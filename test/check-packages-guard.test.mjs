@@ -109,6 +109,14 @@ describe("check-packages policy mode", () => {
     expect(result.stdout + result.stderr).toMatch(/not explicitly allowed/);
   });
 
+  it("matches remote URL schemes case-insensitively", () => {
+    const result = scan({
+      dependencies: { "safe-looking-name": "HTTPS://example.com/request.tgz" },
+    });
+    expect(result.status).toBe(1);
+    expect(result.stdout + result.stderr).toMatch(/not explicitly allowed/);
+  });
+
   it("treats git+file dependencies as local sources", () => {
     expect(
       scan({ dependencies: { "safe-local-package": "git+file:../safe-local-package" } }).status,
