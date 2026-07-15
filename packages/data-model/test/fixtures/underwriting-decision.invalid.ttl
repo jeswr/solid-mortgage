@@ -1,0 +1,15 @@
+# Violations: mort:decisionStatus missing (sh:minCount) and the AUS
+# recommendation is not a FIBO UnderwritingDecision named individual (sh:in).
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix fibo-loan-ln-app: <https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoanApplications/> .
+@prefix fibo-loan-reln-org: <https://spec.edmcouncil.org/fibo/ontology/LOAN/RealEstateLoans/MortgageOrigination/> .
+@prefix fibo-fnd-rel-rel: <https://spec.edmcouncil.org/fibo/ontology/FND/Relations/Relations/> .
+
+<https://alex.pod.example/mortgage/decision>
+  a fibo-loan-ln-app:UnderwritingDecision ;
+  fibo-fnd-rel-rel:evaluates <https://alex.pod.example/mortgage/application> ;
+  dcterms:type fibo-loan-reln-org:CashOutStatus-NoCashOut ;
+  dcterms:issued "2026-07-14T16:20:00Z"^^xsd:dateTime ;
+  dcterms:creator <https://lender.example/orgs/underwriting#id> .

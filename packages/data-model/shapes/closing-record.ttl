@@ -1,0 +1,88 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+@prefix fibo-loan-ln-ln: <https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/Loans/> .
+@prefix fibo-loan-reln-mtg: <https://spec.edmcouncil.org/fibo/ontology/LOAN/RealEstateLoans/Mortgages/> .
+@prefix fibo-fbc-dae-dbt: <https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Debt/> .
+
+# Resource 9 (vocab.md section 5): the executed-mortgage closing record the
+# eClose app writes (scene 5). mort:closingDate carries the consummation date
+# as a literal (FIBO's hasInitialFundingDate requires an OMG Commons
+# ExplicitDate node whose term IRIs do not dereference); schema:interestRate is
+# the display note rate (percent).
+mshape:ClosingRecordShape
+  a sh:NodeShape ;
+  sh:targetClass fibo-loan-reln-mtg:Mortgage ;
+  sh:closed true ;
+  sh:property [
+    # schema:MortgageLoan is welcome as a secondary display type.
+    sh:path rdf:type ;
+    sh:hasValue fibo-loan-reln-mtg:Mortgage ;
+  ] ;
+  sh:property [
+    sh:path fibo-fbc-dae-dbt:hasBorrower ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path mort:subjectProperty ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:PropertyShape ;
+  ] ;
+  sh:property [
+    sh:path fibo-loan-ln-ln:hasPrincipalAmount ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path fibo-loan-ln-ln:hasTotalClosingCosts ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path schema:interestRate ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive 0.0 ;
+    sh:maxInclusive 25.0 ;
+    sh:message "interestRate is the note rate in percent (e.g. 6.125)" ;
+  ] ;
+  sh:property [
+    sh:path mort:loanTermMonths ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:integer ;
+    sh:minInclusive 12 ;
+    sh:maxInclusive 480 ;
+  ] ;
+  sh:property [
+    sh:path mort:closingDate ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+  ] ;
+  sh:property [
+    sh:path mort:recordingReference ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    # The servicer of record (Truist-modelled after the scene 5 transfer).
+    sh:path fibo-loan-ln-ln:isServicedBy ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:OrganizationShape ;
+  ] .

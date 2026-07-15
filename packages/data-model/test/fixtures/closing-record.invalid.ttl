@@ -1,0 +1,35 @@
+# Violations: recordingReference missing (sh:minCount) and interestRate is a
+# string where the shape pins xsd:decimal.
+@prefix schema: <https://schema.org/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix fibo-loan-ln-ln: <https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/Loans/> .
+@prefix fibo-loan-reln-mtg: <https://spec.edmcouncil.org/fibo/ontology/LOAN/RealEstateLoans/Mortgages/> .
+@prefix fibo-fbc-dae-dbt: <https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Debt/> .
+@prefix fibo-fnd-plc-rp: <https://spec.edmcouncil.org/fibo/ontology/FND/Places/RealProperty/> .
+
+<https://alex.pod.example/mortgage/closing>
+  a fibo-loan-reln-mtg:Mortgage ;
+  fibo-fbc-dae-dbt:hasBorrower <https://alex.pod.example/profile/card#me> ;
+  mort:subjectProperty [
+    a fibo-fnd-plc-rp:RealEstate ;
+    schema:address [
+      a schema:PostalAddress ;
+      schema:streetAddress "1121 Maple Hollow Court" ;
+      schema:addressLocality "Columbus" ;
+      schema:addressRegion "OH" ;
+      schema:postalCode "43230"
+    ]
+  ] ;
+  fibo-loan-ln-ln:hasPrincipalAmount [
+    a schema:MonetaryAmount ;
+    schema:value 335000.00 ;
+    schema:currency "USD"
+  ] ;
+  schema:interestRate "6.125 percent" ;
+  mort:loanTermMonths 360 ;
+  mort:closingDate "2026-08-28"^^xsd:date ;
+  fibo-loan-ln-ln:isServicedBy [
+    a schema:Organization, fibo-loan-ln-ln:Servicer ;
+    schema:name "Concept Demo Servicing Co."
+  ] .

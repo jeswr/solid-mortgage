@@ -1,0 +1,62 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+@prefix fibo-fbc-dae-dbt: <https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Debt/> .
+
+# Resource 1 (vocab.md section 5): the /mortgage/profile borrower resource the
+# wallet app writes. It governs that document only - NOT the WebID profile
+# document, which carries arbitrary further triples.
+mshape:BorrowerProfileShape
+  a sh:NodeShape ;
+  sh:targetClass fibo-fbc-dae-dbt:Borrower ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue schema:Person ;
+  ] ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue fibo-fbc-dae-dbt:Borrower ;
+  ] ;
+  sh:property [
+    sh:path schema:name ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path schema:birthDate ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+  ] ;
+  sh:property [
+    sh:path schema:email ;
+    sh:minCount 1 ;
+    sh:datatype xsd:string ;
+    sh:pattern "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$" ;
+  ] ;
+  sh:property [
+    sh:path schema:telephone ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+  ] ;
+  sh:property [
+    sh:path schema:address ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:PostalAddressShape ;
+  ] ;
+  sh:property [
+    sh:path mort:maritalStatus ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:in ( mort:MaritalStatus-Married mort:MaritalStatus-Separated mort:MaritalStatus-Unmarried ) ;
+    sh:message "maritalStatus must be a concept from mort:MaritalStatusScheme (URLA section 1a)" ;
+  ] .

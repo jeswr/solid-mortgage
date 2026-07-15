@@ -203,6 +203,15 @@ mort:recordingReference
   rdfs:range xsd:string ;
   rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
 
+mort:subjectProperty
+  a owl:ObjectProperty ;
+  rdfs:label "subject property"@en ;
+  rdfs:comment "The real property that is the subject of a loan application, appraisal, title search, or closed mortgage (URLA section 4a subject property). Approximates MISMO v3.4 SubjectProperty; no released FIBO module or schema.org term links an applicant, application, or report to the property concerned (verified 2026-07-15 against the LOAN and FND modules). Range is fibo-fnd-plc-rp:RealEstate."@en ;
+  skos:definition "The real property that a mortgage resource concerns (URLA section 4a subject property)."@en ;
+  rdfs:range <https://spec.edmcouncil.org/fibo/ontology/FND/Places/RealProperty/RealEstate> ;
+  rdfs:seeAlso <https://spec.edmcouncil.org/fibo/ontology/FND/Places/RealProperty/RealEstate> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
 #################################################################
 # Status vocabularies (SKOS)
 #################################################################

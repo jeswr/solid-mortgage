@@ -1,0 +1,82 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+@prefix fibo-loan-ln-app: <https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoanApplications/> .
+@prefix fibo-fnd-rel-rel: <https://spec.edmcouncil.org/fibo/ontology/FND/Relations/Relations/> .
+
+# Resource 8 (vocab.md section 5): the underwriting decision the lender writes
+# back to the pod (scenes 3-4). The lender-facing outcome is the
+# mort:decisionStatus SKOS scheme (approved / approved-with-conditions /
+# denied / suspended - URLA-facing statuses FIBO does not provide); the FIBO
+# UnderwritingDecision-* named individuals are the AUS recommendation codes
+# (Freddie-LPA-modelled gse app, scene 4), attached via dcterms:type.
+mshape:UnderwritingDecisionShape
+  a sh:NodeShape ;
+  sh:targetClass fibo-loan-ln-app:UnderwritingDecision ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue fibo-loan-ln-app:UnderwritingDecision ;
+  ] ;
+  sh:property [
+    # The loan application this decision evaluates (pod resource IRI).
+    sh:path fibo-fnd-rel-rel:evaluates ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path mort:decisionStatus ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:in (
+      mort:DecisionStatus-Approved
+      mort:DecisionStatus-ApprovedWithConditions
+      mort:DecisionStatus-Denied
+      mort:DecisionStatus-Suspended
+    ) ;
+    sh:message "decisionStatus must be a concept from mort:DecisionStatusScheme" ;
+  ] ;
+  sh:property [
+    sh:path mort:underwritingCondition ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path fibo-loan-ln-app:hasApprovedAmount ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    # Optional AUS recommendation code (FIBO named individuals).
+    sh:path dcterms:type ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:in (
+      fibo-loan-ln-app:UnderwritingDecision-Approve
+      fibo-loan-ln-app:UnderwritingDecision-Deny
+      fibo-loan-ln-app:UnderwritingDecision-Eligible
+      fibo-loan-ln-app:UnderwritingDecision-Ineligible
+      fibo-loan-ln-app:UnderwritingDecision-Refer
+      fibo-loan-ln-app:UnderwritingDecision-UnableToDetermine
+    ) ;
+    sh:message "the AUS recommendation must be a FIBO UnderwritingDecision named individual" ;
+  ] ;
+  sh:property [
+    sh:path dcterms:issued ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dateTime ;
+  ] ;
+  sh:property [
+    # The deciding lender (or AUS) WebID.
+    sh:path dcterms:creator ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] .

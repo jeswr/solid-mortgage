@@ -11,15 +11,22 @@
   },
   "scripts": {
     "build": "tsc --project tsconfig.json",
+    "check:shapes": "node scripts/check-shapes.mjs",
+    "generate:shapes": "node scripts/generate-shapes.mjs",
     "generate:vocab": "node scripts/generate-vocab.mjs",
     "lint": "biome check src test scripts package.json tsconfig.json",
     "test": "vitest run --root . --config ../../vitest.config.ts",
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@jeswr/rdf-serialize": "github:jeswr/rdf-serialize#9c3a34dd93f318fd00d9e6f22081123e502a0578"
+    "@jeswr/rdf-serialize": "github:jeswr/rdf-serialize#9c3a34dd93f318fd00d9e6f22081123e502a0578",
+    "@rdfjs/data-model": "^2.1.2",
+    "@rdfjs/dataset": "^2.0.3",
+    "@rdfjs/types": "^2.0.1",
+    "n3": "^2.1.1",
+    "shacl-engine": "^1.1.2"
   },
   "devDependencies": {
-    "n3": "^2.1.1"
+    "@types/n3": "^1.26.1"
   }
 }

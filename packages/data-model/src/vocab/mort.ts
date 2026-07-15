@@ -42,6 +42,7 @@ export const MORT = {
   ScoreModel_FICO8: "https://solid-mortgage-vocab.vercel.app/mort#ScoreModel-FICO8",
   ScoreModelScheme: "https://solid-mortgage-vocab.vercel.app/mort#ScoreModelScheme",
   searchedThrough: "https://solid-mortgage-vocab.vercel.app/mort#searchedThrough",
+  subjectProperty: "https://solid-mortgage-vocab.vercel.app/mort#subjectProperty",
   TitleClearCredential: "https://solid-mortgage-vocab.vercel.app/mort#TitleClearCredential",
   titleStatus: "https://solid-mortgage-vocab.vercel.app/mort#titleStatus",
   TitleStatus_Clear: "https://solid-mortgage-vocab.vercel.app/mort#TitleStatus-Clear",

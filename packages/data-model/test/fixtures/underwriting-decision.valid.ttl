@@ -1,0 +1,20 @@
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix schema: <https://schema.org/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix fibo-loan-ln-app: <https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoanApplications/> .
+@prefix fibo-fnd-rel-rel: <https://spec.edmcouncil.org/fibo/ontology/FND/Relations/Relations/> .
+
+<https://alex.pod.example/mortgage/decision>
+  a fibo-loan-ln-app:UnderwritingDecision ;
+  fibo-fnd-rel-rel:evaluates <https://alex.pod.example/mortgage/application> ;
+  mort:decisionStatus mort:DecisionStatus-ApprovedWithConditions ;
+  mort:underwritingCondition "Provide updated employment verification within 10 business days of closing." ;
+  fibo-loan-ln-app:hasApprovedAmount [
+    a schema:MonetaryAmount ;
+    schema:value 335000.00 ;
+    schema:currency "USD"
+  ] ;
+  dcterms:type fibo-loan-ln-app:UnderwritingDecision-Approve ;
+  dcterms:issued "2026-07-14T16:20:00Z"^^xsd:dateTime ;
+  dcterms:creator <https://lender.example/orgs/underwriting#id> .
