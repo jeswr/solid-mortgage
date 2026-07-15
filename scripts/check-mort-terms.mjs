@@ -12,8 +12,11 @@ import { Parser } from "n3";
 const ROOT = path.resolve(import.meta.dirname, "..");
 const VOCAB_TTL = path.join(ROOT, "vocab", "mort.ttl");
 const MORT_NAMESPACE = "https://solid-mortgage-vocab.vercel.app/mort#";
-const FULL_IRI_PATTERN = /https:\/\/solid-mortgage-vocab\.vercel\.app\/mort#([A-Za-z][\w.-]*)/g;
-const PREFIXED_PATTERN = /\bmort:([A-Za-z][\w-]*)/g;
+export const FULL_IRI_PATTERN =
+  /https:\/\/solid-mortgage-vocab\.vercel\.app\/mort#([A-Za-z][\w.-]*)/g;
+// Requires a term character immediately after the colon, so prose such as
+// "every mort: term" is never treated as a compact IRI reference.
+export const PREFIXED_PATTERN = /\bmort:([A-Za-z][\w-]*)/g;
 // Prefixed-name (mort:X) scanning covers RDF data plus code/config, where a
 // compact IRI in a string or JSON-LD context must also resolve to a defined term.
 const PREFIXED_SCAN_EXTENSIONS = new Set([
