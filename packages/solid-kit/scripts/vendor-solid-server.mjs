@@ -196,8 +196,9 @@ switch \`packages/solid-kit/package.json\` to the registry version once sm-50 la
 
 ## Install-time patch
 
-\`patches/@jeswr__solid-server.patch\` (wired via \`patchedDependencies\` in
-\`pnpm-workspace.yaml\`) widens the package \`exports\` map to expose the wasm \`SolidServer\`
+\`patches/@jeswr__solid-server.patch\` (wired via the \`pnpm.patchedDependencies\` field of the
+ROOT \`package.json\` — pnpm 10.4.1 silently ignores the \`pnpm-workspace.yaml\` location)
+widens the package \`exports\` map to expose the wasm \`SolidServer\`
 class and the \`src/http.js\` mapping helpers, which upstream currently hides behind the
 \`"."\`-only exports map (docs/research/fastify-host.md §3 "the real blocker"). The upstream
 fix is sparq-org/sparq#2323 (sm-69); the patch dies with it. \`scripts/vendor-solid-server.mjs\`
