@@ -3,6 +3,9 @@
 agent = "codex"
 model = "gpt-5.6-sol"
 
+# Security reviews of auth/VC/ACL surfaces run on Claude (decision 0008).
+security_agent = "claude-code"
+
 review_min_severity = "low"
 
 reuse_review_session = true
