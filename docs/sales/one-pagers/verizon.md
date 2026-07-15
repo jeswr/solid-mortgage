@@ -31,13 +31,13 @@ provides for free (decision 0006).
 The role-map sheet's pitch, verbatim: *"Host citizen/consumer Pods at carrier scale and pilot
 a consumer data wallet"* — and the R3 generic pitch: *"launch managed Pod hosting as a new
 regulated revenue line, using CoP conformance as your trust mark"* (role-map sheet). The demo
-names the trust inversion: a carrier once fined over location-data sharing now custodies a pod
-whose access the *user* alone grants, every grant receipted (decision 0003). Stated honestly:
-the demo shows access control and receipts — the host remains inside the trust boundary;
-making the host technically unable to read stored data (client-side encryption, host-blind
-custody) is a partner-phase design requirement, not a property of today's stack. Most adopters
-will rent pods, not run them (role-map sheet, R3): the custodian seat is the recurring-revenue
-seat.
+names the trust inversion: a carrier once fined over location-data sharing now operates the
+custody layer for a pod where the *user* decides which applications and counterparties get
+access, every grant receipted (decision 0003). Stated honestly: user-controlled access applies
+to third parties — the hosting operator itself remains inside the trust boundary and can read
+stored data until host-blind custody (client-side encryption) is built, which is a
+partner-phase design requirement, not a property of today's stack. Most adopters will rent
+pods, not run them (role-map sheet, R3): the custodian seat is the recurring-revenue seat.
 
 ## What building it for real entails
 
