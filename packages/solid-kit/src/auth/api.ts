@@ -188,13 +188,16 @@ export function createNonceStore(options: NonceStoreOptions = {}): NonceStore {
       if (live.size > maxEntries) {
         // Capacity pressure drops EXPIRED challenges first — a flood of fresh sessions
         // must not evict a live, pending legitimate challenge while dead entries occupy
-        // slots. Only then does the oldest live challenge go. Size `maxEntries` against
-        // the trusted issuers' account population and wire a per-WebID `rateLimiter` on
-        // the minting route (any verified WebID can mint).
+        // slots. Every entry shares one TTL and delete-then-set keeps insertion order,
+        // so expiry order == insertion order: sweep from the oldest end and STOP at the
+        // first live entry (constant amortised work, no full scan on a live-full store).
+        // Only then does the oldest live challenge go. Size `maxEntries` against the
+        // trusted issuers' account population and wire a per-WebID `rateLimiter` on the
+        // minting route (any verified WebID can mint).
         const cutoff = now();
         for (const [key, entry] of live) {
-          if (live.size <= maxEntries) break;
-          if (entry.expiresAt <= cutoff) live.delete(key);
+          if (live.size <= maxEntries || entry.expiresAt > cutoff) break;
+          live.delete(key);
         }
         while (live.size > maxEntries) {
           const oldest = live.keys().next();

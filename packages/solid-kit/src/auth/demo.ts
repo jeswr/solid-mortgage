@@ -11,6 +11,7 @@ import { createGuardedFetch, type GuardOptions, refuseRedirects } from "@jeswr/g
 import {
   computeAllowedOrigins,
   isOriginAllowed,
+  resolvePristineFetch,
   sameWebId,
   validateWebId,
 } from "@jeswr/solid-auth-core";
@@ -45,10 +46,18 @@ export interface DemoLoginOptions {
   /**
    * Extra resource ORIGINS the injected (possibly owner-capable) fetch may serve, beyond
    * the pod's and the persona WebID's origins — the same fail-closed credential boundary
-   * `createAuthClient` enforces. Requests outside the boundary fall back to the
-   * credential-free global fetch, never the injected one.
+   * `createAuthClient` enforces. Requests outside the boundary fall back to
+   * {@link publicFetch}, never the injected one.
    */
   allowedOrigins?: string[];
+  /**
+   * A KNOWN-CREDENTIAL-FREE fetch for out-of-boundary requests. Defaults to the global
+   * fetch unwrapped through the auth-core pristine brand (so an auth-core-patched global
+   * is not mistaken for credential-free). A host that patches the global fetch WITHOUT
+   * that brand (e.g. its own service worker auth layer) cannot be detected — inject the
+   * pristine fetch explicitly there.
+   */
+  publicFetch?: typeof fetch;
   /**
    * `@jeswr/guarded-fetch` policy for the session's `authFetch` (parity with
    * `createAuthClient`). Merged over the kit defaults; pass `false` to skip the guard
@@ -112,7 +121,15 @@ export function demoLogin(options: DemoLoginOptions): DemoSession {
   const personaWebId = validateWebId(options.webId, allowInsecureLoopback);
   const podBaseUrl = validatePodBaseUrl(options.podBaseUrl, allowInsecureLoopback);
   const baseFetch = options.fetch ?? fetch;
-  const publicFetch = fetch;
+  // The out-of-boundary fallback must be CREDENTIAL-FREE (roborev sm-22 round 2): unwrap
+  // an auth-core-branded patched global back to its pristine base; hosts with unbranded
+  // patched globals supply `publicFetch` explicitly (see the option doc). Bind when the
+  // global comes back unchanged — a bare native `fetch` call needs its globalThis receiver.
+  const rawGlobalFetch = fetch;
+  const pristineFetch = resolvePristineFetch(rawGlobalFetch);
+  const publicFetch =
+    options.publicFetch ??
+    (pristineFetch === rawGlobalFetch ? rawGlobalFetch.bind(globalThis) : pristineFetch);
   // The injected fetch may carry OWNER authority (harness accounts; a future credentialed
   // Mode-1 variant), so it gets the SAME fail-closed origin boundary as a real session
   // (roborev sm-22): pod origin + persona WebID origin + explicit allowedOrigins, cleartext
