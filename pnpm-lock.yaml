@@ -419,6 +419,9 @@ importers:
       '@jeswr/guarded-fetch':
         specifier: github:jeswr/guarded-fetch#81926b4481310ff74a5c02c3c4eaa2a51ce2dee6
         version: https://codeload.github.com/jeswr/guarded-fetch/tar.gz/81926b4481310ff74a5c02c3c4eaa2a51ce2dee6
+      '@jeswr/solid-api-auth':
+        specifier: github:jeswr/solid-api-auth#0560b5e8fdd59b2886060d5377bb03d3f5ef01d0
+        version: https://codeload.github.com/jeswr/solid-api-auth/tar.gz/0560b5e8fdd59b2886060d5377bb03d3f5ef01d0
       '@jeswr/solid-auth-core':
         specifier: github:jeswr/solid-auth-core#79d90556df6319b5a3699d877be56769c55fe15e
         version: https://codeload.github.com/jeswr/solid-auth-core/tar.gz/79d90556df6319b5a3699d877be56769c55fe15e(react@19.2.7)
@@ -1561,6 +1564,11 @@ packages:
     resolution: {tarball: https://codeload.github.com/jeswr/rdf-serialize/tar.gz/9c3a34dd93f318fd00d9e6f22081123e502a0578}
     version: 0.1.0
     engines: {node: '>=24'}
+
+  '@jeswr/solid-api-auth@https://codeload.github.com/jeswr/solid-api-auth/tar.gz/0560b5e8fdd59b2886060d5377bb03d3f5ef01d0':
+    resolution: {tarball: https://codeload.github.com/jeswr/solid-api-auth/tar.gz/0560b5e8fdd59b2886060d5377bb03d3f5ef01d0}
+    version: 0.1.0
+    engines: {node: '>=22.12'}
 
   '@jeswr/solid-auth-core@https://codeload.github.com/jeswr/solid-auth-core/tar.gz/79d90556df6319b5a3699d877be56769c55fe15e':
     resolution: {tarball: https://codeload.github.com/jeswr/solid-auth-core/tar.gz/79d90556df6319b5a3699d877be56769c55fe15e}
@@ -6142,6 +6150,13 @@ snapshots:
     dependencies:
       '@rdfjs/types': 2.0.1
       n3: 2.1.1
+
+  '@jeswr/solid-api-auth@https://codeload.github.com/jeswr/solid-api-auth/tar.gz/0560b5e8fdd59b2886060d5377bb03d3f5ef01d0':
+    dependencies:
+      '@jeswr/fetch-rdf': 0.1.0
+      jose: 6.2.3
+      oauth4webapi: 3.8.6
+      undici: 8.5.0
 
   '@jeswr/solid-auth-core@https://codeload.github.com/jeswr/solid-auth-core/tar.gz/79d90556df6319b5a3699d877be56769c55fe15e(react@19.2.7)':
     dependencies:
