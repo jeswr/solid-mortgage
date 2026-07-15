@@ -91,8 +91,14 @@ Overrides are exact values for named `(shape, instance, propertyPath)` coordinat
 
 - **Merge semantics:** an override *replaces* the full generated value set for that property
   on that instance; unnamed properties still generate; unnamed instances are untouched.
-  Overrides may pin the instance IRI. An override naming a property the (closed) shape does
-  not allow is an error — overrides are inside the conformance boundary, not an escape hatch.
+  An override naming a property the (closed) shape does not allow is an error — overrides are
+  inside the conformance boundary, not an escape hatch.
+- **Identity pins are two distinct kinds** (so §4.2 rebasing stays well-defined):
+  `{fragment}` pins the instance's *destination-relative* name (rewritten to
+  `{resource IRI}#{fragment}` at seed time), while `{external}` pins a *real, absolute,
+  dereferenceable* IRI (e.g. the persona's WebID) that rebasing preserves verbatim and the
+  no-minted-IRIs lint covers. Any other absolute IRI — in particular one under the
+  placeholder base — is rejected at generation time.
 - **Non-perturbation:** because streams are coordinate-keyed (§3.1), pinning one field never
   changes any sibling value. Tested by golden diff: flip one override, assert the delta is
   exactly that field.
@@ -135,10 +141,18 @@ inter-field ordering (personas pin the DTI-coherent fields, §5.1), `sh:sparql`,
 
 ### 3.5 Self-conformance gate
 
-`validate: true` (default) runs the merged output through an independent RDF/JS SHACL engine
-(`shacl-engine`; dev-dep posture — callers can disable in production seeding after goldens
-pass). The generator never gets to be its own referee; unsupported constraint combinations
-surface as validation failures instead of silently-wrong fixtures.
+Two layers, with distinct dependency postures:
+
+- **In core (always on, zero extra deps):** the driving strategy checks the *conjunctive*
+  facets of the property it generated (§3.4) and errors loudly on any documented-unsupported
+  constraint — nonconforming data is never emitted silently.
+- **Independent validation (injected):** the merged output can additionally be checked by a
+  real SHACL engine so the generator is never its own referee. The engine is **injected
+  through the API** (`validator?: ShaclValidator`), not a hard dependency of the core — a
+  `@jeswr/synthetic-rdf/validate` subpath export adapts `shacl-engine` for callers that want
+  the one-liner. The package's own test suite always runs it (sm-63 criterion 5); seeding
+  scripts in consuming repos pass the adapter; production/browser callers that omit it pay no
+  bundle cost and still get the in-core checks.
 
 ### 3.6 API sketch
 
@@ -156,15 +170,23 @@ export interface SyntheticRdfOptions {
   mintIri?: (shape: NamedNode, index: number, base: string) => NamedNode;
   plugins?: readonly ValueGenerator[];     // tier-7 deterministic value-quality plugins
   maxDepth?: number;                       // sh:node recursion budget (default 3)
-  validate?: boolean;                      // independent SHACL self-check (default true)
+  validator?: ShaclValidator;              // injected independent SHACL check (§3.5)
 }
+
+/** Adapter seam so the core never hard-depends on a SHACL engine. */
+export interface ShaclValidator {
+  validate(data: DatasetCore, shapes: DatasetCore):
+    Promise<{ conforms: boolean; report: string }>;
+}
+// import { shaclEngineValidator } from "@jeswr/synthetic-rdf/validate"  ← optional adapter
 
 export interface TargetSpec { shape: NamedNode; count: number; }
 
 export interface ShapeOverride {
   shape: NamedNode;
   index?: number;                          // default 0
-  iri?: NamedNode;                         // pin the instance IRI
+  /** Identity pin (§3.3): destination-relative fragment, or a real external IRI kept verbatim. */
+  id?: { fragment: string } | { external: NamedNode };
   values?: Readonly<Record<string, Term | readonly Term[]>>;  // propertyPath IRI → exact terms
 }
 
@@ -243,8 +265,13 @@ export interface PodLayout { pods: readonly PodSpec[]; }
 
 export interface PodSpec {
   account: { target: SeedTarget } | { provision: { webid?: string } };
-  resources: readonly ResourceSpec[];
+  /** Static entries, or expanders that materialise several related resources from ONE
+   *  computation (e.g. one credential issuance → VC + anchor VCs + witness, §5.2). */
+  resources: readonly (ResourceSpec | ResourceExpander)[];
 }
+
+export type ResourceExpander =
+  (context: PodContext) => readonly ResourceSpec[] | Promise<readonly ResourceSpec[]>;
 
 export interface ResourceSpec {
   path: string;                            // pod-root-relative: "/mortgage/credentials/income"
@@ -256,8 +283,7 @@ export interface ResourceSpec {
 export type DataSource =
   | { instance: InstanceRef }              // a GeneratedInstance from synthetic-rdf
   | { dataset: DatasetCore }
-  | { body: string }
-  | { build: (context: PodContext) => string | Promise<string> };  // e.g. sign a VC (§5.2)
+  | { body: string };                      // pre-built (expanders emit these, §5.2)
 
 export interface InstanceRef { shape: string; index?: number; }
 export interface PodContext {
@@ -288,10 +314,16 @@ export function seedPods(options: SeedOptions): Promise<SeedManifest>;
 
 **IRI rebasing.** Generated instances carry placeholder-base IRIs (§3.2). At write time the
 instance's focus IRI becomes `{resource IRI}#{fragment}` (default fragment `it`, or the
-override-pinned IRI) and cross-instance references are rewritten term-level from the same
-mapping; serialisation emits **relative IRIs with no base directive** so the server resolves
-them against the resource URL — the same portability trick `seed.ts`'s `publicReadAcl` uses,
-now applied to all seeded data. Values are unaffected by rebasing (§3.2 keying).
+override-pinned fragment) and cross-instance references are rewritten term-level from the
+same mapping. Exactly one class of absolute IRI survives rebasing untouched: `{external}`
+identity pins and any other real-world IRIs already present in the data (vocab terms, WebIDs,
+FIBO individuals). Placeholder-base IRIs never reach a pod — an unmapped one at write time is
+an error. Serialisation emits **relative IRIs with no base directive** for the rebased terms,
+so the server resolves them against the resource URL — the same portability trick `seed.ts`'s
+`publicReadAcl` uses, now applied to all seeded data; bodies containing only fragment-pinned
+identities are therefore byte-identical across pod origins, and `{external}` pins (which are
+origin-specific by nature) are the documented exception. Values are unaffected by rebasing
+(§3.2 keying).
 
 **Idempotence.** `create` keeps `seed.ts`'s strict `If-None-Match: *` semantics (a doubly
 seeded pod is a harness bug — e2e default). `ensure` skips 412s (long-lived dev server
@@ -330,8 +362,10 @@ server speaks WAC); the wrapper layer keeps an ACP door open via `wacToAcp`.
 
 ### 5.2 Credential pipeline seam (sm-26 interface)
 
-VCs are not PUT as raw generated Turtle — they pass through vc-kit issuance. The seam is
-solid-seed's `build` source plus one solid-mortgage-defined interface that sm-26 implements:
+VCs are not PUT as raw generated Turtle — they pass through vc-kit issuance. The seam is a
+solid-seed `ResourceExpander` (§4.2) wrapping one solid-mortgage-defined interface that sm-26
+implements — **one `issue()` call materialises all of its resources** (VC + anchor VCs +
+witness), so issuance is never repeated per resource and the outputs stay mutually consistent:
 
 ```ts
 /** Implemented by sm-26 tooling (packages/vc-kit); consumed by the sm-65 layout module. */
@@ -348,6 +382,21 @@ export interface CredentialSeedPipeline {
     witness?: string;                      // borrower-only witness resource beside the VC
   }>;
 }
+
+/** sm-65 layout module: one issuance → N ResourceSpecs via a solid-seed expander. */
+const incomeCredential: ResourceExpander = async (context) => {
+  const issued = await pipeline.issue({ /* claims, hiddenFields, validity… */ });
+  return [
+    { path: "/mortgage/credentials/income", source: { body: issued.vc },
+      contentType: "application/ld+json", access: incomeAccess },
+    ...issued.anchors.map((anchor, i) => ({
+      path: `/mortgage/credentials/income-anchor-${i}`,
+      source: { body: anchor.vc }, contentType: "application/ld+json", access: anchorAccess })),
+    ...(issued.witness === undefined ? [] : [{
+      path: "/mortgage/credentials/income-witness",
+      source: { body: issued.witness }, access: ownerOnly }]),
+  ];
+};
 ```
 
 Contract points: `operandEnc` is computed (`encode_int_literal`) from the **same RDF literal
@@ -376,8 +425,10 @@ here, it belongs upstream (extract-repeated-logic rule).
    datatype facets (both inclusive/exclusive bounds + length), pattern subset, `sh:node`
    recursion (depth cap + cycle error), `sh:minCount/maxCount`, closed shapes.
 4. Non-perturbation: flipping one override changes exactly that field's quads (golden diff).
-5. Self-conformance: default-on independent SHACL validation of merged output; every
-   documented-unsupported constraint errors loudly (test per constraint).
+5. Self-conformance: in-core conjunctive facet checks always on; injected `ShaclValidator`
+   seam with the `./validate` adapter; the package's own tests always run the independent
+   engine over merged output; every documented-unsupported constraint errors loudly (test per
+   constraint). Core has no hard dependency on any SHACL engine.
 6. Out-of-shape override → error; out-of-bounds pinned value → validation failure (test uses
    a decision-0005-style digit-budget shape).
 7. SKILL.md + README; PR to `jeswr/solid-sdk` (Jesse-owned — PR in-scope).
@@ -391,7 +442,10 @@ here, it belongs upstream (extract-repeated-logic rule).
 3. Modes: `create` 412-fails on re-seed; `ensure` skips; `replace` re-run leaves pod state
    byte-identical (read-back assertion).
 4. IRI rebasing: cross-instance references resolve to real pod IRIs; serialised bodies use
-   relative IRIs (portability test: same layout on two origins ⇒ identical bodies).
+   relative IRIs (portability test: same layout on two origins ⇒ identical bodies for
+   fragment-pinned data); `{external}` identity pins survive verbatim; an unmapped
+   placeholder-base IRI at write time errors. `ResourceExpander` entries materialise once
+   per seed run (single-issuance test, §5.2).
 5. ACLs authored via `@solid/object` wrappers — no string-templated `.acl` (review gate);
    owner-control preserved on every ACL (the `seed.ts` lockout lesson, as a test).
 6. Manifest returned and accurate per mode.
