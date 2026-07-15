@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  '@jeswr/solid-server':
+    hash: db3e990235a0509c3ce37c670f64864c9a69b5aa5a9b5b65d4ab3023d771270f
+    path: packages/solid-kit/vendor/patches/@jeswr__solid-server.patch
+
 importers:
 
   .:
@@ -44,9 +49,22 @@ importers:
       '@jeswr/solid-auth-core':
         specifier: github:jeswr/solid-auth-core#79d90556df6319b5a3699d877be56769c55fe15e
         version: https://codeload.github.com/jeswr/solid-auth-core/tar.gz/79d90556df6319b5a3699d877be56769c55fe15e(react@19.2.7)
+      '@jeswr/solid-server':
+        specifier: file:vendor/jeswr-solid-server-0.1.0.tgz
+        version: file:packages/solid-kit/vendor/jeswr-solid-server-0.1.0.tgz(patch_hash=db3e990235a0509c3ce37c670f64864c9a69b5aa5a9b5b65d4ab3023d771270f)
       '@jeswr/solid-session-restore':
         specifier: github:jeswr/solid-session-restore#72755147e627e853b9600fc301fe2d06b9433c42
         version: https://codeload.github.com/jeswr/solid-session-restore/tar.gz/72755147e627e853b9600fc301fe2d06b9433c42
+      get-port:
+        specifier: ^7.1.0
+        version: 7.2.0
+      jose:
+        specifier: ^5.10.0
+        version: 5.10.0
+    devDependencies:
+      '@types/node':
+        specifier: ^25.9.2
+        version: 25.9.5
 
   packages/ui:
     dependencies:
@@ -271,6 +289,12 @@ packages:
     resolution: {tarball: https://codeload.github.com/jeswr/solid-odrl/tar.gz/a116c5993e3cdfdaf8d16f2d5b411b92c9c932e3}
     version: 0.1.0
     engines: {node: '>=24'}
+
+  '@jeswr/solid-server@file:packages/solid-kit/vendor/jeswr-solid-server-0.1.0.tgz':
+    resolution: {integrity: sha512-cMh1ckDWspn8GqHJWhL1obqCNBa8x52fNUIrQfd3Z1LYNVLE5coN51NJymFyLXteEoc2stexlz8s5bQsCM6O+A==, tarball: file:packages/solid-kit/vendor/jeswr-solid-server-0.1.0.tgz}
+    version: 0.1.0
+    engines: {node: '>=18'}
+    hasBin: true
 
   '@jeswr/solid-session-restore@https://codeload.github.com/jeswr/solid-session-restore/tar.gz/72755147e627e853b9600fc301fe2d06b9433c42':
     resolution: {tarball: https://codeload.github.com/jeswr/solid-session-restore/tar.gz/72755147e627e853b9600fc301fe2d06b9433c42}
@@ -687,6 +711,9 @@ packages:
   '@rolldown/pluginutils@1.0.1':
     resolution: {integrity: sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw==}
 
+  '@solid/access-token-verifier@2.1.1':
+    resolution: {integrity: sha512-dGvu4xk3P74xl6XYsULWBY8F/fNCoi/EK07Iv3RT+0vDA21+3VEKk72sWmki0W59qJRTRDQZXkCOyo4b5Hd7zA==}
+
   '@solid/object@0.6.0':
     resolution: {integrity: sha512-Ybme2HjbeWKZ6jOyYxacsFnAC6wPaifnSNO39bYW7PdbTEwgT56jG0Rp3TAWzXJvRjBzqMErUwvOMpqd8sVeOw==}
     engines: {node: '>=24.0.0'}
@@ -884,6 +911,10 @@ packages:
     resolution: {integrity: sha512-FJhYRoDaiatfEkUK8HKlicmu/3SGFD51q3itKDGoSTysQJBnfOcxU5GxnhE1E6soB76MbT0MBtnKJuXyAx+96Q==}
     engines: {node: '>=6'}
 
+  get-port@7.2.0:
+    resolution: {integrity: sha512-afP4W205ONCuMoPBqcR6PSXnzX35KTcJygfJfcp+QY+uwm3p20p1YczWXhlICIzGMCxYBQcySEcOgsJcrkyobg==}
+    engines: {node: '>=16'}
+
   html-encoding-sniffer@6.0.0:
     resolution: {integrity: sha512-CV9TW3Y3f8/wT0BRFc1/KAVQ3TUHiXmaAb6VW9vtiMFf7SLoMd1PdAc4W3KFOFETBJUb90KatHqlsZMWV+R9Gg==}
     engines: {node: ^20.19.0 || ^22.12.0 || >=24.0.0}
@@ -897,6 +928,9 @@ packages:
 
   is-potential-custom-element-name@1.0.1:
     resolution: {integrity: sha512-bCYeRA2rVibKZd+s2625gGnGF/t7DSqDs4dP7CrLA1m7jKWz6pps0LpYLJN8Q64HtmPKJ1hrN3nzPNKFEKOUiQ==}
+
+  jose@5.10.0:
+    resolution: {integrity: sha512-s+3Al/p9g32Iq+oqXxkW//7jk2Vig6FF1CFqzVXoTUXt2qz89YWbL+OwS17NFYEvxC35n0FKeGO2LGYSxeM2Gg==}
 
   jose@6.2.3:
     resolution: {integrity: sha512-YYVDInQKFJfR/xa3ojUTl8c2KoTwiL1R5Wg9YCydwH0x0B9grbzlg5HC7mMjCtUJjbQ/YnGEZIhI5tCgfTb4Hw==}
@@ -1000,6 +1034,10 @@ packages:
     resolution: {integrity: sha512-4pfM1Ff0x50o0tQwb5ucw/RzNyD0/YJME6IVcStalZuMWxdt3sR3huStTtxz4PUmvZfRguvDejasvQ2kifR11g==}
     engines: {node: 20 || >=22}
 
+  lru-cache@6.0.0:
+    resolution: {integrity: sha512-Jo6dJ04CmSjuznwJSS3pUeWmd/H0ffTlkXXgwZi+eq1UCmqQwCh+eLsYOYCwY991i2Fah4h1BEMCx4qThGbsiA==}
+    engines: {node: '>=10'}
+
   lucide-react@0.544.0:
     resolution: {integrity: sha512-t5tS44bqd825zAW45UQxpG2CvcC4urOwn2TrwSH8u+MjeE+1NnWl6QqeQ/6NdjMqdOygyiT9p3Ev0p1NJykxjw==}
     peerDependencies:
@@ -1026,6 +1064,15 @@ packages:
     resolution: {integrity: sha512-bzlKTyNJ7+LdGIIwy8ijFpIqEQIvafahV7eYykJ8Cvh42EdJeODoJ6gUJXpQJvej1BddH8OqTXZNE/KfbWAu8Q==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
+
+  node-fetch@2.7.0:
+    resolution: {integrity: sha512-c4FRfUm/dbcWZ7U+1Wq0AwCyFL+3nt2bEw05wfxSz+DWpWsitgmSgYmy2dQdWyKC1694ELPqMs/YzUSNozLt8A==}
+    engines: {node: 4.x || >=6.0.0}
+    peerDependencies:
+      encoding: ^0.1.0
+    peerDependenciesMeta:
+      encoding:
+        optional: true
 
   oauth4webapi@3.8.6:
     resolution: {integrity: sha512-iwemM91xz8nryHti2yTmg5fhyEMVOkOXwHNqbvcATjyajb5oQxCQzrNOA6uElRHuMhQQTKUyFKV9y/CNyg25BQ==}
@@ -1189,9 +1236,15 @@ packages:
     resolution: {integrity: sha512-exgYmnmL/sJpR3upZfXG5PoatXQii55xAiXGXzY+sROLZ/Y+SLcp9PgJNI9Vz37HpQ74WvDcLT8eqm+kV3FzrA==}
     engines: {node: '>=16'}
 
+  tr46@0.0.3:
+    resolution: {integrity: sha512-N3WMsuqV66lT30CrXNbEjx4GEwlow3v6rr4mCcv6prnfwhS01rkgyFdjPNBYd9br7LpXV1+Emh01fHnq2Gdgrw==}
+
   tr46@6.0.0:
     resolution: {integrity: sha512-bLVMLPtstlZ4iMQHpFHTR7GAGj2jxi8Dg0s2h2MafAE4uSWF98FC/3MomU51iQAMf8/qDUbKWf5GxuvvVcXEhw==}
     engines: {node: '>=20'}
+
+  ts-guards@0.5.1:
+    resolution: {integrity: sha512-Y6P/VJnwARiPMfxO7rvaYaz5tGQ5TQ0Wnb2cWIxMpFOioYkhsT8XaCrJX6wYPNFACa4UOrN5SPqhwpM8NolAhQ==}
 
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
@@ -1327,6 +1380,9 @@ packages:
     resolution: {integrity: sha512-o8qghlI8NZHU1lLPrpi2+Uq7abh4GGPpYANlalzWxyWteJOCsr/P+oPBA49TOLu5FTZO4d3F9MnWJfiMo4BkmA==}
     engines: {node: '>=18'}
 
+  webidl-conversions@3.0.1:
+    resolution: {integrity: sha512-2JAn3z8AR6rjK8Sm8orRC0h/bcl/DqL7tRPdGZ4I1CjdF+EaMLmYxBHyXuKL849eucPFhvBoxMsflfOb8kxaeQ==}
+
   webidl-conversions@8.0.1:
     resolution: {integrity: sha512-BMhLD/Sw+GbJC21C/UgyaZX41nPt8bUTg+jWyDeg7e7YN4xOM05YPSIXceACnXVtqyEw/LMClUQMtMZ+PGGpqQ==}
     engines: {node: '>=20'}
@@ -1339,6 +1395,9 @@ packages:
     resolution: {integrity: sha512-1to4zXBxmXHV3IiSSEInrreIlu02vUOvrhxJJH5vcxYTBDAx51cqZiKdyTxlecdKNSjj8EcxGBxNf6Vg+945gw==}
     engines: {node: ^20.19.0 || ^22.12.0 || >=24.0.0}
 
+  whatwg-url@5.0.0:
+    resolution: {integrity: sha512-saE57nupxk6v3HY35+jzBwYa0rKSy0XR8JSxZPwgLr7ys0IBzhGviA1/TUGJLmSVqs8pb9AnvICXEuOHLprYTw==}
+
   why-is-node-running@2.3.0:
     resolution: {integrity: sha512-hUrmaWBdVDcxvYqnyh09zunKzROWjbZTiNy8dBEjkS7ehEDQibXJ7XvlmtbwuTclUiIyN+CyXQD4Vmko8fNm8w==}
     engines: {node: '>=8'}
@@ -1350,6 +1409,9 @@ packages:
 
   xmlchars@2.2.0:
     resolution: {integrity: sha512-JZnDKK8B0RCDw84FNdDAIpZK+JuJw+s7Lz8nksI7SIuU3UXJJslUthsi+uWBUYOwPFwW7W7PRLRfUKpxjtjFCw==}
+
+  yallist@4.0.0:
+    resolution: {integrity: sha512-3wdGidZyq5PB084XLES5TpOSRA3wjXAlIWMhum2kRcv/41Sn2emQ0dycQW4uZXLejwKvg6EsvbdlVL+FYEct7A==}
 
 snapshots:
 
@@ -1530,6 +1592,12 @@ snapshots:
       content-type: 1.0.5
       jsonld-streaming-parser: 5.0.1
       n3: 2.1.1
+
+  '@jeswr/solid-server@file:packages/solid-kit/vendor/jeswr-solid-server-0.1.0.tgz(patch_hash=db3e990235a0509c3ce37c670f64864c9a69b5aa5a9b5b65d4ab3023d771270f)':
+    dependencies:
+      '@solid/access-token-verifier': 2.1.1
+    transitivePeerDependencies:
+      - encoding
 
   '@jeswr/solid-session-restore@https://codeload.github.com/jeswr/solid-session-restore/tar.gz/72755147e627e853b9600fc301fe2d06b9433c42':
     dependencies:
@@ -1820,6 +1888,16 @@ snapshots:
 
   '@rolldown/pluginutils@1.0.1': {}
 
+  '@solid/access-token-verifier@2.1.1':
+    dependencies:
+      jose: 5.10.0
+      lru-cache: 6.0.0
+      n3: 1.26.0
+      node-fetch: 2.7.0
+      ts-guards: 0.5.1
+    transitivePeerDependencies:
+      - encoding
+
   '@solid/object@0.6.0':
     dependencies:
       '@rdfjs/wrapper': 0.34.0
@@ -1997,6 +2075,8 @@ snapshots:
 
   get-nonce@1.0.1: {}
 
+  get-port@7.2.0: {}
+
   html-encoding-sniffer@6.0.0:
     dependencies:
       '@exodus/bytes': 1.15.1
@@ -2008,6 +2088,8 @@ snapshots:
   ieee754@1.2.1: {}
 
   is-potential-custom-element-name@1.0.1: {}
+
+  jose@5.10.0: {}
 
   jose@6.2.3: {}
 
@@ -2123,6 +2205,10 @@ snapshots:
 
   lru-cache@11.5.2: {}
 
+  lru-cache@6.0.0:
+    dependencies:
+      yallist: 4.0.0
+
   lucide-react@0.544.0(react@19.2.7):
     dependencies:
       react: 19.2.7
@@ -2146,6 +2232,10 @@ snapshots:
       readable-stream: 4.7.0
 
   nanoid@3.3.16: {}
+
+  node-fetch@2.7.0:
+    dependencies:
+      whatwg-url: 5.0.0
 
   oauth4webapi@3.8.6: {}
 
@@ -2293,9 +2383,13 @@ snapshots:
     dependencies:
       tldts: 7.4.8
 
+  tr46@0.0.3: {}
+
   tr46@6.0.0:
     dependencies:
       punycode: 2.3.1
+
+  ts-guards@0.5.1: {}
 
   tslib@2.8.1: {}
 
@@ -2372,6 +2466,8 @@ snapshots:
     dependencies:
       xml-name-validator: 5.0.0
 
+  webidl-conversions@3.0.1: {}
+
   webidl-conversions@8.0.1: {}
 
   whatwg-mimetype@5.0.0: {}
@@ -2384,6 +2480,11 @@ snapshots:
     transitivePeerDependencies:
       - '@noble/hashes'
 
+  whatwg-url@5.0.0:
+    dependencies:
+      tr46: 0.0.3
+      webidl-conversions: 3.0.1
+
   why-is-node-running@2.3.0:
     dependencies:
       siginfo: 2.0.0
@@ -2392,3 +2493,5 @@ snapshots:
   xml-name-validator@5.0.0: {}
 
   xmlchars@2.2.0: {}
+
+  yallist@4.0.0: {}
