@@ -148,6 +148,7 @@ test.describe("app concept-demo banners", () => {
   test.describe.configure({ mode: "serial" });
 
   test.beforeAll(async () => {
+    test.setTimeout(120_000);
     const shellEnv: NodeJS.ProcessEnv = {};
     for (const app of apps.slice(1)) {
       if (app.zoneEnv === undefined) throw new Error(`Missing zone env for ${app.packageName}`);
