@@ -14,6 +14,7 @@ test-results/
 .DS_Store
 *.log
 .pnpm-store/
+.cache/
 .beads/drain.log
 .beads/drain.lock/
 .claude/worktrees/
