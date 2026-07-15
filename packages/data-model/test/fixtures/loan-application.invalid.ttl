@@ -1,0 +1,36 @@
+# Violations: two MortgageLoanPurpose individuals (sh:qualifiedMaxCount 1), no
+# AmortizationType individual (sh:qualifiedMinCount 1), and loanTermMonths 600
+# exceeds sh:maxInclusive 480.
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix schema: <https://schema.org/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix fibo-loan-ln-app: <https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoanApplications/> .
+@prefix fibo-loan-reln-org: <https://spec.edmcouncil.org/fibo/ontology/LOAN/RealEstateLoans/MortgageOrigination/> .
+@prefix fibo-fnd-arr-rep: <https://spec.edmcouncil.org/fibo/ontology/FND/Arrangements/Reporting/> .
+@prefix fibo-fnd-plc-rp: <https://spec.edmcouncil.org/fibo/ontology/FND/Places/RealProperty/> .
+
+<https://alex.pod.example/mortgage/application>
+  a fibo-loan-ln-app:LoanApplication ;
+  dcterms:created "2026-07-12"^^xsd:date ;
+  fibo-fnd-arr-rep:isSubmittedBy <https://alex.pod.example/profile/card#me> ;
+  fibo-loan-ln-app:hasRequestedAmount [
+    a schema:MonetaryAmount ;
+    schema:value 340000.00 ;
+    schema:currency "USD"
+  ] ;
+  mort:loanTermMonths 600 ;
+  mort:subjectProperty [
+    a fibo-fnd-plc-rp:RealEstate ;
+    schema:address [
+      a schema:PostalAddress ;
+      schema:streetAddress "1121 Maple Hollow Court" ;
+      schema:addressLocality "Columbus" ;
+      schema:addressRegion "OH" ;
+      schema:postalCode "43230"
+    ]
+  ] ;
+  dcterms:type
+    fibo-loan-reln-org:MortgageLoanPurpose-RealPropertyPurchase ,
+    fibo-loan-reln-org:MortgageLoanPurpose-LoanRefinancing ,
+    fibo-loan-reln-org:PropertyUsage-primaryResidence .

@@ -1,0 +1,151 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+@prefix fibo-fnd-arr-asmt: <https://spec.edmcouncil.org/fibo/ontology/FND/Arrangements/Assessments/> .
+@prefix fibo-fnd-plc-rp: <https://spec.edmcouncil.org/fibo/ontology/FND/Places/RealProperty/> .
+
+# Shared support shapes referenced (sh:node) by the nine resource shapes.
+# None declares a target: they validate only where a resource shape points at them.
+# OMG Commons (cmns-*) and GLEIF term IRIs do not dereference, so dates use
+# dcterms/xsd literals and money uses schema:MonetaryAmount (vocab.md section 3,
+# decision 0005); FIBO object properties keep FIBO semantics where their term
+# IRIs resolve.
+
+mshape:PostalAddressShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue schema:PostalAddress ;
+  ] ;
+  sh:property [
+    sh:path schema:streetAddress ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path schema:addressLocality ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path schema:addressRegion ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:pattern "^[A-Z]{2}$" ;
+    sh:message "addressRegion must be a two-letter US state code" ;
+  ] ;
+  sh:property [
+    sh:path schema:postalCode ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:pattern "^[0-9]{5}(-[0-9]{4})?$" ;
+    sh:message "postalCode must be a US ZIP or ZIP+4" ;
+  ] .
+
+mshape:OrganizationShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:property [
+    # Extra types (e.g. fibo-loan-ln-ln:Servicer on the servicer node) are
+    # permitted: only the presence of schema:Organization is required.
+    sh:path rdf:type ;
+    sh:hasValue schema:Organization ;
+  ] ;
+  sh:property [
+    sh:path schema:name ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] .
+
+mshape:MonetaryAmountShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue schema:MonetaryAmount ;
+  ] ;
+  sh:property [
+    sh:path schema:value ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive 0.0 ;
+  ] ;
+  sh:property [
+    sh:path schema:currency ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:in ( "USD" ) ;
+  ] .
+
+# The appraised value is DISCLOSED, never ZK-proved (decision 0005): it is a
+# display MonetaryAmount double-typed with the FIBO assessment concept.
+mshape:AppraisedValueShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue fibo-fnd-arr-asmt:AppraisedValue ;
+  ] ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue schema:MonetaryAmount ;
+  ] ;
+  sh:property [
+    sh:path schema:value ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive 0.0 ;
+  ] ;
+  sh:property [
+    sh:path schema:currency ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:in ( "USD" ) ;
+  ] .
+
+# The subject property (URLA section 4a). hasEstimatedValue is optional here;
+# the appraisal credential requires it via mshape:AppraisedPropertyShape.
+mshape:PropertyShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:property [
+    # Secondary display types (e.g. schema:SingleFamilyResidence) are permitted.
+    sh:path rdf:type ;
+    sh:hasValue fibo-fnd-plc-rp:RealEstate ;
+  ] ;
+  sh:property [
+    sh:path schema:address ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:PostalAddressShape ;
+  ] ;
+  sh:property [
+    sh:path fibo-fnd-arr-asmt:hasEstimatedValue ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:AppraisedValueShape ;
+  ] .
+
+# Refinement used by the appraisal credential: same property, value required.
+mshape:AppraisedPropertyShape
+  a sh:NodeShape ;
+  sh:node mshape:PropertyShape ;
+  sh:property [
+    sh:path fibo-fnd-arr-asmt:hasEstimatedValue ;
+    sh:minCount 1 ;
+    sh:message "an appraised property must carry its appraised value" ;
+  ] .

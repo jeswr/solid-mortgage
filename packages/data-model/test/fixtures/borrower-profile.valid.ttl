@@ -1,0 +1,19 @@
+@prefix schema: <https://schema.org/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix fibo-fbc-dae-dbt: <https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Debt/> .
+
+<https://alex.pod.example/profile/card#me>
+  a schema:Person, fibo-fbc-dae-dbt:Borrower ;
+  schema:name "Alex Rivera" ;
+  schema:birthDate "1992-04-17"^^xsd:date ;
+  schema:email "alex.rivera@mail.example" ;
+  schema:telephone "+1-555-0142" ;
+  schema:address [
+    a schema:PostalAddress ;
+    schema:streetAddress "418 Cedar Grove Lane" ;
+    schema:addressLocality "Columbus" ;
+    schema:addressRegion "OH" ;
+    schema:postalCode "43004"
+  ] ;
+  mort:maritalStatus mort:MaritalStatus-Unmarried .

@@ -1,0 +1,156 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+@prefix fibo-loan-ln-app: <https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoanApplications/> .
+@prefix fibo-loan-reln-org: <https://spec.edmcouncil.org/fibo/ontology/LOAN/RealEstateLoans/MortgageOrigination/> .
+@prefix fibo-fnd-arr-rep: <https://spec.edmcouncil.org/fibo/ontology/FND/Arrangements/Reporting/> .
+
+# Resource 7 (vocab.md section 5): the URLA-subset loan application written by
+# the lender app from pod data (scene 3). The URLA controlled vocabularies are
+# FIBO named individuals (loan purpose, occupancy, amortization type, cash-out
+# status) attached via dcterms:type: FIBO's own hasIntendedLoanPurpose is a
+# DatatypeProperty (xsd:string) and the OMG Commons classifier property IRIs do
+# not dereference, so dcterms:type is the controlled-vocabulary link. One
+# qualified constraint per facet pins its cardinality.
+#
+# URLA section 5 declarations booleans and 4b down-payment source join when the
+# sm-ea6 vocab round enumerates them.
+mshape:LoanApplicationShape
+  a sh:NodeShape ;
+  sh:targetClass fibo-loan-ln-app:LoanApplication ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue fibo-loan-ln-app:LoanApplication ;
+  ] ;
+  sh:property [
+    # URLA application date. FIBO's hasApplicationDate requires an OMG Commons
+    # ExplicitDate node whose term IRIs do not dereference - dcterms instead.
+    sh:path dcterms:created ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+  ] ;
+  sh:property [
+    # The borrower WebID (FIBO: applications are submitted by requesters).
+    sh:path fibo-fnd-arr-rep:isSubmittedBy ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path fibo-loan-ln-app:hasRequestedAmount ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path mort:loanTermMonths ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:integer ;
+    sh:minInclusive 12 ;
+    sh:maxInclusive 480 ;
+  ] ;
+  sh:property [
+    sh:path mort:subjectProperty ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:PropertyShape ;
+  ] ;
+  sh:property [
+    # Value space: the URLA-aligned FIBO named individuals, all facets.
+    sh:path dcterms:type ;
+    sh:minCount 3 ;
+    sh:maxCount 4 ;
+    sh:nodeKind sh:IRI ;
+    sh:in (
+      fibo-loan-reln-org:MortgageLoanPurpose-BusinessOrCommercial
+      fibo-loan-reln-org:MortgageLoanPurpose-DwellingConstruction
+      fibo-loan-reln-org:MortgageLoanPurpose-HomeImprovement
+      fibo-loan-reln-org:MortgageLoanPurpose-LoanRefinancing
+      fibo-loan-reln-org:MortgageLoanPurpose-MortgageModification
+      fibo-loan-reln-org:MortgageLoanPurpose-RealPropertyPurchase
+      fibo-loan-reln-org:PropertyUsage-investment
+      fibo-loan-reln-org:PropertyUsage-primaryResidence
+      fibo-loan-reln-org:PropertyUsage-secondHome
+      fibo-loan-reln-org:AmortizationType-adjustableRate
+      fibo-loan-reln-org:AmortizationType-fixedRate
+      fibo-loan-reln-org:AmortizationType-graduatedPayment
+      fibo-loan-reln-org:AmortizationType-graduatedPaymentAdjustable
+      fibo-loan-reln-org:AmortizationType-growingEquity
+      fibo-loan-reln-org:AmortizationType-rateImprovement
+      fibo-loan-reln-org:AmortizationType-step
+      fibo-loan-reln-org:CashOutStatus-CashOut
+      fibo-loan-reln-org:CashOutStatus-LimitedCashOut
+      fibo-loan-reln-org:CashOutStatus-NoCashOut
+    ) ;
+    sh:message "dcterms:type values must be URLA-aligned FIBO named individuals" ;
+  ] ;
+  sh:property [
+    # Facet: loan purpose (URLA section 4a), exactly one.
+    sh:path dcterms:type ;
+    sh:qualifiedValueShape [
+      sh:in (
+        fibo-loan-reln-org:MortgageLoanPurpose-BusinessOrCommercial
+        fibo-loan-reln-org:MortgageLoanPurpose-DwellingConstruction
+        fibo-loan-reln-org:MortgageLoanPurpose-HomeImprovement
+        fibo-loan-reln-org:MortgageLoanPurpose-LoanRefinancing
+        fibo-loan-reln-org:MortgageLoanPurpose-MortgageModification
+        fibo-loan-reln-org:MortgageLoanPurpose-RealPropertyPurchase
+      )
+    ] ;
+    sh:qualifiedMinCount 1 ;
+    sh:qualifiedMaxCount 1 ;
+    sh:message "exactly one FIBO MortgageLoanPurpose individual is required" ;
+  ] ;
+  sh:property [
+    # Facet: occupancy (URLA section 4a), exactly one.
+    sh:path dcterms:type ;
+    sh:qualifiedValueShape [
+      sh:in (
+        fibo-loan-reln-org:PropertyUsage-investment
+        fibo-loan-reln-org:PropertyUsage-primaryResidence
+        fibo-loan-reln-org:PropertyUsage-secondHome
+      )
+    ] ;
+    sh:qualifiedMinCount 1 ;
+    sh:qualifiedMaxCount 1 ;
+    sh:message "exactly one FIBO PropertyUsage individual is required" ;
+  ] ;
+  sh:property [
+    # Facet: amortization type, exactly one.
+    sh:path dcterms:type ;
+    sh:qualifiedValueShape [
+      sh:in (
+        fibo-loan-reln-org:AmortizationType-adjustableRate
+        fibo-loan-reln-org:AmortizationType-fixedRate
+        fibo-loan-reln-org:AmortizationType-graduatedPayment
+        fibo-loan-reln-org:AmortizationType-graduatedPaymentAdjustable
+        fibo-loan-reln-org:AmortizationType-growingEquity
+        fibo-loan-reln-org:AmortizationType-rateImprovement
+        fibo-loan-reln-org:AmortizationType-step
+      )
+    ] ;
+    sh:qualifiedMinCount 1 ;
+    sh:qualifiedMaxCount 1 ;
+    sh:message "exactly one FIBO AmortizationType individual is required" ;
+  ] ;
+  sh:property [
+    # Facet: cash-out status, refinance applications only.
+    sh:path dcterms:type ;
+    sh:qualifiedValueShape [
+      sh:in (
+        fibo-loan-reln-org:CashOutStatus-CashOut
+        fibo-loan-reln-org:CashOutStatus-LimitedCashOut
+        fibo-loan-reln-org:CashOutStatus-NoCashOut
+      )
+    ] ;
+    sh:qualifiedMinCount 0 ;
+    sh:qualifiedMaxCount 1 ;
+  ] .

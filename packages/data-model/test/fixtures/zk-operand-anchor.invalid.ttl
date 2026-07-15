@@ -1,0 +1,16 @@
+# Violations: mort:field is not a decision 0005 ZK scaled-unit field (sh:in),
+# operandEnc lacks the 0x prefix (sh:pattern), and credentialStatus is missing
+# (sh:minCount - anchors are revoked via status, decision 0012).
+@prefix cred: <https://www.w3.org/2018/credentials#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+
+<https://alex.pod.example/credentials/income-anchor>
+  a cred:VerifiableCredential, mort:ZkOperandAnchor ;
+  cred:issuer <https://verifications.example/orgs/employment-verifier#id> ;
+  cred:validFrom "2026-06-15T00:00:00Z"^^xsd:dateTime ;
+  cred:credentialSubject <https://alex.pod.example/profile/card#me> .
+
+<https://alex.pod.example/profile/card#me>
+  mort:field mort:loanTermMonths ;
+  mort:operandEnc "1f6a9c02dd41e87b3355c04a9ee1d0f244ab6690c15e8d7a41f3b2c8a90d6e21" .
