@@ -9,9 +9,11 @@
 import { readValidCredential } from "@jeswr/solid-vc";
 import type { DatasetCore, Quad, Term } from "@rdfjs/types";
 import { DataFactory, Store } from "n3";
-import { documentQuadsOf } from "./credential.js";
+import { assertAbsoluteIri } from "./claims.js";
+import { DATE_TIME_LEXICAL, documentQuadsOf } from "./credential.js";
 import { finishIssue, type IssueCredentialOptions, type IssuedCredential } from "./issue.js";
 import type { StatusIndexAllocator, StatusListClient } from "./status.js";
+import { type EmbeddedProofOptions, verifyEmbeddedProofs } from "./verify.js";
 import {
   type CredentialKind,
   credentialKindOfTypes,
@@ -40,6 +42,12 @@ export interface ValidityWindowInfo {
  */
 export function isFresh(window: ValidityWindowInfo, asOf: Date): boolean {
   if (window.validFrom === undefined || window.validUntil === undefined) return false;
+  // Strict xsd:dateTime lexicals only - `Date.parse` alone is lenient ("2026"
+  // parses), and this helper is documented as consumable straight off a
+  // credential projection, so it must not be softer than the verify gate.
+  if (!DATE_TIME_LEXICAL.test(window.validFrom) || !DATE_TIME_LEXICAL.test(window.validUntil)) {
+    return false;
+  }
   const from = Date.parse(window.validFrom);
   const until = Date.parse(window.validUntil);
   if (Number.isNaN(from) || Number.isNaN(until)) return false;
@@ -68,6 +76,15 @@ export interface ReissueOptions {
   readonly allocator: StatusIndexAllocator;
   /** The replacement credential IRI. Default: the old credential's IRI. */
   readonly credentialId?: string;
+  /**
+   * Key resolution for authenticating the OLD credential's signature before
+   * its claims are carried over. Default: exactly `key` (the issuer re-signing
+   * its own credential) - override when the original was signed with a rotated
+   * key.
+   */
+  readonly resolveKey?: EmbeddedProofOptions["resolveKey"];
+  /** Issuer binding for the old credential's proof. Default: vm === key id. */
+  readonly isControlledBy?: EmbeddedProofOptions["isControlledBy"];
 }
 
 export interface ReissueResult {
@@ -85,10 +102,18 @@ export interface ReissueResult {
  * claim graph round-trips without a per-kind projection, and the sm-19 shape
  * re-validates the rebuilt document before the new signature is produced.
  *
- * Fail-closed guards: the old document must be a well-formed single-VC graph;
- * its issuer must match the status list's issuer; its status entry must point
- * at THIS status list (re-issuing against a foreign list would strand the old
- * credential unrevoked).
+ * Fail-closed guards - re-issuance is a SIGNING ORACLE unless every one holds:
+ *  - the old document must be a well-formed single-VC graph;
+ *  - its issuer must match the status list's issuer;
+ *  - its embedded proof MUST cryptographically verify against the issuer's
+ *    key ({@link verifyEmbeddedProofs}) - the old document typically lives in
+ *    the HOLDER's pod, so unauthenticated claims must never be re-signed
+ *    (a holder could otherwise edit their income and have the tampered value
+ *    re-issued as genuine). Expiry is deliberately tolerated (the flow exists
+ *    to renew expired credentials); signature/binding failures are not;
+ *  - its status entry must point at THIS status list and must NOT already be
+ *    revoked (re-issuing a revoked credential is an explicit issuer decision,
+ *    not a one-click renewal).
  */
 export async function reissueCredential(
   oldDocument: DatasetCore,
@@ -112,12 +137,44 @@ export async function reissueCredential(
   if (kind === undefined) {
     throw new ReissueError("old credential carries no known mort credential class");
   }
-  const oldIndex = readOwnStatusIndex(oldDocument, oldTerm, options.statusList);
 
-  const newId = options.credentialId ?? meta.id;
+  // Authenticate the old claims BEFORE anything is carried over or signed.
+  const resolveKey =
+    options.resolveKey ??
+    (async (verificationMethod: string) =>
+      verificationMethod === options.key.verificationMethod ? options.key.publicKey : undefined);
+  const isControlledBy =
+    options.isControlledBy ??
+    ((verificationMethod: string, issuer: string) =>
+      verificationMethod === options.key.verificationMethod &&
+      issuer === options.statusList.issuer);
+  const proofErrors = await verifyEmbeddedProofs(oldDocument, meta.node, meta.issuer, {
+    resolveKey,
+    isControlledBy,
+  });
+  if (proofErrors.length > 0) {
+    throw new ReissueError(
+      `old credential failed proof verification (${proofErrors.map((error) => error.code).join(", ")}) - refusing to re-sign unauthenticated claims`,
+    );
+  }
+
+  const oldIndex = readOwnStatusIndex(oldDocument, oldTerm, options.statusList);
+  if (await options.statusList.readBit(oldIndex, { now: options.now })) {
+    throw new ReissueError(
+      `old credential's status index ${oldIndex} is already revoked - re-issuing a revoked credential requires an explicit issuer decision`,
+    );
+  }
+
+  const newId = assertReissueIri(options.credentialId ?? meta.id);
+  // Reserve the old index FIRST: a partially rehydrated allocator could
+  // otherwise hand the replacement the very index the revoke below sets.
+  options.allocator.reserve(oldIndex);
   const newIndex = options.allocator.allocate(
     newId === meta.id ? `${newId}#reissue-${options.now.toISOString()}` : newId,
   );
+  if (newIndex === oldIndex) {
+    throw new ReissueError("allocator returned the revoked index for the replacement");
+  }
 
   const issued = await reissueSameClaims(oldDocument, oldTerm, kind, {
     credentialId: newId,
@@ -130,6 +187,15 @@ export async function reissueCredential(
 
   await options.statusList.revoke(oldIndex, { now: options.now });
   return { issued, revokedIndex: oldIndex, newIndex };
+}
+
+/** IRI-guard the replacement id (caller-supplied ids bypass issueCredential's gate). */
+function assertReissueIri(id: string): string {
+  try {
+    return assertAbsoluteIri(id, "replacement credentialId");
+  } catch (error) {
+    throw new ReissueError((error as Error).message);
+  }
 }
 
 interface SameClaimsOptions {

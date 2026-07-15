@@ -81,12 +81,14 @@ export {
 export {
   type CheckCredentialStatusOptions,
   checkCredentialStatus,
+  type EmbeddedProofOptions,
   type VcKitErrorCode,
   type VcKitVerificationError,
   type VerifiedCredentialInfo,
   type VerifyCredentialOptions,
   type VerifyCredentialResult,
   verifyCredential,
+  verifyEmbeddedProofs,
 } from "./verify.js";
 export {
   asCredentialKind,

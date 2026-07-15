@@ -5,6 +5,7 @@
 
 import { describe, expect, test } from "vitest";
 import {
+  deriveStatusIndex,
   isFresh,
   ReissueError,
   reissueCredential,
@@ -49,6 +50,9 @@ describe("isFresh - decision 0007 window semantics", () => {
     expect(isFresh({ validFrom: window.validFrom }, NOW)).toBe(false);
     expect(isFresh({ validUntil: window.validUntil }, NOW)).toBe(false);
     expect(isFresh({ validFrom: "garbage", validUntil: window.validUntil }, NOW)).toBe(false);
+    // Date.parse-lenient but non-xsd:dateTime lexicals are refused too.
+    expect(isFresh({ validFrom: "2026", validUntil: window.validUntil }, NOW)).toBe(false);
+    expect(isFresh({ validFrom: window.validFrom, validUntil: "2027" }, NOW)).toBe(false);
   });
 });
 
@@ -163,6 +167,102 @@ describe("reissueCredential - same claims, fresh window, old one revoked", () =>
         validity: BACKDATED_VALIDITY,
         statusList: list,
         allocator: new StatusIndexAllocator(),
+      }),
+    ).rejects.toThrowError(ReissueError);
+  });
+
+  test("refuses a TAMPERED old document - re-issue must never be a signing oracle", async () => {
+    const host = stubHost();
+    const list = await hostedStatusList(host);
+    const old = await issueEmployment(list, 42);
+    // The holder edits their own pod copy: income 8500 -> 9900 (inside the
+    // SHACL range, so only the signature can catch it).
+    const tampered = parseTurtle(old.body.replace("8500", "9900"));
+    await expect(
+      reissueCredential(tampered, {
+        key: await issuerKey(),
+        now: NOW,
+        validity: BACKDATED_VALIDITY,
+        statusList: list,
+        allocator: new StatusIndexAllocator(),
+      }),
+    ).rejects.toThrowError(/INVALID_SIGNATURE|refusing to re-sign/);
+  });
+
+  test("refuses an old document whose proof was stripped", async () => {
+    const host = stubHost();
+    const list = await hostedStatusList(host);
+    const old = await issueEmployment(list, 42);
+    const store = parseTurtle(old.body);
+    for (const link of store.match(null, null, null)) {
+      if (link.predicate.value === "https://w3id.org/security#proof") store.delete(link);
+    }
+    await expect(
+      reissueCredential(store, {
+        key: await issuerKey(),
+        now: NOW,
+        validity: BACKDATED_VALIDITY,
+        statusList: list,
+        allocator: new StatusIndexAllocator(),
+      }),
+    ).rejects.toThrowError(/NO_PROOF|refusing to re-sign/);
+  });
+
+  test("refuses an ALREADY-REVOKED old credential (explicit issuer decision)", async () => {
+    const host = stubHost();
+    const list = await hostedStatusList(host);
+    const old = await issueEmployment(list, 42);
+    await list.revoke(42, { now: NOW });
+    await expect(
+      reissueCredential(parseTurtle(old.body), {
+        key: await issuerKey(),
+        now: NOW,
+        validity: BACKDATED_VALIDITY,
+        statusList: list,
+        allocator: new StatusIndexAllocator(),
+      }),
+    ).rejects.toThrowError(/already revoked/);
+  });
+
+  test("reserves the old index before allocating - collision cannot revoke the replacement", async () => {
+    const host = stubHost();
+    const list = await hostedStatusList(host);
+    const old = await issueEmployment(list, 42);
+    // A replacement id whose deterministic home index IS the old index, in a
+    // small allocator that never had 42 reserved (partial rehydration).
+    const listLength = 64;
+    let replacementId = "";
+    for (let i = 0; ; i += 1) {
+      const candidate = `https://alex.example/credentials/income-${i}`;
+      if (deriveStatusIndex(candidate, { listLength }) === 42) {
+        replacementId = candidate;
+        break;
+      }
+    }
+    const result = await reissueCredential(parseTurtle(old.body), {
+      key: await issuerKey(),
+      now: NOW,
+      validity: BACKDATED_VALIDITY,
+      statusList: list,
+      allocator: new StatusIndexAllocator(listLength),
+      credentialId: replacementId,
+    });
+    expect(result.revokedIndex).toBe(42);
+    expect(result.newIndex).not.toBe(42);
+  });
+
+  test("refuses a malformed replacement credentialId (IRI injection guard)", async () => {
+    const host = stubHost();
+    const list = await hostedStatusList(host);
+    const old = await issueEmployment(list, 42);
+    await expect(
+      reissueCredential(parseTurtle(old.body), {
+        key: await issuerKey(),
+        now: NOW,
+        validity: BACKDATED_VALIDITY,
+        statusList: list,
+        allocator: new StatusIndexAllocator(),
+        credentialId: "https://alex.example/x> <https://evil.example/y",
       }),
     ).rejects.toThrowError(ReissueError);
   });

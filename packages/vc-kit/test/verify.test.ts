@@ -225,6 +225,49 @@ describe("proof-node hardening", () => {
     expect(codesOf(outcome)).toContain("PROOF_PURPOSE_MISMATCH");
   });
 
+  test("an extra rdf:type on the proof node is refused (unsigned data)", async () => {
+    const store = parseTurtle(issued.body);
+    const [link] = [...store.match(namedNode(CREDENTIAL_ID), namedNode(SEC_PROOF))];
+    store.add(
+      quad(
+        link?.object as Quad_Subject,
+        namedNode("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
+        namedNode("https://schema.org/Thing"),
+      ),
+    );
+    const outcome = await verifyCredential(store, verifyOptions());
+    expect(outcome.verified).toBe(false);
+    expect(codesOf(outcome)).toContain("MALFORMED");
+  });
+
+  test("a language-tagged proofValue is refused (strict plain literal)", async () => {
+    const store = parseTurtle(issued.body);
+    const [link] = [...store.match(namedNode(CREDENTIAL_ID), namedNode(SEC_PROOF))];
+    const proofNode = link?.object as Quad_Subject;
+    const valuePredicate = namedNode("https://w3id.org/security#proofValue");
+    const [valueQuad] = [...store.match(proofNode, valuePredicate)];
+    if (valueQuad === undefined) throw new Error("no proofValue quad");
+    store.delete(valueQuad);
+    store.add(quad(proofNode, valuePredicate, literal(valueQuad.object.value, "en")));
+    const outcome = await verifyCredential(store, verifyOptions());
+    expect(outcome.verified).toBe(false);
+    expect(codesOf(outcome)).toContain("MALFORMED");
+  });
+
+  test("a created timestamp with the wrong datatype is refused", async () => {
+    const store = parseTurtle(issued.body);
+    const [link] = [...store.match(namedNode(CREDENTIAL_ID), namedNode(SEC_PROOF))];
+    const proofNode = link?.object as Quad_Subject;
+    const createdPredicate = namedNode("http://purl.org/dc/terms/created");
+    const [createdQuad] = [...store.match(proofNode, createdPredicate)];
+    if (createdQuad === undefined) throw new Error("no created quad");
+    store.delete(createdQuad);
+    store.add(quad(proofNode, createdPredicate, literal(createdQuad.object.value)));
+    const outcome = await verifyCredential(store, verifyOptions());
+    expect(outcome.verified).toBe(false);
+    expect(codesOf(outcome)).toContain("MALFORMED");
+  });
+
   test("a duplicated cryptosuite on the proof node is MALFORMED", async () => {
     const store = parseTurtle(issued.body);
     const [link] = [...store.match(namedNode(CREDENTIAL_ID), namedNode(SEC_PROOF))];

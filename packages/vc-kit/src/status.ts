@@ -214,11 +214,16 @@ export class StatusListClient {
     }
     setStatusBit(bits, index, value);
     const signed = await this.signList(bits, options);
-    const headers: Record<string, string> = { "content-type": LIST_CONTENT_TYPE };
-    if (etag !== null) headers["if-match"] = etag;
+    if (etag === null) {
+      // Fail closed rather than unconditional-PUT: without If-Match a
+      // concurrent revocation would be silently overwritten (lost update).
+      throw new StatusListError(
+        `status list GET ${this.url} returned no ETag - refusing an unconditional overwrite`,
+      );
+    }
     const response = await this.fetchImpl(this.url, {
       method: "PUT",
-      headers,
+      headers: { "content-type": LIST_CONTENT_TYPE, "if-match": etag },
       body: serializeList(signed),
     });
     if (!response.ok) {

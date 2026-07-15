@@ -203,6 +203,25 @@ describe("StatusListClient lifecycle", () => {
     expect(outcome.errors.map((error) => error.code)).toContain("STATUS_UNREACHABLE");
   });
 
+  test("a host that supplies no ETag is refused for updates (lost-update guard)", async () => {
+    const host = stubHost();
+    const list = await hostedStatusList(host);
+    const etagless: typeof host.fetch = async (input, init) => {
+      const response = await host.fetch(input, init);
+      const headers = new Headers(response.headers);
+      headers.delete("etag");
+      return new Response(response.body, { status: response.status, headers });
+    };
+    const etaglessList = new StatusListClient({
+      url: LIST_URL,
+      issuer: ISSUER,
+      key: await issuerKey(),
+      fetch: etagless,
+    });
+    await expect(etaglessList.revoke(1, { now: NOW })).rejects.toThrowError(/no ETag/);
+    expect(list).toBeDefined();
+  });
+
   test("concurrent update loses (412) and surfaces as a retryable error", async () => {
     const host = stubHost();
     await hostedStatusList(host);

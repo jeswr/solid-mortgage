@@ -235,7 +235,47 @@ export async function verifyCredential(
   );
 
   // Gate 5: proofs. Strict reconstruction; EVERY proof must verify.
+  errors.push(
+    ...(await verifyEmbeddedProofs(dataset, node, meta.issuer, {
+      resolveKey,
+      isControlledBy,
+      ...(options.registry !== undefined ? { registry: options.registry } : {}),
+    })),
+  );
+
+  return errors.length === 0
+    ? { verified: true, errors: [], credential: info }
+    : { verified: false, errors, credential: info };
+}
+
+/** The key-resolution seams the proof gate consumes. */
+export interface EmbeddedProofOptions {
+  readonly resolveKey: (verificationMethod: string) => Promise<CryptoKey | undefined>;
+  readonly isControlledBy?: (
+    verificationMethod: string,
+    issuer: string,
+  ) => boolean | Promise<boolean>;
+  readonly registry?: SuiteRegistry;
+}
+
+/**
+ * The signature gate ALONE, over a parsed credential node: strict proof
+ * reconstruction ({@link readProof}), at least one proof, and EVERY proof must
+ * be purpose-correct, issuer-bound and cryptographically valid over the signed
+ * document quads. Shared by `verifyCredential` (gate 5) and the re-issue
+ * flow's authenticate-before-re-sign guard; composes with the other gates -
+ * it does NOT check shape, window or status by itself.
+ */
+export async function verifyEmbeddedProofs(
+  dataset: DatasetCore,
+  node: CredentialNode,
+  issuer: string,
+  options: EmbeddedProofOptions,
+): Promise<VcKitVerificationError[]> {
+  const errors: VcKitVerificationError[] = [];
+  const isControlledBy = options.isControlledBy ?? defaultControlledBy;
   const registry = options.registry ?? defaultSuiteRegistry();
+  const credentialTerm = node as unknown as Term;
   const documentQuads = documentQuadsOf(dataset, credentialTerm);
   const proofs = [...node.proofs];
   if (proofs.length === 0) {
@@ -270,15 +310,15 @@ export async function verifyCredential(
       });
       continue;
     }
-    if (!(await controlledByFailClosed(isControlledBy, proof.verificationMethod, meta.issuer))) {
+    if (!(await controlledByFailClosed(isControlledBy, proof.verificationMethod, issuer))) {
       errors.push({
         code: "ISSUER_MISMATCH",
-        message: `verificationMethod ${proof.verificationMethod} is not controlled by issuer ${meta.issuer}`,
+        message: `verificationMethod ${proof.verificationMethod} is not controlled by issuer ${issuer}`,
       });
     }
     let signatureOk = false;
     try {
-      signatureOk = await suite.verify(documentQuads, proof, { resolveKey });
+      signatureOk = await suite.verify(documentQuads, proof, { resolveKey: options.resolveKey });
     } catch {
       signatureOk = false;
     }
@@ -289,10 +329,7 @@ export async function verifyCredential(
       });
     }
   }
-
-  return errors.length === 0
-    ? { verified: true, errors: [], credential: info }
-    : { verified: false, errors, credential: info };
+  return errors;
 }
 
 async function controlledByFailClosed(

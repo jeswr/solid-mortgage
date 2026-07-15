@@ -79,12 +79,27 @@ export function assertAbsoluteIri(value: string, label: string): string {
   return value;
 }
 
-/** Validate an `xsd:date` lexical (`YYYY-MM-DD`) - see the LiteralFrom.date gotcha. */
+/**
+ * Validate an `xsd:date` lexical (`YYYY-MM-DD`) - see the LiteralFrom.date
+ * gotcha. `Date.parse` alone is insufficient: it silently normalises invalid
+ * calendar dates (`2021-02-30` -> March 2nd), so the parsed components must
+ * round-trip to the same date.
+ */
 function assertDateLexical(value: string, label: string): string {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value) || Number.isNaN(Date.parse(`${value}T00:00:00Z`))) {
-    throw new ClaimInputError(`${label} must be an xsd:date lexical (YYYY-MM-DD): ${value}`);
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (match !== null) {
+    const [, year, month, day] = match;
+    const parsed = new Date(`${value}T00:00:00Z`);
+    if (
+      !Number.isNaN(parsed.getTime()) &&
+      parsed.getUTCFullYear() === Number(year) &&
+      parsed.getUTCMonth() + 1 === Number(month) &&
+      parsed.getUTCDate() === Number(day)
+    ) {
+      return value;
+    }
   }
-  return value;
+  throw new ClaimInputError(`${label} must be an xsd:date lexical (YYYY-MM-DD): ${value}`);
 }
 
 /** A whole-USD amount as an `xsd:decimal` lexical with two fraction digits. */

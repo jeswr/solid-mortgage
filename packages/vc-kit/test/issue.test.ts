@@ -152,6 +152,16 @@ describe("issueCredential - fail-closed refusals (nothing is signed)", () => {
     ).rejects.toThrowError(ClaimInputError);
   });
 
+  test("an invalid calendar date is refused (2021-02-30 must not normalise)", async () => {
+    await expect(
+      issueCredential({
+        ...(await baseOptions()),
+        kind: "employment-income-credential",
+        claims: employmentClaims({ startDate: "2021-02-30" }),
+      }),
+    ).rejects.toThrowError(ClaimInputError);
+  });
+
   test("dateTime lexical in an xsd:date slot is refused (regression guard)", async () => {
     await expect(
       issueCredential({

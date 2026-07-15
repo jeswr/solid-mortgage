@@ -110,7 +110,22 @@ function exactlyOne(terms: ReadonlySet<Term>, what: string): Term {
   return term as Term;
 }
 
-const DATE_TIME_LEXICAL = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/;
+const XSD_STRING = "http://www.w3.org/2001/XMLSchema#string";
+
+/** A plain (xsd:string, no language) literal's value, else throw. */
+function plainLiteral(term: Term, what: string): string {
+  if (
+    term.termType !== "Literal" ||
+    term.language !== "" ||
+    (term.datatype !== undefined && term.datatype.value !== XSD_STRING)
+  ) {
+    throw new ProofReadError(`${what} must be a plain string literal`);
+  }
+  return term.value;
+}
+
+/** Strict `xsd:dateTime` lexical (what the issuance path writes). */
+export const DATE_TIME_LEXICAL = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/;
 
 /**
  * Reconstruct the structured {@link DataIntegrityProof} from a parsed proof
@@ -134,15 +149,18 @@ export function readProof(node: ProofNode): DataIntegrityProof {
     }
   }
 
-  const types = [...node.types].map((term) => term.value);
-  if (!types.includes(SEC_DATA_INTEGRITY_PROOF)) {
+  // Exactly ONE type, and it must be sec:DataIntegrityProof: extra type quads
+  // live outside the signed document (proof subgraph), so tolerating them
+  // would let unsigned data ride the proof node.
+  const typeTerm = exactlyOne(node.types as unknown as ReadonlySet<Term>, "rdf:type");
+  if (typeTerm.value !== SEC_DATA_INTEGRITY_PROOF) {
     throw new ProofReadError("proof node is not typed sec:DataIntegrityProof");
   }
 
-  const cryptosuite = exactlyOne(node.cryptosuites as ReadonlySet<Term>, "sec:cryptosuite");
-  if (cryptosuite.termType !== "Literal") {
-    throw new ProofReadError("sec:cryptosuite must be a literal");
-  }
+  const cryptosuite = plainLiteral(
+    exactlyOne(node.cryptosuites as ReadonlySet<Term>, "sec:cryptosuite"),
+    "sec:cryptosuite",
+  );
   const verificationMethod = exactlyOne(
     node.verificationMethods as ReadonlySet<Term>,
     "sec:verificationMethod",
@@ -154,16 +172,20 @@ export function readProof(node: ProofNode): DataIntegrityProof {
   if (proofPurpose.termType !== "NamedNode") {
     throw new ProofReadError("sec:proofPurpose must be an IRI");
   }
-  const proofValue = exactlyOne(node.proofValues as ReadonlySet<Term>, "sec:proofValue");
-  if (proofValue.termType !== "Literal") {
-    throw new ProofReadError("sec:proofValue must be a literal");
-  }
+  const proofValue = plainLiteral(
+    exactlyOne(node.proofValues as ReadonlySet<Term>, "sec:proofValue"),
+    "sec:proofValue",
+  );
 
   const createds = node.createds as ReadonlySet<Term>;
   let created: string | undefined;
   if (createds.size > 0) {
     const term = exactlyOne(createds, "dcterms:created");
-    if (term.termType !== "Literal" || !DATE_TIME_LEXICAL.test(term.value)) {
+    if (
+      term.termType !== "Literal" ||
+      term.datatype?.value !== XSD_DATE_TIME ||
+      !DATE_TIME_LEXICAL.test(term.value)
+    ) {
       throw new ProofReadError("dcterms:created must be a well-formed xsd:dateTime literal");
     }
     created = term.value;
@@ -171,11 +193,11 @@ export function readProof(node: ProofNode): DataIntegrityProof {
 
   return {
     type: "DataIntegrityProof",
-    cryptosuite: cryptosuite.value,
+    cryptosuite,
     verificationMethod: verificationMethod.value,
     proofPurpose: proofPurpose.value,
     ...(created !== undefined ? { created } : {}),
-    proofValue: proofValue.value,
+    proofValue,
   };
 }
 
