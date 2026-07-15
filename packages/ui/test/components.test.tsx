@@ -37,6 +37,15 @@ test("DemoLockedField editable variant stays prefilled and keeps the hint", () =
   expect(screen.getByText(DEMO_FIELD_HINT)).toBeDefined();
 });
 
+test("DemoLockedField hint prop is supplemental — the R7 warning cannot be replaced", () => {
+  render(<DemoLockedField hint="Use persona Jordan Demo." label="City" value="Springfield" />);
+  const input = screen.getByLabelText<HTMLInputElement>("City");
+  const hintId = input.getAttribute("aria-describedby");
+  expect(document.getElementById(hintId as string)?.textContent).toBe(
+    `${DEMO_FIELD_HINT} Use persona Jordan Demo.`,
+  );
+});
+
 test("AppShell frames the app with role-first header, adjacent banner, footer, and theme", () => {
   const theme = orgThemes.wallet;
   const { container } = render(

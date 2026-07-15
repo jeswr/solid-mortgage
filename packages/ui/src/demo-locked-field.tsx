@@ -13,7 +13,11 @@ export interface DemoLockedFieldProps {
    * banned outright — do not build them with or without this component.
    */
   editable?: boolean;
-  /** Overrides the default hint text; the hint itself cannot be removed. */
+  /**
+   * Supplemental hint text appended AFTER the mandatory R7 hint. The
+   * "do not enter real information" warning itself always renders and cannot be
+   * replaced or removed.
+   */
   hint?: string;
   className?: string;
 }
@@ -27,7 +31,7 @@ export function DemoLockedField({
   value,
   name,
   editable = false,
-  hint = DEMO_FIELD_HINT,
+  hint,
   className,
 }: DemoLockedFieldProps) {
   const inputId = useId();
@@ -49,7 +53,7 @@ export function DemoLockedField({
         {...(editable ? { defaultValue: value } : { readOnly: true, value })}
       />
       <p className="text-xs text-muted-foreground" id={hintId}>
-        {hint}
+        {hint === undefined ? DEMO_FIELD_HINT : `${DEMO_FIELD_HINT} ${hint}`}
       </p>
     </div>
   );

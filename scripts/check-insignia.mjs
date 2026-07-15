@@ -69,13 +69,16 @@ const SCANNED_EXTENSIONS = new Set([
 
 const SKIPPED_DIRECTORIES = new Set([".next", ".turbo", "dist", "node_modules"]);
 
-/** apps/<app>/app + packages/ui/src — the directories whose contents reach a rendered page. */
+/**
+ * Every apps/<app> tree (routes, components, lib, public assets, config) + packages/ui/src —
+ * anything that can reach a rendered page or be served as an asset.
+ */
 export function defaultTargetDirectories(repoRoot = REPO_ROOT) {
   const targets = [];
   const appsRoot = join(repoRoot, "apps");
   for (const entry of readdirSync(appsRoot, { withFileTypes: true })) {
     if (!entry.isDirectory()) continue;
-    const appDirectory = join(appsRoot, entry.name, "app");
+    const appDirectory = join(appsRoot, entry.name);
     if (safeIsDirectory(appDirectory)) targets.push(appDirectory);
   }
   targets.push(join(repoRoot, "packages", "ui", "src"));
@@ -105,11 +108,37 @@ function fileExtension(path) {
   return dot === -1 ? "" : path.slice(dot).toLowerCase();
 }
 
-/** Scan directories; returns findings [{ file, line, id, reason, excerpt }]. */
+/**
+ * Scan directories; returns findings [{ file, line, id, reason, excerpt }].
+ *
+ * Every file's NAME is checked regardless of extension (catches e.g. a raster
+ * `fdic-seal.png`, whose binary content cannot be grepped); text files are additionally
+ * scanned line by line.
+ */
 export function scanInsignia(directories) {
   const findings = [];
   for (const directory of directories) {
     for (const file of walkFiles(directory)) {
+      const relativePath = relative(REPO_ROOT, file);
+      const fileName = relativePath.split("/").pop() ?? relativePath;
+      const normalizedName = fileName.replace(/[-_.]/g, " ");
+      for (const { id, pattern, reason } of BANNED_PATTERNS) {
+        // The uppercased form lets the case-sensitive standalone-token rules (e.g. "LPA")
+        // catch conventionally lowercase filename segments such as "lpa-findings.svg".
+        if (
+          !pattern.test(fileName) &&
+          !pattern.test(normalizedName) &&
+          !pattern.test(normalizedName.toUpperCase())
+        )
+          continue;
+        findings.push({
+          excerpt: `(filename) ${fileName}`,
+          file: relativePath,
+          id,
+          line: 0,
+          reason,
+        });
+      }
       if (!SCANNED_EXTENSIONS.has(fileExtension(file))) continue;
       const lines = readFileSync(file, "utf8").split(/\r?\n/);
       for (let index = 0; index < lines.length; index += 1) {
@@ -118,7 +147,7 @@ export function scanInsignia(directories) {
           if (!pattern.test(text)) continue;
           findings.push({
             excerpt: text.trim().slice(0, 120),
-            file: relative(REPO_ROOT, file),
+            file: relativePath,
             id,
             line: index + 1,
             reason,

@@ -22,6 +22,15 @@ test("flags every banned-insignia pattern in the violation fixtures", () => {
   expect(violationFindings.length).toBeGreaterThanOrEqual(12);
 });
 
+test("flags banned filenames even when the file content is clean (image assets)", () => {
+  const findings = scanInsignia([FIXTURES]) as Array<{ file: string; id: string; line: number }>;
+  const filenameFindings = findings.filter((finding) =>
+    finding.file.endsWith("lpa-seal-badge.svg"),
+  );
+  expect(filenameFindings.map((finding) => finding.id)).toContain("gse-product-abbreviation");
+  expect(filenameFindings.every((finding) => finding.line === 0)).toBe(true);
+});
+
 test("does not flag the clean fixture (word-boundary and casing negatives)", () => {
   const findings = scanInsignia([FIXTURES]) as Array<{ file: string }>;
   expect(findings.filter((finding) => finding.file.endsWith("clean.txt"))).toEqual([]);
