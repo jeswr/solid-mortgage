@@ -167,16 +167,23 @@ describe("sparq WASM harness — fixed-owner mode", () => {
   }, async () => {
     const scoped = await startSolidServer();
     const pending = scoped.provisionAccount();
+    // stop() must resolve cleanly — with the lifecycle contract, that certifies any late
+    // account's cleanup completed (a cleanup failure rejects stop()).
     await scoped.stop();
 
-    // Whichever side of the race won, no live pod may remain afterwards.
+    // Whichever side of the race won: a handed-out account must be dead, and a rejection
+    // must be the race-specific one (anything else means provisioning itself broke).
     const account = await pending.then(
       (provisioned) => provisioned,
-      () => undefined,
+      (error) => {
+        expect(String(error)).toMatch(/stopped while provisioning/);
+        return undefined;
+      },
     );
     if (account !== undefined) {
       await expect(fetch(`${account.baseUrl}/`)).rejects.toThrow();
     }
     await expect(fetch(`${scoped.baseUrl}/`)).rejects.toThrow();
+    // The deterministic stop-wins branch lives in harness-race.test.ts.
   });
 });

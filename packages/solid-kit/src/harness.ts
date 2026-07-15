@@ -289,40 +289,61 @@ export const sparqWasmServer: SolidServerImplementation = {
       );
     }
     const accounts: SolidTestAccount[] = [];
-    /** Settled-wrappers of in-flight provisions, so stop() can wait them out (no leaks). */
-    const inFlight = new Set<Promise<void>>();
+    /**
+     * In-flight provision lifecycles, awaited by stop() so no pod outlives it. A lifecycle
+     * REJECTS only when late-account cleanup failed (a possible leak stop() must surface);
+     * plain provisioning failures resolve to `undefined` — nothing live, only the caller
+     * needs to hear about them (via `callerError`).
+     */
+    const inFlight = new Set<Promise<SolidTestAccount | undefined>>();
     let stopped = false;
 
     const provisionAccount = (webid?: string): Promise<SolidTestAccount> => {
       if (stopped) return Promise.reject(new Error("harness already stopped"));
-      const pending = (async () => {
-        const account = oidc
-          ? await provisionOidcAccount(webid)
-          : await provisionFixedOwnerAccount(webid);
+      let callerError: unknown;
+      const lifecycle = (async (): Promise<SolidTestAccount | undefined> => {
+        let account: SolidTestAccount;
+        try {
+          account = oidc
+            ? await provisionOidcAccount(webid)
+            : await provisionFixedOwnerAccount(webid);
+        } catch (error) {
+          callerError = error;
+          return undefined;
+        }
         if (stopped) {
-          // stop() ran while this account was booting: never hand out a live pod.
+          // stop() ran while this account was booting: never hand out a live pod. A throw
+          // from account.stop() rejects the lifecycle and so surfaces in stop().
           await account.stop();
-          throw new Error("harness stopped while provisioning this account");
+          callerError = new Error("harness stopped while provisioning this account");
+          return undefined;
         }
         accounts.push(account);
         return account;
       })();
-      const settled = pending.then(
-        () => undefined,
-        () => undefined,
-      );
-      inFlight.add(settled);
-      settled.then(() => inFlight.delete(settled));
-      return pending;
+      inFlight.add(lifecycle);
+      const remove = () => {
+        inFlight.delete(lifecycle);
+      };
+      void lifecycle.then(remove, remove);
+      return lifecycle.then((account) => {
+        if (account === undefined) throw callerError;
+        return account;
+      });
     };
 
     const primary = await provisionAccount(options.ownerWebid);
     const stop = makeStopOnce(async () => {
       stopped = true;
-      // Every in-flight provision either pushed its account (stopped below) or is cleaning
-      // itself up inside `pending`; wait so no pod or issuer outlives stop().
-      await Promise.all([...inFlight]);
+      // Let in-flight provisions finish their own push-or-cleanup, stop every provisioned
+      // account, and only then re-throw any late-cleanup failure — stop() must not resolve
+      // while a pod may still be live, but neither may one bad lifecycle skip the rest.
+      const lifecycles = await Promise.allSettled([...inFlight]);
       await Promise.all(accounts.map((account) => account.stop()));
+      const cleanupFailure = lifecycles.find(
+        (outcome): outcome is PromiseRejectedResult => outcome.status === "rejected",
+      );
+      if (cleanupFailure !== undefined) throw cleanupFailure.reason;
     });
 
     try {
