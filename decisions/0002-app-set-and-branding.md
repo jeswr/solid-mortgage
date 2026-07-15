@@ -31,3 +31,29 @@ theming only — **no logos or trade dress**. Every app: unremovable shared Conc
 robots.txt, cookie-persisted consent interstitial. No password gate by default (skip the
 $150/mo Vercel feature) unless an org objects. Per-org brand sign-off is a partner-phase gate.
 Microsoft, if mentioned in copy, is "CDMC workgroup participant", not member (C12).
+
+## Addendum — sm-39 Reg N / UDAAP / trademark optics review (autonomous, 2026-07-15)
+
+Grounding + exact copy in `docs/research/regn-optics.md`. Rules R1–R8 tighten the above
+(prior wording superseded where they conflict):
+
+- **R1** Banner copy v2: adds source-negation ("this is not {Org}") and offer-negation
+  ("not an offer of credit"); adjacent to the brand header; every route incl. 404/500.
+- **R2** Bright-line insignia ban: never render "Member FDIC"/FDIC marks, deposit-insurance
+  claims, Equal Housing Lender/Opportunity logos, HUD/FHA/VA/agency seals, or NMLS IDs /
+  license numbers (real or invented). Lint + e2e enforced. (12 U.S.C. § 1828(a)(4) binds
+  *any person* — not merely optics.)
+- **R3** No GSE product marks on public surfaces: `apps/gse` UI says "automated underwriting
+  service (AUS) — the Freddie Mac role", never "Loan Product Advisor"/"LPA" (Freddie ToU
+  requires written consent for product identifiers).
+- **R4** Neutral deploy hostnames: no org marks/abbreviations in Vercel slugs or any public
+  hostname (repo dir names may stay); no custom domains containing marks, ever.
+- **R5** Illustrative-figure tag adjacent to every rendered rate/fee/payment/decision
+  ("6.875% — illustrative figure, not an offer"), shared component so it travels into
+  screenshots.
+- **R6** Link-preview disclaimers: `<title>` suffix "— Concept Demo (not {Org})" + meta/OG
+  description leading with the non-affiliation line.
+- **R7** Demo-locked forms: prefilled demo personas; no free-entry SSN/DOB-format fields;
+  "do not enter real information" hint on editable fields; no page styled as an org's login.
+- **R8** Interstitial copy v2 (regn-optics §4.2) replaces prior wording; adds "not built by
+  {Org}", "no offer or solicitation", "do not enter real personal or financial information".
