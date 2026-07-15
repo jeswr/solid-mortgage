@@ -97,11 +97,13 @@ Overrides are exact values for named `(shape, instance, propertyPath)` coordinat
   `{fragment}` pins the instance's *destination-relative* name (rewritten to
   `{resource IRI}#{fragment}` at seed time), while `{external}` pins a *real, absolute* IRI
   (e.g. the persona's WebID) that rebasing preserves verbatim. Because a runtime `NamedNode`
-  is invisible to source lints, external pins are **rejected unless the caller-supplied
-  `externalIriPolicy` admits them** (default: reject all). The policy is backed by an explicit
-  registry in the consuming repo's source — persona WebIDs etc. — which IS what the repo's
-  IRI-dereferenceability lint HEAD-checks; runtime enforcement and source lint together close
-  the minted-IRI hole. Absolute IRIs under the placeholder base are always rejected.
+  is invisible to source lints, external pins are **rejected unless exact-listed in the
+  caller-supplied `allowedExternalIris` set** (default: empty — reject all). An exact-match
+  set, not a predicate: a callback could admit whole prefixes of minted IRIs, an enumerated
+  set cannot. The set is constructed from an explicit registry module in the consuming repo's
+  source — persona WebIDs etc. — which IS what the repo's IRI-dereferenceability lint
+  HEAD-checks; runtime exact-matching plus source-linting the registry together close the
+  minted-IRI hole. Absolute IRIs under the placeholder base are always rejected.
 - **Non-perturbation:** because streams are coordinate-keyed (§3.1), pinning one field never
   changes any sibling value. Tested by golden diff: flip one override, assert the delta is
   exactly that field.
@@ -175,10 +177,11 @@ export interface SyntheticRdfOptions {
   plugins?: readonly ValueGenerator[];     // tier-7 deterministic value-quality plugins
   maxDepth?: number;                       // sh:node recursion budget (default 3)
   validator: ShaclValidator;               // REQUIRED independent SHACL check (§3.5)
-  /** {external} identity pins are accepted ONLY if this policy admits them (§3.3).
-   *  Default: reject all. The registry the caller supplies lives in source, where the
-   *  repo's IRI-dereferenceability lint covers it. */
-  externalIriPolicy?: (iri: NamedNode) => boolean;
+  /** {external} identity pins are accepted ONLY if exact-listed here (§3.3). Default:
+   *  empty. Built from a source registry module that the repo's IRI-dereferenceability
+   *  lint covers; an exact set (not a predicate) so prefix-shaped policies cannot
+   *  readmit minted IRIs. */
+  allowedExternalIris?: ReadonlySet<string>;
 }
 
 /** Adapter seam so the core never hard-depends on a SHACL engine. */
@@ -340,15 +343,25 @@ seeded pod is a harness bug — e2e default). `ensure` skips 412s (long-lived de
 restarts). `replace` unconditionally PUTs — with deterministic bytes this converges: re-seeding
 is a no-op state-wise. The manifest reports which branch each resource took.
 
-**Expander groups are all-or-nothing.** The resources returned by one `ResourceExpander` are
-mutually dependent (a VC and its anchors are cryptographically paired, §5.2), so per-resource
-mode branching cannot apply inside a group: `ensure` first probes existence of every member
-and either skips the whole group (all exist) or writes the whole group (none exist) — a
-partial group is an error naming the missing/extra members, never a silent mix of an old VC
-with newly issued anchors; `replace` rewrites the whole group; `create` fails if any member
-exists. Expanders run exactly once per seed run (their output is what defines the group's
-member paths); the all-or-nothing decision governs the writes. The manifest reports groups
-as units.
+**Expander groups: preflight consistency + convergent recovery.** The resources returned by
+one `ResourceExpander` are mutually dependent (a VC and its anchors are cryptographically
+paired, §5.2), so per-resource mode branching cannot apply inside a group. LDP offers no
+multi-resource transaction, so the guarantee is honestly two-part rather than "atomic":
+
+- *Preflight:* `ensure` probes existence of every member and either skips the whole group
+  (all exist) or writes the whole group (none exist) — a partially existing group is an error
+  naming the offending members, never a silent mix of an old VC with newly issued anchors.
+  `create` fails if any member exists (each write additionally carries `If-None-Match: *`,
+  so a probe-to-write race still cannot clobber); `replace` rewrites the whole group.
+- *Recovery:* a failed PUT mid-group aborts the run; the manifest names written vs unwritten
+  members, and the documented repair is a `replace` re-run — deterministic bytes (§3.1) make
+  that convergent, so partial state is always driveable to consistency. Concurrent writers
+  are out of scope by assumption: seeding targets pods under the caller's exclusive control
+  (per-suite harness instances, the dev server before app traffic, the Mode-1 in-browser
+  pod), and the design does not claim safety against a concurrently mutating pod.
+
+Expanders run exactly once per seed run (their output is what defines the group's member
+paths); the group decision governs the writes. The manifest reports groups as units.
 
 **ACLs.** `AccessSpec` is authored through `@solid/object` access-control wrappers — the
 generic upstream package must not replicate `seed.ts`'s pre-authored string template (house
@@ -449,7 +462,7 @@ here, it belongs upstream (extract-repeated-logic rule).
    injected `ShaclValidator` (`./validate` adapter provided); the only unvalidated path is the
    explicitly named `generateUnchecked()`; every documented-unsupported constraint errors
    loudly (test per constraint). Core has no hard dependency on any SHACL engine.
-   `{external}` identity pins are rejected without an admitting `externalIriPolicy`
+   `{external}` identity pins are rejected unless exact-listed in `allowedExternalIris`
    (rejection test incl. placeholder-base and unregistered absolute IRIs).
 6. Out-of-shape override → error; out-of-bounds pinned value → validation failure (test uses
    a decision-0005-style digit-budget shape).
@@ -462,9 +475,10 @@ here, it belongs upstream (extract-repeated-logic rule).
 2. Seeds a multi-pod layout against `@jeswr/solid-server` in tests: provisioned accounts,
    nested containers, correct `content-type`s.
 3. Modes: `create` 412-fails on re-seed; `ensure` skips; `replace` re-run leaves pod state
-   byte-identical (read-back assertion). Expander groups are all-or-nothing per mode; a
-   partially existing group under `ensure` errors naming the offending members
-   (partial-group test).
+   byte-identical (read-back assertion). Expander groups follow the preflight + convergent-
+   recovery semantics of §4.2: partially existing group under `ensure` errors naming the
+   offending members (partial-group test); aborted mid-group write is repaired by a
+   `replace` re-run (recovery test); group `create` writes carry `If-None-Match: *`.
 4. IRI rebasing: cross-instance references resolve to real pod IRIs; serialised bodies use
    relative IRIs (portability test: same layout on two origins ⇒ identical bodies for
    fragment-pinned data); `{external}` identity pins survive verbatim; an unmapped
