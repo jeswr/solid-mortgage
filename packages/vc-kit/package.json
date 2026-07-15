@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "securityCritical": true,
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -17,6 +18,15 @@
   },
   "dependencies": {
     "@jeswr/solid-odrl": "github:jeswr/solid-odrl#a116c5993e3cdfdaf8d16f2d5b411b92c9c932e3",
-    "@jeswr/solid-vc": "github:jeswr/solid-vc#bee27d508372e64021e23bdaeb2d79c06e08cf18"
+    "@jeswr/solid-vc": "github:jeswr/solid-vc#bee27d508372e64021e23bdaeb2d79c06e08cf18",
+    "@mortgage/data-model": "workspace:*",
+    "@rdfjs/types": "^2.0.1",
+    "@rdfjs/wrapper": "^0.34.0",
+    "n3": "^2.1.1"
+  },
+  "devDependencies": {
+    "@mortgage/solid-kit": "workspace:*",
+    "@types/n3": "^1.26.1",
+    "@types/node": "^25.9.2"
   }
 }
