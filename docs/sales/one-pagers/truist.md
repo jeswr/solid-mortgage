@@ -37,8 +37,11 @@ whose provenance and access history arrive machine-readable.
 
 ## What building it for real entails
 
-- Servicing-transfer choreography over pod grants: request → borrower approval → boarding via
-  granted access rather than bulk file copy (scene 5 is the reference pattern).
+- Servicing-transfer choreography over pod grants — honestly scoped: real transfers operate
+  under servicing authority and do not require borrower consent [30], so the production design
+  is authority-based access transfer with borrower *notification* and receipts, and boarding
+  never blocks on borrower action (the demo's approval beat dramatizes visibility, not a
+  consent requirement).
 - Honest retention design: regulated servicing records you must keep are still kept — the
   claim is enumerable, revocable *authorizations*, not zero copies (master narrative §6).
 - RESPA notice automation (goodbye/hello letters, §1024.33 [30]) as a product-phase extension

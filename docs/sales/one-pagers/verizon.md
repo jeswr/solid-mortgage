@@ -31,15 +31,20 @@ provides for free (decision 0006).
 The role-map sheet's pitch, verbatim: *"Host citizen/consumer Pods at carrier scale and pilot
 a consumer data wallet"* — and the R3 generic pitch: *"launch managed Pod hosting as a new
 regulated revenue line, using CoP conformance as your trust mark"* (role-map sheet). The demo
-copy names the trust inversion explicitly: a carrier once fined over location-data sharing now
-custodies a pod it cannot read — user-held keys, receipted access (decision 0003). Most
-adopters will rent pods, not run them (role-map sheet, R3): the custodian seat is the
-recurring-revenue seat.
+names the trust inversion: a carrier once fined over location-data sharing now custodies a pod
+whose access the *user* alone grants, every grant receipted (decision 0003). Stated honestly:
+the demo shows access control and receipts — the host remains inside the trust boundary;
+making the host technically unable to read stored data (client-side encryption, host-blind
+custody) is a partner-phase design requirement, not a property of today's stack. Most adopters
+will rent pods, not run them (role-map sheet, R3): the custodian seat is the recurring-revenue
+seat.
 
 ## What building it for real entails
 
 - A managed consumer pod-hosting service: user-held keys, custody SLAs, and audit obligations
-  (role-map sheet, R3 commitments).
+  (role-map sheet, R3 commitments) — with host-blind custody (client-side encryption)
+  evaluated as a design requirement, since access control alone leaves the host able to read
+  stored data.
 - The consumer wallet UX productised — grants, receipts, revocation — on top of the hosting
   layer (the demo's wallet is the reference pattern).
 - Hosting conformance against the CoP's CDMC-anchored criteria as they are defined (role-map

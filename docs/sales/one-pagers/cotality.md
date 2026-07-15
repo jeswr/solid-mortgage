@@ -27,8 +27,10 @@ exists in the build today; the spotlight grows in the partner phase.
 ## The proposition
 
 Appraisal has no EDMA member — the role is an open seat on the map (org-map, gaps). Two
-angles, both yours: issue the valuation as a borrower-held credential (satisfying the Reg B
-copy obligation [16] as a side effect of issuance), and put CLIP forward as the property
+angles, both yours: issue the valuation as a borrower-held credential — giving the borrower a
+durable copy the moment it exists, *supporting* the creditor's Reg B delivery obligation [16]
+(delivery timing and evidence of receipt remain the creditor's compliance duty, not the
+credential's) — and put CLIP forward as the property
 identifier the CoP's bindings resolve to — the role-map's identifier pitch, "make your
 identifier the default in every conformant pod" (role-map sheet, R5), applied to property
 rather than organisations.
