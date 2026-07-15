@@ -1,0 +1,34 @@
+{
+  "name": "@jeswr/solid-mortgage-workspace",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Solid Mortgage Showcase — multi-stakeholder EDMA demo suite on Solid",
+  "type": "module",
+  "license": "UNLICENSED",
+  "author": "Jesse Wright <63333554+jeswr@users.noreply.github.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jeswr/solid-mortgage.git"
+  },
+  "packageManager": "pnpm@10.4.1",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "lint": "pnpm run lint:root && turbo run lint --affected --concurrency=4",
+    "lint:root": "biome check package.json turbo.json",
+    "lint:fix": "biome check --write .",
+    "typecheck": "turbo run typecheck --affected --concurrency=4",
+    "test": "turbo run test --affected --concurrency=4",
+    "build": "turbo run build --affected --concurrency=4",
+    "gate": "pnpm run lint:root && turbo run lint build typecheck test --affected --concurrency=4",
+    "gate:full": "turbo run lint build typecheck test --concurrency=4"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.1",
+    "@types/node": "^25.9.2",
+    "turbo": "^2.10.4",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9"
+  }
+}
