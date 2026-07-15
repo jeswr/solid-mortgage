@@ -317,12 +317,32 @@ export interface SeedOptions {
   mode?: "create" | "ensure" | "replace";  // default "create"
 }
 
-export interface SeedManifest {
-  pods: readonly { webid: string; baseUrl: string;
-                   resources: readonly { path: string; url: string; status: "created"|"skipped"|"replaced" }[] }[];
+export interface SeedManifest { pods: readonly PodManifest[]; }
+export interface PodManifest {
+  webid: string; baseUrl: string;
+  resources: readonly ResourceOutcome[];
+  groups: readonly GroupOutcome[];         // one per ResourceExpander
+}
+export interface ResourceOutcome {
+  path: string; url: string;
+  status: "created" | "skipped" | "replaced" | "failed" | "unwritten";  // last two only in SeedError
+  group?: number;                          // index into groups when expander-produced
+}
+export interface GroupOutcome {
+  index: number;                           // expander position in PodSpec.resources
+  members: readonly string[];              // member paths
+  status: "written" | "skipped" | "partial";  // "partial" only in SeedError
 }
 
 export function seedPods(options: SeedOptions): Promise<SeedManifest>;
+
+/** seedPods rejects with this on any write/preflight failure; the partial manifest —
+ *  including "failed"/"unwritten" resources and "partial" groups — rides along so the
+ *  §4.2 recovery path (replace re-run) has the full picture. */
+export class SeedError extends Error {
+  readonly manifest: SeedManifest;
+  readonly cause: unknown;
+}
 ```
 
 **IRI rebasing.** Generated instances carry placeholder-base IRIs (§3.2). At write time the
@@ -486,7 +506,9 @@ here, it belongs upstream (extract-repeated-logic rule).
    per seed run (single-issuance test, §5.2).
 5. ACLs authored via `@solid/object` wrappers — no string-templated `.acl` (review gate);
    owner-control preserved on every ACL (the `seed.ts` lockout lesson, as a test).
-6. Manifest returned and accurate per mode.
+6. Manifest returned and accurate per mode, including group records; failures reject with
+   `SeedError` whose partial manifest marks `failed`/`unwritten` resources and `partial`
+   groups (asserted by the recovery test of criterion 3).
 7. SKILL.md + README; PR to `jeswr/solid-sdk`.
 
 ### Bead updates (filed from repo root with `discovered-from:sm-62`)
