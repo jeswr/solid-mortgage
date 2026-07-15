@@ -141,7 +141,10 @@ export function isValidDateTimeLexical(value: string): boolean {
   const match = DATE_TIME_PARTS.exec(value);
   if (match === null) return false;
   const [, year, month, day, hour, minute, second, , zone, , zoneHour, zoneMinute] = match;
-  const date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+  // setUTCFullYear (not the Date.UTC constructor) so four-digit years below
+  // 0100 are not remapped to 19xx and wrongly rejected.
+  const date = new Date(0);
+  date.setUTCFullYear(Number(year), Number(month) - 1, Number(day));
   if (
     date.getUTCFullYear() !== Number(year) ||
     date.getUTCMonth() + 1 !== Number(month) ||

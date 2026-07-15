@@ -58,6 +58,15 @@ describe("isFresh - decision 0007 window semantics", () => {
       false,
     );
   });
+
+  test("early four-digit years are VALID lexicals (Date.UTC two-digit-year trap)", () => {
+    // 0044-03-15 is a legitimate xsd:dateTime; the window is simply in the
+    // past, so isFresh is false for recency - not for malformedness. Prove
+    // the lexical is accepted by evaluating AT the historic instant.
+    const early = { validFrom: "0044-03-15T00:00:00Z", validUntil: "0044-03-16T00:00:00Z" };
+    expect(isFresh(early, new Date("0044-03-15T12:00:00Z"))).toBe(true);
+    expect(isFresh(early, NOW)).toBe(false);
+  });
 });
 
 describe("reissueCredential - same claims, fresh window, old one revoked", () => {
