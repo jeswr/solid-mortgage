@@ -22,6 +22,11 @@ const RDF_EXTENSIONS = new Set([
   ".ttl",
 ]);
 const SKIP_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
+// TEMPORARY (sm-18): the mort vocab namespace host is exempt until the
+// solid-mortgage-vocab Vercel project is live - it must be the FIRST deploy of
+// the sm-37 wiring, after which this exemption is removed so lint:iris covers
+// mort: IRIs like any other namespace (decision 0010).
+const TEMPORARILY_UNDEPLOYED_HOSTS = new Set(["solid-mortgage-vocab.vercel.app"]);
 
 function trackedRdfFiles() {
   const output = execFileSync("git", ["ls-files", "-z"], { cwd: ROOT, encoding: "utf8" });
@@ -36,6 +41,7 @@ function shouldSkip(iri) {
   const { hostname } = new URL(iri);
   return (
     SKIP_HOSTS.has(hostname) ||
+    TEMPORARILY_UNDEPLOYED_HOSTS.has(hostname) ||
     hostname.endsWith(".localhost") ||
     hostname === "example.com" ||
     hostname.endsWith(".example") ||

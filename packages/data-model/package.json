@@ -11,11 +11,15 @@
   },
   "scripts": {
     "build": "tsc --project tsconfig.json",
-    "lint": "biome check src test package.json tsconfig.json",
+    "generate:vocab": "node scripts/generate-vocab.mjs",
+    "lint": "biome check src test scripts package.json tsconfig.json",
     "test": "vitest run --root . --config ../../vitest.config.ts",
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "dependencies": {
     "@jeswr/rdf-serialize": "github:jeswr/rdf-serialize#9c3a34dd93f318fd00d9e6f22081123e502a0578"
+  },
+  "devDependencies": {
+    "n3": "^2.1.1"
   }
 }

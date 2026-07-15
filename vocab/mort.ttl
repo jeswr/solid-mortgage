@@ -1,0 +1,382 @@
+@prefix cred: <https://www.w3.org/2018/credentials#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+#################################################################
+# Ontology
+#
+# Residue vocabulary for the Solid Mortgage Showcase: only terms
+# that FIBO, schema.org, W3C VC 2.0, DPV, and ODRL do not provide
+# (docs/research/vocab.md section 5; decisions 0005, 0010, 0012).
+# ZK scaled-unit encodings follow decision 0005 (whole-dollar
+# units within fixed digit budgets - no cents-denominated fields).
+#################################################################
+
+<https://solid-mortgage-vocab.vercel.app/mort>
+  a owl:Ontology ;
+  dcterms:title "Solid Mortgage Showcase residue vocabulary (mort)"@en ;
+  dcterms:description "Project residue vocabulary for the Solid Mortgage Showcase. Defines only the terms that established vocabularies (FIBO, schema.org, W3C VC 2.0, DPV, ODRL) do not provide: credential subtypes, title status, underwriting decision statuses, marital status, ZK scaled-unit fields per decision 0005's digit budgets, and the ZK operand-anchor credential of decision 0012. Every other concern is modelled with the established vocabularies; each term's comment names the external concept it approximates."@en ;
+  dcterms:created "2026-07-15"^^xsd:date ;
+  dcterms:creator <https://github.com/jeswr> ;
+  owl:versionInfo "0.1.0" .
+
+#################################################################
+# Credential subtype classes (vocab.md section 5, rows 2-6)
+#################################################################
+
+mort:EmploymentIncomeCredential
+  a owl:Class ;
+  rdfs:subClassOf cred:VerifiableCredential ;
+  rdfs:label "Employment income credential"@en ;
+  rdfs:comment "A verifiable credential in which an employer or payroll provider attests the subject's employment and gross income. Approximates a MISMO v3.4 income verification (URLA section 1b-1e employment record); the underlying report is a fibo-loan-ln-app:IncomeVerificationReport linked via cred:evidence."@en ;
+  skos:definition "Verifiable credential attesting the subject's employment and gross income, issued by the employer or payroll provider."@en ;
+  rdfs:seeAlso <https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoanApplications/IncomeVerificationReport> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:AssetCredential
+  a owl:Class ;
+  rdfs:subClassOf cred:VerifiableCredential ;
+  rdfs:label "Asset credential"@en ;
+  rdfs:comment "A verifiable credential in which a depository institution attests the subject's account holdings for reserves and down-payment verification. Approximates a MISMO v3.4 asset verification (URLA section 2a); the account is described with schema:BankAccount and the balance with schema:MonetaryAmount."@en ;
+  skos:definition "Verifiable credential attesting the subject's account holdings, issued by the depository institution."@en ;
+  rdfs:seeAlso <https://schema.org/BankAccount> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:CreditScoreCredential
+  a owl:Class ;
+  rdfs:subClassOf cred:VerifiableCredential ;
+  rdfs:label "Credit score credential"@en ;
+  rdfs:comment "A verifiable credential in which a credit bureau attests the subject's credit score. Approximates a MISMO v3.4 credit score record; the rating itself is a fibo-loan-ln-app:IndividualPersonCreditRating with scores on a fibo-fnd-arr-rt:RatingScale."@en ;
+  skos:definition "Verifiable credential attesting the subject's credit score, issued by a credit bureau."@en ;
+  rdfs:seeAlso <https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoanApplications/IndividualPersonCreditRating> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:AppraisalCredential
+  a owl:Class ;
+  rdfs:subClassOf cred:VerifiableCredential ;
+  rdfs:label "Appraisal credential"@en ;
+  rdfs:comment "A verifiable credential in which an appraisal management company attests a property valuation. Approximates a MISMO v3.4 appraisal report record; the appraisal is a fibo-fnd-arr-asmt:Appraisal and the disclosed value uses fibo-fnd-arr-asmt:AppraisedValue with schema:MonetaryAmount (the appraised value is disclosed, never ZK-proved - decision 0005)."@en ;
+  skos:definition "Verifiable credential attesting a property appraisal, issued by the appraisal management company."@en ;
+  rdfs:seeAlso <https://spec.edmcouncil.org/fibo/ontology/FND/Arrangements/Assessments/Appraisal> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:TitleClearCredential
+  a owl:Class ;
+  rdfs:subClassOf cred:VerifiableCredential ;
+  rdfs:label "Title clear credential"@en ;
+  rdfs:comment "A verifiable credential in which a title company attests the outcome of a title search on a property. Approximates a MISMO v3.4 title commitment; no clear-title concept exists in released FIBO modules, so the status is carried by mort:titleStatus. Encumbrances found are referenced via fibo-loan-ln-app:PublicRecordCategory-LienRecord."@en ;
+  skos:definition "Verifiable credential attesting the outcome of a title search, issued by the title company."@en ;
+  rdfs:seeAlso <https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoanApplications/PublicRecordCategory-LienRecord> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+#################################################################
+# ZK operand anchor (decision 0012)
+#################################################################
+
+mort:ZkOperandAnchor
+  a owl:Class ;
+  rdfs:subClassOf cred:VerifiableCredential ;
+  rdfs:label "ZK operand anchor"@en ;
+  rdfs:comment "An issuer-signed companion credential that binds a hidden credential field to its deterministic sparq term encoding (decision 0012). The credential subject is the holder's WebID; mort:field names the anchored property, mort:operandEnc carries the encoding the filter circuit exposes as its public operand_enc input, and cred:credentialStatus enables revocation. A bare live filter proof is forgeable; verifiers MUST check anchor signature, issuer trust, status, subject WebID equality with the authenticated presenter, operand-encoding equality with the proof's public input, and challenge freshness."@en ;
+  skos:definition "Issuer-signed credential binding a hidden field of another credential to its deterministic ZK operand encoding, enabling forgery-resistant live threshold proofs."@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:field
+  a owl:ObjectProperty ;
+  rdfs:label "anchored field"@en ;
+  rdfs:comment "On a mort:ZkOperandAnchor subject: the property whose (hidden) literal value the anchor's operand encoding commits to, e.g. mort:monthlyGrossIncomeUsd (decision 0012)."@en ;
+  skos:definition "The property whose hidden literal value a ZK operand anchor commits to."@en ;
+  rdfs:range rdf:Property ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:operandEnc
+  a owl:DatatypeProperty ;
+  rdfs:label "operand encoding"@en ;
+  rdfs:comment "On a mort:ZkOperandAnchor subject: the deterministic, salt-free sparq term encoding of the anchored field's literal value, as a 0x-prefixed hexadecimal field element. Equals the filter circuit's public operand_enc input; being deterministic it is dictionary-attackable for low-entropy values - the honest claim is 'not disclosed and not forgeable', never 'cannot be learned' (decision 0012)."@en ;
+  skos:definition "Deterministic sparq term encoding of the anchored field's literal value, as a 0x-prefixed hexadecimal field element."@en ;
+  rdfs:range xsd:string ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+#################################################################
+# ZK scaled-unit fields (decision 0005 digit budgets)
+#################################################################
+
+mort:monthlyGrossIncomeUsd
+  a owl:DatatypeProperty ;
+  rdfs:label "monthly gross income (USD)"@en ;
+  rdfs:comment "The subject's gross income in whole US dollars per month, as a plain xsd:integer within decision 0005's 4-digit budget (SHACL pins the bounds). ZK-provable via filter_int_d4 (income >= threshold) and as the disclosed bound of the recast DTI statement. Approximates fibo-loan-ln-app:BorrowerMonthlyIncome / hasGrossIncome and MISMO v3.4 TotalMonthlyIncomeAmount, rescaled to whole dollars for integer-only circuits."@en ;
+  skos:definition "Gross income in whole US dollars per month, ZK-provable within a 4-digit budget."@en ;
+  rdfs:range xsd:integer ;
+  rdfs:seeAlso <https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoanApplications/BorrowerMonthlyIncome> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:totalMonthlyDebtUsd
+  a owl:DatatypeProperty ;
+  rdfs:label "total monthly debt (USD)"@en ;
+  rdfs:comment "The subject's total monthly debt obligations in whole US dollars per month, as a plain xsd:integer within decision 0005's 4-digit budget (SHACL pins the bounds). Hidden operand of the recast DTI statement: hidden monthly debts <= floor(0.43 x disclosed income), proved via filter_int_d4. Never store a precomputed DTI ratio as the provable fact. Approximates the liability total behind fibo-loan-ln-app:TotalDebtExpenseRatio and MISMO v3.4 TotalMonthlyDebtExpenseAmount, rescaled to whole dollars."@en ;
+  skos:definition "Total monthly debt obligations in whole US dollars per month, the hidden operand of the recast DTI statement."@en ;
+  rdfs:range xsd:integer ;
+  rdfs:seeAlso <https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoanApplications/UnderwritingDecision> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:creditScoreValue
+  a owl:DatatypeProperty ;
+  rdfs:label "credit score value"@en ;
+  rdfs:comment "The subject's credit score as a plain xsd:integer within decision 0005's 3-digit budget (300-850 for FICO-family models; SHACL pins the bounds). ZK-provable via filter_int_d3 (score >= threshold). Approximates fibo-fnd-arr-rt:RatingScore on a fibo-fnd-arr-rt:RatingScale and MISMO v3.4 CreditScoreValue; the scoring model is named via mort:scoreModel."@en ;
+  skos:definition "Credit score as a plain integer within a 3-digit budget, ZK-provable against a threshold."@en ;
+  rdfs:range xsd:integer ;
+  rdfs:seeAlso <https://spec.edmcouncil.org/fibo/ontology/FND/Arrangements/Ratings/RatingScore> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+#################################################################
+# Credential detail properties (vocab.md section 5)
+#################################################################
+
+mort:accountLast4
+  a owl:DatatypeProperty ;
+  rdfs:label "account last four digits"@en ;
+  rdfs:comment "The last four digits of the account number described by an asset credential, as a display-safe masked identifier. Approximates a masked MISMO v3.4 AssetAccountIdentifier; the full identifier is never stored in the pod."@en ;
+  skos:definition "Last four digits of the attested account number, as a masked display identifier."@en ;
+  rdfs:range xsd:string ;
+  rdfs:seeAlso <https://schema.org/accountId> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:appraiserLicenseId
+  a owl:DatatypeProperty ;
+  rdfs:label "appraiser license identifier"@en ;
+  rdfs:comment "The state license or certification number of the appraiser who performed the appraisal attested by an appraisal credential. Approximates MISMO v3.4 AppraiserLicenseIdentifier; the appraiser is a fibo-fnd-arr-asmt:Appraiser."@en ;
+  skos:definition "State license or certification number of the attesting appraiser."@en ;
+  rdfs:range xsd:string ;
+  rdfs:seeAlso <https://spec.edmcouncil.org/fibo/ontology/FND/Arrangements/Assessments/Appraiser> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:searchedThrough
+  a owl:DatatypeProperty ;
+  rdfs:label "searched through"@en ;
+  rdfs:comment "The effective date through which the public records were searched for the title search attested by a title clear credential. Approximates MISMO v3.4 TitleSearchThroughDate."@en ;
+  skos:definition "Effective date through which public records were searched for the attested title search."@en ;
+  rdfs:range xsd:date ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+#################################################################
+# Loan application, decision, and closing properties
+# (vocab.md section 5, rows 7-9)
+#################################################################
+
+mort:loanTermMonths
+  a owl:DatatypeProperty ;
+  rdfs:label "loan term (months)"@en ;
+  rdfs:comment "The requested or agreed loan term in whole months (e.g. 360 for a 30-year mortgage). Integer companion of schema:loanTerm, which ranges over QuantitativeValue; approximates MISMO v3.4 LoanMaturityPeriodCount."@en ;
+  skos:definition "Loan term in whole months."@en ;
+  rdfs:range xsd:integer ;
+  rdfs:seeAlso <https://schema.org/loanTerm> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:underwritingCondition
+  a owl:DatatypeProperty ;
+  rdfs:label "underwriting condition"@en ;
+  rdfs:comment "A condition attached to an underwriting decision that must be satisfied before or at closing (used with the approved-with-conditions status). Approximates MISMO v3.4 underwriting condition text on a fibo-loan-ln-app:UnderwritingDecision."@en ;
+  skos:definition "A condition attached to an underwriting decision, to be satisfied before or at closing."@en ;
+  rdfs:range xsd:string ;
+  rdfs:seeAlso <https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoanApplications/UnderwritingDecision> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:closingDate
+  a owl:DatatypeProperty ;
+  rdfs:label "closing date"@en ;
+  rdfs:comment "The date the loan closing was executed, where distinct from the initial funding date (fibo-loan-reln-mtg:hasInitialFundingDate). Approximates MISMO v3.4 ClosingDate."@en ;
+  skos:definition "Date the loan closing was executed."@en ;
+  rdfs:range xsd:date ;
+  rdfs:seeAlso <https://spec.edmcouncil.org/fibo/ontology/LOAN/RealEstateLoans/Mortgages/hasInitialFundingDate> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:recordingReference
+  a owl:DatatypeProperty ;
+  rdfs:label "recording reference"@en ;
+  rdfs:comment "The county recorder's reference (instrument, book/page, or document number) under which the executed security instrument was recorded. Approximates MISMO v3.4 RecordingDocumentIdentifier."@en ;
+  skos:definition "County recording reference for the executed security instrument."@en ;
+  rdfs:range xsd:string ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+#################################################################
+# Status vocabularies (SKOS)
+#################################################################
+
+## Marital status (URLA section 1a; no schema.org or core DPV property exists)
+
+mort:maritalStatus
+  a owl:ObjectProperty ;
+  rdfs:label "marital status"@en ;
+  rdfs:comment "The borrower's marital status, from the URLA section 1a closed set (married / separated / unmarried). Approximates MISMO v3.4 MaritalStatusType; neither schema.org nor core DPV provides a marital-status property."@en ;
+  skos:definition "The borrower's marital status, as a concept from the marital status scheme."@en ;
+  rdfs:range skos:Concept ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:MaritalStatusScheme
+  a skos:ConceptScheme ;
+  rdfs:label "Marital status scheme"@en ;
+  rdfs:comment "The URLA section 1a marital status values (MISMO v3.4 MaritalStatusType)."@en ;
+  skos:prefLabel "Marital status scheme"@en ;
+  skos:definition "Concept scheme of URLA section 1a marital status values."@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:MaritalStatus-Married
+  a skos:Concept ;
+  rdfs:label "married"@en ;
+  rdfs:comment "The borrower is married (URLA section 1a; MISMO MaritalStatusType 'Married')."@en ;
+  skos:prefLabel "married"@en ;
+  skos:definition "The borrower is married."@en ;
+  skos:inScheme mort:MaritalStatusScheme ;
+  skos:topConceptOf mort:MaritalStatusScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:MaritalStatus-Separated
+  a skos:Concept ;
+  rdfs:label "separated"@en ;
+  rdfs:comment "The borrower is legally separated (URLA section 1a; MISMO MaritalStatusType 'Separated')."@en ;
+  skos:prefLabel "separated"@en ;
+  skos:definition "The borrower is legally separated."@en ;
+  skos:inScheme mort:MaritalStatusScheme ;
+  skos:topConceptOf mort:MaritalStatusScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:MaritalStatus-Unmarried
+  a skos:Concept ;
+  rdfs:label "unmarried"@en ;
+  rdfs:comment "The borrower is unmarried - single, divorced, or widowed (URLA section 1a; MISMO MaritalStatusType 'Unmarried')."@en ;
+  skos:prefLabel "unmarried"@en ;
+  skos:definition "The borrower is unmarried (single, divorced, or widowed)."@en ;
+  skos:inScheme mort:MaritalStatusScheme ;
+  skos:topConceptOf mort:MaritalStatusScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+## Credit score model (no real IRI exists for FICO model names)
+
+mort:scoreModel
+  a owl:ObjectProperty ;
+  rdfs:label "score model"@en ;
+  rdfs:comment "The scoring model under which a credit score value was produced. Approximates MISMO v3.4 CreditScoreModelNameType; no dereferenceable IRI exists for FICO model names, so the models are project concepts."@en ;
+  skos:definition "The scoring model that produced the credit score value."@en ;
+  rdfs:range skos:Concept ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:ScoreModelScheme
+  a skos:ConceptScheme ;
+  rdfs:label "Credit score model scheme"@en ;
+  rdfs:comment "Credit scoring models attested by credit score credentials (MISMO v3.4 CreditScoreModelNameType)."@en ;
+  skos:prefLabel "Credit score model scheme"@en ;
+  skos:definition "Concept scheme of credit scoring models."@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:ScoreModel-FICO8
+  a skos:Concept ;
+  rdfs:label "FICO Score 8"@en ;
+  rdfs:comment "The FICO Score 8 model, range 300-850 (MISMO CreditScoreModelNameType 'FICO'; the model most widely used in US mortgage underwriting)."@en ;
+  skos:prefLabel "FICO Score 8"@en ;
+  skos:definition "The FICO Score 8 credit scoring model, range 300-850."@en ;
+  skos:inScheme mort:ScoreModelScheme ;
+  skos:topConceptOf mort:ScoreModelScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+## Title status (no clear-title concept in released FIBO modules)
+
+mort:titleStatus
+  a owl:ObjectProperty ;
+  rdfs:label "title status"@en ;
+  rdfs:comment "The outcome of a title search: clear or clouded. Approximates the MISMO v3.4 title commitment outcome; no clear-title concept exists in released FIBO modules."@en ;
+  skos:definition "The outcome of a title search, as a concept from the title status scheme."@en ;
+  rdfs:range skos:Concept ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:TitleStatusScheme
+  a skos:ConceptScheme ;
+  rdfs:label "Title status scheme"@en ;
+  rdfs:comment "Outcomes of a title search as attested by a title clear credential."@en ;
+  skos:prefLabel "Title status scheme"@en ;
+  skos:definition "Concept scheme of title search outcomes."@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:TitleStatus-Clear
+  a skos:Concept ;
+  rdfs:label "clear"@en ;
+  rdfs:comment "The title search found no encumbrances that would defeat the expected lien position."@en ;
+  skos:prefLabel "clear"@en ;
+  skos:definition "No encumbrances found that would defeat the expected lien position."@en ;
+  skos:inScheme mort:TitleStatusScheme ;
+  skos:topConceptOf mort:TitleStatusScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:TitleStatus-Clouded
+  a skos:Concept ;
+  rdfs:label "clouded"@en ;
+  rdfs:comment "The title search found one or more encumbrances (liens, judgments, or defects) that must be resolved before closing; found records are referenced via fibo-loan-ln-app:PublicRecordCategory-LienRecord."@en ;
+  skos:prefLabel "clouded"@en ;
+  skos:definition "Encumbrances found that must be resolved before closing."@en ;
+  skos:inScheme mort:TitleStatusScheme ;
+  skos:topConceptOf mort:TitleStatusScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+## Underwriting decision status (FIBO has the UnderwritingDecision class
+## but no status individuals in the fetched module)
+
+mort:decisionStatus
+  a owl:ObjectProperty ;
+  rdfs:label "decision status"@en ;
+  rdfs:comment "The status of an underwriting decision (fibo-loan-ln-app:UnderwritingDecision carries no status individuals in released FIBO modules). Approximates MISMO v3.4 LoanStatusType underwriting outcomes."@en ;
+  skos:definition "The status of an underwriting decision, as a concept from the decision status scheme."@en ;
+  rdfs:range skos:Concept ;
+  rdfs:seeAlso <https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoanApplications/UnderwritingDecision> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:DecisionStatusScheme
+  a skos:ConceptScheme ;
+  rdfs:label "Underwriting decision status scheme"@en ;
+  rdfs:comment "Statuses of an underwriting decision (approved / approved with conditions / denied / suspended)."@en ;
+  skos:prefLabel "Underwriting decision status scheme"@en ;
+  skos:definition "Concept scheme of underwriting decision statuses."@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:DecisionStatus-Approved
+  a skos:Concept ;
+  rdfs:label "approved"@en ;
+  rdfs:comment "The application is approved as submitted."@en ;
+  skos:prefLabel "approved"@en ;
+  skos:definition "The application is approved as submitted."@en ;
+  skos:inScheme mort:DecisionStatusScheme ;
+  skos:topConceptOf mort:DecisionStatusScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:DecisionStatus-ApprovedWithConditions
+  a skos:Concept ;
+  rdfs:label "approved with conditions"@en ;
+  rdfs:comment "The application is approved subject to conditions listed via mort:underwritingCondition."@en ;
+  skos:prefLabel "approved with conditions"@en ;
+  skos:definition "The application is approved subject to listed conditions."@en ;
+  skos:inScheme mort:DecisionStatusScheme ;
+  skos:topConceptOf mort:DecisionStatusScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:DecisionStatus-Denied
+  a skos:Concept ;
+  rdfs:label "denied"@en ;
+  rdfs:comment "The application is denied."@en ;
+  skos:prefLabel "denied"@en ;
+  skos:definition "The application is denied."@en ;
+  skos:inScheme mort:DecisionStatusScheme ;
+  skos:topConceptOf mort:DecisionStatusScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:DecisionStatus-Suspended
+  a skos:Concept ;
+  rdfs:label "suspended"@en ;
+  rdfs:comment "The decision is suspended pending further documentation from the borrower."@en ;
+  skos:prefLabel "suspended"@en ;
+  skos:definition "The decision is suspended pending further documentation."@en ;
+  skos:inScheme mort:DecisionStatusScheme ;
+  skos:topConceptOf mort:DecisionStatusScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
