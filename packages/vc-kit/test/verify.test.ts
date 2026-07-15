@@ -268,6 +268,40 @@ describe("proof-node hardening", () => {
     expect(codesOf(outcome)).toContain("MALFORMED");
   });
 
+  test("a LITERAL-valued rdf:type on the proof node is refused (value spoof)", async () => {
+    const store = parseTurtle(issued.body);
+    const [link] = [...store.match(namedNode(CREDENTIAL_ID), namedNode(SEC_PROOF))];
+    const proofNode = link?.object as Quad_Subject;
+    const typePredicate = namedNode("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
+    const [typeQuad] = [...store.match(proofNode, typePredicate)];
+    if (typeQuad === undefined) throw new Error("no proof type quad");
+    store.delete(typeQuad);
+    store.add(quad(proofNode, typePredicate, literal(typeQuad.object.value)));
+    const outcome = await verifyCredential(store, verifyOptions());
+    expect(outcome.verified).toBe(false);
+    expect(codesOf(outcome)).toContain("MALFORMED");
+  });
+
+  test("a created timestamp with an impossible calendar date is refused", async () => {
+    const store = parseTurtle(issued.body);
+    const [link] = [...store.match(namedNode(CREDENTIAL_ID), namedNode(SEC_PROOF))];
+    const proofNode = link?.object as Quad_Subject;
+    const createdPredicate = namedNode("http://purl.org/dc/terms/created");
+    const [createdQuad] = [...store.match(proofNode, createdPredicate)];
+    if (createdQuad === undefined) throw new Error("no created quad");
+    store.delete(createdQuad);
+    store.add(
+      quad(
+        proofNode,
+        createdPredicate,
+        literal("2026-02-30T00:00:00.000Z", namedNode("http://www.w3.org/2001/XMLSchema#dateTime")),
+      ),
+    );
+    const outcome = await verifyCredential(store, verifyOptions());
+    expect(outcome.verified).toBe(false);
+    expect(codesOf(outcome)).toContain("MALFORMED");
+  });
+
   test("a duplicated cryptosuite on the proof node is MALFORMED", async () => {
     const store = parseTurtle(issued.body);
     const [link] = [...store.match(namedNode(CREDENTIAL_ID), namedNode(SEC_PROOF))];

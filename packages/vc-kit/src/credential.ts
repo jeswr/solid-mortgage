@@ -127,6 +127,36 @@ function plainLiteral(term: Term, what: string): string {
 /** Strict `xsd:dateTime` lexical (what the issuance path writes). */
 export const DATE_TIME_LEXICAL = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/;
 
+const DATE_TIME_PARTS =
+  /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d+)?(Z|([+-])(\d{2}):(\d{2}))$/;
+
+/**
+ * Strict + CALENDAR-valid `xsd:dateTime` lexical. The regex alone is not
+ * enough: V8's `Date.parse` silently normalises an impossible day
+ * (`2026-02-30` -> March 2nd), so the date components must round-trip, the
+ * time components must be in range, and a zone offset is bounded to +-14:00
+ * (the XSD limit).
+ */
+export function isValidDateTimeLexical(value: string): boolean {
+  const match = DATE_TIME_PARTS.exec(value);
+  if (match === null) return false;
+  const [, year, month, day, hour, minute, second, , zone, , zoneHour, zoneMinute] = match;
+  const date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+  if (
+    date.getUTCFullYear() !== Number(year) ||
+    date.getUTCMonth() + 1 !== Number(month) ||
+    date.getUTCDate() !== Number(day)
+  ) {
+    return false;
+  }
+  if (Number(hour) > 23 || Number(minute) > 59 || Number(second) > 59) return false;
+  if (zone !== "Z") {
+    const offsetMinutes = Number(zoneHour) * 60 + Number(zoneMinute);
+    if (Number(zoneMinute) > 59 || offsetMinutes > 14 * 60) return false;
+  }
+  return true;
+}
+
 /**
  * Reconstruct the structured {@link DataIntegrityProof} from a parsed proof
  * node, STRICT + fail-closed (throws {@link ProofReadError}):
@@ -149,11 +179,12 @@ export function readProof(node: ProofNode): DataIntegrityProof {
     }
   }
 
-  // Exactly ONE type, and it must be sec:DataIntegrityProof: extra type quads
-  // live outside the signed document (proof subgraph), so tolerating them
-  // would let unsigned data ride the proof node.
+  // Exactly ONE type, and it must be the sec:DataIntegrityProof IRI: extra
+  // type quads live outside the signed document (proof subgraph), so
+  // tolerating them would let unsigned data ride the proof node, and a
+  // literal/blank type whose VALUE merely equals the IRI is not a type.
   const typeTerm = exactlyOne(node.types as unknown as ReadonlySet<Term>, "rdf:type");
-  if (typeTerm.value !== SEC_DATA_INTEGRITY_PROOF) {
+  if (typeTerm.termType !== "NamedNode" || typeTerm.value !== SEC_DATA_INTEGRITY_PROOF) {
     throw new ProofReadError("proof node is not typed sec:DataIntegrityProof");
   }
 
@@ -184,7 +215,7 @@ export function readProof(node: ProofNode): DataIntegrityProof {
     if (
       term.termType !== "Literal" ||
       term.datatype?.value !== XSD_DATE_TIME ||
-      !DATE_TIME_LEXICAL.test(term.value)
+      !isValidDateTimeLexical(term.value)
     ) {
       throw new ProofReadError("dcterms:created must be a well-formed xsd:dateTime literal");
     }

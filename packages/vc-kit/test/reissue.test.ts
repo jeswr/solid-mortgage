@@ -53,6 +53,10 @@ describe("isFresh - decision 0007 window semantics", () => {
     // Date.parse-lenient but non-xsd:dateTime lexicals are refused too.
     expect(isFresh({ validFrom: "2026", validUntil: window.validUntil }, NOW)).toBe(false);
     expect(isFresh({ validFrom: window.validFrom, validUntil: "2027" }, NOW)).toBe(false);
+    // Regex-shaped but calendar-impossible values are refused (NaN guard).
+    expect(isFresh({ validFrom: "2026-02-30T00:00:00Z", validUntil: window.validUntil }, NOW)).toBe(
+      false,
+    );
   });
 });
 

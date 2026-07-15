@@ -10,7 +10,7 @@ import { readValidCredential } from "@jeswr/solid-vc";
 import type { DatasetCore, Quad, Term } from "@rdfjs/types";
 import { DataFactory, Store } from "n3";
 import { assertAbsoluteIri } from "./claims.js";
-import { DATE_TIME_LEXICAL, documentQuadsOf } from "./credential.js";
+import { documentQuadsOf, isValidDateTimeLexical } from "./credential.js";
 import { finishIssue, type IssueCredentialOptions, type IssuedCredential } from "./issue.js";
 import type { StatusIndexAllocator, StatusListClient } from "./status.js";
 import { type EmbeddedProofOptions, verifyEmbeddedProofs } from "./verify.js";
@@ -42,10 +42,11 @@ export interface ValidityWindowInfo {
  */
 export function isFresh(window: ValidityWindowInfo, asOf: Date): boolean {
   if (window.validFrom === undefined || window.validUntil === undefined) return false;
-  // Strict xsd:dateTime lexicals only - `Date.parse` alone is lenient ("2026"
-  // parses), and this helper is documented as consumable straight off a
-  // credential projection, so it must not be softer than the verify gate.
-  if (!DATE_TIME_LEXICAL.test(window.validFrom) || !DATE_TIME_LEXICAL.test(window.validUntil)) {
+  // Strict, calendar-valid xsd:dateTime lexicals only - `Date.parse` alone is
+  // lenient ("2026" parses; "2026-02-30" normalises), and this helper is
+  // documented as consumable straight off a credential projection, so it must
+  // not be softer than the verify gate.
+  if (!isValidDateTimeLexical(window.validFrom) || !isValidDateTimeLexical(window.validUntil)) {
     return false;
   }
   const from = Date.parse(window.validFrom);
@@ -79,11 +80,17 @@ export interface ReissueOptions {
   /**
    * Key resolution for authenticating the OLD credential's signature before
    * its claims are carried over. Default: exactly `key` (the issuer re-signing
-   * its own credential) - override when the original was signed with a rotated
-   * key.
+   * its own credential). For a credential signed with a ROTATED key, override
+   * `resolveKey` AND `isControlledBy` TOGETHER - the default binding also
+   * pins the old verification method to `key.verificationMethod`, so a
+   * resolver-only override still fails closed.
    */
   readonly resolveKey?: EmbeddedProofOptions["resolveKey"];
-  /** Issuer binding for the old credential's proof. Default: vm === key id. */
+  /**
+   * Issuer binding for the old credential's proof. Default:
+   * `vm === key.verificationMethod && issuer === statusList.issuer`. Must be
+   * overridden together with `resolveKey` for rotated keys (see above).
+   */
   readonly isControlledBy?: EmbeddedProofOptions["isControlledBy"];
 }
 
