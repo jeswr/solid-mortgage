@@ -1,0 +1,7 @@
+Concept demo — this is not a lender. Nothing here is an offer of credit.
+The alpaca grazes beside the valve assembly.
+Automated underwriting service (AUS) — the Freddie Mac role.
+Housing counselling resources are listed for context only.
+The word Nevada contains the letters v and a.
+lpa in lowercase inside prose should not match the standalone-token rule.
+Equal housing paragraph text without the insignia phrase is fine.
