@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { Parser, type Quad_Object, Store, type Term } from "n3";
 import { describe, expect, test } from "vitest";
-import { validate } from "../src/shacl.js";
+import { type MortgageResourceKind, RESOURCE_TARGET_CLASSES, validate } from "../src/shacl.js";
 import { ALL_SHAPES_DOCUMENTS, SHAPES_DOCUMENT_KEYS } from "../src/shapes/shapes.js";
 import { MORT } from "../src/vocab/mort.js";
 import { ZK_ANCHORABLE_FIELD_IRIS, ZK_FIELD_BUDGETS } from "../src/zk-budgets.js";
@@ -77,23 +77,33 @@ const cases: readonly {
   },
   {
     name: "asset-credential",
-    expectedViolations: ["PatternConstraintComponent", "InConstraintComponent"],
+    expectedViolations: [
+      "PatternConstraintComponent",
+      "InConstraintComponent",
+      "LessThanConstraintComponent",
+    ],
   },
   {
     name: "credit-score-credential",
     expectedViolations: ["MaxInclusiveConstraintComponent", "MinCountConstraintComponent"],
   },
-  { name: "appraisal-credential", expectedViolations: ["MinCountConstraintComponent"] },
+  {
+    name: "appraisal-credential",
+    expectedViolations: ["MinCountConstraintComponent", "SPARQLConstraintComponent"],
+  },
   {
     name: "title-clear-credential",
     expectedViolations: ["DatatypeConstraintComponent", "InConstraintComponent"],
   },
   {
     name: "loan-application",
+    // OrConstraintComponent: refinance purpose present without a cash-out
+    // status trips the conditional cash-out constraint.
     expectedViolations: [
       "QualifiedMinCountConstraintComponent",
       "QualifiedMaxCountConstraintComponent",
       "MaxInclusiveConstraintComponent",
+      "OrConstraintComponent",
     ],
   },
   {
@@ -114,22 +124,69 @@ const cases: readonly {
   },
 ];
 
+// Generous timeout: the first validation pays comunica's cold start for the
+// sh:sparql constraint (over 5s on a cold cache).
+const VALIDATE_TIMEOUT_MS = 30_000;
+
 describe.each(cases)("$name", ({ name, expectedViolations }) => {
-  test("conforming fixture validates", async () => {
-    const report = await validate(fixture(`${name}.valid`));
-    expect(report.violations).toEqual([]);
-    expect(report.conforms).toBe(true);
+  const kind = name as MortgageResourceKind;
+
+  test(
+    "conforming fixture validates",
+    async () => {
+      const report = await validate(fixture(`${name}.valid`), { expect: kind });
+      expect(report.violations).toEqual([]);
+      expect(report.conforms).toBe(true);
+    },
+    VALIDATE_TIMEOUT_MS,
+  );
+
+  test(
+    "violating fixture is rejected for the expected reasons",
+    async () => {
+      const report = await validate(fixture(`${name}.invalid`), { expect: kind });
+      expect(report.conforms).toBe(false);
+      const components = new Set(
+        report.violations.map((violation) => violation.constraintComponent?.split("#")[1]),
+      );
+      for (const expected of expectedViolations) {
+        expect([...components], `${name}.invalid should violate ${expected}`).toContain(expected);
+      }
+    },
+    VALIDATE_TIMEOUT_MS,
+  );
+});
+
+describe("expect option (untrusted pod RDF must not conform vacuously)", () => {
+  test("an empty document fails when a resource kind is expected", async () => {
+    const report = await validate("", { expect: "credit-score-credential" });
+    expect(report.conforms).toBe(false);
+    expect(report.violations[0]?.message).toContain("no credit-score-credential resource found");
   });
 
-  test("violating fixture is rejected for the expected reasons", async () => {
-    const report = await validate(fixture(`${name}.invalid`));
+  test("a document of the WRONG type fails the expected kind", async () => {
+    const report = await validate(fixture("borrower-profile.valid"), {
+      expect: "employment-income-credential",
+    });
     expect(report.conforms).toBe(false);
-    const components = new Set(
-      report.violations.map((violation) => violation.constraintComponent?.split("#")[1]),
+  });
+
+  test(
+    "without expect, an empty document conforms (the documented hazard)",
+    async () => {
+      const report = await validate("");
+      expect(report.conforms).toBe(true);
+    },
+    VALIDATE_TIMEOUT_MS,
+  );
+
+  test("RESOURCE_TARGET_CLASSES matches the shapes' sh:targetClass by document", () => {
+    const targetsInShapes = new Set(
+      shapesStore()
+        .getObjects(null, `${SH}targetClass`, null)
+        .map((term) => term.value),
     );
-    for (const expected of expectedViolations) {
-      expect([...components], `${name}.invalid should violate ${expected}`).toContain(expected);
-    }
+    expect(new Set(Object.values(RESOURCE_TARGET_CLASSES))).toEqual(targetsInShapes);
   });
 });
 

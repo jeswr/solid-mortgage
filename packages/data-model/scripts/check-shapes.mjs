@@ -13,6 +13,7 @@ import dataFactory from "@rdfjs/data-model";
 import datasetFactory from "@rdfjs/dataset";
 import { Parser, Store } from "n3";
 import { Validator } from "shacl-engine";
+import { validations as sparqlValidations } from "shacl-engine/sparql.js";
 
 const PACKAGE_ROOT = path.resolve(import.meta.dirname, "..");
 const SHAPES_DIR = path.join(PACKAGE_ROOT, "shapes");
@@ -24,6 +25,7 @@ const factory = {
   namedNode: dataFactory.namedNode.bind(dataFactory),
   blankNode: dataFactory.blankNode.bind(dataFactory),
   literal: dataFactory.literal.bind(dataFactory),
+  variable: dataFactory.variable.bind(dataFactory),
   defaultGraph: dataFactory.defaultGraph.bind(dataFactory),
   quad: dataFactory.quad.bind(dataFactory),
   dataset: datasetFactory.dataset.bind(datasetFactory),
@@ -51,7 +53,7 @@ for (const shape of targeted) {
   if (closed.join() !== "true") failures.push(`${shape.value} is not sh:closed`);
 }
 
-const validator = new Validator(shapes, { factory });
+const validator = new Validator(shapes, { factory, validations: sparqlValidations });
 
 const fixtureFiles = (await readdir(FIXTURES_DIR)).filter((file) => file.endsWith(".ttl")).sort();
 let checked = 0;

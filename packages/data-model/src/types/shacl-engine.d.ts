@@ -35,6 +35,11 @@ declare module "shacl-engine" {
   }
 }
 
+declare module "shacl-engine/sparql.js" {
+  export const validations: Iterable<[unknown, unknown]>;
+  export const targetResolvers: Iterable<[unknown, unknown]>;
+}
+
 declare module "@rdfjs/data-model" {
   import type { DataFactory } from "@rdfjs/types";
 

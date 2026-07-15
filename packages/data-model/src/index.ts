@@ -1,4 +1,6 @@
 export {
+  type MortgageResourceKind,
+  RESOURCE_TARGET_CLASSES,
   type ShaclReport,
   type ShaclViolation,
   type ValidateOptions,

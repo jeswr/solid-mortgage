@@ -29,6 +29,21 @@ mshape:AppraisalCredentialShape
   sh:targetClass mort:AppraisalCredential ;
   sh:closed true ;
   sh:ignoredProperties ( sec:proof ) ;
+  sh:sparql [
+    # Cross-node equality (inexpressible in core SHACL): the evidence report
+    # must evaluate the SAME property the credentialSubject claims, otherwise a
+    # valid-looking appraised value could be backed by an unrelated report.
+    sh:message "the appraisal evidence must evaluate the credentialSubject's mort:subjectProperty" ;
+    sh:select """
+      SELECT $this ?value WHERE {
+        $this <https://www.w3.org/2018/credentials#evidence> ?report .
+        ?report <https://spec.edmcouncil.org/fibo/ontology/FND/Relations/Relations/evaluates> ?value .
+        $this <https://www.w3.org/2018/credentials#credentialSubject> ?subject .
+        ?subject <https://solid-mortgage-vocab.vercel.app/mort#subjectProperty> ?property .
+        FILTER (?value != ?property)
+      }
+    """ ;
+  ] ;
   sh:property [
     sh:path rdf:type ;
     sh:hasValue cred:VerifiableCredential ;
@@ -44,6 +59,7 @@ mshape:AppraisalCredentialShape
     sh:minCount 1 ;
     sh:maxCount 1 ;
     sh:datatype xsd:dateTime ;
+    sh:lessThan cred:validUntil ;
   ] ;
   sh:property [
     sh:path cred:validUntil ;
@@ -174,6 +190,7 @@ mshape:AssetCredentialShape
     sh:minCount 1 ;
     sh:maxCount 1 ;
     sh:datatype xsd:dateTime ;
+    sh:lessThan cred:validUntil ;
   ] ;
   sh:property [
     sh:path cred:validUntil ;
@@ -581,6 +598,7 @@ mshape:CreditScoreCredentialShape
     sh:minCount 1 ;
     sh:maxCount 1 ;
     sh:datatype xsd:dateTime ;
+    sh:lessThan cred:validUntil ;
   ] ;
   sh:property [
     sh:path cred:validUntil ;
@@ -676,6 +694,7 @@ mshape:EmploymentIncomeCredentialShape
     sh:minCount 1 ;
     sh:maxCount 1 ;
     sh:datatype xsd:dateTime ;
+    sh:lessThan cred:validUntil ;
   ] ;
   sh:property [
     sh:path cred:validUntil ;
@@ -893,19 +912,47 @@ mshape:LoanApplicationShape
     sh:qualifiedMaxCount 1 ;
     sh:message "exactly one FIBO AmortizationType individual is required" ;
   ] ;
-  sh:property [
-    # Facet: cash-out status, refinance applications only.
-    sh:path dcterms:type ;
-    sh:qualifiedValueShape [
-      sh:in (
-        fibo-loan-reln-org:CashOutStatus-CashOut
-        fibo-loan-reln-org:CashOutStatus-LimitedCashOut
-        fibo-loan-reln-org:CashOutStatus-NoCashOut
-      )
-    ] ;
-    sh:qualifiedMinCount 0 ;
-    sh:qualifiedMaxCount 1 ;
-  ] .
+  # Facet: cash-out status is CONDITIONAL - exactly one on refinance
+  # applications, none otherwise (URLA section 4a).
+  sh:or (
+    [
+      sh:property [
+        sh:path dcterms:type ;
+        sh:hasValue fibo-loan-reln-org:MortgageLoanPurpose-LoanRefinancing ;
+      ] ;
+      sh:property [
+        sh:path dcterms:type ;
+        sh:qualifiedValueShape [
+          sh:in (
+            fibo-loan-reln-org:CashOutStatus-CashOut
+            fibo-loan-reln-org:CashOutStatus-LimitedCashOut
+            fibo-loan-reln-org:CashOutStatus-NoCashOut
+          )
+        ] ;
+        sh:qualifiedMinCount 1 ;
+        sh:qualifiedMaxCount 1 ;
+      ] ;
+    ]
+    [
+      sh:not [
+        sh:property [
+          sh:path dcterms:type ;
+          sh:hasValue fibo-loan-reln-org:MortgageLoanPurpose-LoanRefinancing ;
+        ] ;
+      ] ;
+      sh:property [
+        sh:path dcterms:type ;
+        sh:qualifiedValueShape [
+          sh:in (
+            fibo-loan-reln-org:CashOutStatus-CashOut
+            fibo-loan-reln-org:CashOutStatus-LimitedCashOut
+            fibo-loan-reln-org:CashOutStatus-NoCashOut
+          )
+        ] ;
+        sh:qualifiedMaxCount 0 ;
+      ] ;
+    ]
+  ) .
 `,
   "title-clear-credential": `@prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
@@ -938,6 +985,7 @@ mshape:TitleClearCredentialShape
     sh:minCount 1 ;
     sh:maxCount 1 ;
     sh:datatype xsd:dateTime ;
+    sh:lessThan cred:validUntil ;
   ] ;
   sh:property [
     sh:path cred:validUntil ;
@@ -1116,6 +1164,7 @@ mshape:ZkOperandAnchorShape
     sh:minCount 1 ;
     sh:maxCount 1 ;
     sh:datatype xsd:dateTime ;
+    sh:lessThan cred:validUntil ;
   ] ;
   sh:property [
     # Anchors are revoked via credentialStatus rather than expiring, but an

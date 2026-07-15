@@ -141,16 +141,44 @@ mshape:LoanApplicationShape
     sh:qualifiedMaxCount 1 ;
     sh:message "exactly one FIBO AmortizationType individual is required" ;
   ] ;
-  sh:property [
-    # Facet: cash-out status, refinance applications only.
-    sh:path dcterms:type ;
-    sh:qualifiedValueShape [
-      sh:in (
-        fibo-loan-reln-org:CashOutStatus-CashOut
-        fibo-loan-reln-org:CashOutStatus-LimitedCashOut
-        fibo-loan-reln-org:CashOutStatus-NoCashOut
-      )
-    ] ;
-    sh:qualifiedMinCount 0 ;
-    sh:qualifiedMaxCount 1 ;
-  ] .
+  # Facet: cash-out status is CONDITIONAL - exactly one on refinance
+  # applications, none otherwise (URLA section 4a).
+  sh:or (
+    [
+      sh:property [
+        sh:path dcterms:type ;
+        sh:hasValue fibo-loan-reln-org:MortgageLoanPurpose-LoanRefinancing ;
+      ] ;
+      sh:property [
+        sh:path dcterms:type ;
+        sh:qualifiedValueShape [
+          sh:in (
+            fibo-loan-reln-org:CashOutStatus-CashOut
+            fibo-loan-reln-org:CashOutStatus-LimitedCashOut
+            fibo-loan-reln-org:CashOutStatus-NoCashOut
+          )
+        ] ;
+        sh:qualifiedMinCount 1 ;
+        sh:qualifiedMaxCount 1 ;
+      ] ;
+    ]
+    [
+      sh:not [
+        sh:property [
+          sh:path dcterms:type ;
+          sh:hasValue fibo-loan-reln-org:MortgageLoanPurpose-LoanRefinancing ;
+        ] ;
+      ] ;
+      sh:property [
+        sh:path dcterms:type ;
+        sh:qualifiedValueShape [
+          sh:in (
+            fibo-loan-reln-org:CashOutStatus-CashOut
+            fibo-loan-reln-org:CashOutStatus-LimitedCashOut
+            fibo-loan-reln-org:CashOutStatus-NoCashOut
+          )
+        ] ;
+        sh:qualifiedMaxCount 0 ;
+      ] ;
+    ]
+  ) .

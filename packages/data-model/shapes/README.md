@@ -42,10 +42,21 @@ the shapes — the budget table and the shapes cannot drift.
   `schema:baseSalary`; the credit credential has no FIBO `RatingScore` node.
   The closed shapes make this foot-gun a validation error (decision 0005).
 - **VC 2.0 envelope**: `credentialSubject` must be an IRI (the borrower WebID —
-  holder binding, decision 0012), `validFrom`/`validUntil` are `xsd:dateTime`,
+  holder binding, decision 0012), `validFrom`/`validUntil` are `xsd:dateTime`
+  with `sh:lessThan` guarding against inverted validity windows,
   `credentialStatus` is required (Bitstring Status List per issuer; the
   anchor's status points at the ZK rail's own Schnorr-bound list, so no entry
   type is pinned yet).
+- **Cross-node equality via `sh:sparql`** (shacl-engine's SPARQL validations
+  are registered by `validate()` and `check:shapes`): the appraisal evidence
+  must `evaluates` the same property node the `credentialSubject` claims as
+  `mort:subjectProperty` — inexpressible in core SHACL.
+- **Vacuous-pass guard**: SHACL targeting means a document with no node of the
+  expected type conforms trivially. `validate(data, { expect: "<kind>" })`
+  fails instead; ALWAYS pass `expect` when validating untrusted pod RDF
+  (`RESOURCE_TARGET_CLASSES` is test-locked to the shapes' `sh:targetClass`).
+- **Conditional cash-out** (URLA §4a): `sh:or` requires exactly one
+  `CashOutStatus-*` individual on refinance applications and none otherwise.
 - **URLA controlled vocabularies are FIBO named individuals** (loan purpose,
   occupancy, amortization type, cash-out status) attached via `dcterms:type`
   with one qualified constraint per facet: FIBO's own
