@@ -208,7 +208,7 @@ grant + receipt + revocation trail.
 | MISMO RON identity standards | — | — (per-event proofing) | — | — | Adopted, V2 in flight | Identity proofing that *issues* a reusable credential |
 | Fannie D1C / Freddie AIM | — | — (per-lender re-pull) | — | — | Production, industry-wide | Same verified data, held by the borrower, reused across lenders, minimally disclosed |
 | FHFA Velocity TechSprint | — | — | — | — | Ideas stage | A running implementation of its "direct-to-source + trust" themes |
-| FormFree Passport (Web5) | wallet only | single-issuer | — | — | Product live; Web5 substrate wound down (11/2024) | Multi-issuer open-standard VCs, general pod, ZK pre-qual, full journey |
+| FormFree Passport (Web5) | wallet only | single-issuer | — | — | Still marketed (operating status unverified); Web5 substrate wound down (11/2024) | Multi-issuer open-standard VCs, general pod, ZK pre-qual, full journey |
 | Bloom | — (chain-anchored) | intended | — | — | Dormant since SEC 2022 | Standards-based, no token, lender-rail-shaped |
 | Trinsic (platform era) | wallet only | horizontal | — | — | Pivoted 2024 | Vertical anchor ecosystem (the missing ingredient its founder named) |
 | Bonifii MemberPass | — | within consortium | — | — | Acquired (Metallicus), auth-only | Data credentials + store, not just login KYC |
@@ -225,7 +225,7 @@ grant + receipt + revocation trail.
 ### The three objection-handling sentences (feed sm-58)
 
 1. **"Who else has done this?"** — Everyone has done a piece: the GSEs proved verified digital
-   data saves 12 days, FormFree proved a mortgage vendor will issue borrower-held VCs, Athumi
+   data can save up to 12 days, FormFree proved a mortgage vendor will issue borrower-held VCs, Athumi
    proved production pods at government scale, GLEIF+BIS proved reusable credentials kill
    repeated onboarding, and the EU is legislating wallet acceptance into every bank. Nobody
    has put the pieces together — that is this showcase.
