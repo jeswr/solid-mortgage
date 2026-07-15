@@ -15,6 +15,13 @@
     "test": "vitest run --root . --config ../../vitest.config.ts",
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },
+  "peerDependencies": {
+    "react": "^19.2.7"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.17",
+    "react": "^19.2.7"
+  },
   "dependencies": {
     "@jeswr/app-shell": "github:jeswr/app-shell#4b6509919cd822d638a7736ddb45ba7c52c40dca",
     "@jeswr/guarded-fetch": "github:jeswr/guarded-fetch#81926b4481310ff74a5c02c3c4eaa2a51ce2dee6",
