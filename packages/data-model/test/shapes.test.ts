@@ -171,6 +171,41 @@ describe("expect option (untrusted pod RDF must not conform vacuously)", () => {
     expect(report.conforms).toBe(false);
   });
 
+  test("a decoy typed node cannot stand in for an untyped root (focusNode)", async () => {
+    // The document holds a fully valid credit-score credential (the decoy),
+    // but the resource the caller asked about carries no type at all.
+    const decoy = fixture("credit-score-credential.valid");
+    const root = "https://alex.pod.example/credentials/credit-forged";
+    const data = `${decoy}\n<${root}> <https://solid-mortgage-vocab.vercel.app/mort#creditScoreValue> 9999 .`;
+
+    const kindOnly = await validate(data, { expect: "credit-score-credential" });
+    expect(kindOnly.conforms).toBe(true); // the documented residual hazard
+
+    const bound = await validate(data, {
+      expect: "credit-score-credential",
+      focusNode: root,
+    });
+    expect(bound.conforms).toBe(false);
+    expect(bound.violations[0]?.message).toContain(root);
+    expect(bound.violations[0]?.focusNode).toBe(root);
+  });
+
+  test("focusNode without expect is a usage error", async () => {
+    await expect(
+      validate("", { focusNode: "https://alex.pod.example/credentials/credit" }),
+    ).rejects.toThrow(RangeError);
+  });
+
+  test("a typed focusNode is then fully validated by targeting", async () => {
+    // Root carries the right type but violates the shape: binding the root
+    // must not weaken validation.
+    const report = await validate(fixture("credit-score-credential.invalid"), {
+      expect: "credit-score-credential",
+      focusNode: "https://alex.pod.example/credentials/credit",
+    });
+    expect(report.conforms).toBe(false);
+  });
+
   test(
     "without expect, an empty document conforms (the documented hazard)",
     async () => {

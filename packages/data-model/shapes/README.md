@@ -53,8 +53,11 @@ the shapes — the budget table and the shapes cannot drift.
   `mort:subjectProperty` — inexpressible in core SHACL.
 - **Vacuous-pass guard**: SHACL targeting means a document with no node of the
   expected type conforms trivially. `validate(data, { expect: "<kind>" })`
-  fails instead; ALWAYS pass `expect` when validating untrusted pod RDF
-  (`RESOURCE_TARGET_CLASSES` is test-locked to the shapes' `sh:targetClass`).
+  fails instead, and `focusNode: "<root IRI>"` binds the guard to the intended
+  resource so a decoy typed node cannot stand in for an untyped root. ALWAYS
+  pass `expect` when validating untrusted pod RDF, plus `focusNode` whenever
+  the root IRI is known (`RESOURCE_TARGET_CLASSES` is test-locked to the
+  shapes' `sh:targetClass`).
 - **Conditional cash-out** (URLA §4a): `sh:or` requires exactly one
   `CashOutStatus-*` individual on refinance applications and none otherwise.
 - **URLA controlled vocabularies are FIBO named individuals** (loan purpose,

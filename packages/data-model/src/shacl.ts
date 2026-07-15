@@ -64,9 +64,16 @@ export interface ValidateOptions {
   /**
    * The resource kind this document is supposed to contain. When set, a
    * document with no node typed as that kind's target class FAILS instead of
-   * conforming vacuously. ALWAYS set this when validating untrusted pod RDF.
+   * conforming vacuously. ALWAYS set this when validating untrusted pod RDF,
+   * and pass `focusNode` too whenever the root IRI is known.
    */
   readonly expect?: MortgageResourceKind;
+  /**
+   * IRI of the node that must BE the expected resource. Without it, `expect`
+   * only proves that SOME node has the target type - a decoy node of the
+   * right type beside an untyped root would still pass. Requires `expect`.
+   */
+  readonly focusNode?: string;
 }
 
 /**
@@ -147,19 +154,30 @@ export async function validate(
       ? new Store(new Parser({ format: "text/turtle", baseIRI: options.baseIRI }).parse(data))
       : data;
 
+  if (options.focusNode !== undefined && options.expect === undefined) {
+    throw new RangeError("validate(): focusNode requires expect");
+  }
+
   if (options.expect !== undefined) {
     const targetClass = RESOURCE_TARGET_CLASSES[options.expect];
+    // Binding to the intended root closes the decoy bypass: once the root is
+    // required to carry the target type, SHACL targeting validates it.
     const typed = dataset.match(
-      null,
+      options.focusNode === undefined ? null : dataFactory.namedNode(options.focusNode),
       dataFactory.namedNode(RDF_TYPE),
       dataFactory.namedNode(targetClass),
     );
     if (typed.size === 0) {
+      const where =
+        options.focusNode === undefined
+          ? "expected at least one node"
+          : `expected <${options.focusNode}> to be`;
       return {
         conforms: false,
         violations: [
           {
-            message: `no ${options.expect} resource found: expected at least one node typed <${targetClass}> (SHACL targeting would conform vacuously)`,
+            message: `no ${options.expect} resource found: ${where} typed <${targetClass}> (SHACL targeting would conform vacuously)`,
+            focusNode: options.focusNode,
             path: [RDF_TYPE],
           },
         ],
