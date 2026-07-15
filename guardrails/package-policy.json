@@ -4,7 +4,16 @@
   "minAgeDays": 30,
   "npm": {
     "deny": ["request", "moment", "left-pad", "colors", "node-fetch"],
-    "remoteGitAllow": [],
+    "remoteGitAllow": [
+      "github:jeswr/app-shell#4b6509919cd822d638a7736ddb45ba7c52c40dca",
+      "github:jeswr/guarded-fetch#81926b4481310ff74a5c02c3c4eaa2a51ce2dee6",
+      "github:jeswr/rdf-serialize#9c3a34dd93f318fd00d9e6f22081123e502a0578",
+      "github:jeswr/solid-auth-core#79d90556df6319b5a3699d877be56769c55fe15e",
+      "github:jeswr/solid-components#fa6461a7cd3fd356ba5d2ab689186662e5c59442",
+      "github:jeswr/solid-odrl#a116c5993e3cdfdaf8d16f2d5b411b92c9c932e3",
+      "github:jeswr/solid-session-restore#72755147e627e853b9600fc301fe2d06b9433c42",
+      "github:jeswr/solid-vc#bee27d508372e64021e23bdaeb2d79c06e08cf18"
+    ],
     "denyReasons": {
       "request": "deprecated since 2020 - use native fetch / undici",
       "moment": "maintenance mode - use Temporal / date-fns / Luxon",

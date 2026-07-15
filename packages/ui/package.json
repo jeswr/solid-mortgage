@@ -1,0 +1,23 @@
+{
+  "name": "@mortgage/ui",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "lint": "biome check src test package.json tsconfig.json",
+    "test": "vitest run --root . --config ../../vitest.config.ts",
+    "typecheck": "tsc --project tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@jeswr/app-shell": "github:jeswr/app-shell#4b6509919cd822d638a7736ddb45ba7c52c40dca",
+    "@jeswr/guarded-fetch": "github:jeswr/guarded-fetch#81926b4481310ff74a5c02c3c4eaa2a51ce2dee6",
+    "@jeswr/solid-components": "github:jeswr/solid-components#fa6461a7cd3fd356ba5d2ab689186662e5c59442"
+  }
+}
