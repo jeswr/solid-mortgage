@@ -40,9 +40,12 @@ internals, ALTA title commitment detail, eNote/MERS eRegistry transfer, insuranc
   WebID. Dev/test pods run on sparq's WASM Solid server (§7). Deployed demo (decision 0011):
   **Mode 1 default = per-visitor in-browser sparq-wasm pods** in a SharedWorker runtime on ONE
   shared domain (Chrome storage partitioning + the vercel.app PSL entry make cross-origin pod
-  sharing impossible — hence multi-zones, §8); **Mode 2 live multi-actor = one hosted CSS 7.1.9**
-  (pod host + real Solid-OIDC issuer, seeded, nightly reset, framed as an interop proof).
-  Partner phase migrates to sparq-lws-core native + Keycloak once the sm-5 upstream items land.
+  sharing impossible — hence multi-zones, §8); **Mode 2a = org/stakeholder pods on a hard
+  read-only multiplexed sparq-wasm Vercel Node/Fluid function** (seeded WAC public-read,
+  GET/HEAD/OPTIONS + query-only /sparql, $0/mo, org WebIDs dereferenceable — decision 0013);
+  **Mode 2b = deploy-on-demand CSS** only for real-login beats and facilitated multi-actor
+  sessions. Partner phase migrates to sparq-lws-core native + Keycloak once the sm-5 upstream
+  items land.
 - **Credentials**: W3C VC 2.0 JSON-LD via `@jeswr/solid-vc`; ZK-participating credentials
   dual-signed at seed time by sparq native tooling (decision 0004). Stored in the pod under
   `/credentials/`, access-controlled; ZK witness inputs beside them, borrower-only.
@@ -104,7 +107,10 @@ optics review is a P1 bead before deploy (M3).
 ## 7. Dev/test infrastructure
 
 Dev + e2e Solid server = sparq `@jeswr/solid-server` (sparq-lws-wasm), vendored as a packed
-tarball until Jesse's npm bootstrap publish (needs:user). ONE harness module in
+tarball until Jesse's npm bootstrap publish (needs:user). The dev host converges on a
+Fastify-mounted pod (upstream ask [sparq#2323](https://github.com/sparq-org/sparq/issues/2323):
+`createSolidPod().dispatch()` + first-party Fastify plugin; stopgap plugin in solid-kit only
+if needed sooner — decision 0013). ONE harness module in
 `packages/solid-kit` owns boot + account/pod seeding ({baseUrl, accounts, stop()},
 provisionAccount) so the server implementation is a single-module swap (decision 0009);
 per-suite in-memory instances on random ports; multi-identity WAC tests lift sparq's
