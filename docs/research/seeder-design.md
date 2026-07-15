@@ -326,10 +326,12 @@ export interface PodManifest {
 export interface ResourceOutcome {
   path: string; url: string;
   status: "created" | "skipped" | "replaced" | "failed" | "unwritten";  // last two only in SeedError
-  group?: number;                          // index into groups when expander-produced
+  group?: string;                          // GroupOutcome.id when expander-produced
 }
 export interface GroupOutcome {
-  index: number;                           // expander position in PodSpec.resources
+  /** Stable id shared with ResourceOutcome.group — derived from the expander's position
+   *  in PodSpec.resources (one index domain, no dense-array ambiguity). */
+  id: string;
   members: readonly string[];              // member paths
   status: "written" | "skipped" | "partial";  // "partial" only in SeedError
 }
@@ -340,8 +342,9 @@ export function seedPods(options: SeedOptions): Promise<SeedManifest>;
  *  including "failed"/"unwritten" resources and "partial" groups — rides along so the
  *  §4.2 recovery path (replace re-run) has the full picture. */
 export class SeedError extends Error {
-  readonly manifest: SeedManifest;
-  readonly cause: unknown;
+  constructor(message: string, readonly manifest: SeedManifest, options?: { cause?: unknown }) {
+    super(message, options);
+  }
 }
 ```
 
