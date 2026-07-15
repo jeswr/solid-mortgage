@@ -101,6 +101,20 @@ describe("check-packages policy mode", () => {
     },
   );
 
+  it("rejects an unapproved HTTPS Git or tarball source", () => {
+    const result = scan({
+      dependencies: { "safe-looking-name": "https://example.com/request.tgz" },
+    });
+    expect(result.status).toBe(1);
+    expect(result.stdout + result.stderr).toMatch(/not explicitly allowed/);
+  });
+
+  it("treats git+file dependencies as local sources", () => {
+    expect(
+      scan({ dependencies: { "safe-local-package": "git+file:../safe-local-package" } }).status,
+    ).toBe(0);
+  });
+
   it("resolves scoped npm aliases", () => {
     expect(scan({ dependencies: { formatter: "npm:@biomejs/biome@^2.0.0" } }).status).toBe(0);
   });

@@ -11,8 +11,9 @@ import { fileURLToPath } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(HERE, "..", "..");
-const LOCAL_SPEC = /^(file:|link:|workspace:|portal:)/;
-const REMOTE_GIT_SPEC = /^(github:|gitlab:|bitbucket:|gist:|git:|git\+|[\w.-]+\/[\w.-]+(#.+)?$)/;
+const LOCAL_SPEC = /^(file:|link:|workspace:|portal:|git\+file:|\.{0,2}\/|\/|~\/)/;
+const REMOTE_GIT_SPEC =
+  /^(https?:|github:|gitlab:|bitbucket:|gist:|git:|git\+(?!file:)|[\w.-]+\/[\w.-]+(#.+)?$)/;
 
 function parseArgs(argv) {
   const options = {
