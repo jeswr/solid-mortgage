@@ -14,14 +14,24 @@ const VOCAB_TTL = path.join(ROOT, "vocab", "mort.ttl");
 const MORT_NAMESPACE = "https://solid-mortgage-vocab.vercel.app/mort#";
 const FULL_IRI_PATTERN = /https:\/\/solid-mortgage-vocab\.vercel\.app\/mort#([A-Za-z][\w.-]*)/g;
 const PREFIXED_PATTERN = /\bmort:([A-Za-z][\w-]*)/g;
-const RDF_EXTENSIONS = new Set([
+// Prefixed-name (mort:X) scanning covers RDF data plus code/config, where a
+// compact IRI in a string or JSON-LD context must also resolve to a defined term.
+const PREFIXED_SCAN_EXTENSIONS = new Set([
+  ".cjs",
+  ".js",
+  ".json",
   ".jsonld",
+  ".jsx",
+  ".mjs",
+  ".mts",
   ".nq",
   ".nt",
   ".owl",
   ".rdf",
   ".shaclc",
   ".trig",
+  ".ts",
+  ".tsx",
   ".ttl",
 ]);
 const LOCAL_NAME_TRAILER = /[.-]+$/;
@@ -60,8 +70,8 @@ let referenceCount = 0;
 for (const file of trackedFiles()) {
   const text = await readFile(file, "utf8").catch(() => null);
   if (text === null) continue;
-  const isRdf = RDF_EXTENSIONS.has(path.extname(file).toLowerCase());
-  const patterns = isRdf ? [FULL_IRI_PATTERN, PREFIXED_PATTERN] : [FULL_IRI_PATTERN];
+  const scanPrefixed = PREFIXED_SCAN_EXTENSIONS.has(path.extname(file).toLowerCase());
+  const patterns = scanPrefixed ? [FULL_IRI_PATTERN, PREFIXED_PATTERN] : [FULL_IRI_PATTERN];
   for (const [lineIndex, line] of text.split("\n").entries()) {
     for (const pattern of patterns) {
       for (const match of line.matchAll(pattern)) {

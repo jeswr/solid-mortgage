@@ -7,7 +7,7 @@
     "build": "node scripts/generate.mjs && next build",
     "lint": "biome check app lib scripts test package.json tsconfig.json next.config.mjs",
     "test": "vitest run --root . --config ../../vitest.config.ts",
-    "typecheck": "tsc --project tsconfig.json --noEmit"
+    "typecheck": "node scripts/generate.mjs && tsc --project tsconfig.json --noEmit"
   },
   "dependencies": {
     "negotiator": "^1.0.0",
