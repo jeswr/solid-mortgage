@@ -53,8 +53,8 @@ hands the borrower the keys.
 borrower, copied into every downstream party's systems (`mortgage-process.md` §3). The result:
 the Mr. Cooper breach exposed 14.7 million people (2023) [38]; First American exposed 885
 million title documents (2019, $1M NYDFS penalty) [39]. Data that is accessed in place rather
-than copied by default can only leak from the places that actually hold it — and the receipted
-model makes those places enumerable.
+than copied by default means far fewer standing copies to breach — and every authorization
+that was ever granted is on the record.
 
 And the borrower — the person all this data is about — holds none of it, cannot see who has
 what, and re-supplies the same documents at pre-approval, application, underwriting, and again
@@ -234,8 +234,10 @@ distinguishes a standards community from a vendor pitch.
   grants and revocations (a complete authorization history), not every individual read.
 - Receipted access reduces unnecessary durable copies; it cannot technically prevent an
   authorised recipient retaining what it fetched, and regulated parties (lenders, servicers)
-  still keep what retention rules require. The honest claim is that holdings become scoped,
-  visible, and revocable — not that they drop to zero.
+  still keep what retention rules require. The honest claim: **authorizations** become
+  scoped, enumerable, and revocable. What a recipient retained is outside the ledger's
+  sight — copies are fewer, not zero, and revoking a grant does not claw back a retained
+  copy.
 
 **ZK honesty panel (repeated verbatim on every proving surface — decision 0005, zkp-fit).**
 - The proving stack is **research-grade**: internally re-audited, external cryptographer
