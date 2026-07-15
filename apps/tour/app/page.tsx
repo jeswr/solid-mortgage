@@ -9,7 +9,7 @@ export default function Home() {
       <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
         {site.appName}
       </h1>
-      <p className="mt-5 text-lg text-muted-foreground">modelled on {site.organization}</p>
+      <p className="mt-5 text-lg text-muted-foreground">by the {site.organization}</p>
     </main>
   );
 }

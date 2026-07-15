@@ -1,31 +1,16 @@
 export const uiPackage = "@mortgage/ui";
 
-export interface ConceptDemoBannerProps {
-  organization: string;
-}
-
-/** Persistent source- and offer-negation required on every branded surface. */
-export function ConceptDemoBanner({ organization }: ConceptDemoBannerProps) {
-  return (
-    <div
-      data-concept-demo-banner=""
-      style={{
-        background: "#0f172a",
-        bottom: 0,
-        color: "#f8fafc",
-        fontFamily: "ui-sans-serif, system-ui, sans-serif",
-        fontSize: "0.875rem",
-        fontWeight: 600,
-        left: 0,
-        lineHeight: 1.5,
-        padding: "0.75rem 1rem",
-        position: "fixed",
-        right: 0,
-        textAlign: "center",
-        zIndex: 50,
-      }}
-    >
-      Concept demo - this is not {organization}. Not an offer of credit.
-    </div>
-  );
-}
+export { AppShell, type AppShellProps } from "./app-shell";
+export { ConceptDemoBanner, type ConceptDemoBannerProps } from "./concept-demo-banner";
+export { ConsentInterstitial, type ConsentInterstitialProps } from "./consent-interstitial";
+export {
+  CredentialCard,
+  type CredentialCardProps,
+  type CredentialStatus,
+} from "./credential-card";
+export { DemoLockedField, type DemoLockedFieldProps } from "./demo-locked-field";
+export * from "./disclaimers";
+export { HonestyPanel, type HonestyPanelProps } from "./honesty-panel";
+export { IllustrativeFigure, type IllustrativeFigureProps } from "./illustrative-figure";
+export { StatCard, type StatCardProps } from "./stat-card";
+export * from "./themes";

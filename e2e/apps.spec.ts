@@ -1,12 +1,23 @@
 import { type ChildProcess, spawn } from "node:child_process";
 import { createServer } from "node:net";
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
+import {
+  bannerFullText,
+  copyText,
+  type DisclaimerVariant,
+  INTERSTITIAL_CONTINUE_LABEL,
+  INTERSTITIAL_HEADING,
+  interstitialParagraphs,
+} from "../packages/ui/src/disclaimers";
 
 interface AppDefinition {
   appName: string;
   organization: string;
   packageName: string;
   path: string;
+  role?: string;
+  variant?: DisclaimerVariant;
+  hasInterstitial?: boolean;
   zoneEnv?: string;
 }
 
@@ -16,12 +27,15 @@ const apps: AppDefinition[] = [
     organization: "EDMA Solid Community of Practice",
     packageName: "@mortgage/app-tour",
     path: "/",
+    variant: "own",
   },
   {
     appName: "Data Vault",
+    hasInterstitial: true,
     organization: "Verizon",
     packageName: "@mortgage/app-wallet",
     path: "/wallet",
+    role: "consumer data custodian",
     zoneEnv: "MORTGAGE_WALLET_ZONE_URL",
   },
   {
@@ -144,6 +158,24 @@ async function stopApps() {
   }
 }
 
+async function expectBannerVisible(page: Page, app: AppDefinition) {
+  const banner = page.locator("[data-concept-demo-banner]");
+  await expect(banner).toBeVisible();
+  await expect(banner).toContainText(
+    bannerFullText({ organization: app.organization, role: app.role, variant: app.variant }),
+  );
+  await expect(banner.getByRole("link", { name: "About this demo" })).toBeVisible();
+}
+
+async function acknowledgeInterstitial(page: Page, organization: string) {
+  const dialog = page.getByRole("dialog", { name: INTERSTITIAL_HEADING });
+  await expect(dialog).toBeVisible();
+  // Source-negation paragraph (regn-optics §4.2) must be present verbatim.
+  await expect(dialog).toContainText(copyText(interstitialParagraphs(organization)[1]));
+  await dialog.getByRole("button", { name: INTERSTITIAL_CONTINUE_LABEL }).click();
+  await expect(dialog).toBeHidden();
+}
+
 test.describe("app concept-demo banners", () => {
   test.describe.configure({ mode: "serial" });
 
@@ -164,11 +196,32 @@ test.describe("app concept-demo banners", () => {
       const response = await page.goto(`${shellOrigin}${app.path}`);
       expect(response?.status(), logsByPackage.get("@mortgage/app-tour")?.join("")).toBe(200);
       await expect(page.getByRole("heading", { level: 1, name: app.appName })).toBeVisible();
-      await expect(
-        page.getByText(`Concept demo - this is not ${app.organization}. Not an offer of credit.`, {
-          exact: true,
-        }),
-      ).toBeVisible();
+      if (app.hasInterstitial === true) {
+        await acknowledgeInterstitial(page, app.organization);
+        // Consent is cookie-persisted: the interstitial must not reappear on reload.
+        await page.reload();
+        await expect(page.getByRole("dialog", { name: INTERSTITIAL_HEADING })).toBeHidden();
+      }
+      await expectBannerVisible(page, app);
     });
   }
+
+  test("@mortgage/app-tour renders the banner on unknown routes (404) @smoke", async ({ page }) => {
+    const response = await page.goto(`${shellOrigin}/route-that-does-not-exist`);
+    expect(response?.status()).toBe(404);
+    await expect(page.getByRole("heading", { level: 1, name: "Page not found" })).toBeVisible();
+    await expectBannerVisible(page, apps[0]);
+  });
+
+  test("@mortgage/app-wallet renders the banner on unknown routes (404) @smoke", async ({
+    page,
+  }) => {
+    const wallet = apps[1];
+    const response = await page.goto(`${shellOrigin}/wallet/route-that-does-not-exist`);
+    expect(response?.status()).toBe(404);
+    // Fresh browser context: the interstitial shows again on the error route too.
+    await acknowledgeInterstitial(page, wallet.organization);
+    await expect(page.getByRole("heading", { level: 1, name: "Page not found" })).toBeVisible();
+    await expectBannerVisible(page, wallet);
+  });
 });

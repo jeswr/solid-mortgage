@@ -1,6 +1,6 @@
 "use client";
 
-import { ConceptDemoBanner } from "@mortgage/ui";
+import { ConceptDemoBanner, orgThemes } from "@mortgage/ui";
 import { site } from "./site";
 
 export default function GlobalError({ reset }: { reset: () => void }) {
@@ -21,7 +21,7 @@ export default function GlobalError({ reset }: { reset: () => void }) {
             Try again
           </button>
         </main>
-        <ConceptDemoBanner organization={site.organization} />
+        <ConceptDemoBanner organization={site.organization} orgRole={orgThemes.wallet.role} />
       </body>
     </html>
   );
