@@ -67,6 +67,16 @@ describe("check-packages policy mode", () => {
     expect(result.stdout + result.stderr).toMatch(/request/);
   });
 
+  it("checks an inferred repository name in an SCP-style SSH Git spec", () => {
+    const result = scan({
+      dependencies: {
+        "safe-looking-name": "git+ssh://git@github.com:example/request.git#abc1234",
+      },
+    });
+    expect(result.status).toBe(1);
+    expect(result.stdout + result.stderr).toMatch(/request/);
+  });
+
   it("resolves scoped npm aliases", () => {
     expect(scan({ dependencies: { formatter: "npm:@biomejs/biome@^2.0.0" } }).status).toBe(0);
   });

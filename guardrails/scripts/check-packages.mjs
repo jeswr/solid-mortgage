@@ -65,8 +65,10 @@ function inferGitPackageName(spec) {
   } else if (/^[\w.-]+\/[\w.-]+(#.+)?$/.test(spec)) {
     pathname = spec.split("#")[0];
   } else if (/^git(\+|:)/.test(spec)) {
+    const normalizedSpec = spec.replace(/^git\+/, "");
+    const scpStyle = normalizedSpec.match(/^ssh:\/\/[^/]+:([^#]+)(?:#.*)?$/);
     try {
-      pathname = new URL(spec.replace(/^git\+/, "")).pathname;
+      pathname = scpStyle?.[1] ?? new URL(normalizedSpec).pathname;
     } catch {
       return null;
     }
