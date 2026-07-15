@@ -1,0 +1,19 @@
+diff --git a/package.json b/package.json
+index e6bdc9b..f891157 100644
+--- a/package.json
++++ b/package.json
+@@ -10,7 +10,13 @@
+     ".": {
+       "types": "./src/index.d.ts",
+       "default": "./src/index.js"
+-    }
++    },
++    "./http": "./src/http.js",
++    "./wasm": {
++      "types": "./wasm/sparq_lws_wasm.d.ts",
++      "default": "./wasm/sparq_lws_wasm.js"
++    },
++    "./wasm/*": "./wasm/*"
+   },
+   "bin": {
+     "solid-server": "./bin/solid-server.js"

@@ -7,6 +7,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing.d.ts",
+      "import": "./dist/testing.js"
     }
   },
   "scripts": {
@@ -18,6 +22,12 @@
   "dependencies": {
     "@jeswr/guarded-fetch": "github:jeswr/guarded-fetch#81926b4481310ff74a5c02c3c4eaa2a51ce2dee6",
     "@jeswr/solid-auth-core": "github:jeswr/solid-auth-core#79d90556df6319b5a3699d877be56769c55fe15e",
-    "@jeswr/solid-session-restore": "github:jeswr/solid-session-restore#72755147e627e853b9600fc301fe2d06b9433c42"
+    "@jeswr/solid-server": "file:vendor/jeswr-solid-server-0.1.0.tgz",
+    "@jeswr/solid-session-restore": "github:jeswr/solid-session-restore#72755147e627e853b9600fc301fe2d06b9433c42",
+    "get-port": "^7.1.0",
+    "jose": "^5.10.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.2"
   }
 }
