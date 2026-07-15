@@ -2,11 +2,12 @@
   "name": "@mortgage/app-tour",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "biome check app lib package.json tsconfig.json next.config.ts postcss.config.mjs components.json vercel.json",
+    "lint": "biome check app lib test package.json tsconfig.json next.config.ts postcss.config.mjs components.json vercel.json",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests --root . --config ../../vitest.config.ts"
   },
