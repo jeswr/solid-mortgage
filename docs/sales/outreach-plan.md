@@ -94,8 +94,10 @@ one-sheet; link the per-stakeholder demo cut once sm-59 lands.
 > Why now: originating a loan costs ~$11,600 and takes 41–44 days, and the GSEs' own
 > programmes have already proved verified digital data cuts up to 12 days and $165–$388 per
 > loan. The attached one-pager shows your seat, the proposition, and what building it for
-> real would entail — including the CDMC conformance frame your data organisation already
-> works within.
+> real would entail — including how the partner phase anchors to CDMC, EDMA's own
+> data-management assessment framework. *(Members: "the framework your data organisation
+> already works within"; external targets: "the framework EDMA's member organisations
+> assess against" — do not assert an existing CDMC relationship for non-members.)*
 >
 > **The ask:** [SPECIFIC ASK — §2 table]. Could we set up [NEXT STEP] in the next few weeks?
 >
@@ -210,8 +212,10 @@ consumer. Trinsic's founder's own post-mortem names the cause: no anchor vertica
 concentration (prior-art §4). Bloom was token-financed and ended in an SEC settlement
 (prior-art §4). The land-registry DLT pilots (HMLR, Lantmäteriet) were ledger-centric with
 nothing consumer-held — and notably, HMLR's non-DLT digital-deed slice *did* ship (prior-art
-§6). None had an anchor vertical, a user-held store, or privacy tech; we start from all
-three. Mortgage supplies exactly what the failures lacked: an $11,600-per-loan cost problem,
+§6). None combined an anchor vertical, a user-held store, and privacy tech — the land-registry
+pilots had the vertical but nothing consumer-held; the platforms had the technology but no
+vertical — we start from all three. Mortgage supplies exactly what the failures lacked: an
+$11,600-per-loan cost problem,
 existing GSE-approved verifier roles to map issuers onto, and regulation pushing wallet
 acceptance (prior-art §4, lesson).
 
@@ -239,9 +243,11 @@ store + ZK + receipts, today — before their competitors get there.
 Lead with the honesty panel; it is repeated verbatim on every proving surface (master
 narrative §6; decision 0005): the proving stack is **research-grade** — internally
 re-audited, external cryptographer sign-off still pending; a passing proof is not a
-production guarantee. The honest claim is "the value is not disclosed and cannot be forged",
-*not* "the verifier cannot possibly learn it" — for low-entropy values (a credit score has
-551 possible values) a determined verifier could enumerate candidates. Some composed proofs
+production guarantee. The honest claim is "the value is not disclosed and cannot be forged"
+— where "cannot be forged" means the stack verifies issuer-bound proofs under its documented
+cryptographic assumptions, subject to that pending external audit — *not* "the verifier
+cannot possibly learn it": for low-entropy values (a credit score has 551 possible values) a
+determined verifier could enumerate candidates. Some composed proofs
 are precomputed offline and verified live; the screen labels them "proved offline · verified
 live", and a live proof only counts alongside its issuer-signed anchor credential. Every
 partner one-pager already gates ZK productionisation on external audit. On the broader
