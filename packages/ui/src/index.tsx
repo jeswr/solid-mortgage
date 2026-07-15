@@ -1,3 +1,5 @@
+export const uiPackage = "@mortgage/ui";
+
 export interface ConceptDemoBannerProps {
   organization: string;
 }
