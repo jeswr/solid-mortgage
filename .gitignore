@@ -16,3 +16,4 @@ test-results/
 .pnpm-store/
 .beads/drain.log
 .beads/drain.lock/
+.claude/worktrees/
