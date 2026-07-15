@@ -2,6 +2,10 @@
   "$schema": "https://turborepo.dev/schema.json",
   "globalDependencies": ["biome.json", "tsconfig.base.json"],
   "tasks": {
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**", "!.next/cache/**", "out/**", "generated/**"]
