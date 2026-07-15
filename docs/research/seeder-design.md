@@ -95,10 +95,13 @@ Overrides are exact values for named `(shape, instance, propertyPath)` coordinat
   inside the conformance boundary, not an escape hatch.
 - **Identity pins are two distinct kinds** (so §4.2 rebasing stays well-defined):
   `{fragment}` pins the instance's *destination-relative* name (rewritten to
-  `{resource IRI}#{fragment}` at seed time), while `{external}` pins a *real, absolute,
-  dereferenceable* IRI (e.g. the persona's WebID) that rebasing preserves verbatim and the
-  no-minted-IRIs lint covers. Any other absolute IRI — in particular one under the
-  placeholder base — is rejected at generation time.
+  `{resource IRI}#{fragment}` at seed time), while `{external}` pins a *real, absolute* IRI
+  (e.g. the persona's WebID) that rebasing preserves verbatim. Because a runtime `NamedNode`
+  is invisible to source lints, external pins are **rejected unless the caller-supplied
+  `externalIriPolicy` admits them** (default: reject all). The policy is backed by an explicit
+  registry in the consuming repo's source — persona WebIDs etc. — which IS what the repo's
+  IRI-dereferenceability lint HEAD-checks; runtime enforcement and source lint together close
+  the minted-IRI hole. Absolute IRIs under the placeholder base are always rejected.
 - **Non-perturbation:** because streams are coordinate-keyed (§3.1), pinning one field never
   changes any sibling value. Tested by golden diff: flip one override, assert the delta is
   exactly that field.
@@ -146,13 +149,14 @@ Two layers, with distinct dependency postures:
 - **In core (always on, zero extra deps):** the driving strategy checks the *conjunctive*
   facets of the property it generated (§3.4) and errors loudly on any documented-unsupported
   constraint — nonconforming data is never emitted silently.
-- **Independent validation (injected):** the merged output can additionally be checked by a
-  real SHACL engine so the generator is never its own referee. The engine is **injected
-  through the API** (`validator?: ShaclValidator`), not a hard dependency of the core — a
-  `@jeswr/synthetic-rdf/validate` subpath export adapts `shacl-engine` for callers that want
-  the one-liner. The package's own test suite always runs it (sm-63 criterion 5); seeding
-  scripts in consuming repos pass the adapter; production/browser callers that omit it pay no
-  bundle cost and still get the in-core checks.
+- **Independent validation (injected, required by default):** the merged output is checked by
+  a real SHACL engine so the generator is never its own referee — in-core checks alone cannot
+  catch bugs in their own targeting/constraint logic. `generate()` **requires** a
+  `ShaclValidator`; the engine is injected (a `@jeswr/synthetic-rdf/validate` subpath export
+  adapts `shacl-engine` for the one-liner) so the core still has no hard engine dependency.
+  Skipping it is an explicit, greppable act: `generateUnchecked()` — same signature minus the
+  validator — exists for bundle-sensitive browser paths whose exact inputs already passed a
+  checked golden in CI, and its name is the warning label.
 
 ### 3.6 API sketch
 
@@ -170,7 +174,11 @@ export interface SyntheticRdfOptions {
   mintIri?: (shape: NamedNode, index: number, base: string) => NamedNode;
   plugins?: readonly ValueGenerator[];     // tier-7 deterministic value-quality plugins
   maxDepth?: number;                       // sh:node recursion budget (default 3)
-  validator?: ShaclValidator;              // injected independent SHACL check (§3.5)
+  validator: ShaclValidator;               // REQUIRED independent SHACL check (§3.5)
+  /** {external} identity pins are accepted ONLY if this policy admits them (§3.3).
+   *  Default: reject all. The registry the caller supplies lives in source, where the
+   *  repo's IRI-dereferenceability lint covers it. */
+  externalIriPolicy?: (iri: NamedNode) => boolean;
 }
 
 /** Adapter seam so the core never hard-depends on a SHACL engine. */
@@ -204,7 +212,9 @@ export interface SyntheticRdfResult {
   toTurtle(options?: { prefixes?: Readonly<Record<string, string>>; baseIri?: string }): string;
 }
 
-export function generate(options: SyntheticRdfOptions): SyntheticRdfResult;
+export function generate(options: SyntheticRdfOptions): Promise<SyntheticRdfResult>;
+/** Escape hatch WITHOUT the independent SHACL check (§3.5) — the name is the warning. */
+export function generateUnchecked(options: Omit<SyntheticRdfOptions, "validator">): SyntheticRdfResult;
 
 /** Tier-7 plugin: return terms or undefined to pass. MUST draw only from context.random. */
 export interface ValueGenerator {
@@ -330,6 +340,16 @@ seeded pod is a harness bug — e2e default). `ensure` skips 412s (long-lived de
 restarts). `replace` unconditionally PUTs — with deterministic bytes this converges: re-seeding
 is a no-op state-wise. The manifest reports which branch each resource took.
 
+**Expander groups are all-or-nothing.** The resources returned by one `ResourceExpander` are
+mutually dependent (a VC and its anchors are cryptographically paired, §5.2), so per-resource
+mode branching cannot apply inside a group: `ensure` first probes existence of every member
+and either skips the whole group (all exist) or writes the whole group (none exist) — a
+partial group is an error naming the missing/extra members, never a silent mix of an old VC
+with newly issued anchors; `replace` rewrites the whole group; `create` fails if any member
+exists. Expanders run exactly once per seed run (their output is what defines the group's
+member paths); the all-or-nothing decision governs the writes. The manifest reports groups
+as units.
+
 **ACLs.** `AccessSpec` is authored through `@solid/object` access-control wrappers — the
 generic upstream package must not replicate `seed.ts`'s pre-authored string template (house
 rule: never string-concat `.acl`; the template was a bootstrap exemption). WAC first (the sparq
@@ -425,10 +445,12 @@ here, it belongs upstream (extract-repeated-logic rule).
    datatype facets (both inclusive/exclusive bounds + length), pattern subset, `sh:node`
    recursion (depth cap + cycle error), `sh:minCount/maxCount`, closed shapes.
 4. Non-perturbation: flipping one override changes exactly that field's quads (golden diff).
-5. Self-conformance: in-core conjunctive facet checks always on; injected `ShaclValidator`
-   seam with the `./validate` adapter; the package's own tests always run the independent
-   engine over merged output; every documented-unsupported constraint errors loudly (test per
-   constraint). Core has no hard dependency on any SHACL engine.
+5. Self-conformance: in-core conjunctive facet checks always on; `generate()` requires an
+   injected `ShaclValidator` (`./validate` adapter provided); the only unvalidated path is the
+   explicitly named `generateUnchecked()`; every documented-unsupported constraint errors
+   loudly (test per constraint). Core has no hard dependency on any SHACL engine.
+   `{external}` identity pins are rejected without an admitting `externalIriPolicy`
+   (rejection test incl. placeholder-base and unregistered absolute IRIs).
 6. Out-of-shape override → error; out-of-bounds pinned value → validation failure (test uses
    a decision-0005-style digit-budget shape).
 7. SKILL.md + README; PR to `jeswr/solid-sdk` (Jesse-owned — PR in-scope).
@@ -440,7 +462,9 @@ here, it belongs upstream (extract-repeated-logic rule).
 2. Seeds a multi-pod layout against `@jeswr/solid-server` in tests: provisioned accounts,
    nested containers, correct `content-type`s.
 3. Modes: `create` 412-fails on re-seed; `ensure` skips; `replace` re-run leaves pod state
-   byte-identical (read-back assertion).
+   byte-identical (read-back assertion). Expander groups are all-or-nothing per mode; a
+   partially existing group under `ensure` errors naming the offending members
+   (partial-group test).
 4. IRI rebasing: cross-instance references resolve to real pod IRIs; serialised bodies use
    relative IRIs (portability test: same layout on two origins ⇒ identical bodies for
    fragment-pinned data); `{external}` identity pins survive verbatim; an unmapped
