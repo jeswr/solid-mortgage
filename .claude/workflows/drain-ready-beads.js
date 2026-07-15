@@ -15,6 +15,9 @@
 //   MINUS needs:user-labelled beads   (human-gated: not agent work)
 //   MINUS epics                        (containers — dispatch their ready children instead)
 //   MINUS beads with an open PR       (branch bead/<id> already pushed = in flight)
+//   MINUS external-repo surfaces      (surface:solid-sdk / surface:sparq-upstream beads work in
+//                                      OTHER repos with their own conventions — the lead
+//                                      dispatches those with bespoke briefs, never this loop)
 //   MINUS surface collisions          (at most ONE bead per surface:* label per wave —
 //                                      disjoint path sets are what make parallel merges safe)
 //
@@ -101,6 +104,26 @@ function pickPersona(surface) {
   return 'general-purpose' // packages/*, sparq-upstream, solid-sdk, docs, unknown
 }
 
+// Decision 0008 + Jesse's caching gist: mechanical implementation surfaces run on GPT-5.6 Sol
+// via codex (half price, better long-horizon terminal work), driven by a thin haiku wrapper.
+// Judgment surfaces (RDF/SHACL, vc-kit/auth security, design system, docs/sales writing) stay
+// on Claude. Sol NEVER owns acceptance tests unreviewed — the Claude verify stage covers that.
+function pickRunner(surface) {
+  const s = (surface || '').toLowerCase()
+  if (s.startsWith('apps/') || s === 'deploy' || s === 'infra' || s === 'e2e') return 'sol'
+  return 'claude'
+}
+
+function solImplPrompt(b) {
+  return `You are a thin DISPATCHER in an isolated git worktree of ${REPO}: the implementation of bead ${b.id} ("${b.title}", surface: ${b.surface}) is done by GPT-5.6 Sol via the codex CLI, not by you. Steps:
+1. Claim from the repo root: cd ${REPO} && bd update ${b.id} --claim (on failure STOP: return skipped=true, reason="already claimed").
+2. In your worktree, create branch bead/${b.id}. Then launch Sol FROM THE WORKTREE (cwd matters: codex caches its system-prompt + AGENTS.md prefix automatically — running inside the repo is what makes the ~10K-token prefix cache hit; keep your user brief SHORT, it is uncached):
+   codex exec --json --full-auto -m gpt-5.6-sol -c model_reasoning_effort=high "Work bead ${b.id}. Spec: run (cd ${REPO} && bd show ${b.id}). Obey AGENTS.md. Stay within surface ${b.surface}. Branch bead/${b.id} (already checked out). pnpm install --frozen-lockfile if needed, implement, run pnpm run gate until green. Commit subject prefixed [GPT-5.6], trailer Co-Authored-By: GPT-5.6 Sol via codex <noreply@openai.com>. Push the branch and open a PR on jeswr/solid-mortgage titled '${b.id}: <summary>' ending with the line: 🤖 Generated with [Claude Code](https://claude.com/claude-code) — do NOT merge. File discovered follow-ups: (cd ${REPO} && bd create '<title>' -d '<why>' --deps discovered-from:${b.id})."
+3. When codex exits, verify independently: branch pushed? PR open (gh pr list --head bead/${b.id})? gate result from the codex JSON output. Do NOT redo or extend Sol's implementation yourself.
+4. If codex is unavailable or fails twice, return skipped=true with the error as reason (the lead re-routes).
+Return the structured output only: bead, prUrl, gatesGreen, skipped, reason, followUpBeads (ids Sol created — check cd ${REPO} && bd list --json | last entries with discovered-from:${b.id}).`
+}
+
 function frontierPrompt(cap) {
   return `You are the frontier reader for the bead drain in ${REPO}. From the REPO ROOT run:
   cd ${REPO} && bd ready --json
@@ -108,6 +131,7 @@ function frontierPrompt(cap) {
 Filter the ready beads to the DISPATCHABLE set:
   - status === "open" only (in_progress beads are already claimed);
   - drop any bead labelled needs:user (report in droppedAsGated);
+  - drop any bead whose surface label is "surface:solid-sdk" or "surface:sparq-upstream" (external-repo work, lead-dispatched — report in droppedAsGated);
   - drop issue_type === "epic";
   - drop any bead whose branch bead/<id> appears in the open-PR head refs (report in droppedAsInFlight);
   ${ONLY ? `- keep ONLY ids in ${JSON.stringify(ONLY)};` : ''}
@@ -163,13 +187,22 @@ while (wave < MAX_WAVES) {
 
   const waveResults = await pipeline(
     frontier.beads,
-    b => agent(implPrompt(b, pickPersona(b.surface)), {
-      label: `impl:${b.id}`,
-      phase: 'Implement',
-      schema: IMPL_SCHEMA,
-      agentType: pickPersona(b.surface),
-      isolation: 'worktree',
-    }),
+    b => pickRunner(b.surface) === 'sol'
+      ? agent(solImplPrompt(b), {
+          label: `impl-sol:${b.id}`,
+          phase: 'Implement',
+          schema: IMPL_SCHEMA,
+          model: 'haiku',
+          effort: 'low',
+          isolation: 'worktree',
+        })
+      : agent(implPrompt(b, pickPersona(b.surface)), {
+          label: `impl:${b.id}`,
+          phase: 'Implement',
+          schema: IMPL_SCHEMA,
+          agentType: pickPersona(b.surface),
+          isolation: 'worktree',
+        }),
     (r, b) => {
       if (!r || r.skipped || !r.prUrl) return { bead: b.id, merged: false, concerns: [r ? r.reason || 'skipped' : 'agent died'] }
       implemented.push({ bead: r.bead, prUrl: r.prUrl, followUps: r.followUpBeads || [] })

@@ -33,7 +33,14 @@ record; research grounding lives in `docs/research/`; autonomous decisions are l
 5. **Review**: roborev reviews every commit (`.roborev.toml`: codex / gpt-5.6-sol,
    min severity low). Read verdicts and address findings. Agents run roborev async
    (`--background`), never blocking foreground.
-6. **Commits**: unsigned, author `63333554+jeswr@users.noreply.github.com`, trailer
+6. **Delegate mechanical work to GPT-5.6 Sol** (decision 0008): apps scaffolding/CRUD, deploy,
+   infra, e2e grind run on Sol via `codex exec --json --full-auto -m gpt-5.6-sol` **from inside
+   this repo/worktree** (codex auto-caches its system prompt + this AGENTS.md as the prompt
+   prefix — 5–10 min TTL, so launch in bursts); briefs stay SHORT and point Sol at
+   `bd show <bead>`; commits prefixed `[GPT-5.6]`. Sol never touches security-critical
+   surfaces (vc-kit ZK, auth, ACL) and never owns its own acceptance tests — Claude verifies
+   every Sol diff.
+7. **Commits**: unsigned, author `63333554+jeswr@users.noreply.github.com`, trailer
    `Co-Authored-By:` for the generating model. Sub-agents must never push to repos Jesse does
    not own; upstream work stops at "ready to PR" for lead approval — sparq-org and jeswr repos
    are Jesse's, PRs there are in-scope.
