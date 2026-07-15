@@ -4,6 +4,7 @@
   "minAgeDays": 30,
   "npm": {
     "deny": ["request", "moment", "left-pad", "colors", "node-fetch"],
+    "remoteGitAllow": [],
     "denyReasons": {
       "request": "deprecated since 2020 - use native fetch / undici",
       "moment": "maintenance mode - use Temporal / date-fns / Luxon",

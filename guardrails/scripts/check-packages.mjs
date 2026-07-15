@@ -11,7 +11,8 @@ import { fileURLToPath } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(HERE, "..", "..");
-const LOCAL_SPEC = /^(file:|link:|workspace:|portal:|github:|git:|git\+|[\w.-]+\/[\w.-]+(#.+)?$)/;
+const LOCAL_SPEC = /^(file:|link:|workspace:|portal:)/;
+const REMOTE_GIT_SPEC = /^(github:|gitlab:|bitbucket:|gist:|git:|git\+|[\w.-]+\/[\w.-]+(#.+)?$)/;
 
 function parseArgs(argv) {
   const options = {
@@ -57,33 +58,6 @@ function resolveNpmAlias(name, spec) {
   return separator > 0 ? target.slice(0, separator) : target;
 }
 
-function inferGitPackageName(spec) {
-  if (typeof spec !== "string") return null;
-  let pathname;
-  if (spec.startsWith("github:")) {
-    pathname = spec.slice("github:".length).split("#")[0];
-  } else if (/^[\w.-]+\/[\w.-]+(#.+)?$/.test(spec)) {
-    pathname = spec.split("#")[0];
-  } else if (/^git(\+|:)/.test(spec)) {
-    const normalizedSpec = spec.replace(/^git\+/, "");
-    const scpStyle = normalizedSpec.match(/^ssh:\/\/[^/]+:([^#]+)(?:#.*)?$/);
-    try {
-      pathname = scpStyle?.[1] ?? new URL(normalizedSpec).pathname;
-    } catch {
-      return null;
-    }
-  } else {
-    return null;
-  }
-  return (
-    pathname
-      .split("/")
-      .filter(Boolean)
-      .at(-1)
-      ?.replace(/\.git$/, "") ?? null
-  );
-}
-
 function dependenciesFromPackageJson(file) {
   const manifest = JSON.parse(readFileSync(file, "utf8"));
   const groups = [
@@ -98,12 +72,12 @@ function dependenciesFromPackageJson(file) {
       const resolved = resolveNpmAlias(name, spec);
       dependencies.push({
         name: resolved,
-        registry: resolved !== name || typeof spec !== "string" || !LOCAL_SPEC.test(spec),
+        registry:
+          resolved !== name ||
+          typeof spec !== "string" ||
+          (!LOCAL_SPEC.test(spec) && !REMOTE_GIT_SPEC.test(spec)),
+        remoteGitSpec: typeof spec === "string" && REMOTE_GIT_SPEC.test(spec) ? spec : null,
       });
-      const inferredGitName = inferGitPackageName(spec);
-      if (inferredGitName && inferredGitName !== resolved) {
-        dependencies.push({ name: inferredGitName, registry: false });
-      }
     }
   }
   return dependencies;
@@ -172,11 +146,16 @@ const minimumAge = options.minAgeDays ?? policy.minAgeDays ?? 0;
 const ecosystemPolicy = policy[ecosystem] ?? { deny: [], allow: [] };
 const deny = new Set(ecosystemPolicy.deny ?? []);
 const allow = new Set(ecosystemPolicy.allow ?? []);
+const remoteGitAllow = new Set(ecosystemPolicy.remoteGitAllow ?? []);
 const allowlistMode = policy.mode === "allowlist";
 
 const dependencies = new Map(options.names.map((name) => [name, true]));
+const remoteGitSources = [];
 for (const manifest of options.scans) {
   for (const dependency of dependenciesFromPackageJson(manifest)) {
+    if (dependency.remoteGitSpec) {
+      remoteGitSources.push({ name: dependency.name, spec: dependency.remoteGitSpec });
+    }
     dependencies.set(
       dependency.name,
       dependency.registry || dependencies.get(dependency.name) === true,
@@ -188,7 +167,12 @@ if (dependencies.size === 0) {
   process.exit(2);
 }
 
-const violations = [];
+const violations = remoteGitSources
+  .filter(({ spec }) => !remoteGitAllow.has(spec))
+  .map(
+    ({ name, spec }) =>
+      `${name}: remote Git source is not explicitly allowed by exact spec (${spec})`,
+  );
 const warnings = [];
 for (const [name, registryInstall] of dependencies) {
   if (deny.has(name)) {
