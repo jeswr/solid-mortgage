@@ -27,7 +27,7 @@ because the same facts about the borrower — income, assets, credit — are col
 copied, and re-verified by over a dozen parties, none of whom the borrower can see or control.
 The showcase rebuilds that journey on Solid: the borrower's verified data lives in a pod they
 control, verifications arrive once as reusable verifiable credentials, and every party gets
-scoped, revocable, receipted access instead of a copy. Each application in the demo is
+scoped, revocable, receipted access instead of yet another unmanaged copy. Each application in the demo is
 modelled on a real organisation's seat in the value chain — most of them EDMA members — so
 every member watching sees their own role, working, on screen.
 
@@ -53,7 +53,8 @@ hands the borrower the keys.
 borrower, copied into every downstream party's systems (`mortgage-process.md` §3). The result:
 the Mr. Cooper breach exposed 14.7 million people (2023) [38]; First American exposed 885
 million title documents (2019, $1M NYDFS penalty) [39]. Data that is accessed in place rather
-than copied is data that cannot leak from a dozen places at once.
+than copied by default can only leak from the places that actually hold it — and the receipted
+model makes those places enumerable.
 
 And the borrower — the person all this data is about — holds none of it, cannot see who has
 what, and re-supplies the same documents at pre-approval, application, underwriting, and again
@@ -117,14 +118,18 @@ return rate quotes. Neither ever sees the underlying numbers. No credit pull hap
 **Talking points.**
 - "Pre-qualification today means handing income and asset detail to every lender you shop
   [1]. Here, Alex proves *just the threshold* — the lenders learn 'qualified', nothing else."
-- "No data was left behind. If Alex walks away, these lenders hold nothing to breach."
+- "The lenders never received the underlying numbers — if Alex walks away, there is no
+  income or credit data for them to retain."
 - "Open the 'what just happened underneath' panel — and note the honesty panel beside it:
   this proving stack is research-grade, not yet externally audited. We say so on screen." (Full
   points in §6.)
 
-**Watch-out.** Do not claim ZK for the rest of the journey. Once Alex picks a lender, the
+**Watch-outs.** Do not claim ZK for the rest of the journey. Once Alex picks a lender, the
 application needs real figures — the demo deliberately switches from proofs to granted access
-at that point, and saying so builds credibility.
+at that point, and saying so builds credibility. And in the default in-browser mode the
+sign-in — including the holder binding when a proof is presented — is simulated and labelled
+as such on screen; real authenticated presentation happens in the live multi-actor mode
+(§6, decisions 0011/0012).
 
 ### Scene 3 — One-click application (~2 min)
 
@@ -139,15 +144,17 @@ lands back *in Alex's pod*.
   sell — Bank of America reports 81% of its mortgage applications are initiated digitally
   (`org-map.md`). The pod makes that experience portable to *every* lender, not just the
   biggest."
-- "Note what 'granted access' means: scoped to named resources, revocable, and receipted.
-  Not a copy."
+- "Note what 'granted access' means: scoped to named resources, revocable, and receipted —
+  a managed alternative to today's unmanaged copies. (Parties with legal retention duties
+  still keep what regulation requires — own that if asked; see §6.)"
 
 ### Scene 4 — Nothing goes stale (~2 min)
 
-**What you show.** Thirty days pass (the demo seeds credentials with real back-dated validity
-windows — no fake clock). The lender's pre-close freshness check finds the employment
-credential's validity lapsed. One click, and the issuer re-issues it through the grant Alex
-already gave. The Freddie-LPA-modelled underwriting app re-runs on the granted data.
+**What you show.** Thirty days pass (the demo seeds the employment credential with a real
+back-dated issuance — no fake clock). The lender's pre-close freshness check finds the
+credential is now too old to satisfy its freshness window (the 10-business-day
+employment-verification rule below). One click, and the issuer re-issues it through the grant
+Alex already gave. The Freddie-LPA-modelled underwriting app re-runs on the granted data.
 
 **Talking points.**
 - "The rule being dramatized: verbal verification of employment no more than 10 business days
@@ -165,8 +172,8 @@ already gave. The Freddie-LPA-modelled underwriting app re-runs on the granted d
 **What you show.** The Closing Disclosure arrives in the pod 3 days before closing. Alex
 eSigns in the eClose flow modelled on Wolters Kluwer's eOriginal. The loan's servicing then
 transfers to a servicer modelled on Truist: the new servicer requests access, **Alex approves
-it, revokes the original lender, and reads the consent-receipt ledger** — every access, by
-every party, receipted.
+it, revokes the original lender, and reads the consent-receipt ledger** — every grant and
+every revocation, receipted.
 
 **Talking points.**
 - "Two regulations close the story: TRID's 3-business-day Closing Disclosure window [5][25],
@@ -174,8 +181,8 @@ every party, receipted.
 - "The eClose rail is real industry plumbing: eNotes are 12.86% of MERS registrations and
   counting, and eNote loans fund up to 5 days faster, saving over $200/loan [31][32]."
 - "The final screen is the whole pitch in one view: the borrower can enumerate exactly who
-  has had access to what — something no participant in today's process can do
-  (`mortgage-process.md` §3)."
+  has been granted access to what, and when each grant was revoked — something no participant
+  in today's process can do (`mortgage-process.md` §3)."
 
 **Watch-out.** The ledger is built by the wallet application, not by the Solid protocol
 itself — if asked, say "the receipts are an application feature layered on the open standard"
@@ -199,10 +206,12 @@ The showcase converts when a member recognises their seat and takes it. The sequ
 4. **What EDMA gets regardless:** the binding table and the working reference implementation
    are CoP deliverables — standards value even for members who only watch.
 
-Four roles have no member today — credit bureau, appraisal, title, mortgage insurance — and
-the external approach list (Equifax, Cotality, First American; MISMO via its open workgroups)
-is in `org-map.md`. That gap is itself a talking point: the CoP is recruiting the missing
-seats.
+Five roles have no member today — credit bureau, appraisal, title, the regulator lens, and US
+mortgage insurance (`org-map.md`). The plan per gap: external approaches for three (Equifax,
+Cotality, First American), MISMO engaged through its open workgroups, the regulator lens
+convened through member public bodies (FDIC, Federal Reserve banks) rather than the CFPB, and
+US mortgage insurance an open recruitment gap. The gaps are themselves a talking point: the
+CoP is recruiting the missing seats.
 
 ## 6. Appendix — honest limits (say these before you are asked)
 
@@ -212,15 +221,21 @@ distinguishes a standards community from a vendor pitch.
 **What is simulated.**
 - All personas and data are fictional; every API response is watermarked `simulated: true`.
 - In the default visitor mode, pods run *in the visitor's own browser* and the login is
-  simulated — the honesty panel on screen says so. A second, live multi-actor mode runs on a
-  hosted community Solid server with real logins, framed as an interoperability proof
-  (decision 0011).
+  simulated — including the holder binding when a proof is presented — and the honesty panel
+  on screen says so. A second, live multi-actor mode runs on a hosted community Solid server
+  with real logins and authenticated presentation, framed as an interoperability proof
+  (decisions 0011/0012).
 - No real credit pull, no real GSE underwriting, no real eNote registry: the AUS findings,
   eClose ceremony, and registry beats are simulations of the real artifacts.
 - The 30-day time jump in scene 4 uses credentials seeded with back-dated validity windows —
   no clock is faked.
 - The consent-receipt ledger is an application-level feature built by the wallet (decision
-  0006) — the Solid protocol provides the access control; the receipts are ours.
+  0006) — the Solid protocol provides the access control; the receipts are ours. It records
+  grants and revocations (a complete authorization history), not every individual read.
+- Receipted access reduces unnecessary durable copies; it cannot technically prevent an
+  authorised recipient retaining what it fetched, and regulated parties (lenders, servicers)
+  still keep what retention rules require. The honest claim is that holdings become scoped,
+  visible, and revocable — not that they drop to zero.
 
 **ZK honesty panel (repeated verbatim on every proving surface — decision 0005, zkp-fit).**
 - The proving stack is **research-grade**: internally re-audited, external cryptographer

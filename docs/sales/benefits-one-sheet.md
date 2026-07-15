@@ -42,8 +42,8 @@ re-issue through an existing grant — re-collection eliminated (SPEC scene 4).
 
 | | Today | In the demo |
 |---|---|---|
-| Copies | **12 artifact classes, each held by 2–4 parties** (lender, AUS/GSE, vendor, agent…); the servicing file — "a full copy of most of the above" — passes to **every successive servicer** | **One copy, in the borrower's pod**; parties get scoped, revocable, receipted access |
-| Borrower visibility | Cannot enumerate who holds what | Full consent-receipt ledger, on screen (app-level, decision 0006) |
+| Copies | **12 artifact classes, each held by 2–4 parties** (lender, AUS/GSE, vendor, agent…); the servicing file — "a full copy of most of the above" — passes to **every successive servicer** | **Source data lives once, in the borrower's pod**; parties get scoped, revocable, receipted access — durable copies only where retention rules require them |
+| Borrower visibility | Cannot enumerate who holds what | Grant/revocation receipt ledger, on screen (app-level, decision 0006) |
 | Source | mortgage-process §3 | SPEC §2 scene 5 |
 
 ## Why copies are a liability
