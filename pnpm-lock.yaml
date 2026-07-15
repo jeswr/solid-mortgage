@@ -472,6 +472,28 @@ importers:
       '@jeswr/solid-vc':
         specifier: github:jeswr/solid-vc#bee27d508372e64021e23bdaeb2d79c06e08cf18
         version: https://codeload.github.com/jeswr/solid-vc/tar.gz/bee27d508372e64021e23bdaeb2d79c06e08cf18
+      '@mortgage/data-model':
+        specifier: workspace:*
+        version: link:../data-model
+      '@rdfjs/types':
+        specifier: ^2.0.1
+        version: 2.0.1
+      '@rdfjs/wrapper':
+        specifier: ^0.34.0
+        version: 0.34.0
+      n3:
+        specifier: ^2.1.1
+        version: 2.1.1
+    devDependencies:
+      '@mortgage/solid-kit':
+        specifier: workspace:*
+        version: link:../solid-kit
+      '@types/n3':
+        specifier: ^1.26.1
+        version: 1.26.1
+      '@types/node':
+        specifier: ^25.9.2
+        version: 25.9.5
 
 packages:
 

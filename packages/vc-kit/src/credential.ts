@@ -1,0 +1,203 @@
+/**
+ * Graph-level credential plumbing shared by issue/verify/reissue:
+ *
+ * - the RDF form of an embedded Data Integrity proof (write + strict read);
+ * - the document-quads extraction that recovers the SIGNED claim graph from a
+ *   pod-resident credential document (everything except the proof subgraph).
+ *
+ * Rationale: the pinned `@jeswr/solid-vc` signs/verifies over claim QUADS via
+ * its `DataIntegritySuite` proof-suite seam. vc-kit builds claim graphs with
+ * typed accessors (so shape-required `xsd:date` literals are expressible; the
+ * structured-JSON claim path cannot lower them) and drives the same suite over
+ * the quads directly. The proof-node convention matches solid-vc's wrappers
+ * (`cred --sec:proof--> proof node`), so `wrapVc`/`CredentialNode` read it.
+ */
+
+import type { DataIntegrityProof, ProofNode } from "@jeswr/solid-vc";
+import type { DataFactory, DatasetCore, Quad, Quad_Subject, Term } from "@rdfjs/types";
+import { LiteralFrom, NamedNodeFrom, RequiredAs, SetFrom, TermWrapper } from "@rdfjs/wrapper";
+import { assertAbsoluteIri } from "./claims.js";
+import {
+  DC_CREATED,
+  RDF_TYPE,
+  SEC_CRYPTOSUITE,
+  SEC_DATA_INTEGRITY_PROOF,
+  SEC_PROOF,
+  SEC_PROOF_PURPOSE,
+  SEC_PROOF_VALUE,
+  SEC_VERIFICATION_METHOD,
+  XSD_DATE_TIME,
+} from "./vocab.js";
+
+/** The predicates an embedded proof node may carry - anything else is refused. */
+const PROOF_PREDICATES: ReadonlySet<string> = new Set([
+  RDF_TYPE,
+  SEC_CRYPTOSUITE,
+  SEC_VERIFICATION_METHOD,
+  SEC_PROOF_PURPOSE,
+  SEC_PROOF_VALUE,
+  DC_CREATED,
+]);
+
+class ProofWriteNode extends TermWrapper {
+  get types(): Set<string> {
+    return SetFrom.subjectPredicate(this, RDF_TYPE, (term) => term.value, NamedNodeFrom.string);
+  }
+
+  writeProof(proof: DataIntegrityProof): void {
+    this.types.add(SEC_DATA_INTEGRITY_PROOF);
+    RequiredAs.object(this, SEC_CRYPTOSUITE, proof.cryptosuite, LiteralFrom.string);
+    RequiredAs.object(
+      this,
+      SEC_VERIFICATION_METHOD,
+      assertAbsoluteIri(proof.verificationMethod, "proof.verificationMethod"),
+      NamedNodeFrom.string,
+    );
+    RequiredAs.object(
+      this,
+      SEC_PROOF_PURPOSE,
+      assertAbsoluteIri(purposeIri(proof.proofPurpose), "proof.proofPurpose"),
+      NamedNodeFrom.string,
+    );
+    if (proof.created !== undefined) {
+      RequiredAs.object(
+        this,
+        DC_CREATED,
+        [XSD_DATE_TIME, proof.created],
+        LiteralFrom.datatypeTuple,
+      );
+    }
+    RequiredAs.object(this, SEC_PROOF_VALUE, proof.proofValue, LiteralFrom.string);
+  }
+}
+
+/** The IRI form of a proof purpose (mirrors solid-vc's `purposeIri`). */
+export function purposeIri(purpose: string): string {
+  return /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(purpose)
+    ? purpose
+    : `https://w3id.org/security#${purpose}`;
+}
+
+/**
+ * Append `proof` to the credential's graph as an embedded Data Integrity proof
+ * node (`cred --sec:proof--> _:proof`). Call ONLY after the claim quads are
+ * final - the proof signs the claim graph as-is.
+ */
+export function appendProof(
+  dataset: DatasetCore,
+  factory: DataFactory,
+  credential: Quad_Subject,
+  proof: DataIntegrityProof,
+): void {
+  const node = factory.blankNode();
+  dataset.add(factory.quad(credential, factory.namedNode(SEC_PROOF), node));
+  new ProofWriteNode(node, dataset, factory).writeProof(proof);
+}
+
+/** One strict read failure while reconstructing an embedded proof. */
+export class ProofReadError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ProofReadError";
+  }
+}
+
+function exactlyOne(terms: ReadonlySet<Term>, what: string): Term {
+  if (terms.size !== 1) {
+    throw new ProofReadError(`proof node must carry exactly one ${what} (found ${terms.size})`);
+  }
+  const [term] = terms;
+  return term as Term;
+}
+
+const DATE_TIME_LEXICAL = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/;
+
+/**
+ * Reconstruct the structured {@link DataIntegrityProof} from a parsed proof
+ * node, STRICT + fail-closed (throws {@link ProofReadError}):
+ *
+ *  - the node must be typed `sec:DataIntegrityProof`;
+ *  - cryptosuite / verificationMethod / proofPurpose / proofValue must each be
+ *    exactly one term of the right kind; `created` is optional but, when
+ *    present, must be a single well-formed `xsd:dateTime` literal;
+ *  - the node must carry NO predicate outside the proof vocabulary - unsigned
+ *    data smuggled onto the proof node (which is excluded from the signed
+ *    document quads) is refused rather than silently ignored.
+ */
+export function readProof(node: ProofNode): DataIntegrityProof {
+  const wrapper = node as unknown as TermWrapper;
+  for (const quad of wrapper.dataset.match(wrapper as Term)) {
+    if (!PROOF_PREDICATES.has(quad.predicate.value)) {
+      throw new ProofReadError(
+        `proof node carries a non-proof predicate (unsigned data): <${quad.predicate.value}>`,
+      );
+    }
+  }
+
+  const types = [...node.types].map((term) => term.value);
+  if (!types.includes(SEC_DATA_INTEGRITY_PROOF)) {
+    throw new ProofReadError("proof node is not typed sec:DataIntegrityProof");
+  }
+
+  const cryptosuite = exactlyOne(node.cryptosuites as ReadonlySet<Term>, "sec:cryptosuite");
+  if (cryptosuite.termType !== "Literal") {
+    throw new ProofReadError("sec:cryptosuite must be a literal");
+  }
+  const verificationMethod = exactlyOne(
+    node.verificationMethods as ReadonlySet<Term>,
+    "sec:verificationMethod",
+  );
+  if (verificationMethod.termType !== "NamedNode") {
+    throw new ProofReadError("sec:verificationMethod must be an IRI");
+  }
+  const proofPurpose = exactlyOne(node.proofPurposes as ReadonlySet<Term>, "sec:proofPurpose");
+  if (proofPurpose.termType !== "NamedNode") {
+    throw new ProofReadError("sec:proofPurpose must be an IRI");
+  }
+  const proofValue = exactlyOne(node.proofValues as ReadonlySet<Term>, "sec:proofValue");
+  if (proofValue.termType !== "Literal") {
+    throw new ProofReadError("sec:proofValue must be a literal");
+  }
+
+  const createds = node.createds as ReadonlySet<Term>;
+  let created: string | undefined;
+  if (createds.size > 0) {
+    const term = exactlyOne(createds, "dcterms:created");
+    if (term.termType !== "Literal" || !DATE_TIME_LEXICAL.test(term.value)) {
+      throw new ProofReadError("dcterms:created must be a well-formed xsd:dateTime literal");
+    }
+    created = term.value;
+  }
+
+  return {
+    type: "DataIntegrityProof",
+    cryptosuite: cryptosuite.value,
+    verificationMethod: verificationMethod.value,
+    proofPurpose: proofPurpose.value,
+    ...(created !== undefined ? { created } : {}),
+    proofValue: proofValue.value,
+  };
+}
+
+/**
+ * The SIGNED document quads of a pod-resident credential document: every quad
+ * except (a) the credential's `sec:proof` link quads and (b) quads whose
+ * subject is one of those proof nodes. The exclusion is deliberately MINIMAL
+ * and fail-closed: any other extra quad (a decoy node, a claim smuggled deeper
+ * under the proof node, a second `sec:proof` triple on a foreign subject)
+ * stays in the document and breaks the signature; extra predicates ON a proof
+ * node are refused by {@link readProof}.
+ */
+export function documentQuadsOf(dataset: DatasetCore, credential: Term): Quad[] {
+  const proofTerms: Term[] = [];
+  for (const quad of dataset.match(credential)) {
+    if (quad.predicate.value === SEC_PROOF) proofTerms.push(quad.object);
+  }
+  const quads: Quad[] = [];
+  for (const quad of dataset) {
+    if (quad.subject.equals(credential) && quad.predicate.value === SEC_PROOF) continue;
+    if (proofTerms.some((proof) => quad.subject.equals(proof))) continue;
+    quads.push(quad);
+  }
+  return quads;
+}
