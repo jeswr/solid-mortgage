@@ -54,3 +54,9 @@ jobs:
 
       - name: Run lint, build, typecheck, and tests
         run: pnpm run gate
+
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run end-to-end tests
+        run: pnpm run test:e2e

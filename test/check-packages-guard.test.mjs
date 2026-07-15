@@ -53,6 +53,12 @@ describe("check-packages policy mode", () => {
     expect(result.stdout + result.stderr).toMatch(/request/);
   });
 
+  it("applies policy checks to non-registry dependency specs", () => {
+    const result = scan({ dependencies: { request: "github:example/request#abc1234" } });
+    expect(result.status).toBe(1);
+    expect(result.stdout + result.stderr).toMatch(/request/);
+  });
+
   it("resolves scoped npm aliases", () => {
     expect(scan({ dependencies: { formatter: "npm:@biomejs/biome@^2.0.0" } }).status).toBe(0);
   });

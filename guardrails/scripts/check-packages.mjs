@@ -57,7 +57,7 @@ function resolveNpmAlias(name, spec) {
   return separator > 0 ? target.slice(0, separator) : target;
 }
 
-function namesFromPackageJson(file) {
+function dependenciesFromPackageJson(file) {
   const manifest = JSON.parse(readFileSync(file, "utf8"));
   const groups = [
     manifest.dependencies,
@@ -65,15 +65,17 @@ function namesFromPackageJson(file) {
     manifest.peerDependencies,
     manifest.optionalDependencies,
   ];
-  const names = [];
+  const dependencies = [];
   for (const group of groups) {
     for (const [name, spec] of Object.entries(group ?? {})) {
       const resolved = resolveNpmAlias(name, spec);
-      if (resolved === name && typeof spec === "string" && LOCAL_SPEC.test(spec)) continue;
-      names.push(resolved);
+      dependencies.push({
+        name: resolved,
+        registry: resolved !== name || typeof spec !== "string" || !LOCAL_SPEC.test(spec),
+      });
     }
   }
-  return names;
+  return dependencies;
 }
 
 function workspaceManifests() {
@@ -141,17 +143,23 @@ const deny = new Set(ecosystemPolicy.deny ?? []);
 const allow = new Set(ecosystemPolicy.allow ?? []);
 const allowlistMode = policy.mode === "allowlist";
 
-let names = options.names.slice();
-for (const manifest of options.scans) names.push(...namesFromPackageJson(manifest));
-names = [...new Set(names)];
-if (names.length === 0) {
+const dependencies = new Map(options.names.map((name) => [name, true]));
+for (const manifest of options.scans) {
+  for (const dependency of dependenciesFromPackageJson(manifest)) {
+    dependencies.set(
+      dependency.name,
+      dependency.registry || dependencies.get(dependency.name) === true,
+    );
+  }
+}
+if (dependencies.size === 0) {
   console.error("no package names given (pass names or --scan)");
   process.exit(2);
 }
 
 const violations = [];
 const warnings = [];
-for (const name of names) {
+for (const [name, registryInstall] of dependencies) {
   if (deny.has(name)) {
     violations.push(`${name}: on DENYLIST (${ecosystem})`);
     continue;
@@ -162,6 +170,10 @@ for (const name of names) {
   }
   if (options.mode === "policy") {
     console.log(`ok(policy)   ${name}`);
+    continue;
+  }
+  if (!registryInstall) {
+    console.log(`ok(policy)   ${name}  (non-registry install)`);
     continue;
   }
 
@@ -194,4 +206,6 @@ if (violations.length > 0) {
   for (const violation of violations) console.error(`  x ${violation}`);
   process.exit(1);
 }
-console.log(`\nPASS  ${names.length} package(s) cleared (${options.mode} mode, ${ecosystem}).`);
+console.log(
+  `\nPASS  ${dependencies.size} package(s) cleared (${options.mode} mode, ${ecosystem}).`,
+);
