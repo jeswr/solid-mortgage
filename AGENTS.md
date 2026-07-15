@@ -60,3 +60,54 @@ run a fresh install after any dependency change before trusting local lint resul
 - `packages/vc-kit` — VC issue/verify + sparq ZKP-over-VC hooks
 - `packages/ui` — shared shadcn-based component kit with per-org theming tokens
 - `e2e/` — cross-app journey tests (each suite boots its own in-memory sparq solid server)
+
+## Task tracking — beads
+
+[beads](https://github.com/gastownhall/beads) (`bd`, prefix `sm-`) is the source of truth for
+all work in this repo; the JSONL in `.beads/` is committed. Rules:
+
+- **Run `bd` only from the repo root checkout** — never from inside a worktree (a
+  worktree-local `.beads/` forks the JSONL).
+- **Claim before working** (`bd update <id> --claim`), close when merged (`bd close <id>`),
+  `bd sync` before ending a session.
+- **File follow-ups as beads, never TODOs**: any discovered task, bug, or deferred improvement
+  → `bd create "<title>" -d "<why + acceptance>" --deps discovered-from:<current-id>`; label
+  `needs:user` when a human action gates it; label `surface:<path>` so the drain can schedule
+  it without collisions (one bead per surface in flight).
+- **Epics are containers** — dispatch their ready children, never the epic itself.
+
+## Autonomous drain
+
+`.claude/workflows/drain-ready-beads.js` (run with `Workflow({ name: "drain-ready-beads" })`)
+drains the `bd ready` frontier without the lead session hand-dispatching: filter →
+persona-routed implement agents in isolated worktrees → PR → adversarial verify → merge clean
+PRs + close beads, in waves until dry. `scripts/drain-daemon.sh` is the headless entry point
+(`nohup scripts/drain-daemon.sh >/dev/null 2>&1 &`; logs at `.beads/drain.log`) so the
+frontier keeps draining with no session available. Safety rails: `needs:user`/epics/in-flight
+excluded, one bead per surface, security surfaces never auto-merged, follow-ups filed as beads.
+
+## Landing the Plane (Session Completion)
+
+**When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
+
+**MANDATORY WORKFLOW:**
+
+1. **File issues for remaining work** - Create issues for anything that needs follow-up
+2. **Run quality gates** (if code changed) - Tests, linters, builds
+3. **Update issue status** - Close finished work, update in-progress items
+4. **PUSH TO REMOTE** - This is MANDATORY:
+   ```bash
+   git pull --rebase
+   bd sync
+   git push
+   git status  # MUST show "up to date with origin"
+   ```
+5. **Clean up** - Clear stashes, prune remote branches
+6. **Verify** - All changes committed AND pushed
+7. **Hand off** - Provide context for next session
+
+**CRITICAL RULES:**
+- Work is NOT complete until `git push` succeeds
+- NEVER stop before pushing - that leaves work stranded locally
+- NEVER say "ready to push when you are" - YOU must push
+- If push fails, resolve and retry until it succeeds
