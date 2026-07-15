@@ -1,5 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
+  "buildCommand": "pnpm --dir ../.. exec turbo run build --filter=@mortgage/app-lender-53",
   "ignoreCommand": "npx turbo-ignore --fallback=HEAD^1"
 }

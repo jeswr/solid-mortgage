@@ -20,7 +20,6 @@
     "node": ">=24"
   },
   "scripts": {
-    "dev": "turbo run dev --parallel",
     "lint": "pnpm run lint:root && pnpm run check:packages && turbo run lint --concurrency=4",
     "lint:root": "biome check package.json turbo.json biome.json vitest.config.ts playwright.config.ts scripts guardrails test e2e",
     "lint:fix": "biome check --write .",

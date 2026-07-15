@@ -442,6 +442,9 @@ importers:
       react:
         specifier: ^19.2.7
         version: 19.2.7
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
 
   packages/vc-kit:
     dependencies:
