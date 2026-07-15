@@ -57,6 +57,31 @@ function resolveNpmAlias(name, spec) {
   return separator > 0 ? target.slice(0, separator) : target;
 }
 
+function inferGitPackageName(spec) {
+  if (typeof spec !== "string") return null;
+  let pathname;
+  if (spec.startsWith("github:")) {
+    pathname = spec.slice("github:".length).split("#")[0];
+  } else if (/^[\w.-]+\/[\w.-]+(#.+)?$/.test(spec)) {
+    pathname = spec.split("#")[0];
+  } else if (/^git(\+|:)/.test(spec)) {
+    try {
+      pathname = new URL(spec.replace(/^git\+/, "")).pathname;
+    } catch {
+      return null;
+    }
+  } else {
+    return null;
+  }
+  return (
+    pathname
+      .split("/")
+      .filter(Boolean)
+      .at(-1)
+      ?.replace(/\.git$/, "") ?? null
+  );
+}
+
 function dependenciesFromPackageJson(file) {
   const manifest = JSON.parse(readFileSync(file, "utf8"));
   const groups = [
@@ -73,6 +98,10 @@ function dependenciesFromPackageJson(file) {
         name: resolved,
         registry: resolved !== name || typeof spec !== "string" || !LOCAL_SPEC.test(spec),
       });
+      const inferredGitName = inferGitPackageName(spec);
+      if (inferredGitName && inferredGitName !== resolved) {
+        dependencies.push({ name: inferredGitName, registry: false });
+      }
     }
   }
   return dependencies;
