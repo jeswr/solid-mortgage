@@ -161,4 +161,22 @@ describe("sparq WASM harness — fixed-owner mode", () => {
     await scoped.stop();
     await expect(scoped.provisionAccount()).rejects.toThrow(/stopped/);
   });
+
+  test("stop() racing an in-flight provisionAccount() never leaks a pod", {
+    timeout: 30_000,
+  }, async () => {
+    const scoped = await startSolidServer();
+    const pending = scoped.provisionAccount();
+    await scoped.stop();
+
+    // Whichever side of the race won, no live pod may remain afterwards.
+    const account = await pending.then(
+      (provisioned) => provisioned,
+      () => undefined,
+    );
+    if (account !== undefined) {
+      await expect(fetch(`${account.baseUrl}/`)).rejects.toThrow();
+    }
+    await expect(fetch(`${scoped.baseUrl}/`)).rejects.toThrow();
+  });
 });

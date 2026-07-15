@@ -124,6 +124,24 @@ describe("sparq WASM harness — oidc mode (real WAC)", () => {
     expect(ownWrite.status).toBe(201);
   });
 
+  test("authFetch preserves the body of a Request-object input", { timeout: 30_000 }, async () => {
+    const owner = server.accounts[0];
+    const url = `${server.baseUrl}/private/from-request-object`;
+
+    const write = await owner?.authFetch(
+      new Request(url, {
+        method: "PUT",
+        headers: { "content-type": TURTLE, "if-none-match": "*" },
+        body: PRIVATE_DOC,
+      }),
+    );
+    expect(write?.status).toBe(201);
+
+    const read = await owner?.authFetch(url, { headers: { accept: TURTLE } });
+    expect(read?.status).toBe(200);
+    expect(await read?.text()).toContain("owner-only document");
+  });
+
   test("rejects fixed-owner-only options instead of silently ignoring them", async () => {
     await expect(
       startSolidServer({ oidc: true, ownerWebid: "https://id.example/nope#me" }),

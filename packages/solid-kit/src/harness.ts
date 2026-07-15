@@ -250,19 +250,20 @@ async function provisionOidcAccount(webid?: string): Promise<SolidTestAccount> {
   }
 
   const authFetch: typeof fetch = async (input, init) => {
-    const url = new URL(input instanceof Request ? input.url : String(input), `${baseUrl}/`);
-    const method = (
-      init?.method ?? (input instanceof Request ? input.method : "GET")
-    ).toUpperCase();
+    // Merge input + init into one Request first so bodies, signals, redirect mode, etc.
+    // survive; string/URL inputs may be pod-relative and resolve against this account's pod.
+    const request = new Request(
+      input instanceof Request ? input : new URL(String(input), `${baseUrl}/`),
+      init,
+    );
+    const url = new URL(request.url);
     // RFC 9449: `htu` binds scheme/authority/path only (no query or fragment).
     const htu = `${url.origin}${url.pathname}`;
-    const headers = new Headers(
-      init?.headers ?? (input instanceof Request ? input.headers : undefined),
-    );
-    const credentialHeaders = await identity.headers(method, htu);
+    const credentialHeaders = await identity.headers(request.method, htu);
+    const headers = new Headers(request.headers);
     headers.set("authorization", credentialHeaders.authorization);
     headers.set("dpop", credentialHeaders.dpop);
-    return fetch(url, { ...init, method, headers });
+    return fetch(new Request(request, { headers }));
   };
 
   return {
@@ -288,20 +289,39 @@ export const sparqWasmServer: SolidServerImplementation = {
       );
     }
     const accounts: SolidTestAccount[] = [];
+    /** Settled-wrappers of in-flight provisions, so stop() can wait them out (no leaks). */
+    const inFlight = new Set<Promise<void>>();
     let stopped = false;
 
-    const provisionAccount = async (webid?: string): Promise<SolidTestAccount> => {
-      if (stopped) throw new Error("harness already stopped");
-      const account = oidc
-        ? await provisionOidcAccount(webid)
-        : await provisionFixedOwnerAccount(webid);
-      accounts.push(account);
-      return account;
+    const provisionAccount = (webid?: string): Promise<SolidTestAccount> => {
+      if (stopped) return Promise.reject(new Error("harness already stopped"));
+      const pending = (async () => {
+        const account = oidc
+          ? await provisionOidcAccount(webid)
+          : await provisionFixedOwnerAccount(webid);
+        if (stopped) {
+          // stop() ran while this account was booting: never hand out a live pod.
+          await account.stop();
+          throw new Error("harness stopped while provisioning this account");
+        }
+        accounts.push(account);
+        return account;
+      })();
+      const settled = pending.then(
+        () => undefined,
+        () => undefined,
+      );
+      inFlight.add(settled);
+      settled.then(() => inFlight.delete(settled));
+      return pending;
     };
 
     const primary = await provisionAccount(options.ownerWebid);
     const stop = makeStopOnce(async () => {
       stopped = true;
+      // Every in-flight provision either pushed its account (stopped below) or is cleaning
+      // itself up inside `pending`; wait so no pod or issuer outlives stop().
+      await Promise.all([...inFlight]);
       await Promise.all(accounts.map((account) => account.stop()));
     });
 
