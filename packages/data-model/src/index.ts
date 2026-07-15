@@ -1,4 +1,15 @@
 export {
+  PERSONA_VALUES,
+  type Persona,
+  type PersonaFactoryOptions,
+  type PersonaId,
+  type PersonaIssuers,
+  type PersonaResource,
+  type PersonaValues,
+  personas,
+  RESOURCE_POD_PATHS,
+} from "./personas.js";
+export {
   type MortgageResourceKind,
   RESOURCE_TARGET_CLASSES,
   type ShaclReport,
@@ -6,7 +17,6 @@ export {
   type ValidateOptions,
   validate,
 } from "./shacl.js";
-
 export {
   ALL_SHAPES_DOCUMENTS,
   SHAPES_DOCUMENT_KEYS,
@@ -14,13 +24,89 @@ export {
   type ShapesDocumentKey,
 } from "./shapes/shapes.js";
 export {
+  CRED,
+  DCTERMS,
+  FIBO,
+  RDF_TYPE,
+  SCHEMA,
+  TURTLE_PREFIXES,
+  XSD,
+} from "./vocab/external.js";
+export {
   MORT,
   MORT_NAMESPACE,
   MORT_ONTOLOGY_IRI,
   type MortTermIri,
   type MortTermKey,
 } from "./vocab/mort.js";
+export {
+  type AppraisalCredentialInit,
+  type AssetCredentialInit,
+  type BorrowerProfileInit,
+  buildAppraisalCredential,
+  buildAssetCredential,
+  buildBorrowerProfile,
+  buildClosingRecord,
+  buildCreditScoreCredential,
+  buildEmploymentIncomeCredential,
+  buildLoanApplication,
+  buildTitleClearCredential,
+  buildUnderwritingDecision,
+  buildZkOperandAnchor,
+  type ClosingRecordInit,
+  type CredentialEnvelopeInit,
+  type CreditScoreCredentialInit,
+  type DepositAccountInit,
+  type EmploymentIncomeCredentialInit,
+  type LoanApplicationInit,
+  type PostalAddressInit,
+  type PropertyInit,
+  type TitleClearCredentialInit,
+  type UnderwritingDecisionInit,
+  type ZkOperandAnchorInit,
+} from "./wrappers/build.js";
+export { literalFromXsdDate, literalFromXsdDecimal } from "./wrappers/mappings.js";
 
+export {
+  AMORTIZATION_TYPE_IRIS,
+  AppraisalCredential,
+  AppraisalSubject,
+  AssetCredential,
+  AssetSubject,
+  AUS_RECOMMENDATION_IRIS,
+  BorrowerProfile,
+  CASH_OUT_STATUS_IRIS,
+  ClosingRecord,
+  CredentialResource,
+  CreditScoreCredential,
+  CreditScoreSubject,
+  DECISION_STATUS_IRIS,
+  EmploymentIncomeCredential,
+  EmploymentIncomeSubject,
+  LOAN_PURPOSE_IRIS,
+  LoanApplication,
+  MARITAL_STATUS_IRIS,
+  MortgageResource,
+  PROPERTY_USAGE_IRIS,
+  SCORE_MODEL_IRIS,
+  TITLE_STATUS_IRIS,
+  TitleClearCredential,
+  TitleClearSubject,
+  UnderwritingDecision,
+  ZkOperandAnchor,
+  ZkOperandAnchorSubject,
+} from "./wrappers/resources.js";
+export { resourceToTurtle, ShapeViolationError } from "./wrappers/serialize.js";
+export {
+  AppraisalEvidence,
+  Appraiser,
+  DepositAccount,
+  MonetaryAmount,
+  OrganizationNode,
+  PostalAddress,
+  RealEstateProperty,
+  TypedNode,
+} from "./wrappers/support.js";
 export {
   fitsZkBudget,
   ZK_ANCHORABLE_FIELD_IRIS,
