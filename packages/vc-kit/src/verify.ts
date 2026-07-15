@@ -33,7 +33,7 @@ import {
 } from "@jeswr/solid-vc";
 import { type MortgageResourceKind, validate } from "@mortgage/data-model";
 import type { DatasetCore, Term } from "@rdfjs/types";
-import { documentQuadsOf, purposeIri, readProof } from "./credential.js";
+import { DATE_TIME_LEXICAL, documentQuadsOf, purposeIri, readProof } from "./credential.js";
 import { VC_CREDENTIAL_STATUS } from "./vocab.js";
 
 /** solid-vc's error codes plus the vc-kit shape gate. */
@@ -113,8 +113,6 @@ function defaultControlledBy(verificationMethod: string, issuer: string): boolea
   if (verificationMethod === issuer) return true;
   return verificationMethod.startsWith(`${issuer}#`) || verificationMethod.startsWith(`${issuer}/`);
 }
-
-const DATE_TIME_LEXICAL = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/;
 
 /**
  * Verify a pod-resident mortgage credential document. Every gate is
