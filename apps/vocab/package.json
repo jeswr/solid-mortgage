@@ -1,0 +1,25 @@
+{
+  "name": "@mortgage/vocab",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/generate.mjs && next build",
+    "lint": "biome check app lib scripts test package.json tsconfig.json next.config.mjs",
+    "test": "vitest run --root . --config ../../vitest.config.ts",
+    "typecheck": "node scripts/generate.mjs && tsc --project tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "negotiator": "^1.0.0",
+    "next": "^16.2.10",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
+  "devDependencies": {
+    "@jeswr/rdf-serialize": "github:jeswr/rdf-serialize#9c3a34dd93f318fd00d9e6f22081123e502a0578",
+    "@types/negotiator": "^0.6.4",
+    "@types/react": "^19.2.17",
+    "jsonld": "^9.0.0",
+    "n3": "^2.1.1"
+  }
+}
