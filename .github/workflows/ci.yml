@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    name: pnpm gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.4.1
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Restore IRI lint cache
+        uses: actions/cache@v4
+        with:
+          path: .cache/iri-lint.json
+          key: iri-lint-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            iri-lint-${{ runner.os }}-
+
+      - name: Check dependency provenance
+        run: pnpm run check:packages:full
+
+      - name: Check RDF IRI dereferenceability
+        run: pnpm run lint:iris
+
+      - name: Run lint, build, typecheck, and tests
+        run: pnpm run gate
