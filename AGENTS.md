@@ -75,6 +75,9 @@ all work in this repo; the JSONL in `.beads/` is committed. Rules:
 
 - **Run `bd` only from the repo root checkout** — never from inside a worktree (a
   worktree-local `.beads/` forks the JSONL).
+- **PR branches must not carry `.beads/` changes** — tracker commits land directly on main
+  (the established chore-commit pattern); before opening a PR, `git checkout origin/main --
+  .beads/` on the branch if it drifted. Branch-carried JSONL is the #1 merge-conflict source.
 - **Claim before working** (`bd update <id> --claim`), close when merged (`bd close <id>`),
   `bd sync` before ending a session.
 - **File follow-ups as beads, never TODOs**: any discovered task, bug, or deferred improvement
