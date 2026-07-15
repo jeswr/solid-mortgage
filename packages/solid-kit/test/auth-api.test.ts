@@ -7,6 +7,7 @@
  * the verifier reconstructs `htu` from the absolute URL exactly as it would in a route
  * handler.
  */
+import { createHash } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import {
   createApiVerifier,
@@ -247,6 +248,62 @@ describe("verifyApiRequest — DPoP-bound Solid-OIDC verification", () => {
   });
 });
 
+describe("dev issuer — authorization-code DPoP key continuity (dpop_jkt)", () => {
+  test("a code pre-bound via dpop_jkt only exchanges with the SAME DPoP key", async () => {
+    const issuer = await startDevOidcIssuer();
+    try {
+      const bound = await createDevDpopClient();
+      const thief = await createDevDpopClient();
+      const verifier = "test-code-verifier-0123456789-0123456789-abc";
+      const challenge = createHash("sha256").update(verifier, "ascii").digest("base64url");
+
+      const authorize = async (): Promise<string> => {
+        const url = new URL(`${issuer.issuer}/authorize`);
+        url.searchParams.set("client_id", "https://app.example/clientid.jsonld");
+        url.searchParams.set("redirect_uri", "http://localhost:1/callback");
+        url.searchParams.set("response_type", "code");
+        url.searchParams.set("scope", "openid webid offline_access");
+        url.searchParams.set("state", "state-1");
+        url.searchParams.set("nonce", "nonce-1");
+        url.searchParams.set("code_challenge", challenge);
+        url.searchParams.set("code_challenge_method", "S256");
+        url.searchParams.set("dpop_jkt", bound.jkt);
+        const response = await fetch(url, { redirect: "manual" });
+        expect(response.status).toBe(302);
+        const location = new URL(response.headers.get("location") ?? "");
+        return location.searchParams.get("code") ?? "";
+      };
+
+      const exchange = async (code: string, key: typeof bound): Promise<Response> =>
+        fetch(`${issuer.issuer}/token`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/x-www-form-urlencoded",
+            dpop: await key.proof("POST", `${issuer.issuer}/token`),
+          },
+          body: new URLSearchParams({
+            grant_type: "authorization_code",
+            code,
+            client_id: "https://app.example/clientid.jsonld",
+            redirect_uri: "http://localhost:1/callback",
+            code_verifier: verifier,
+          }).toString(),
+        });
+
+      // A DIFFERENT key than the dpop_jkt pre-binding is refused.
+      const stolen = await exchange(await authorize(), thief);
+      expect(stolen.status).toBe(400);
+      expect(((await stolen.json()) as { error: string }).error).toBe("invalid_grant");
+
+      // The bound key succeeds (fresh code — the stolen attempt burned the first one).
+      const legitimate = await exchange(await authorize(), bound);
+      expect(legitimate.status).toBe(200);
+    } finally {
+      await issuer.stop();
+    }
+  }, 20_000);
+});
+
 describe("createNonceStore — per-session single-use VP-POST challenges", () => {
   test("a minted nonce consumes exactly once", () => {
     const store = createNonceStore();
@@ -301,5 +358,17 @@ describe("createNonceStore — per-session single-use VP-POST challenges", () =>
     store.mint("session-3");
     expect(store.size).toBe(2);
     expect(store.consume("session-1", first)).toBe(false); // evicted
+  });
+
+  test("capacity pressure drops EXPIRED challenges before any live one", () => {
+    let now = 1_000_000;
+    const store = createNonceStore({ maxEntries: 2, ttlMs: 60_000, now: () => now });
+    store.mint("stale-session"); // will be expired by the time capacity is hit
+    now += 60_001;
+    const live = store.mint("live-session");
+    const fresh = store.mint("fresh-session"); // overflow: the expired entry must go first
+    expect(store.size).toBe(2);
+    expect(store.consume("live-session", live)).toBe(true); // survived the eviction
+    expect(store.consume("fresh-session", fresh)).toBe(true);
   });
 });

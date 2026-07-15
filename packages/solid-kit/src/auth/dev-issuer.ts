@@ -127,6 +127,8 @@ interface AuthorizationCodeRecord {
   redirectUri: string;
   codeChallenge: string;
   nonce: string;
+  /** RFC 9449 §10: the DPoP key the code is pre-bound to, when the client sent `dpop_jkt`. */
+  dpopJkt?: string;
 }
 
 interface RefreshTokenRecord {
@@ -252,7 +254,8 @@ export async function startDevOidcIssuer(
     }
     // Auto-approve: there is no resource owner in the fixture. Single-use code.
     const code = randomUUID();
-    authorizationCodes.set(code, { clientId, redirectUri, codeChallenge, nonce });
+    const dpopJkt = params.get("dpop_jkt") ?? undefined;
+    authorizationCodes.set(code, { clientId, redirectUri, codeChallenge, nonce, dpopJkt });
     const location = new URL(redirectUri);
     location.searchParams.set("code", code);
     location.searchParams.set("state", state);
@@ -287,6 +290,13 @@ export async function startDevOidcIssuer(
       const challenge = base64url.encode(createHash("sha256").update(verifier, "ascii").digest());
       if (verifier === "" || challenge !== record.codeChallenge) {
         throw new TokenEndpointError("invalid_grant", "PKCE code_verifier mismatch");
+      }
+      if (record.dpopJkt !== undefined && record.dpopJkt !== jkt) {
+        // Authorization-code DPoP key continuity (`dpop_jkt` pre-binding, RFC 9449 §10).
+        throw new TokenEndpointError(
+          "invalid_grant",
+          "authorization code is bound to a different DPoP key (dpop_jkt mismatch)",
+        );
       }
       const refreshToken = randomUUID();
       refreshTokens.set(refreshToken, { jkt, webid });

@@ -186,8 +186,21 @@ export function createNonceStore(options: NonceStoreOptions = {}): NonceStore {
       live.delete(sessionKey);
       live.set(sessionKey, { nonce, expiresAt: now() + ttlMs });
       if (live.size > maxEntries) {
-        const oldest = live.keys().next();
-        if (!oldest.done) live.delete(oldest.value);
+        // Capacity pressure drops EXPIRED challenges first — a flood of fresh sessions
+        // must not evict a live, pending legitimate challenge while dead entries occupy
+        // slots. Only then does the oldest live challenge go. Size `maxEntries` against
+        // the trusted issuers' account population and wire a per-WebID `rateLimiter` on
+        // the minting route (any verified WebID can mint).
+        const cutoff = now();
+        for (const [key, entry] of live) {
+          if (live.size <= maxEntries) break;
+          if (entry.expiresAt <= cutoff) live.delete(key);
+        }
+        while (live.size > maxEntries) {
+          const oldest = live.keys().next();
+          if (oldest.done) break;
+          live.delete(oldest.value);
+        }
       }
       return nonce;
     },

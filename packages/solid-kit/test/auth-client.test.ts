@@ -55,6 +55,13 @@ async function startApiServer(
   let origin = "";
   const handle = async (request: IncomingMessage, response: ServerResponse): Promise<void> => {
     const url = `${origin}${request.url ?? "/"}`;
+    if (request.url === "/api/redirect") {
+      // Same-origin redirect bait: a credentialed client must REFUSE to follow it.
+      response.statusCode = 302;
+      response.setHeader("location", `${origin}/api/whoami`);
+      response.end();
+      return;
+    }
     const auth = await verifyApiRequest(
       { headers: request.headers, method: request.method ?? "GET", url },
       { verifier },
@@ -231,6 +238,14 @@ describe("createAuthClient — real Solid-OIDC login + the decision-0012 API rai
     const third = createAuthClient(clientOptions());
     expect(await third.restore()).toEqual({ outcome: "login" });
   }, 30_000);
+
+  test("authFetch REFUSES redirects — a 3xx never re-attaches the credential", async () => {
+    const client = createAuthClient(clientOptions());
+    await client.login(issuer.webid);
+    // Even a same-(allowed-)origin redirect is refused: following it would let the
+    // engine mint a fresh DPoP credential for the hop (roborev sm-22 High).
+    await expect(client.authFetch(`${api.origin}/api/redirect`)).rejects.toThrow(/redirect/iu);
+  }, 20_000);
 
   test("session-change listeners fire on login and logout", async () => {
     const client = createAuthClient(clientOptions());

@@ -10,7 +10,7 @@
  * issuer (see `dev-issuer.ts` + `allowInsecureLoopback`) or a real hosted issuer (Mode 2b,
  * decision 0011) is a data change, not a code change.
  */
-import { createGuardedFetch, type GuardOptions } from "@jeswr/guarded-fetch";
+import { createGuardedFetch, type GuardOptions, refuseRedirects } from "@jeswr/guarded-fetch";
 import { createSolidAuth, type SolidAuth, type SolidAuthConfig } from "@jeswr/solid-auth-core";
 import type { RealAuthSession } from "./types.js";
 
@@ -65,14 +65,19 @@ export function createAuthClient(options: CreateAuthClientOptions): AuthClient {
   // engine swaps `authenticatedFetch` across login/restore/logout).
   const liveAuthenticatedFetch: typeof fetch = (input, init) =>
     auth.authenticatedFetch(input, init);
+  // Credentialed fetches REFUSE redirects (suite posture; roborev sm-22 High): following
+  // a 3xx re-enters the engine, which would re-attach a fresh DPoP credential on an
+  // allowed-origin hop — silent credentialed cross-origin forwarding, including 307/308
+  // body forwards. A refused redirect surfaces as RedirectRefusedError for the caller.
+  const redirectSafeFetch = refuseRedirects(liveAuthenticatedFetch);
   const authFetch: typeof fetch =
     guard === false
-      ? liveAuthenticatedFetch
+      ? redirectSafeFetch
       : createGuardedFetch({
           allowLoopback: config.allowInsecureLoopback === true,
           maxBytes: DEFAULT_POD_MAX_BYTES,
           ...guard,
-          fetch: liveAuthenticatedFetch,
+          fetch: redirectSafeFetch,
         });
 
   // A facade with FORWARDING GETTERS — spreading `auth` would freeze its live

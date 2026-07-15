@@ -7,8 +7,13 @@
  * acknowledging (at the type level AND at runtime) that the UI surfaces
  * {@link AuthSession.simulated}.
  */
-import { createGuardedFetch, type GuardOptions } from "@jeswr/guarded-fetch";
-import { validateWebId } from "@jeswr/solid-auth-core";
+import { createGuardedFetch, type GuardOptions, refuseRedirects } from "@jeswr/guarded-fetch";
+import {
+  computeAllowedOrigins,
+  isOriginAllowed,
+  sameWebId,
+  validateWebId,
+} from "@jeswr/solid-auth-core";
 import type { LoginResult, RestoreOutcome, SimulatedAuthSession } from "./types.js";
 
 /**
@@ -37,6 +42,13 @@ export interface DemoLoginOptions {
   fetch?: typeof fetch;
   /** Permit `http:` for LOOPBACK hosts only (dev/test pods). Default false. */
   allowInsecureLoopback?: boolean;
+  /**
+   * Extra resource ORIGINS the injected (possibly owner-capable) fetch may serve, beyond
+   * the pod's and the persona WebID's origins — the same fail-closed credential boundary
+   * `createAuthClient` enforces. Requests outside the boundary fall back to the
+   * credential-free global fetch, never the injected one.
+   */
+  allowedOrigins?: string[];
   /**
    * `@jeswr/guarded-fetch` policy for the session's `authFetch` (parity with
    * `createAuthClient`). Merged over the kit defaults; pass `false` to skip the guard
@@ -100,6 +112,16 @@ export function demoLogin(options: DemoLoginOptions): DemoSession {
   const personaWebId = validateWebId(options.webId, allowInsecureLoopback);
   const podBaseUrl = validatePodBaseUrl(options.podBaseUrl, allowInsecureLoopback);
   const baseFetch = options.fetch ?? fetch;
+  const publicFetch = fetch;
+  // The injected fetch may carry OWNER authority (harness accounts; a future credentialed
+  // Mode-1 variant), so it gets the SAME fail-closed origin boundary as a real session
+  // (roborev sm-22): pod origin + persona WebID origin + explicit allowedOrigins, cleartext
+  // guarded. Outside the boundary requests ride the credential-free global fetch.
+  const allowedOrigins = computeAllowedOrigins({
+    allowedOrigins: [podBaseUrl, ...(options.allowedOrigins ?? [])],
+    webId: personaWebId,
+    allowInsecureLoopback,
+  });
 
   let boundWebId: string | null = personaWebId;
   const listeners = new Set<(session: { webId: string | null }) => void>();
@@ -113,31 +135,54 @@ export function demoLogin(options: DemoLoginOptions): DemoSession {
     }
   };
 
-  const delegatingFetch: typeof fetch = (input, init) => baseFetch(input, init);
+  // Credentialed branch refuses redirects (parity with createAuthClient's authFetch).
+  const credentialedFetch = refuseRedirects((input, init) => baseFetch(input, init));
+  const boundaryFetch: typeof fetch = (input, init) => {
+    let url: string;
+    if (input instanceof Request) {
+      url = input.url;
+    } else {
+      try {
+        // Pod-relative convenience: bare paths resolve against the pod base.
+        url = new URL(String(input), podBaseUrl).toString();
+      } catch {
+        return publicFetch(input, init); // fail-closed: never the credentialed fetch
+      }
+    }
+    return isOriginAllowed(allowedOrigins, url)
+      ? credentialedFetch(input instanceof Request ? input : url, init)
+      : publicFetch(input, init);
+  };
   const authFetch: typeof fetch =
     options.guard === false
-      ? delegatingFetch
+      ? boundaryFetch
       : createGuardedFetch({
           allowLoopback: allowInsecureLoopback,
           maxBytes: DEFAULT_POD_MAX_BYTES,
           ...options.guard,
-          fetch: delegatingFetch,
+          fetch: boundaryFetch,
         });
 
   return {
     simulated: true as const,
     podBaseUrl,
     authFetch,
-    publicFetch: fetch,
+    publicFetch,
     get webId() {
       return boundWebId;
     },
     login(webId?: string): Promise<LoginResult> {
-      try {
-        boundWebId = validateWebId(webId ?? personaWebId, allowInsecureLoopback);
-      } catch (error) {
-        return Promise.reject(error);
+      // The pod/fetch binding belongs to THIS persona: a different WebID must not gain
+      // its authority (roborev sm-22). Persona switches are a new demoLogin().
+      if (webId !== undefined && !sameWebId(webId, personaWebId)) {
+        return Promise.reject(
+          new Error(
+            `demoLogin: this simulated session is bound to ${personaWebId}; ` +
+              "construct a new demoLogin to switch personas (the pod binding switches with the identity)",
+          ),
+        );
       }
+      boundWebId = personaWebId;
       emit();
       return Promise.resolve({ webId: boundWebId });
     },

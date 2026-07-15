@@ -5,7 +5,7 @@
  * exactly the in-browser Mode-1 topology, where every request already acts as the
  * owner).
  */
-import { afterAll, beforeAll, describe, expect, test } from "vitest";
+import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 import { demoLogin, SIMULATED_LOGIN_DISCLOSURE } from "../src/auth/demo.js";
 import { type SolidTestServer, startSolidServer } from "../src/testing.js";
 
@@ -80,6 +80,44 @@ describe("demoLogin — decision-0011 honesty enforcement", () => {
 
     unsubscribe();
     expect(seen).toEqual([null, WEBID]);
+  });
+
+  test("login() refuses a different persona's WebID (pod authority stays bound)", async () => {
+    const session = demoLogin(options());
+    await expect(session.login("https://someone-else.example/profile#me")).rejects.toThrow(
+      /bound to/u,
+    );
+    expect(session.webId).toBe(WEBID); // binding untouched by the refused switch
+    await expect(session.login(WEBID)).resolves.toEqual({ webId: WEBID });
+  });
+
+  test("the injected (owner-capable) fetch never serves origins outside the boundary", async () => {
+    const injected = vi.fn(async () => new Response("pod", { status: 200 }));
+    const publicStub = vi.fn(async () => new Response("public", { status: 200 }));
+    vi.stubGlobal("fetch", publicStub);
+    try {
+      // Constructed AFTER the stub so the session's public fallback is observable.
+      const session = demoLogin({
+        ...options(),
+        fetch: injected as unknown as typeof fetch,
+        guard: false, // isolate the boundary check from the SSRF guard's DNS work
+      });
+
+      const inPod = await session.authFetch(`${POD}/private/doc`);
+      expect(await inPod.text()).toBe("pod");
+      // Pod-relative convenience resolves against the pod base (still the injected fetch).
+      await session.authFetch("/private/other");
+      expect(injected).toHaveBeenCalledTimes(2);
+
+      // Foreign origin: the injected authority is NEVER used; the request falls back to
+      // the credential-free global fetch (roborev sm-22 boundary finding).
+      const foreign = await session.authFetch("https://evil.example/exfiltrate");
+      expect(await foreign.text()).toBe("public");
+      expect(injected).toHaveBeenCalledTimes(2);
+      expect(publicStub).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   test("a throwing listener never disturbs the session", async () => {
