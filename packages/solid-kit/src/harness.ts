@@ -336,14 +336,17 @@ export const sparqWasmServer: SolidServerImplementation = {
     const stop = makeStopOnce(async () => {
       stopped = true;
       // Let in-flight provisions finish their own push-or-cleanup, stop every provisioned
-      // account, and only then re-throw any late-cleanup failure — stop() must not resolve
-      // while a pod may still be live, but neither may one bad lifecycle skip the rest.
+      // account, and only then throw — stop() must not resolve while a pod may still be
+      // live, but neither may one bad shutdown short-circuit the rest, so everything is
+      // allSettled first and failures are aggregated.
       const lifecycles = await Promise.allSettled([...inFlight]);
-      await Promise.all(accounts.map((account) => account.stop()));
-      const cleanupFailure = lifecycles.find(
-        (outcome): outcome is PromiseRejectedResult => outcome.status === "rejected",
-      );
-      if (cleanupFailure !== undefined) throw cleanupFailure.reason;
+      const shutdowns = await Promise.allSettled(accounts.map((account) => account.stop()));
+      const failures = [...lifecycles, ...shutdowns]
+        .filter((outcome): outcome is PromiseRejectedResult => outcome.status === "rejected")
+        .map((outcome) => outcome.reason);
+      if (failures.length > 0) {
+        throw new AggregateError(failures, "solid harness shutdown may have leaked a pod");
+      }
     });
 
     try {
