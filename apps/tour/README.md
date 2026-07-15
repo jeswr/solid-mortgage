@@ -17,4 +17,3 @@ deployment origin, with a URL scheme and no trailing slash.
 Non-routable `.invalid` origins let the shell build before deployment configuration exists;
 all seven variables are required for a working deployed shell. Local tooling should allocate
 ports dynamically and pass the resulting origins through these variables.
-
