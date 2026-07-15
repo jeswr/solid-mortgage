@@ -31,6 +31,13 @@ test("flags banned filenames even when the file content is clean (image assets)"
   expect(filenameFindings.every((finding) => finding.line === 0)).toBe(true);
 });
 
+test("flags prohibited directory names carrying the mark past a generic basename", () => {
+  const findings = scanInsignia([FIXTURES]) as Array<{ file: string; id: string; line: number }>;
+  const pathFindings = findings.filter((finding) => finding.file.endsWith("fdic/seal.svg"));
+  expect(pathFindings.map((finding) => finding.id)).toContain("fdic-mark");
+  expect(pathFindings.every((finding) => finding.line === 0)).toBe(true);
+});
+
 test("does not flag the clean fixture (word-boundary and casing negatives)", () => {
   const findings = scanInsignia([FIXTURES]) as Array<{ file: string }>;
   expect(findings.filter((finding) => finding.file.endsWith("clean.txt"))).toEqual([]);

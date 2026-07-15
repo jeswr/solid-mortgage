@@ -120,19 +120,20 @@ export function scanInsignia(directories) {
   for (const directory of directories) {
     for (const file of walkFiles(directory)) {
       const relativePath = relative(REPO_ROOT, file);
-      const fileName = relativePath.split("/").pop() ?? relativePath;
-      const normalizedName = fileName.replace(/[-_.]/g, " ");
+      // The whole path is checked, not just the basename, so prohibited imagery under a
+      // revealing directory with a generic name (e.g. public/fdic/seal.png) is caught too.
+      const normalizedPath = relativePath.replace(/[\\/\-_.]/g, " ");
       for (const { id, pattern, reason } of BANNED_PATTERNS) {
         // The uppercased form lets the case-sensitive standalone-token rules (e.g. "LPA")
-        // catch conventionally lowercase filename segments such as "lpa-findings.svg".
+        // catch conventionally lowercase path segments such as "lpa-findings.svg".
         if (
-          !pattern.test(fileName) &&
-          !pattern.test(normalizedName) &&
-          !pattern.test(normalizedName.toUpperCase())
+          !pattern.test(relativePath) &&
+          !pattern.test(normalizedPath) &&
+          !pattern.test(normalizedPath.toUpperCase())
         )
           continue;
         findings.push({
-          excerpt: `(filename) ${fileName}`,
+          excerpt: `(file path) ${relativePath}`,
           file: relativePath,
           id,
           line: 0,
