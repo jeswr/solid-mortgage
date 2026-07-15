@@ -107,7 +107,7 @@ Product-phase extensions (not in the 10 min): appraisal VC on UAD 3.6 data, ALTA
 7. Equifax — The Work Number (scale: ~5M employers, 823M+ records): https://theworknumber.com/ and https://legalclarity.org/the-work-number-how-equifaxs-verification-database-works/
 8. Fannie Mae — DU validation service verification report vendors: https://singlefamily.fanniemae.com/applications-technology/desktop-underwriter-validation-service/du-validation-service-verification-report-vendors
 9. Freddie Mac — AIM service providers (income: Argyle, Equifax TWN, Experian, Finicity, Truework, Truv; assets: Blend, Informative Research, Plaid, PointServ): https://sf.freddiemac.com/tools-learning/technology-tools/our-solutions/aim-service-providers and https://sf.freddiemac.com/tools-learning/loan-advisor/our-solutions/aim-asset-income-modeler
-10. Fannie Mae Selling Guide B3-3.1-07 — Verbal VOE (10 business days / 120 days self-employed): https://selling-guide.fanniemae.com/sel/b3-3.1-04/verbal-verification-employment
+10. Fannie Mae Selling Guide B3-3.1-04 — Verbal VOE (10 business days / 120 days self-employed): https://selling-guide.fanniemae.com/sel/b3-3.1-04/verbal-verification-employment
 11. Plaid — Mortgage asset/income verification automation: https://plaid.com/blog/mortgage-automation-2023/
 12. Fannie Mae Selling Guide B1-1-03 — Allowable age of credit documents (4 months): https://selling-guide.fanniemae.com/sel/b1-1-03/allowable-age-credit-documents-and-federal-income-tax-returns
 13. IRS — Income Verification Express Service (IVES) / Form 4506-C: https://www.irs.gov/individuals/income-verification-express-service and https://www.irs.gov/individuals/irs-income-verification-express-service-ives-faqs
