@@ -3,6 +3,17 @@
  * Solid-server harness and pod seeding. Kept off the package root so app bundles importing
  * the runtime kit never pull the server, jose, or port-probing machinery.
  */
+
+export {
+  createDevDpopClient,
+  createMemoryLocalStorage,
+  type DevAccessTokenOverrides,
+  type DevDpopClient,
+  type DevOidcIssuer,
+  InMemorySessionStore,
+  type StartDevOidcIssuerOptions,
+  startDevOidcIssuer,
+} from "./auth/dev-issuer.js";
 export {
   type SolidServerImplementation,
   type SolidTestAccount,
