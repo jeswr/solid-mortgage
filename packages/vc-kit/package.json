@@ -1,0 +1,22 @@
+{
+  "name": "@mortgage/vc-kit",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "lint": "biome check src test package.json tsconfig.json",
+    "test": "vitest run --root . --config ../../vitest.config.ts",
+    "typecheck": "tsc --project tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@jeswr/solid-odrl": "github:jeswr/solid-odrl#a116c5993e3cdfdaf8d16f2d5b411b92c9c932e3",
+    "@jeswr/solid-vc": "github:jeswr/solid-vc#bee27d508372e64021e23bdaeb2d79c06e08cf18"
+  }
+}

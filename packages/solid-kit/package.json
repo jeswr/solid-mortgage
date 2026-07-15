@@ -1,0 +1,23 @@
+{
+  "name": "@mortgage/solid-kit",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "lint": "biome check src test package.json tsconfig.json",
+    "test": "vitest run --root . --config ../../vitest.config.ts",
+    "typecheck": "tsc --project tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@jeswr/guarded-fetch": "github:jeswr/guarded-fetch#81926b4481310ff74a5c02c3c4eaa2a51ce2dee6",
+    "@jeswr/solid-auth-core": "github:jeswr/solid-auth-core#79d90556df6319b5a3699d877be56769c55fe15e",
+    "@jeswr/solid-session-restore": "github:jeswr/solid-session-restore#72755147e627e853b9600fc301fe2d06b9433c42"
+  }
+}
