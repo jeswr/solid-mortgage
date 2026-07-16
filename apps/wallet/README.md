@@ -53,10 +53,14 @@ The central app of the journey (scenes 1/2/3/5):
     record, not verified by the wallet". Regression-tested in `test/ledger-integrity.test.ts`
     (forged root receipt, junk, protected-store write refusal, strict fail-closed on a
     transient protected-read) against a real granted party on a real WAC pod.
-  - **Known residual** (bead — cross-surface): the container grant's `acl:default` Write
-    still exposes non-receipt members (credentials/anchors) to a write-granted party, and the
-    closing party's container Control is broader than the closing-record it needs. Correct
-    least-privilege fix spans this app + lender-boa's write paths + closing's ACL management.
+  - **Known residuals** (beads): (a) the container grant's `acl:default` Write still exposes
+    non-receipt members (credentials/anchors) to a write-granted party, and the closing
+    party's container Control is broader than the closing-record it needs — least-privilege
+    fix spans this app + lender-boa's write paths + closing's ACL management; (b) a party
+    holding container Control could pre-plant forged receipts under a matching lock (WAC alone
+    cannot prove a receipt was wallet-written) — structural closure is to SIGN wallet consent
+    receipts. Neither is reachable in the demo's flows (per-visitor Mode-1 pods; Mode-2 always
+    creates the store on the first wallet grant, before any party grant exists).
 
 **Mode-2 grant rail boundary (decision 0015):** every `/api/grants*`+`/api/ledger` route
 requires a DPoP-bound Solid-OIDC caller (anonymous ⇒ 401), derives the pod from the token

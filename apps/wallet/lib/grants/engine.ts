@@ -194,17 +194,18 @@ function aclIri(containerIri: string): string {
  * can write a receipt there even though they hold Write on the parent. THE
  * load-bearing control for receipt integrity.
  *
- * TAMPER DETECTION (roborev sm-28 High, hardened): the wallet always creates
- * the container AND its lock together (both strict `If-None-Match: *`). In the
- * intended flow this runs on the FIRST grant, while NO party has any grant yet
- * — so the store is locked before any adversary holds inherited Write. A SPLIT
- * outcome — the container already exists but its lock does NOT (so our lock
- * create SUCCEEDS) — means someone created the store WITHOUT the lock (an
- * inherited-Write party pre-provisioning forged records, or a pre-hardening
- * pod). That is untrusted: we FAIL CLOSED rather than lock over foreign
- * contents and let them read as authoritative. A Control-granted party could
- * still forge a matching lock (the separate container-Control residual, tracked
- * as a bead); everything short of Control is caught here.
+ * TAMPER DETECTION (roborev sm-28 High, hardened twice): the wallet writes the
+ * lock ONLY on a container it JUST CREATED FRESH — never over a pre-existing
+ * one. In the intended flow the fresh create runs on the FIRST grant, while NO
+ * party has any grant yet, so the store is locked in a window with no
+ * adversary. A container that ALREADY EXISTS is verify-only: the wallet GETs
+ * its `.acl` and either trusts an owner+service-only lock or FAILS CLOSED —
+ * writing NOTHING, so a tampered/un-migrated store stays fail-closed on every
+ * retry (an earlier version wrote the lock before throwing, which one retry
+ * laundered into "our own" trusted lock — roborev sm-28 round-3). A
+ * Control-granted party could still author a matching lock over pre-planted
+ * records (the container-Control residual + a "sign policy receipts" follow-up,
+ * both beaded); everything short of Control is caught here.
  */
 async function ensureReceiptsStore(
   podBase: string,
@@ -213,19 +214,25 @@ async function ensureReceiptsStore(
   podFetch: PodIoFetch,
 ): Promise<void> {
   const container = receiptsContainerIri(podBase);
+  const iri = aclIri(container);
   const created = await podFetch(container, {
     method: "PUT",
     headers: { "content-type": "text/turtle", "if-none-match": "*" },
     body: "",
     redirect: "error",
   });
-  const containerExisted = created.status === 412;
-  if (!created.ok && !containerExisted) {
+  // PRE-EXISTING container: verify-only, write NOTHING (see the doc). An absent
+  // or foreign lock throws; only an owner+service-only lock is trusted.
+  if (created.status === 412) {
+    await verifyReceiptsLock(container, iri, ownerWebId, serviceWebId, podFetch);
+    return;
+  }
+  if (!created.ok) {
     throw new PodAccessError(502, `could not provision the receipt store (${created.status})`);
   }
-  // The restrictive ACL: owner + service full control (accessTo AND default,
-  // so members inherit it too); NO agentClass, NO party.
-  const iri = aclIri(container);
+  // FRESH container (we just created it, in the no-adversary window). Lock it:
+  // owner + service full control (accessTo AND default so members inherit);
+  // NO agentClass, NO agentGroup, NO party.
   const dataset = new Store();
   const owner = authorization(`${iri}#owner`, dataset, container, ownerWebId);
   owner.default = container;
@@ -245,33 +252,23 @@ async function ensureReceiptsStore(
     body: await serializeAcl(dataset),
     redirect: "error",
   });
-  const lockExisted = aclResponse.status === 412;
-  if (!aclResponse.ok && !lockExisted) {
-    throw new PodAccessError(502, `could not lock the receipt store (${aclResponse.status})`);
-  }
-  // Happy paths: fresh (container created + lock created) or ours (both 412).
-  // A container that existed WITHOUT its lock is untrusted (see the doc).
-  if (containerExisted && !lockExisted) {
-    throw new PodAccessError(
-      409,
-      "the consent-receipt store exists without its integrity lock — refusing to trust it " +
-        "(possible tampering or an un-migrated pod); reconcile it out of band before granting",
-    );
-  }
-  // A PRE-EXISTING lock is only trusted after we VERIFY it grants access to the
-  // borrower + wallet service ALONE (roborev sm-28 Medium): a first-writer that
-  // happened to hold Control (the container-Control residual) could otherwise
-  // author a permissive lock and own the store forever. GET + typed-wrapper
-  // check, never string comparison.
-  if (lockExisted) {
+  if (aclResponse.ok) return;
+  // A concurrent transition (multi-instance) locked our fresh container first:
+  // verify THAT lock rather than trusting blindly.
+  if (aclResponse.status === 412) {
     await verifyReceiptsLock(container, iri, ownerWebId, serviceWebId, podFetch);
+    return;
   }
+  throw new PodAccessError(502, `could not lock the receipt store (${aclResponse.status})`);
 }
 
 /**
- * Fail closed unless `/mortgage/receipts/.acl` grants write/control to the
- * borrower + wallet service ONLY — no other agent, no agentClass. Read through
- * the `@solid/object` typed wrappers (house rule).
+ * Fail closed unless `/mortgage/receipts/.acl` grants access to the borrower +
+ * wallet service ONLY — no public/authenticated class, no `acl:agentClass`, no
+ * `acl:agentGroup` (a group document lives outside the pod and its membership
+ * could be edited later — roborev sm-28 round-3), no other `acl:agent`, and
+ * every rule scoped to THIS container. Read through the `@solid/object` typed
+ * wrappers (house rule).
  */
 async function verifyReceiptsLock(
   containerIri: string,
@@ -282,25 +279,29 @@ async function verifyReceiptsLock(
 ): Promise<void> {
   const existing = await readPodResource(aclDocumentIri, containerIri, podFetch);
   if (existing === undefined) {
-    throw new PodAccessError(409, "the consent-receipt store lock vanished — refusing to proceed");
+    throw new PodAccessError(
+      409,
+      "the consent-receipt store exists without its integrity lock — refusing to trust it " +
+        "(possible tampering or an un-migrated pod); reconcile it out of band before granting",
+    );
   }
   const allowed = new Set([ownerWebId, ...(serviceWebId === undefined ? [] : [serviceWebId])]);
   const acl = new AclResource(new Store([...existing.dataset] as Quad[]), DataFactory);
+  const untrusted = (detail: string): PodAccessError =>
+    new PodAccessError(409, `the consent-receipt store lock is untrusted (${detail})`);
   for (const rule of acl.authorizations) {
-    // No public / authenticated-class access to the policy store, ever.
-    if (rule.accessibleToAny || rule.accessibleToAuthenticated || rule.agentClass.size > 0) {
-      throw new PodAccessError(
-        409,
-        "the consent-receipt store lock grants class-based access — untrusted, refusing to proceed",
-      );
+    if (rule.accessibleToAny || rule.accessibleToAuthenticated) {
+      throw untrusted("grants public/authenticated access");
+    }
+    if (rule.agentClass.size > 0) throw untrusted("grants agentClass access");
+    if (rule.agentGroup !== undefined) throw untrusted("grants agentGroup access");
+    // Every rule must be scoped to THIS container (accessTo and/or default) —
+    // a rule targeting anything else is a foreign lock, not ours.
+    if (rule.accessTo !== containerIri && rule.default !== containerIri) {
+      throw untrusted("names a foreign target");
     }
     for (const agent of rule.agent) {
-      if (!allowed.has(agent)) {
-        throw new PodAccessError(
-          409,
-          "the consent-receipt store lock names an unexpected agent — untrusted, refusing to proceed",
-        );
-      }
+      if (!allowed.has(agent)) throw untrusted("names an unexpected agent");
     }
   }
 }
@@ -641,7 +642,9 @@ async function policyHistoryFor(
   agentWebId: string,
   options: GrantEngineOptions,
 ): Promise<readonly ConsentReceiptView[]> {
-  const history = await readPolicyHistory(podBase, borrowerWebId, options);
+  // requireStore: transitions call this only AFTER ensureReceiptsStore, so a
+  // missing store here is a transient fault, not the empty state (round-3 #3).
+  const history = await readPolicyHistory(podBase, borrowerWebId, options, true);
   return history.filter((receipt) => receipt.recipient === agentWebId);
 }
 
@@ -683,19 +686,30 @@ export async function readGrantStandings(
  * THROWS — a transient dropout must never silently shrink policy history and
  * re-enable a revoked party (roborev sm-28 Medium #1). Only owner/service can
  * delete a protected member, so a listed-but-404 there is also a fault worth
- * failing on. A 404 on the CONTAINER itself is the ordinary empty state.
+ * failing on.
+ *
+ * `requireContainer` (transitions only): the caller has JUST provisioned the
+ * store, so a 404 on the CONTAINER itself is a transient fault → THROW rather
+ * than read as empty (roborev sm-28 round-3). The dashboard/ledger reads leave
+ * it false, so a fresh pod with no store yet reads as empty history.
  */
 async function readReceiptsFrom(
   listIri: string,
   prefixes: readonly string[],
   provenance: "wallet" | "external",
   mode: "strict" | "tolerant",
+  requireContainer: boolean,
   podBase: string,
   borrowerWebId: string,
   options: GrantEngineOptions,
 ): Promise<ConsentReceiptView[]> {
   const resource = await readPodResource(listIri, podBase, options.podFetch);
-  if (resource === undefined) return [];
+  if (resource === undefined) {
+    if (requireContainer) {
+      throw new PodAccessError(502, "the just-provisioned receipt store is unexpectedly absent");
+    }
+    return [];
+  }
   const container = new ContainerDataset(resource.dataset, DataFactory).container;
   // No typed LDP root ⇒ no members ⇒ empty history, in BOTH modes: a freshly
   // provisioned empty store legitimately lists nothing. Strict's guarantee is
@@ -762,6 +776,7 @@ async function readPolicyHistory(
   podBase: string,
   borrowerWebId: string,
   options: GrantEngineOptions,
+  requireStore = false,
 ): Promise<readonly ConsentReceiptView[]> {
   const listIri = receiptsContainerIri(podBase);
   const views = await readReceiptsFrom(
@@ -769,6 +784,7 @@ async function readPolicyHistory(
     [VAULT_RECEIPT_PREFIX],
     "wallet",
     "strict",
+    requireStore,
     podBase,
     borrowerWebId,
     options,
@@ -812,6 +828,7 @@ export async function readConsentLedger(
       [VAULT_RECEIPT_PREFIX],
       "wallet",
       "tolerant",
+      false,
       podBase,
       borrowerWebId,
       options,
@@ -821,6 +838,7 @@ export async function readConsentLedger(
       [RECEIPT_PREFIX],
       "external",
       "tolerant",
+      false,
       podBase,
       borrowerWebId,
       options,
