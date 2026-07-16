@@ -17,9 +17,11 @@
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@aztec/bb.js": "5.0.0-nightly.20260324",
     "@jeswr/solid-odrl": "github:jeswr/solid-odrl#a116c5993e3cdfdaf8d16f2d5b411b92c9c932e3",
     "@jeswr/solid-vc": "github:jeswr/solid-vc#bee27d508372e64021e23bdaeb2d79c06e08cf18",
     "@mortgage/data-model": "workspace:*",
+    "@noir-lang/noir_js": "1.0.0-beta.21",
     "@rdfjs/types": "^2.0.1",
     "@rdfjs/wrapper": "^0.34.0",
     "n3": "^2.1.1"
