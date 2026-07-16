@@ -126,6 +126,39 @@ describe("consent-ledger integrity against a write-granted party", () => {
     expect(revoke.action).toBe("revoke");
   });
 
+  test("a grant FAILS CLOSED when a protected withdraw receipt is transiently unreadable", async () => {
+    // Set up an authoritative revoke: grant then revoke a throwaway agent so a
+    // withdraw receipt exists in the protected store.
+    const throwaway = "https://throwaway.example/orgs/x#id";
+    await changeContainerAccess(podBase, ownerWebId, throwaway, "grant", MODES, {
+      podFetch: owner.authFetch,
+    });
+    await changeContainerAccess(podBase, ownerWebId, throwaway, "revoke", MODES, {
+      podFetch: owner.authFetch,
+    });
+
+    // A fetch that 500s exactly when the protected withdraw receipt is READ —
+    // a transient dropout. A fail-OPEN policy read would drop the withdraw and
+    // let the re-grant through; the STRICT read must abort instead.
+    const flaky: typeof fetch = (input, init) => {
+      const url = String(input instanceof Request ? input.url : input);
+      const method = (input instanceof Request ? input.method : init?.method) ?? "GET";
+      if (method === "GET" && /\/receipts\/vault-\d+-revoke-/.test(url)) {
+        return Promise.resolve(new Response("flaky", { status: 500 }));
+      }
+      return owner.authFetch(input, init);
+    };
+    await expect(
+      changeContainerAccess(podBase, ownerWebId, throwaway, "grant", MODES, { podFetch: flaky }),
+    ).rejects.toThrow();
+    // With a healthy fetch the guard still sees the withdraw: immutable 409.
+    await expect(
+      changeContainerAccess(podBase, ownerWebId, throwaway, "grant", MODES, {
+        podFetch: owner.authFetch,
+      }),
+    ).rejects.toThrow(/immutable/);
+  });
+
   test("junk at a root receipt IRI does not block a real revoke", async () => {
     const iri = `${mortgageContainerIri(podBase)}consent-receipt-junk`;
     const junk = await party.authFetch(iri, {

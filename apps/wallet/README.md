@@ -38,15 +38,21 @@ The central app of the journey (scenes 1/2/3/5):
   client-side against the in-browser pod (the disclosed simulation) and server-side over the
   wallet's service identity against a real WAC pod (proven by `test/pod-auth.test.ts` with
   real authenticated grantee reads → 200, then 401/403 after revocation).
-  - **Receipt integrity** (roborev sm-28 hardening): the authoritative ledger lives in a
-    dedicated `/mortgage/receipts/` subcontainer whose OWN ACL admits writes from the
-    borrower + wallet service ONLY — overriding the container's inherited `acl:default`, so a
-    write-granted party cannot forge a withdrawal to lock out a competitor nor poison the
-    ledger to block the borrower's own revocation. Grant/revoke POLICY reads exclusively from
-    there (at the deterministic vault IRIs, name-must-match-body); the DISPLAY ledger
-    additionally shows other apps' root-level records (the closing ceremony) but tolerates
-    junk (skip-and-surface). A REVOKE removes live WAC access BEFORE consulting the ledger.
-    Regression-tested in `test/ledger-integrity.test.ts` against a real granted party.
+  - **Receipt integrity** (roborev sm-28 hardening, two rounds): the authoritative ledger
+    lives in a dedicated `/mortgage/receipts/` subcontainer whose OWN ACL admits writes from
+    the borrower + wallet service ONLY — overriding the container's inherited `acl:default`,
+    so a write-granted party cannot forge a withdrawal to lock out a competitor nor poison
+    the ledger to block the borrower's own revocation. Defence in depth: grant/revoke POLICY
+    reads that store STRICTLY (a transient dropout aborts the caller, never silently shrinking
+    history to re-enable a revoked party) at the deterministic vault IRIs with
+    name-must-match-body; a pre-existing store is TAMPER-CHECKED (a container without its lock,
+    or a lock naming any agent beyond owner+service, fails closed — not first-writer-wins); a
+    REVOKE removes live WAC access before any ledger read OR store provisioning. The DISPLAY
+    ledger additionally shows other apps' root-level records but tolerates junk
+    (skip-and-surface) and tags them `external` provenance — the UI marks them "third-party
+    record, not verified by the wallet". Regression-tested in `test/ledger-integrity.test.ts`
+    (forged root receipt, junk, protected-store write refusal, strict fail-closed on a
+    transient protected-read) against a real granted party on a real WAC pod.
   - **Known residual** (bead — cross-surface): the container grant's `acl:default` Write
     still exposes non-receipt members (credentials/anchors) to a write-granted party, and the
     closing party's container Control is broader than the closing-record it needs. Correct

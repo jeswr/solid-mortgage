@@ -25,10 +25,13 @@
  *     a dedicated `/mortgage/receipts/` subcontainer whose OWN ACL grants
  *     write to the borrower + the wallet's service identity ONLY (never a
  *     granted party — the subcontainer ACL overrides the container's inherited
- *     `acl:default`). Grant/revoke POLICY reads exclusively from there; the
- *     DISPLAY ledger additionally shows other apps' root-level records but
- *     tolerates junk (skip-and-surface) so no untrusted record can brick a
- *     transition.
+ *     `acl:default`; a pre-existing store is TAMPER-CHECKED, not blindly
+ *     trusted — see `ensureReceiptsStore`). Grant/revoke POLICY reads STRICTLY
+ *     from there (a transient dropout ABORTS the caller, never silently
+ *     shrinking history — a fail-open read would re-enable a revoked party).
+ *     The DISPLAY ledger additionally shows other apps' root-level records
+ *     TOLERANTLY (skip-and-surface, tagged `external` provenance) so no
+ *     untrusted record can brick a transition or masquerade as wallet-verified.
  *
  *   - REVOCATION IS IMMUTABLE at the app level: once the protected store holds
  *     a withdraw receipt for an agent on this container, re-granting that agent
@@ -115,6 +118,13 @@ export interface ConsentReceiptView {
   readonly recipient: string;
   readonly resource: string;
   readonly issuedAt: string;
+  /**
+   * Where the record came from: `wallet` = the protected, integrity-locked
+   * store (authoritative); `external` = a root-level record written by another
+   * app or party — shown for completeness but NOT verified by the wallet, so
+   * the UI must mark it as such (roborev sm-28 Low #4).
+   */
+  readonly provenance: "wallet" | "external";
 }
 
 /** One agent's current standing on the container, for the dashboard. */
@@ -181,9 +191,20 @@ function aclIri(containerIri: string): string {
  * Idempotently provision the protected `/mortgage/receipts/` store: create the
  * subcontainer, then lock it to the borrower (+ wallet service) with an ACL
  * that OVERRIDES the container's inherited `acl:default` — so no granted party
- * can write a receipt there even though they hold Write on the parent. Both
- * writes are strict creates; an existing store (412) is the normal steady
- * state and is a no-op. THE load-bearing control for receipt integrity.
+ * can write a receipt there even though they hold Write on the parent. THE
+ * load-bearing control for receipt integrity.
+ *
+ * TAMPER DETECTION (roborev sm-28 High, hardened): the wallet always creates
+ * the container AND its lock together (both strict `If-None-Match: *`). In the
+ * intended flow this runs on the FIRST grant, while NO party has any grant yet
+ * — so the store is locked before any adversary holds inherited Write. A SPLIT
+ * outcome — the container already exists but its lock does NOT (so our lock
+ * create SUCCEEDS) — means someone created the store WITHOUT the lock (an
+ * inherited-Write party pre-provisioning forged records, or a pre-hardening
+ * pod). That is untrusted: we FAIL CLOSED rather than lock over foreign
+ * contents and let them read as authoritative. A Control-granted party could
+ * still forge a matching lock (the separate container-Control residual, tracked
+ * as a bead); everything short of Control is caught here.
  */
 async function ensureReceiptsStore(
   podBase: string,
@@ -198,12 +219,12 @@ async function ensureReceiptsStore(
     body: "",
     redirect: "error",
   });
-  if (!created.ok && created.status !== 412) {
+  const containerExisted = created.status === 412;
+  if (!created.ok && !containerExisted) {
     throw new PodAccessError(502, `could not provision the receipt store (${created.status})`);
   }
   // The restrictive ACL: owner + service full control (accessTo AND default,
-  // so members inherit it too); NO agentClass, NO party. Strict-create once —
-  // a 412 means it is already locked down.
+  // so members inherit it too); NO agentClass, NO party.
   const iri = aclIri(container);
   const dataset = new Store();
   const owner = authorization(`${iri}#owner`, dataset, container, ownerWebId);
@@ -224,8 +245,63 @@ async function ensureReceiptsStore(
     body: await serializeAcl(dataset),
     redirect: "error",
   });
-  if (!aclResponse.ok && aclResponse.status !== 412) {
+  const lockExisted = aclResponse.status === 412;
+  if (!aclResponse.ok && !lockExisted) {
     throw new PodAccessError(502, `could not lock the receipt store (${aclResponse.status})`);
+  }
+  // Happy paths: fresh (container created + lock created) or ours (both 412).
+  // A container that existed WITHOUT its lock is untrusted (see the doc).
+  if (containerExisted && !lockExisted) {
+    throw new PodAccessError(
+      409,
+      "the consent-receipt store exists without its integrity lock — refusing to trust it " +
+        "(possible tampering or an un-migrated pod); reconcile it out of band before granting",
+    );
+  }
+  // A PRE-EXISTING lock is only trusted after we VERIFY it grants access to the
+  // borrower + wallet service ALONE (roborev sm-28 Medium): a first-writer that
+  // happened to hold Control (the container-Control residual) could otherwise
+  // author a permissive lock and own the store forever. GET + typed-wrapper
+  // check, never string comparison.
+  if (lockExisted) {
+    await verifyReceiptsLock(container, iri, ownerWebId, serviceWebId, podFetch);
+  }
+}
+
+/**
+ * Fail closed unless `/mortgage/receipts/.acl` grants write/control to the
+ * borrower + wallet service ONLY — no other agent, no agentClass. Read through
+ * the `@solid/object` typed wrappers (house rule).
+ */
+async function verifyReceiptsLock(
+  containerIri: string,
+  aclDocumentIri: string,
+  ownerWebId: string,
+  serviceWebId: string | undefined,
+  podFetch: PodIoFetch,
+): Promise<void> {
+  const existing = await readPodResource(aclDocumentIri, containerIri, podFetch);
+  if (existing === undefined) {
+    throw new PodAccessError(409, "the consent-receipt store lock vanished — refusing to proceed");
+  }
+  const allowed = new Set([ownerWebId, ...(serviceWebId === undefined ? [] : [serviceWebId])]);
+  const acl = new AclResource(new Store([...existing.dataset] as Quad[]), DataFactory);
+  for (const rule of acl.authorizations) {
+    // No public / authenticated-class access to the policy store, ever.
+    if (rule.accessibleToAny || rule.accessibleToAuthenticated || rule.agentClass.size > 0) {
+      throw new PodAccessError(
+        409,
+        "the consent-receipt store lock grants class-based access — untrusted, refusing to proceed",
+      );
+    }
+    for (const agent of rule.agent) {
+      if (!allowed.has(agent)) {
+        throw new PodAccessError(
+          409,
+          "the consent-receipt store lock names an unexpected agent — untrusted, refusing to proceed",
+        );
+      }
+    }
   }
 }
 
@@ -337,7 +413,11 @@ async function removeAgentFromAcl(
   await writeAclDocument(containerIri, ownerWebId, serviceWebId, granted, snapshot.etag, podFetch);
 }
 
-function receiptView(iri: string, receipt: ConsentReceipt): ConsentReceiptView {
+function receiptView(
+  iri: string,
+  receipt: ConsentReceipt,
+  provenance: "wallet" | "external" = "wallet",
+): ConsentReceiptView {
   const status = receipt.consentStatus;
   if (status !== DPV.ConsentGiven && status !== DPV.ConsentWithdrawn) {
     throw new PodAccessError(502, `receipt ${iri} has an unsupported consent status`);
@@ -349,6 +429,7 @@ function receiptView(iri: string, receipt: ConsentReceipt): ConsentReceiptView {
     recipient: receipt.dataControllerIri,
     resource: receipt.targetIri,
     issuedAt: receipt.issued.toISOString(),
+    provenance,
   };
 }
 
@@ -420,10 +501,6 @@ async function changeContainerAccessSerialized(
   options: GrantEngineOptions,
 ): Promise<ConsentReceiptView> {
   const containerIri = mortgageContainerIri(podBase);
-  // The protected receipt store must exist AND be locked down before ANY
-  // receipt is written, or the first receipt would land in an unprotected
-  // container (roborev sm-28 High #2). Idempotent — a no-op once established.
-  await ensureReceiptsStore(podBase, borrowerWebId, options.serviceWebId, options.podFetch);
   const snapshot = await readAclSnapshot(
     containerIri,
     borrowerWebId,
@@ -432,10 +509,11 @@ async function changeContainerAccessSerialized(
   );
   const isGranted = snapshot.granted.has(agentWebId);
 
-  // REVOKE removes live WAC access FIRST — before consulting any ledger — so a
-  // poisoned/oversized history can never block the borrower from cutting off a
-  // party (roborev sm-28 High #1). Policy history (protected store only) then
-  // decides idempotency + the receipt sequence.
+  // REVOKE removes live WAC access FIRST — before ANY ledger read OR receipt-
+  // store provisioning — so nothing (a poisoned history, a store-provisioning
+  // fault) can stand between the borrower and cutting off a party (roborev
+  // sm-28 High #1 + Low #3). Only after access is off do we ensure the store,
+  // read policy history (protected store only), and record the receipt.
   if (action === "revoke") {
     if (isGranted) {
       const granted = new Map(snapshot.granted);
@@ -449,6 +527,10 @@ async function changeContainerAccessSerialized(
         options.podFetch,
       );
     }
+    // Access is off; NOW provision the (idempotent) protected store the
+    // receipt lands in, then read history + record. A provisioning fault here
+    // no longer blocks the cut-off (roborev Low #3) — access is already gone.
+    await ensureReceiptsStore(podBase, borrowerWebId, options.serviceWebId, options.podFetch);
     const history = await policyHistoryFor(podBase, borrowerWebId, agentWebId, options);
     const everRevoked = history.some((receipt) => receipt.action === "revoke");
     const everGranted = history.some((receipt) => receipt.action === "grant");
@@ -467,7 +549,10 @@ async function changeContainerAccessSerialized(
     return writeReceipt(podBase, borrowerWebId, agentWebId, "revoke", history.length, options);
   }
 
-  // action === "grant"
+  // action === "grant": the protected store must exist AND be locked BEFORE
+  // the immutability check, so the first receipt never lands unprotected and a
+  // pre-existing store is tamper-checked (roborev sm-28 High/Medium #2).
+  await ensureReceiptsStore(podBase, borrowerWebId, options.serviceWebId, options.podFetch);
   const history = await policyHistoryFor(podBase, borrowerWebId, agentWebId, options);
   const everRevoked = history.some((receipt) => receipt.action === "revoke");
   const everGranted = history.some((receipt) => receipt.action === "grant");
@@ -587,15 +672,24 @@ export async function readGrantStandings(
 }
 
 /**
- * Read receipts out of ONE container, tolerating junk: an entry that is
- * missing, fails SHACL, or names another data subject is SKIPPED (surfaced by
- * omission), never thrown. Only `consent-receipt-`/`vault-` prefixed members
- * are considered. This is what stops an untrusted record — anywhere the
- * borrower granted write — from bricking a read (roborev sm-28 High #1).
+ * Read receipts out of ONE container.
+ *
+ * `mode: "tolerant"` (the DISPLAY ledger): an entry that is missing, fails
+ * SHACL, or names another subject is SKIPPED — an untrusted record must never
+ * brick a read.
+ *
+ * `mode: "strict"` (the AUTHORITATIVE policy store): a listed member that
+ * cannot be read (a 5xx/transient), fails SHACL, or names another subject
+ * THROWS — a transient dropout must never silently shrink policy history and
+ * re-enable a revoked party (roborev sm-28 Medium #1). Only owner/service can
+ * delete a protected member, so a listed-but-404 there is also a fault worth
+ * failing on. A 404 on the CONTAINER itself is the ordinary empty state.
  */
 async function readReceiptsFrom(
   listIri: string,
   prefixes: readonly string[],
+  provenance: "wallet" | "external",
+  mode: "strict" | "tolerant",
   podBase: string,
   borrowerWebId: string,
   options: GrantEngineOptions,
@@ -603,6 +697,9 @@ async function readReceiptsFrom(
   const resource = await readPodResource(listIri, podBase, options.podFetch);
   if (resource === undefined) return [];
   const container = new ContainerDataset(resource.dataset, DataFactory).container;
+  // No typed LDP root ⇒ no members ⇒ empty history, in BOTH modes: a freshly
+  // provisioned empty store legitimately lists nothing. Strict's guarantee is
+  // about a listed MEMBER that cannot be read, not about an empty container.
   if (container === undefined) return [];
   const receiptIris = [...container.contains]
     .map((entry) => entry.value)
@@ -611,19 +708,39 @@ async function readReceiptsFrom(
     receiptIris.map(async (iri): Promise<ConsentReceiptView | undefined> => {
       try {
         const stored = await readPodResource(iri, podBase, options.podFetch);
-        if (stored === undefined) return undefined;
+        if (stored === undefined) {
+          if (mode === "strict") {
+            throw new PodAccessError(502, `protected receipt ${iri} is listed but missing`);
+          }
+          return undefined;
+        }
         const report = await validate(stored.dataset, {
           expect: "consent-receipt",
           focusNode: iri,
         });
-        if (!report.conforms) return undefined;
+        if (!report.conforms) {
+          if (mode === "strict") {
+            throw new PodAccessError(502, `protected receipt ${iri} fails SHACL`);
+          }
+          return undefined;
+        }
         const receipt = new ConsentReceipt(iri, stored.dataset, DataFactory);
-        // A record about someone else is not this borrower's history — drop it
-        // (never throw: a foreign record must not block the borrower's reads).
-        if (receipt.dataSubjectIri !== borrowerWebId) return undefined;
-        return receiptView(iri, receipt);
-      } catch {
-        return undefined; // an unsupported status / transient read → skip
+        if (receipt.dataSubjectIri !== borrowerWebId) {
+          if (mode === "strict") {
+            throw new PodAccessError(502, `protected receipt ${iri} names another data subject`);
+          }
+          return undefined; // a foreign record must not block the borrower's reads
+        }
+        return receiptView(iri, receipt, provenance);
+      } catch (error) {
+        // STRICT fails closed on ANY per-receipt error — a grant must never
+        // proceed on incomplete authoritative history.
+        if (mode === "strict") {
+          throw error instanceof PodAccessError
+            ? error
+            : new PodAccessError(502, `protected receipt ${iri} could not be read`);
+        }
+        return undefined; // tolerant: an unsupported status / transient read → skip
       }
     }),
   );
@@ -635,10 +752,11 @@ async function readReceiptsFrom(
  * store, whose ACL admits writes from the borrower + wallet service alone.
  * This is the sole input to the immutability + idempotency policy, so a
  * granted party cannot forge a revocation or corrupt the sequence
- * (roborev sm-28 High #2). Records are additionally required to sit at the
- * DETERMINISTIC vault IRI that encodes their own recipient + action, so even
- * the wallet service cannot mint a policy record whose body contradicts its
- * name.
+ * (roborev sm-28 High #2), and the read is STRICT — a transient dropout aborts
+ * the caller rather than silently shrinking history (roborev sm-28 Medium #1).
+ * Records are additionally required to sit at the DETERMINISTIC vault IRI that
+ * encodes their own recipient + action, so even the wallet service cannot mint
+ * a policy record whose body contradicts its name.
  */
 async function readPolicyHistory(
   podBase: string,
@@ -649,6 +767,8 @@ async function readPolicyHistory(
   const views = await readReceiptsFrom(
     listIri,
     [VAULT_RECEIPT_PREFIX],
+    "wallet",
+    "strict",
     podBase,
     borrowerWebId,
     options,
@@ -690,6 +810,8 @@ export async function readConsentLedger(
     readReceiptsFrom(
       receiptsContainerIri(podBase),
       [VAULT_RECEIPT_PREFIX],
+      "wallet",
+      "tolerant",
       podBase,
       borrowerWebId,
       options,
@@ -697,6 +819,8 @@ export async function readConsentLedger(
     readReceiptsFrom(
       mortgageContainerIri(podBase),
       [RECEIPT_PREFIX],
+      "external",
+      "tolerant",
       podBase,
       borrowerWebId,
       options,

@@ -65,14 +65,20 @@ export function LedgerView() {
   return (
     <div className="mt-6 grid gap-3" data-ledger-list="">
       {receipts.map((receipt) => (
-        <ReceiptCard
-          action={receipt.action}
-          actor={receipt.actor}
-          issuedAt={receipt.issuedAt}
-          key={receipt.iri}
-          recipient={receipt.recipient}
-          resource={receipt.resource}
-        />
+        <div data-receipt-provenance={receipt.provenance} key={receipt.iri}>
+          <ReceiptCard
+            action={receipt.action}
+            actor={receipt.actor}
+            issuedAt={receipt.issuedAt}
+            recipient={receipt.recipient}
+            resource={receipt.resource}
+          />
+          {receipt.provenance === "external" && (
+            <p className="mt-1 text-amber-700 text-xs" data-receipt-external="">
+              Third-party record — written by another application, not verified by the wallet.
+            </p>
+          )}
+        </div>
       ))}
     </div>
   );
