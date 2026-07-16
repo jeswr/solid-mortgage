@@ -104,13 +104,16 @@ export interface ClosingSceneOptions {
  * IN-PROCESS serialization of close + servicing transitions, keyed per pod:
  * same-pod operations (e.g. a grant overlapping a revoke's
  * ACL-write/receipt-write window, or two resumes of a crashed close) cannot
- * interleave within one instance. ACROSS instances the backstop is the
- * conditional-write discipline: every ACL/record write is `If-Match` /
- * `If-None-Match: *` and receipt IRIs are deterministic per transition, so a
- * cross-instance race loses loudly (412 → 5xx, retryable) instead of silently
- * diverging. A shared lock for multi-instance deployments is the same seam
- * caveat as solid-kit's in-process replay/nonce stores (tracked as a bead).
- * Entries are removed once their queue drains (no per-pod key retention).
+ * interleave within one instance. ACROSS instances the conditional-write
+ * discipline (`If-Match`/`If-None-Match: *` everywhere, deterministic
+ * per-transition receipt IRIs) makes same-resource-version races lose loudly
+ * (412 → 5xx, retryable) — but it does NOT serialize interleavings that touch
+ * different resource versions (e.g. a grant reading the ACL after a revoke's
+ * ACL write but before its receipt write commits both transitions), so
+ * multi-instance deployments MUST swap in a shared per-pod lock before
+ * scaling out: bead sm-9kz, the same seam family as solid-kit's in-process
+ * replay/nonce stores. Entries are removed once their queue drains (no
+ * per-pod key retention).
  */
 const podTransitionLocks = new Map<string, Promise<void>>();
 

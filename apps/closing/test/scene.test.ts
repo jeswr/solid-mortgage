@@ -10,6 +10,8 @@
  *   - receipt/ACL divergence: grant rolls back on a failed receipt, revoke
  *     stays off and repairs its missing receipt on retry (Medium).
  */
+
+import { buildConsentReceipt, DPV, resourceToTurtle } from "@mortgage/data-model";
 import {
   containerGrantAcl,
   type SolidTestAccount,
@@ -72,6 +74,50 @@ function receiptFailingFetch(base: typeof fetch): typeof fetch {
     const method = (input instanceof Request ? input.method : init?.method) ?? "GET";
     if (method === "PUT" && url.includes("/consent-receipt-")) {
       return Promise.resolve(new Response(JSON.stringify({ simulated: true }), { status: 503 }));
+    }
+    return base(input, init);
+  };
+}
+
+/**
+ * Simulates LOSING the deterministic-receipt create race to a concurrent
+ * WINNER: the PUT is actually performed (the winner's write) but reported as
+ * a 412 precondition failure to the caller.
+ */
+function receiptRaceLosingFetch(base: typeof fetch): typeof fetch {
+  return async (input, init) => {
+    const url = input instanceof Request ? input.url : String(input);
+    const method = (input instanceof Request ? input.method : init?.method) ?? "GET";
+    if (method === "PUT" && url.includes("/consent-receipt-")) {
+      const real = await base(input, init);
+      if (!real.ok) return real;
+      return new Response(null, { status: 412 });
+    }
+    return base(input, init);
+  };
+}
+
+/**
+ * Simulates a collision where the deterministic IRI holds SHACL-valid but
+ * MISMATCHED content: the PUT 412s without writing, and GETs of that IRI serve
+ * `body` — invisible to the container listing, so the ledger stays clean.
+ */
+function receiptCollisionServingFetch(
+  base: typeof fetch,
+  collidingIri: string,
+  body: string,
+): typeof fetch {
+  return (input, init) => {
+    const url = input instanceof Request ? input.url : String(input);
+    const method = (input instanceof Request ? input.method : init?.method) ?? "GET";
+    if (url.startsWith(collidingIri)) {
+      if (method === "PUT") return Promise.resolve(new Response(null, { status: 412 }));
+      return Promise.resolve(
+        new Response(body, {
+          status: 200,
+          headers: { "content-type": "text/turtle", etag: '"collision-1"' },
+        }),
+      );
     }
     return base(input, init);
   };
@@ -201,6 +247,8 @@ describe("scene 5 receipt/ACL consistency under receipt-write failure", () => {
   let service: SolidTestAccount;
   let closeAgent: SolidTestAccount; // the "lender" whose close-time grant crashes
   let servicer: SolidTestAccount;
+  let raceAgent: SolidTestAccount; // loses the receipt-create race to a winner
+  let mismatchAgent: SolidTestAccount; // colliding IRI holds mismatched RDF
   let podBase: string;
   let record: string;
   let working: ClosingSceneOptions;
@@ -220,7 +268,9 @@ describe("scene 5 receipt/ACL consistency under receipt-write failure", () => {
     const primary = pods.accounts[0];
     if (primary === undefined) throw new Error("OIDC harness did not provision an owner");
     owner = primary;
-    [service, closeAgent, servicer] = await Promise.all([
+    [service, closeAgent, servicer, raceAgent, mismatchAgent] = await Promise.all([
+      pods.provisionAccount(),
+      pods.provisionAccount(),
       pods.provisionAccount(),
       pods.provisionAccount(),
       pods.provisionAccount(),
@@ -335,6 +385,55 @@ describe("scene 5 receipt/ACL consistency under receipt-write failure", () => {
     await expect(
       changeServicingAccess(podBase, owner.webid, closeAgent.webid, "grant", working),
     ).rejects.toMatchObject({ name: "PodAccessError", status: 409 });
+  }, 60_000);
+
+  test("losing the receipt-create race to a concurrent WINNER keeps the recorded grant", async () => {
+    // The deterministic receipt actually lands (the winner's write) while this
+    // caller sees a 412: recovery must return the RECORDED receipt and must
+    // NOT compensate away access the ledger now attests.
+    const losing = { ...working, podFetch: receiptRaceLosingFetch(service.authFetch) };
+    const receipt = await changeServicingAccess(
+      podBase,
+      owner.webid,
+      raceAgent.webid,
+      "grant",
+      losing,
+    );
+    expect(receipt.action).toBe("grant");
+    expect(receipt.recipient).toBe(raceAgent.webid);
+    expect((await raceAgent.authFetch(record)).status).toBe(200);
+    expect(await actionsFor(raceAgent)).toEqual(["grant"]);
+  }, 60_000);
+
+  test("a SHACL-valid but MISMATCHED receipt at the colliding IRI never suppresses rollback", async () => {
+    // The colliding IRI serves a well-formed receipt for the WRONG recipient:
+    // recovery must reject it on the field match and fall through to the
+    // fail-safe compensation (roborev 3c8a207: regression coverage).
+    const collidingIri = `${podBase}mortgage/consent-receipt-0-grant-${encodeURIComponent(
+      mismatchAgent.webid,
+    )}`;
+    const wrongRecipient = buildConsentReceipt({
+      iri: collidingIri,
+      dataSubject: owner.webid,
+      dataController: servicer.webid, // mismatched: not mismatchAgent
+      target: record,
+      consentStatus: DPV.ConsentGiven,
+      issued: new Date(Date.UTC(2026, 6, 16, 16, 0)),
+    });
+    const colliding = {
+      ...working,
+      podFetch: receiptCollisionServingFetch(
+        service.authFetch,
+        collidingIri,
+        await resourceToTurtle(wrongRecipient),
+      ),
+    };
+    await expect(
+      changeServicingAccess(podBase, owner.webid, mismatchAgent.webid, "grant", colliding),
+    ).rejects.toMatchObject({ name: "PodAccessError" });
+    // Rolled back: no access, nothing recorded.
+    expectDenied((await mismatchAgent.authFetch(record)).status);
+    expect(await actionsFor(mismatchAgent)).toEqual([]);
   }, 60_000);
 });
 
