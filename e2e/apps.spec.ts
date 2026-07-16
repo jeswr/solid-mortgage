@@ -59,10 +59,12 @@ const apps: AppDefinition[] = [
   },
   {
     appName: "Mortgage Pre-qualification",
+    hasInterstitial: true,
     heading: "Get a competing rate quote without sharing your numbers",
     organization: "Fifth Third Bank",
     packageName: "@mortgage/app-lender-53",
     path: "/lender-53",
+    role: "competing mortgage lender",
     zoneEnv: "MORTGAGE_COMPARISON_LENDER_ZONE_URL",
   },
   {
