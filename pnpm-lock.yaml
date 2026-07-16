@@ -260,10 +260,31 @@ importers:
 
   apps/property:
     dependencies:
+      '@jeswr/fetch-rdf':
+        specifier: ^0.1.0
+        version: 0.1.0
+      '@jeswr/guarded-fetch':
+        specifier: github:jeswr/guarded-fetch#81926b4481310ff74a5c02c3c4eaa2a51ce2dee6
+        version: https://codeload.github.com/jeswr/guarded-fetch/tar.gz/81926b4481310ff74a5c02c3c4eaa2a51ce2dee6
+      '@mortgage/data-model':
+        specifier: workspace:*
+        version: link:../../packages/data-model
+      '@mortgage/solid-kit':
+        specifier: workspace:*
+        version: link:../../packages/solid-kit
       '@mortgage/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@mortgage/vc-kit':
+        specifier: workspace:*
+        version: link:../../packages/vc-kit
+      '@solid/object':
+        specifier: ^0.6.0
+        version: 0.6.0
       clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
+      n3:
         specifier: ^2.1.1
         version: 2.1.1
       next:
@@ -279,9 +300,15 @@ importers:
         specifier: ^3.6.0
         version: 3.6.0
     devDependencies:
+      '@rdfjs/types':
+        specifier: ^2.0.1
+        version: 2.0.1
       '@tailwindcss/postcss':
         specifier: ^4.3.2
         version: 4.3.2
+      '@types/n3':
+        specifier: ^1.26.1
+        version: 1.26.1
       '@types/node':
         specifier: ^25.9.2
         version: 25.9.5
