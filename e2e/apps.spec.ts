@@ -50,6 +50,7 @@ const apps: AppDefinition[] = [
     organization: "Bank of America",
     packageName: "@mortgage/app-lender-boa",
     path: "/lender-boa",
+    role: "primary mortgage lender",
     zoneEnv: "MORTGAGE_PRIMARY_LENDER_ZONE_URL",
   },
   {
