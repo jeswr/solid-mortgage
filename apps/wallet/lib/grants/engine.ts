@@ -252,7 +252,16 @@ async function ensureReceiptsStore(
     body: await serializeAcl(dataset),
     redirect: "error",
   });
-  if (aclResponse.ok) return;
+  if (aclResponse.ok) {
+    // CLOSE THE CREATE→LOCK WINDOW (roborev sm-28 round-4): between the
+    // container PUT and this lock PUT the new container inherited the parent's
+    // ACL, so a party with inherited Write could have RACED a forged receipt
+    // in. The store is only trustworthy if it is EMPTY at lock time — anything
+    // present was planted in the window, so we fail closed (never reachable in
+    // the intended flow, where the fresh create runs before any party grant).
+    await assertReceiptsStoreEmpty(container, podBase, podFetch);
+    return;
+  }
   // A concurrent transition (multi-instance) locked our fresh container first:
   // verify THAT lock rather than trusting blindly.
   if (aclResponse.status === 412) {
@@ -260,6 +269,28 @@ async function ensureReceiptsStore(
     return;
   }
   throw new PodAccessError(502, `could not lock the receipt store (${aclResponse.status})`);
+}
+
+/** Fail closed unless the just-locked receipt store has NO `vault-*` members. */
+async function assertReceiptsStoreEmpty(
+  container: string,
+  podBase: string,
+  podFetch: PodIoFetch,
+): Promise<void> {
+  const resource = await readPodResource(container, podBase, podFetch);
+  if (resource === undefined) return; // just created — a transient 404 is not a plant
+  const listing = new ContainerDataset(resource.dataset, DataFactory).container;
+  if (listing === undefined) return; // no typed root ⇒ no members
+  const planted = [...listing.contains]
+    .map((entry) => entry.value)
+    .some((memberIri) => memberIri.startsWith(`${container}${VAULT_RECEIPT_PREFIX}`));
+  if (planted) {
+    throw new PodAccessError(
+      409,
+      "the consent-receipt store held records at lock time — refusing to trust it " +
+        "(a record was planted before the integrity lock landed); reconcile it out of band",
+    );
+  }
 }
 
 /**
@@ -289,21 +320,41 @@ async function verifyReceiptsLock(
   const acl = new AclResource(new Store([...existing.dataset] as Quad[]), DataFactory);
   const untrusted = (detail: string): PodAccessError =>
     new PodAccessError(409, `the consent-receipt store lock is untrusted (${detail})`);
+  // POSITIVE check (roborev sm-28 round-4): the lock must actually grant the
+  // owner (+ service, when configured) member-covering write via
+  // `acl:default` on THIS container — a purely-negative check would pass an
+  // empty ACL or one with only `accessTo` rules, leaving members inheriting
+  // the parent's party-Write default.
+  let ownerCovered = false;
+  let serviceCovered = serviceWebId === undefined;
   for (const rule of acl.authorizations) {
     if (rule.accessibleToAny || rule.accessibleToAuthenticated) {
       throw untrusted("grants public/authenticated access");
     }
     if (rule.agentClass.size > 0) throw untrusted("grants agentClass access");
     if (rule.agentGroup !== undefined) throw untrusted("grants agentGroup access");
-    // Every rule must be scoped to THIS container (accessTo and/or default) —
-    // a rule targeting anything else is a foreign lock, not ours.
-    if (rule.accessTo !== containerIri && rule.default !== containerIri) {
-      throw untrusted("names a foreign target");
+    // Each DEFINED target must be THIS container (checked independently, so a
+    // mixed-target rule with a foreign `default` is rejected), and at least
+    // one target must be present.
+    if (rule.accessTo !== undefined && rule.accessTo !== containerIri) {
+      throw untrusted("names a foreign accessTo target");
+    }
+    if (rule.default !== undefined && rule.default !== containerIri) {
+      throw untrusted("names a foreign default target");
+    }
+    if (rule.accessTo === undefined && rule.default === undefined) {
+      throw untrusted("names no target");
     }
     for (const agent of rule.agent) {
       if (!allowed.has(agent)) throw untrusted("names an unexpected agent");
     }
+    if (rule.default === containerIri && rule.canWrite) {
+      if (rule.agent.has(ownerWebId)) ownerCovered = true;
+      if (serviceWebId !== undefined && rule.agent.has(serviceWebId)) serviceCovered = true;
+    }
   }
+  if (!ownerCovered) throw untrusted("does not grant the borrower member-covering write");
+  if (!serviceCovered) throw untrusted("does not grant the service member-covering write");
 }
 
 function authorization(iri: string, dataset: Store, target: string, agent: string): Authorization {
