@@ -105,7 +105,9 @@ export function ApplicationForm({ demoPrefill, apiBase }: ApplicationFormProps) 
       <p className="text-muted-foreground" data-prefill-source={prefill.source}>
         {podConnected
           ? "These values were read live from your granted pod data — not re-typed into a form. This prefill only checks the data's shape (SHACL) and its subject binding; full credential-signature verification is not yet wired into this demo path (tracked)."
-          : "Showing the demo persona. The live pod prefill requires an authenticated borrower session (hosted mode) — in the default in-browser demo there is no real login, so this rail honestly stays off."}
+          : prefillError !== null
+            ? "Showing the demo persona — the live pod prefill attempt did not complete (details below)."
+            : "Showing the demo persona. The live pod prefill requires an authenticated borrower session (hosted mode) — in the default in-browser demo there is no real login, so this rail honestly stays off."}
       </p>
       {prefillError !== null && (
         <p className="mt-2 text-sm text-accent" data-prefill-error="" role="alert">

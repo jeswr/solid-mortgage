@@ -93,6 +93,8 @@ let appOrigin = "";
 let appChild: ChildProcess | undefined;
 const appLogs: string[] = [];
 let issuer: DevOidcIssuer;
+/** A trusted identity whose profile claims NO pim:storage — real authenticated 403s. */
+let unboundIssuer: DevOidcIssuer;
 let pods: SolidTestServer;
 let podBase = "";
 let borrowerWebId = "";
@@ -230,6 +232,7 @@ test.describe("lender-boa (sm-30)", () => {
     pods = await startSolidServer({});
     podBase = `${pods.baseUrl}/`;
     issuer = await startDevOidcIssuer({ storage: podBase });
+    unboundIssuer = await startDevOidcIssuer();
 
     // The borrower persona, subject-bound to the ISSUER-hosted WebID (the
     // authenticated caller), plus the pod-side acknowledgment card (decision
@@ -272,7 +275,7 @@ test.describe("lender-boa (sm-30)", () => {
     await statusList.create({ now: new Date() });
 
     appOrigin = await startApp({
-      MORTGAGE_TRUSTED_OIDC_ISSUERS: issuer.issuer,
+      MORTGAGE_TRUSTED_OIDC_ISSUERS: `${issuer.issuer},${unboundIssuer.issuer}`,
       MORTGAGE_TRUSTED_ANCHOR_ISSUERS: anchorIssuer,
       // The seeded persona employment VC's issuer (unsigned in the seed layer
       // until sm-26 — so it fails full verifyCredential and never greens).
@@ -295,6 +298,7 @@ test.describe("lender-boa (sm-30)", () => {
     }
     await pods?.stop();
     await issuer?.stop();
+    await unboundIssuer?.stop();
     await new Promise<void>((resolve) => fixtures?.server.close(() => resolve()));
   });
 
@@ -475,12 +479,12 @@ test.describe("lender-boa (sm-30)", () => {
    * ship a login UI for). Every intercepted request gets a fresh single-use
    * proof bound to the request's own method + htu.
    */
-  async function authenticatePage(page: Page): Promise<void> {
+  async function authenticatePage(page: Page, as: DevOidcIssuer = issuer): Promise<void> {
     await page.route("**/lender-boa/api/**", async (route) => {
       const request = route.request();
       const url = new URL(request.url());
       // RFC 9449: htu binds scheme/authority/path only (never the query).
-      const auth = await issuer.authHeaders(request.method(), `${url.origin}${url.pathname}`);
+      const auth = await as.authHeaders(request.method(), `${url.origin}${url.pathname}`);
       await route.continue({ headers: { ...request.headers(), ...auth } });
     });
   }
@@ -528,19 +532,20 @@ test.describe("lender-boa (sm-30)", () => {
   test("an AUTHENTICATED prefill failure surfaces an alert — never the silent demo fallback", async ({
     page,
   }) => {
-    await page.route("**/lender-boa/api/application/prefill", (route) =>
-      route.fulfill({
-        status: 503,
-        contentType: "application/json",
-        body: JSON.stringify({ simulated: true, error: "not_configured" }),
-      }),
-    );
+    // A REAL authenticated failure: this trusted identity's profile claims no
+    // pim:storage, so the app's own boundary answers 403 (decision 0015 L2).
+    await authenticatePage(page, unboundIssuer);
     await page.goto(`${appOrigin}/lender-boa/application`);
     await expect(page.locator("[data-prefill-error]")).toBeVisible();
+    await expect(page.locator("[data-prefill-error]")).toContainText("403");
+    // The demo persona stands, with the failure copy — NOT the "no real
+    // login" explanation (the caller DID authenticate).
     await expect(page.locator("[data-prefill-source]")).toHaveAttribute(
       "data-prefill-source",
       "demo",
     );
+    await expect(page.getByText("did not complete", { exact: false })).toBeVisible();
+    await expect(page.getByText("no real login", { exact: false })).toHaveCount(0);
   });
 
   test("application page prefills the URLA subset FROM the token-bound pod", async ({ page }) => {
