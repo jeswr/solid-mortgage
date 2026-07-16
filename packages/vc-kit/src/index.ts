@@ -98,3 +98,7 @@ export {
   MSHAPE,
   targetClassOf,
 } from "./vocab.js";
+// The sm-25 ZK layer (Tier A + operand anchors, Tier B manifests, honesty
+// panel). Heavy artifacts and the proving toolchain stay behind dynamic
+// imports - re-exporting here pulls in none of them.
+export * from "./zk/index.js";
