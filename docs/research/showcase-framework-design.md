@@ -715,17 +715,34 @@ The whole of `packages/ui`, de-branded behind `createDisclaimerPack`.
 
 ```ts
 // zod contracts kit OWNS — the single source of truth showcase composes its document
-// schema from (roborev 5648 Medium). Schema-first: each schema is defined WITHOUT a
-// type annotation, and the contract is INFERRED from it — no circular reference
-// (roborev 5650 Medium). e.g.:
-//   export const brandingConfigSchema = z.object({ convener: z.string().min(1), … });
-//   export type BrandingConfig = z.infer<typeof brandingConfigSchema>;
-export const brandingConfigSchema;   // z.object({ … })
-export const themeSpecSchema;
-export const bannedMarkSchema;
-export type BrandingConfig = z.infer<typeof brandingConfigSchema>;
-export type ThemeSpec = z.infer<typeof themeSpecSchema>;
+// schema from (roborev 5648 Medium). Schema-first: each schema is a plain z.object with
+// NO type annotation, and the contract is INFERRED from it — no circular reference
+// (roborev 5650 Medium). Fields abbreviated with `…`; the shapes match §2.1.
+export const bannedMarkSchema = z.object({
+  pattern: z.string(),
+  reason: z.string(),
+});
+export const themeSpecSchema = z.object({
+  hue: z.number(),
+  primary: z.string(),
+  accent: z.string(),
+  primaryForeground: z.string().optional(),
+  accentForeground: z.string().optional(),
+  role: z.string(),
+});
+export const brandingConfigSchema = z.object({
+  convener: z.string().min(1),
+  domainNegations: z.array(z.string()),
+  description: z.string(),
+  aboutHref: z.string().optional(),
+  consentCookiePrefix: z.string().regex(/^[a-z0-9-]+-$/).optional(),
+  illustrativeTag: z.string().optional(),
+  insigniaPreset: z.enum(["us-finance", "none"]).optional(),
+  bannedMarks: z.array(bannedMarkSchema).optional(),
+});
 export type BannedMark = z.infer<typeof bannedMarkSchema>;
+export type ThemeSpec = z.infer<typeof themeSpecSchema>;
+export type BrandingConfig = z.infer<typeof brandingConfigSchema>;
 
 // copy factories (all of packages/ui/src/disclaimers.ts, parameterised)
 export interface DisclaimerPack { /* bannerFullCopy, bannerCompactCopy, footerLegalLine,
