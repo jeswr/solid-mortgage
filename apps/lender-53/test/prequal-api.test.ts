@@ -159,6 +159,40 @@ describe("lender-53 real Tier A verifier", () => {
   });
 
   test(
+    "malformed proof envelopes are all rejected before any statement nonce burns",
+    async () => {
+      const challenges = await mintChallenges();
+      const incomeProof = await proveTierA({
+        statement: PREQUAL_STATEMENTS.income,
+        value: 8500,
+        operandEnc: encOf(8500),
+        nonce: challenges.income.nonce,
+      });
+      const response = await service.verify(
+        await authedRequest(VERIFY_URL, {
+          presentations: {
+            income: {
+              nonce: challenges.income.nonce,
+              proof: tierAProofToJson(incomeProof),
+              anchorVc: "not reached",
+            },
+            score: { nonce: challenges.score.nonce, proof: {}, anchorVc: "not reached" },
+          },
+        }),
+      );
+      expect(response.status).toBe(400);
+      expect(nonces.consume(`${issuer.webid}\u0000income`, challenges.income.nonce)).toBe(true);
+      expect(nonces.consume(`${issuer.webid}\u0000score`, challenges.score.nonce)).toBe(true);
+    },
+    PROVE_TIMEOUT,
+  );
+
+  test("oversized request bodies are rejected while streaming", async () => {
+    const response = await service.verify(await authedRequest(VERIFY_URL, "x".repeat(1_048_577)));
+    expect(response.status).toBe(413);
+  });
+
+  test(
     "forgery with a mismatched operand anchor is rejected 403",
     async () => {
       const challenges = await mintChallenges();

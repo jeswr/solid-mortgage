@@ -49,14 +49,12 @@ export default function RateQuotePage() {
           Quote unlocked after successful proof
         </p>
         <h2 id="quote-heading" className="mt-1 text-xl font-semibold text-card-foreground">
-          30-year fixed concept quote
+          Competing quote
         </h2>
-        <p className="mt-3 text-3xl font-semibold text-primary">
-          <IllustrativeFigure>6.000% interest · 6.190% APR</IllustrativeFigure>
-        </p>
-        <p className="mt-3 text-sm text-muted-foreground">
-          The API returns this competing illustrative quote only after both anchored proofs pass.
-          This is not an application and not an offer of credit.
+        <p className="mt-3 text-muted-foreground" data-quote-locked="">
+          Submit both issuer-anchored proofs through the demo wallet to receive the illustrative
+          rate from the verification response. This is not an application and not an offer of
+          credit.
         </p>
       </section>
 

@@ -203,6 +203,7 @@ test.describe("lender-53 thin competing quote (sm-31)", () => {
       page.getByText("Live proofs are bound to an issuer-signed operand anchor"),
     ).toBeVisible();
     await expect(page.getByText("research-grade", { exact: false }).first()).toBeVisible();
+    await expect(page.getByText("6.000%", { exact: false })).toHaveCount(0);
     await expectBannerAndAxe(page);
   });
 

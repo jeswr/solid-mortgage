@@ -18,3 +18,7 @@ Environment variables (all fail closed):
 
 COOP/COEP is enabled app-wide for the ZK route, and Noir/Barretenberg remain external server
 packages so the real WASM verifier works.
+
+The demo deliberately inherits lender-boa's process-local nonce, DPoP replay, and rate-limit
+stores. A challenge routed to another serverless instance fails closed rather than bypassing a
+gate, but production partner deployment requires request affinity or a shared atomic store.

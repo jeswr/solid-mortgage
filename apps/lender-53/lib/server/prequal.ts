@@ -65,6 +65,39 @@ interface ParsedPresentation {
 }
 
 class BadRequestError extends Error {}
+class PayloadTooLargeError extends Error {}
+
+async function readBoundedBody(request: Request): Promise<string> {
+  const declaredLength = request.headers.get("content-length");
+  if (declaredLength !== null) {
+    const bytes = Number(declaredLength);
+    if (Number.isFinite(bytes) && bytes > MAX_VERIFY_BODY_BYTES) {
+      throw new PayloadTooLargeError();
+    }
+  }
+  if (request.body === null) return "";
+
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    totalBytes += value.byteLength;
+    if (totalBytes > MAX_VERIFY_BODY_BYTES) {
+      await reader.cancel();
+      throw new PayloadTooLargeError();
+    }
+    chunks.push(value);
+  }
+  const body = new Uint8Array(totalBytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder().decode(body);
+}
 
 function parsePresentations(body: unknown): readonly ParsedPresentation[] {
   if (typeof body !== "object" || body === null) {
@@ -119,6 +152,23 @@ function errorSummary(result: TierAVerifyResult) {
   };
 }
 
+interface DecodedPresentation extends ParsedPresentation {
+  readonly presented: ReturnType<typeof tierAProofFromJson>;
+}
+
+function decodeProofs(
+  presentations: readonly ParsedPresentation[],
+): readonly DecodedPresentation[] {
+  return presentations.map((presentation) => {
+    try {
+      return { ...presentation, presented: tierAProofFromJson(presentation.proofJson) };
+    } catch (error) {
+      const detail = error instanceof ZkError ? error.message : "proof payload is malformed";
+      throw new BadRequestError(`presentations.${presentation.id}.proof: ${detail}`);
+    }
+  });
+}
+
 export function createPrequalService(options: PrequalServiceOptions): PrequalService {
   const { config } = options;
   const now = options.now ?? (() => new Date());
@@ -170,14 +220,14 @@ export function createPrequalService(options: PrequalServiceOptions): PrequalSer
       const caller = await authenticate(request);
       if (caller instanceof Response) return caller;
 
-      let presentations: readonly ParsedPresentation[];
+      let presentations: readonly DecodedPresentation[];
       try {
-        const raw = await request.text();
-        if (raw.length > MAX_VERIFY_BODY_BYTES) {
+        const raw = await readBoundedBody(request);
+        presentations = decodeProofs(parsePresentations(JSON.parse(raw)));
+      } catch (error) {
+        if (error instanceof PayloadTooLargeError) {
           return Response.json({ simulated: true, error: "payload_too_large" }, { status: 413 });
         }
-        presentations = parsePresentations(JSON.parse(raw));
-      } catch (error) {
         const detail = error instanceof BadRequestError ? error.message : "body is not valid JSON";
         return Response.json(
           { simulated: true, error: "malformed_request", detail },
@@ -188,23 +238,9 @@ export function createPrequalService(options: PrequalServiceOptions): PrequalSer
       const results: Partial<Record<StatementId, ReturnType<typeof errorSummary>>> = {};
       let allVerified = true;
       for (const presentation of presentations) {
-        let presented: ReturnType<typeof tierAProofFromJson>;
-        try {
-          presented = tierAProofFromJson(presentation.proofJson);
-        } catch (error) {
-          const detail = error instanceof ZkError ? error.message : "proof payload is malformed";
-          return Response.json(
-            {
-              simulated: true,
-              error: "malformed_request",
-              detail: `presentations.${presentation.id}.proof: ${detail}`,
-            },
-            { status: 400 },
-          );
-        }
         // The lender-boa nine-gate call, including nonce burn first and the
         // mandatory anchor.operandEnc === proof public input comparison.
-        const result = await verifyTierA(presented, {
+        const result = await verifyTierA(presentation.presented, {
           statement: PREQUAL_STATEMENTS[presentation.id],
           anchorVc: presentation.anchorVc,
           webid: caller.webid,
