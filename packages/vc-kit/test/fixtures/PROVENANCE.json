@@ -1,0 +1,15 @@
+{
+  "generatedBy": "packages/vc-kit/scripts/capture-fixtures.mjs (sm-26)",
+  "regenerate": "SPARQ_CHECKOUT=<sparq checkout> pnpm --filter @mortgage/vc-kit run capture:fixtures",
+  "sparqRepository": "https://github.com/jeswr/sparq",
+  "sparqCommit": "947480b02fcbd174f80f9247b55ee02202d2e345",
+  "toolchain": {
+    "nargo": "1.0.0-beta.21",
+    "noirJs": "1.0.0-beta.21",
+    "bbJs": "5.0.0-nightly.20260324",
+    "node": "v25.1.0"
+  },
+  "capturedAt": "2026-07-16",
+  "compositeNonce": "sm-26 mortgage composite capture nonce v1",
+  "note": "All values are genuine sparq-native outputs (encode_int_literal, Poseidon2 commitments, Schnorr-BJJ signatures) and genuine self-verified UltraHonk transcripts. Research-grade; NOT externally audited (sparq bead sq-qhy4)."
+}

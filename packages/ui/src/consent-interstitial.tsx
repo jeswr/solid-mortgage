@@ -11,6 +11,7 @@ import {
   useState,
 } from "react";
 import {
+  type DisclaimerVariant,
   INTERSTITIAL_CONTINUE_LABEL,
   INTERSTITIAL_HEADING,
   INTERSTITIAL_LEARN_MORE_LABEL,
@@ -21,6 +22,8 @@ export interface ConsentInterstitialProps {
   organization: string;
   /** Stable per-app slug used in the consent cookie name, e.g. "wallet". */
   appId: string;
+  /** "own" only for surfaces published under the convener's own branding (apps/tour). */
+  variant?: DisclaimerVariant;
   /** Destination of "Learn more about the project" (the tour app). */
   learnMoreHref?: string;
 }
@@ -107,6 +110,7 @@ const LEARN_MORE_STYLE: CSSProperties = {
 export function ConsentInterstitial({
   organization,
   appId,
+  variant = "modelled",
   learnMoreHref = "/",
 }: ConsentInterstitialProps) {
   const [open, setOpen] = useState(true);
@@ -171,7 +175,7 @@ export function ConsentInterstitial({
         <h2 id={headingId} style={HEADING_STYLE}>
           {INTERSTITIAL_HEADING}
         </h2>
-        {interstitialParagraphs(organization).map((paragraph) => (
+        {interstitialParagraphs(organization, variant).map((paragraph) => (
           <p key={paragraph.map((segment) => segment.text).join("")} style={PARAGRAPH_STYLE}>
             {paragraph.map((segment) =>
               segment.strong === true ? (
