@@ -346,6 +346,54 @@ describe("SparqCredentialSeedPipeline.issue (seeder-design section 5.2 seam)", (
     expect(sent?.issuerSeed).toBe(4101);
   });
 
+  it("a two-faced seed getter cannot bypass construction validation (roborev 5568)", async () => {
+    const host = stubHost();
+    const list = await hostedStatusList(host);
+    const { bridge, jobs } = stubBridge();
+    let reads = 0;
+    const twoFaced = {
+      issuer: ISSUER,
+      key: await issuerKey(),
+      native: bridge,
+      // Valid on the FIRST read, hostile afterwards. Validate-then-copy
+      // would validate 4101 but STORE -1; snapshot-then-validate reads the
+      // caller's object exactly once, so the validated value IS the stored
+      // value and the hostile later reads never happen.
+      get schnorrIssuerSeed(): number {
+        reads += 1;
+        return reads === 1 ? 4101 : -1;
+      },
+    };
+    const pipeline = new SparqCredentialSeedPipeline(twoFaced);
+    await pipeline.issue({
+      kind: "employment-income-credential",
+      credentialId: CREDENTIAL_ID,
+      subjectWebid: SUBJECT,
+      claims: employmentClaims(),
+      validFrom: BACKDATED_VALIDITY.validFrom,
+      validUntil: BACKDATED_VALIDITY.validUntil,
+      status: list.entry(42),
+      zkStatus: DEMO_ZK_STATUS.employment,
+    });
+    const sent = jobs.find((job) => (job.credentials ?? []).length > 0)?.credentials?.[0];
+    expect(sent?.issuerSeed).toBe(4101); // never the hostile -1
+    // Conversely, an INVALID first read is rejected at construction.
+    let firstRead = true;
+    expect(
+      () =>
+        new SparqCredentialSeedPipeline({
+          issuer: ISSUER,
+          key: undefined as unknown as Awaited<ReturnType<typeof issuerKey>>,
+          native: bridge,
+          get schnorrIssuerSeed(): number {
+            const value = firstRead ? -1 : 4101;
+            firstRead = false;
+            return value;
+          },
+        }),
+    ).toThrow(SeedToolingError);
+  });
+
   it("rejects a half-configured call BEFORE issuing or signing anything", async () => {
     const { jobs, pipeline } = await rig();
     let statusCallbackHits = 0;

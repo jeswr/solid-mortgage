@@ -128,20 +128,22 @@ export class SparqCredentialSeedPipeline implements CredentialSeedPipeline {
   readonly #options: SparqCredentialSeedPipelineOptions;
 
   constructor(options: SparqCredentialSeedPipelineOptions) {
-    // Fail at CONSTRUCTION, not after a credential has been signed (roborev
+    // SNAPSHOT FIRST, then validate the snapshot (roborev 5568): reading the
+    // caller's object twice would let a getter return a valid seed to the
+    // validator and an invalid one to the stored copy. Then fail at
+    // CONSTRUCTION, not after a credential has been signed (roborev
     // 5560/5564): an invalid Schnorr seed must never produce partial side
-    // effects. Safe-integer bound: a non-safe double (e.g. 1e100) would pass
-    // Number.isInteger yet fail u64 deserialization in the native helper -
+    // effects. Safe-integer bound: a non-safe double (e.g. 1e100) passes
+    // Number.isInteger yet fails u64 deserialization in the native helper -
     // AFTER signing.
-    if (!Number.isSafeInteger(options.schnorrIssuerSeed) || options.schnorrIssuerSeed < 0) {
+    const snapshot = Object.freeze({ ...options });
+    if (!Number.isSafeInteger(snapshot.schnorrIssuerSeed) || snapshot.schnorrIssuerSeed < 0) {
       throw new SeedToolingError(
         "BAD_ISSUER_SEED",
         "schnorrIssuerSeed must be a non-negative safe integer (deterministic DEMO key seed)",
       );
     }
-    // Snapshot: the validated configuration must not be mutable through the
-    // caller's retained options object.
-    this.#options = Object.freeze({ ...options });
+    this.#options = snapshot;
   }
 
   async issue(input: CredentialSeedInput): Promise<CredentialSeedResult> {
