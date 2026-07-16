@@ -37,9 +37,16 @@
  *     unrecorded grant survives; if even the rollback fails, the retry repair
  *     branch writes the missing receipt. Receipt IRIs are DETERMINISTIC per
  *     logical transition, so concurrent repairs collide on `If-None-Match: *`
- *     instead of minting duplicates. All writes are conditional
+ *     instead of minting duplicates, and a grant whose receipt create loses
+ *     that collision returns the RECORDED receipt instead of compensating a
+ *     transition another request just recorded. All writes are conditional
  *     (`If-Match`/`If-None-Match: *`), so concurrent mutations lose loudly
  *     instead of clobbering.
+ *
+ *   - Transitions are SERIALIZED per pod in-process (the demo's deploy shape
+ *     has one writer instance), so a grant can never interleave with a
+ *     revoke's ACL-write/receipt-write window; multi-instance deployments
+ *     must swap in a shared lock (see {@link withPodTransitionLock}).
  */
 import { serialize } from "@jeswr/rdf-serialize";
 import {
@@ -88,6 +95,26 @@ export interface ClosingSceneOptions {
   readonly serviceWebId: string;
   readonly now?: () => Date;
   readonly randomId?: () => string;
+}
+
+/**
+ * IN-PROCESS serialization of servicing transitions, keyed per pod: same-agent
+ * races (e.g. a grant overlapping a revoke's ACL-write/receipt-write window)
+ * cannot interleave within one instance, which is the only writer in this
+ * demo's deploy shape. A multi-instance deployment must swap in a shared lock
+ * or reconcile via the deterministic receipt IRIs — the same seam caveat as
+ * solid-kit's in-process replay/nonce stores.
+ */
+const podTransitionLocks = new Map<string, Promise<unknown>>();
+
+async function withPodTransitionLock<T>(podBase: string, run: () => Promise<T>): Promise<T> {
+  const previous = podTransitionLocks.get(podBase) ?? Promise.resolve();
+  const next = previous.then(run, run);
+  podTransitionLocks.set(
+    podBase,
+    next.catch(() => undefined),
+  );
+  return next;
 }
 
 function mortgageContainer(podBase: string): string {
@@ -213,6 +240,21 @@ function receiptView(iri: string, receipt: ConsentReceipt): ConsentReceiptView {
   };
 }
 
+/**
+ * DETERMINISTIC receipt IRI per logical transition (agent + how many receipts
+ * precede it): two concurrent repairs of the same missing receipt target the
+ * SAME IRI, so the strict `If-None-Match: *` create makes the loser fail
+ * loudly instead of minting a duplicate record (roborev 79200e5).
+ */
+function receiptIriFor(
+  podBase: string,
+  action: "grant" | "revoke",
+  sequence: number,
+  recipient: string,
+): string {
+  return `${mortgageContainer(podBase)}${RECEIPT_PREFIX}${sequence}-${action}-${encodeURIComponent(recipient)}`;
+}
+
 async function writeReceipt(
   podBase: string,
   actor: string,
@@ -222,11 +264,7 @@ async function writeReceipt(
   options: ClosingSceneOptions,
 ): Promise<ConsentReceiptView> {
   const now = options.now?.() ?? new Date();
-  // DETERMINISTIC per logical transition (agent + how many receipts precede
-  // it): two concurrent repairs of the same missing receipt target the SAME
-  // IRI, so the strict `If-None-Match: *` create makes the loser fail loudly
-  // instead of minting a duplicate record (roborev 79200e5).
-  const iri = `${mortgageContainer(podBase)}${RECEIPT_PREFIX}${sequence}-${action}-${encodeURIComponent(recipient)}`;
+  const iri = receiptIriFor(podBase, action, sequence, recipient);
   const receipt = buildConsentReceipt({
     iri,
     dataSubject: actor,
@@ -261,10 +299,13 @@ export async function executeClosing(
   const existing = await readPodResource(iri, podBase, options.podFetch);
   if (existing !== undefined) {
     const receipts = await readConsentLedger(podBase, borrowerWebId, options);
-    const lenderHistory = receipts.filter(
-      (receipt) => receipt.recipient === lenderWebId && receipt.resource === iri,
-    );
-    if (lenderHistory.length > 0) {
+    // The resume gate is ANY receipt for the record, for ANY agent — never
+    // just the currently CONFIGURED lender. The close-time lender grant is
+    // always the record's first receipt (transfers are record-gated), so a
+    // record with receipts is a completed ceremony: resuming it under a
+    // different MORTGAGE_LENDER_SERVICE_WEBID must not mint a fresh grant for
+    // the new identity (roborev cd706f6 Medium — config drift).
+    if (receipts.some((receipt) => receipt.resource === iri)) {
       throw new PodAccessError(
         409,
         "the closing package is already signed — servicing access is managed only by the " +
@@ -316,9 +357,23 @@ export async function executeClosing(
 /**
  * Grant or revoke one agent's Read access on the closing record, with the
  * matching DPV receipt. See the module header for the exact state model
- * (idempotency, immutability of revocation, and failure repair).
+ * (idempotency, immutability of revocation, and failure repair). Transitions
+ * are serialized per pod (see {@link withPodTransitionLock}), so a grant can
+ * never interleave with a revoke's ACL-write/receipt-write window in-process.
  */
-export async function changeServicingAccess(
+export function changeServicingAccess(
+  podBase: string,
+  borrowerWebId: string,
+  agentWebId: string,
+  action: "grant" | "revoke",
+  options: ClosingSceneOptions,
+): Promise<ConsentReceiptView> {
+  return withPodTransitionLock(podBase, () =>
+    changeServicingAccessSerialized(podBase, borrowerWebId, agentWebId, action, options),
+  );
+}
+
+async function changeServicingAccessSerialized(
   podBase: string,
   borrowerWebId: string,
   agentWebId: string,
@@ -385,6 +440,22 @@ export async function changeServicingAccess(
       );
     } catch (error) {
       if (!isGranted) {
+        // Before compensating, check whether the DETERMINISTIC receipt for
+        // this exact transition landed anyway (a concurrent repair may have
+        // recorded it, making our create fail its `If-None-Match: *`): a
+        // RECORDED grant must never be compensated away (roborev cd706f6).
+        const transitionIri = receiptIriFor(podBase, "grant", history.length, agentWebId);
+        try {
+          const recorded = await readPodResource(transitionIri, podBase, options.podFetch);
+          if (recorded !== undefined) {
+            return receiptView(
+              transitionIri,
+              new ConsentReceipt(transitionIri, recorded.dataset, DataFactory),
+            );
+          }
+        } catch {
+          // Could not tell — fall through to the fail-safe rollback below.
+        }
         // Compensation: an UNRECORDED grant must not survive this request.
         // Surgical (removes ONLY this agent from the CURRENT ACL) so a
         // concurrent mutation is never overwritten by a stale snapshot.

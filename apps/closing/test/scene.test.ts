@@ -307,6 +307,29 @@ describe("scene 5 receipt/ACL consistency under receipt-write failure", () => {
       changeServicingAccess(podBase, owner.webid, servicer.webid, "grant", working),
     ).rejects.toMatchObject({ name: "PodAccessError", status: 409 });
   }, 60_000);
+
+  test("CONCURRENT same-agent grant + revoke serialize: ACL and ledger agree", async () => {
+    // closeAgent is currently granted+recorded. Fire a revoke and a grant
+    // together: the per-pod transition lock serializes them, so whichever
+    // order they land in, the invariant holds — access OFF, ledger latest =
+    // revoke, and the grant either 409s (already granted, or immutable after
+    // the revoke). A grant can never resurrect revoked access.
+    const [revokeOutcome, grantOutcome] = await Promise.allSettled([
+      changeServicingAccess(podBase, owner.webid, closeAgent.webid, "revoke", working),
+      changeServicingAccess(podBase, owner.webid, closeAgent.webid, "grant", working),
+    ]);
+    expect(revokeOutcome.status).toBe("fulfilled");
+    expect(grantOutcome.status).toBe("rejected");
+    if (grantOutcome.status === "rejected") {
+      expect(grantOutcome.reason).toMatchObject({ name: "PodAccessError", status: 409 });
+    }
+    expectDenied((await closeAgent.authFetch(record)).status);
+    expect((await actionsFor(closeAgent)).at(-1)).toBe("revoke");
+    // Still immutable afterwards.
+    await expect(
+      changeServicingAccess(podBase, owner.webid, closeAgent.webid, "grant", working),
+    ).rejects.toMatchObject({ name: "PodAccessError", status: 409 });
+  }, 60_000);
 });
 
 describe("decision 0015 fail-closed authenticated pod rail", () => {
