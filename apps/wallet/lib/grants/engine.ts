@@ -60,7 +60,18 @@
  *     what makes the scene-5 ledger read them together).
  *
  *   - Transitions are SERIALIZED per pod in-process; multi-instance deploys
- *     need a shared lock (same seam family as closing — bead sm-9kz).
+ *     need a shared lock (same seam family as closing — bead sm-9kz). Two of
+ *     the receipt-store guarantees below depend on that in-process
+ *     serialization and DO NOT hold across instances until the shared lock
+ *     lands (bead sm-p6q, dependency of sm-9kz): (a) a failed
+ *     reconcile that re-throws could be laundered by a retry that takes the
+ *     verify-only 412 path on a DIFFERENT instance; (b) the fresh-create
+ *     reconcile's "any member is a plant" premise can misclassify a legitimate
+ *     receipt written by a concurrent instance between this instance's lock PUT
+ *     and its reconcile listing. Neither is attacker-drivable, and both are
+ *     excluded by the single-writer demo deploy; the shared-lock work closes
+ *     them (a readiness sentinel or per-pod lock so no other writer treats the
+ *     lock as ready until reconciliation completes).
  *
  * RDF discipline: ACL documents are read AND written through the
  * `@solid/object` typed wrappers (`AclResource`/`Authorization`) and

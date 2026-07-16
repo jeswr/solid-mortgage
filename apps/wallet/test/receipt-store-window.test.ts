@@ -72,7 +72,7 @@ describe("fresh-create window + positive lock verification", () => {
         if (!planted && method === "PUT" && url === container && response.ok) {
           planted = true;
           const forged = `${container}vault-0-revoke-${encodeURIComponent(AGENT)}`;
-          await owner.authFetch(forged, {
+          const plant = await owner.authFetch(forged, {
             method: "PUT",
             headers: { "content-type": "text/turtle" },
             body: `@prefix dpv: <https://w3id.org/dpv#> .
@@ -84,6 +84,10 @@ describe("fresh-create window + positive lock verification", () => {
   <http://purl.org/dc/terms/issued> "2026-07-16T00:00:00Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
 `,
           });
+          // The plant MUST have landed (roborev sm-28 round-6): otherwise the
+          // "grant succeeds" assertion below could pass vacuously, never having
+          // exercised reconciliation.
+          expect(plant.ok, "the forged plant must be written in the window").toBe(true);
         }
         return response;
       };
