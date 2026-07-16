@@ -16,6 +16,10 @@
       "types": "./dist/auth/api.d.ts",
       "import": "./dist/auth/api.js"
     },
+    "./auth/service": {
+      "types": "./dist/auth/service.d.ts",
+      "import": "./dist/auth/service.js"
+    },
     "./testing": {
       "types": "./dist/testing.d.ts",
       "import": "./dist/testing.js"
@@ -37,6 +41,7 @@
     "jose": "^5.10.0"
   },
   "devDependencies": {
-    "@types/node": "^25.9.2"
+    "@types/node": "^25.9.2",
+    "typescript": "^6.0.3"
   }
 }

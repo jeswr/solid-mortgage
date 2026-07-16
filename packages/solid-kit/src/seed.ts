@@ -85,6 +85,61 @@ export function publicReadAcl(resourcePath: string, ownerWebid: string): string 
 `;
 }
 
+/** One agent entry of {@link containerGrantAcl}. */
+export interface ContainerGrantAgent {
+  webid: string;
+  /** Also grant `acl:Control` (the agent manages member ACLs). Default false. */
+  control?: boolean;
+}
+
+export interface ContainerGrantAclOptions {
+  /** Pod-root-relative container path (e.g. `/mortgage/`). */
+  containerPath: string;
+  /** Pod owner — always retains full control (a written ACL replaces implicit rights). */
+  ownerWebid: string;
+  /** Agents granted Read+Write (optionally Control) on the container AND its members. */
+  agents: readonly ContainerGrantAgent[];
+}
+
+/**
+ * Pre-authored WAC ACL for a container: full owner control plus per-agent
+ * `acl:accessTo` + `acl:default` grants — the fixture shape of the sm-28 wallet
+ * grant (borrower authorises an app's service identity over one container).
+ * Root-relative IRIs resolve against the ACL document's own base.
+ */
+export function containerGrantAcl(options: ContainerGrantAclOptions): string {
+  if (!options.containerPath.startsWith("/") || !options.containerPath.endsWith("/")) {
+    throw new Error(
+      `containerPath must be a pod-root-relative container path: ${options.containerPath}`,
+    );
+  }
+  assertIriReference(options.containerPath, "containerPath");
+  assertIriReference(options.ownerWebid, "ownerWebid");
+  const rules = options.agents
+    .map((agent, index) => {
+      assertIriReference(agent.webid, `agents[${index}].webid`);
+      const control = agent.control === true ? ", acl:Control" : "";
+      return `
+<#grant-${index}>
+    a acl:Authorization ;
+    acl:accessTo <${options.containerPath}> ;
+    acl:default <${options.containerPath}> ;
+    acl:agent <${agent.webid}> ;
+    acl:mode acl:Read, acl:Write${control} .
+`;
+    })
+    .join("");
+  return `@prefix acl: <http://www.w3.org/ns/auth/acl#> .
+
+<#owner>
+    a acl:Authorization ;
+    acl:accessTo <${options.containerPath}> ;
+    acl:default <${options.containerPath}> ;
+    acl:agent <${options.ownerWebid}> ;
+    acl:mode acl:Read, acl:Write, acl:Control .
+${rules}`;
+}
+
 export interface ProfileCardFixtureOptions {
   /** The WebID this card describes, e.g. `${baseUrl}/profile/card#me`. */
   webid: string;

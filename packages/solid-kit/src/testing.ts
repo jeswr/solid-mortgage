@@ -23,6 +23,9 @@ export {
   startSolidServer,
 } from "./harness.js";
 export {
+  type ContainerGrantAclOptions,
+  type ContainerGrantAgent,
+  containerGrantAcl,
   type ProfileCardFixtureOptions,
   profileCardFixture,
   publicReadAcl,

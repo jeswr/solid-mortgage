@@ -11,7 +11,7 @@ import {
   TermAs,
 } from "@rdfjs/wrapper";
 import type { MortgageResourceKind } from "../shacl.js";
-import { CRED, DCTERMS, FIBO, SCHEMA } from "../vocab/external.js";
+import { CRED, DCTERMS, DPV, FIBO, ODRL, SCHEMA } from "../vocab/external.js";
 import { MORT } from "../vocab/mort.js";
 import { fitsZkBudget, ZK_ANCHORABLE_FIELD_IRIS } from "../zk-budgets.js";
 import { literalFromXsdDate, literalFromXsdDecimal } from "./mappings.js";
@@ -110,6 +110,9 @@ export const AUS_RECOMMENDATION_IRIS = [
   FIBO.UnderwritingDecision_Refer,
   FIBO.UnderwritingDecision_UnableToDetermine,
 ] as const;
+
+/** Consent receipt states used by the app-level decision-0006 ledger. */
+export const CONSENT_STATUS_IRIS = [DPV.ConsentGiven, DPV.ConsentWithdrawn] as const;
 
 /**
  * Resource 1: the `/mortgage/profile` borrower document the wallet writes
@@ -681,6 +684,14 @@ export class ClosingRecord extends MortgageResource {
     RequiredAs.object(this, MORT.recordingReference, value, LiteralFrom.string);
   }
 
+  /** Borrower-facing reference only; the authoritative eNote remains in the eVault. */
+  get eNoteReference(): string {
+    return RequiredFrom.subjectPredicate(this, MORT.eNoteReference, LiteralAs.string);
+  }
+  set eNoteReference(value: string) {
+    RequiredAs.object(this, MORT.eNoteReference, value, LiteralFrom.string);
+  }
+
   /** The servicer of record after the scene 5 transfer. */
   get servicer(): OrganizationNode {
     return RequiredFrom.subjectPredicate(
@@ -688,6 +699,49 @@ export class ClosingRecord extends MortgageResource {
       FIBO.isServicedBy,
       TermAs.instance(OrganizationNode),
     );
+  }
+}
+
+/** App-level DPV consent receipt (decision 0006; WAC is enforcement, not auditing). */
+export class ConsentReceipt extends MortgageResource {
+  override get resourceKind(): MortgageResourceKind {
+    return "consent-receipt";
+  }
+
+  get dataSubjectIri(): string {
+    return RequiredFrom.subjectPredicate(this, DPV.hasDataSubject, NamedNodeAs.string);
+  }
+  set dataSubjectIri(value: string) {
+    RequiredAs.object(this, DPV.hasDataSubject, value, NamedNodeFrom.string);
+  }
+
+  get dataControllerIri(): string {
+    return RequiredFrom.subjectPredicate(this, DPV.hasDataController, NamedNodeAs.string);
+  }
+  set dataControllerIri(value: string) {
+    RequiredAs.object(this, DPV.hasDataController, value, NamedNodeFrom.string);
+  }
+
+  get targetIri(): string {
+    return RequiredFrom.subjectPredicate(this, ODRL.target, NamedNodeAs.string);
+  }
+  set targetIri(value: string) {
+    RequiredAs.object(this, ODRL.target, value, NamedNodeFrom.string);
+  }
+
+  get consentStatus(): string {
+    return RequiredFrom.subjectPredicate(this, DPV.hasConsentStatus, NamedNodeAs.string);
+  }
+  set consentStatus(value: string) {
+    assertMember("consentStatus", value, CONSENT_STATUS_IRIS);
+    RequiredAs.object(this, DPV.hasConsentStatus, value, NamedNodeFrom.string);
+  }
+
+  get issued(): Date {
+    return RequiredFrom.subjectPredicate(this, DCTERMS.issued, LiteralAs.date);
+  }
+  set issued(value: Date) {
+    RequiredAs.object(this, DCTERMS.issued, value, LiteralFrom.dateTime);
   }
 }
 

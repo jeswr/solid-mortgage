@@ -1,13 +1,14 @@
 import type { Term } from "@rdfjs/types";
 import { type ITermWrapperConstructor, RequiredAs, TermFrom } from "@rdfjs/wrapper";
 import { DataFactory, Store } from "n3";
-import { CRED, FIBO, SCHEMA } from "../vocab/external.js";
+import { CRED, DPV, FIBO, SCHEMA } from "../vocab/external.js";
 import { MORT } from "../vocab/mort.js";
 import {
   AppraisalCredential,
   AssetCredential,
   BorrowerProfile,
   ClosingRecord,
+  ConsentReceipt,
   type CredentialResource,
   CreditScoreCredential,
   EmploymentIncomeCredential,
@@ -406,6 +407,8 @@ export interface ClosingRecordInit {
   loanTermMonths: number;
   closingDate: Date;
   recordingReference: string;
+  /** Borrower-facing simulated registry reference; never the authoritative eNote. */
+  eNoteReference: string;
   servicerName: string;
 }
 
@@ -423,8 +426,32 @@ export function buildClosingRecord(init: ClosingRecordInit): ClosingRecord {
   record.loanTermMonths = init.loanTermMonths;
   record.closingDate = init.closingDate;
   record.recordingReference = init.recordingReference;
+  record.eNoteReference = init.eNoteReference;
   addOrganization(record, FIBO.isServicedBy, init.servicerName, "servicer", [FIBO.Servicer]);
   return record;
+}
+
+export interface ConsentReceiptInit {
+  iri: string;
+  dataSubject: string;
+  dataController: string;
+  target: string;
+  /** One of `CONSENT_STATUS_IRIS`. */
+  consentStatus: string;
+  issued: Date;
+}
+
+/** Build one SHACL-validated app-level consent receipt (decision 0006). */
+export function buildConsentReceipt(init: ConsentReceiptInit): ConsentReceipt {
+  const { store, root } = newDocument(init.iri);
+  const receipt = new ConsentReceipt(root, store, DataFactory);
+  receipt.typeIris.add(DPV.ConsentReceipt);
+  receipt.dataSubjectIri = init.dataSubject;
+  receipt.dataControllerIri = init.dataController;
+  receipt.targetIri = init.target;
+  receipt.consentStatus = init.consentStatus;
+  receipt.issued = init.issued;
+  return receipt;
 }
 
 export interface ZkOperandAnchorInit extends CredentialEnvelopeInit {

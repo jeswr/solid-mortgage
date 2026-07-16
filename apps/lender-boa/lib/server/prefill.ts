@@ -6,7 +6,7 @@
  * untrusted input even under a grant.
  */
 
-import type { MortgageResourceKind } from "@mortgage/data-model";
+import type { MortgageResourceKind, PersonaResourceKind } from "@mortgage/data-model";
 import {
   AssetCredential,
   BorrowerProfile,
@@ -77,7 +77,7 @@ async function validatedDataset(
 
 async function readValidated(
   base: string,
-  kind: Exclude<MortgageResourceKind, "zk-operand-anchor">,
+  kind: PersonaResourceKind,
   focusNode?: string,
 ): Promise<{ dataset: DatasetCore; iri: string }> {
   const iri = `${base}${RESOURCE_POD_PATHS[kind].slice(1)}`;

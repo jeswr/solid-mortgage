@@ -1,0 +1,11 @@
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix dpv: <https://w3id.org/dpv#> .
+@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
+
+<https://alex.pod.example/consent/receipts/grant-1>
+  a dpv:ConsentReceipt ;
+  dpv:hasDataSubject <https://alex.pod.example/profile/card#me> ;
+  dpv:hasDataController <https://servicer.example/profile/card#service> ;
+  odrl:target <https://alex.pod.example/mortgage/closing-record> ;
+  dpv:hasConsentStatus dpv:ConsentGiven ;
+  dcterms:issued "2026-07-16T14:30:00.000Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> .

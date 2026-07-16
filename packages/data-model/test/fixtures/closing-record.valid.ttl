@@ -33,6 +33,7 @@
   mort:loanTermMonths 360 ;
   mort:closingDate "2026-08-28"^^xsd:date ;
   mort:recordingReference "Franklin County Instrument 202608280045121" ;
+  mort:eNoteReference "SIMULATED-ENOTE-2026-08-28-45121" ;
   fibo-loan-ln-ln:isServicedBy [
     a schema:Organization, fibo-loan-ln-ln:Servicer ;
     schema:name "Concept Demo Servicing Co."

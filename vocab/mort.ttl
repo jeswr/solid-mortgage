@@ -203,6 +203,14 @@ mort:recordingReference
   rdfs:range xsd:string ;
   rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
 
+mort:eNoteReference
+  a owl:DatatypeProperty ;
+  rdfs:label "eNote reference"@en ;
+  rdfs:comment "A borrower-facing reference to the simulated eNote registry entry associated with the closed mortgage. The authoritative eNote remains in the eVault; this value is only the reference stored with the borrower's closing record (scene 5)."@en ;
+  skos:definition "Borrower-facing reference to the eNote registry entry associated with a closed mortgage."@en ;
+  rdfs:range xsd:string ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
 mort:subjectProperty
   a owl:ObjectProperty ;
   rdfs:label "subject property"@en ;
