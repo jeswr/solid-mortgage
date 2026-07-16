@@ -20,15 +20,28 @@ The SUPPLIER side of the journey (scenes 1 + 4):
   fabricated. The employment window is genuinely near-expiry (−30d/+14d — the scene-4
   beat, no fake clock).
 - **Bitstring status lists** (decision 0007): ONE hosted revocation list per issuer flow,
-  signed by that issuer and re-signed on every mutation (`StatusListClient`); created
-  lazily on first issuance. Status = revocation ONLY — freshness is the validity window.
+  signed by that issuer and re-signed on every mutation; created lazily on first issuance.
+  Status = revocation ONLY — freshness is the validity window. The hosted document is
+  never trusted off a bare GET: every issuance runs a fail-closed verify-and-refresh
+  (`reinstate` of a reserved maintenance sentinel — signature/issuer checked, window
+  re-anchored), and ALL writes go through a durable-window client whose `validUntil`
+  always covers every credential the flow can mint, so a credential can never outlive
+  its own status list.
 - **Scene 4 — nothing goes stale** (`POST /api/reissue`): the one-click freshness
   re-issue through the existing grant (vc-kit `reissueCredential`): same claims (the old
   claim subgraph is proof-verified BEFORE re-signing), fresh window, fresh status index,
   old index revoked. The one-click gate additionally requires the stored credential to
   fully verify except AT MOST expiry and to attest the authenticated caller — a REVOKED
   credential is refused (re-issuing it is an explicit issuer decision). The flow's operand
-  anchor is renewed in the same click.
+  anchor is renewed in the same click (or repaired if missing — never skipped).
+- **Multi-write consistency** (roborev sm-29 hardening): issuance prepares BOTH signed
+  documents before any pod mutation and writes the anchor first, so no failure point can
+  leave an anchor-less credential reachable; every partial state (failed write, external
+  anchor deletion) is completed or repaired on retry instead of being locked out by
+  `already_issued`. Re-issue compensates: if the conditional pod write fails after
+  `reissueCredential` revoked the old index, the index is REINSTATED and the replacement's
+  slot released — the pod-resident credential is never left pointing at a revoked index,
+  and every single-failure state retries cleanly.
 - **`GET /api/flows`**: the flow catalogue plus the caller's live per-flow vault state
   (issued / verified / fresh), each entry the verdict of the full fail-closed
   `verifyCredential` chain.
@@ -61,8 +74,12 @@ DPoP-bound Solid-OIDC tokens from loopback dev issuers, a real WAC-enforcing spa
 the borrower's vault, the app's real `client_credentials` service identity for pod IO, a
 second real sparq pod hosting the issuer WebID documents and status lists, and vc-kit's
 real fail-closed verifier for every read-back. No mocked auth, issuance, verification or
-status resolution anywhere. `test/flows.test.ts` drift-guards the pinned claims against
-the vc-kit canonical demo inputs, the ZK budgets, the captured encodings, and the
+status resolution anywhere. Its failure-injection describe wraps the real service fetch
+in a one-shot transport seam to prove the partial-failure invariants: a failed anchor or
+credential write never leaves an anchor-less credential and always completes on retry,
+and a failed pod write after a status-list revocation is compensated (the live
+credential's index is reinstated). `test/flows.test.ts` drift-guards the pinned claims
+against the vc-kit canonical demo inputs, the ZK budgets, the captured encodings, and the
 org-theme bindings.
 
 Known demo-scope limit: status-list index occupancy is per-process

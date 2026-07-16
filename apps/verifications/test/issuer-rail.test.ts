@@ -24,6 +24,7 @@
  *     unbound caller 403, unconfigured service identity / issuer flow 503.
  */
 import type { MortgageResourceKind } from "@mortgage/data-model";
+import { createServicePodFetch } from "@mortgage/solid-kit/auth/service";
 import type { DevOidcIssuer, SolidTestAccount, SolidTestServer } from "@mortgage/solid-kit/testing";
 import {
   containerGrantAcl,
@@ -483,6 +484,20 @@ describe("scene 1 — REAL issuance into a real WAC-enforcing pod", () => {
       expect(freshOutcome.verified).toBe(true);
       expect(isFresh(freshOutcome.credential ?? {}, staleAt)).toBe(true);
 
+      // FIX C: the hosted status list must stay verifiable through the
+      // replacement's WHOLE window — not just the write's first 24 hours.
+      // Ten days on (still inside the +14d window), the real status
+      // resolution against the hosted list must still pass.
+      const muchLater = new Date(staleAt.getTime() + 10 * DAY_MS);
+      const durableOutcome = await verifyStored(
+        freshBody,
+        "employment",
+        "employment-income-credential",
+        muchLater,
+      );
+      expect(durableOutcome.errors).toEqual([]);
+      expect(durableOutcome.verified).toBe(true);
+
       // The operand anchor was renewed in the same click.
       const anchorBody = await readVault(ANCHOR_POD_PATHS.employment);
       const anchorOutcome = await verifyStored(
@@ -547,4 +562,295 @@ describe("scene 1 — REAL issuance into a real WAC-enforcing pod", () => {
       expect(after.verified).toBe(false);
     }, 120_000);
   });
+});
+
+/**
+ * Failure-injection suite (roborev sm-29 FIXES A + B): a dedicated borrower
+ * pod + dev-issuer caller, the app's REAL client_credentials service fetch
+ * wrapped in a transport seam that fails EXACTLY ONE targeted (method, url)
+ * pod write per arm — auth, issuance, verification and status resolution all
+ * stay fully real. Dedicated status-list URLs (`…-fi`) keep this suite's
+ * hosted lists independent of the main suite's.
+ */
+describe("partial-failure recovery (failure injection; FIXES A + B)", () => {
+  let owner2: SolidTestAccount;
+  let borrower2: DevOidcIssuer;
+  let pod2Base = "";
+  let service2: IssuerService;
+  let clock2 = new Date();
+  const fiStatusListUrls = {} as Record<IssuerFlowId, string>;
+  /** One-shot injected failures, keyed "METHOD url". Everything else is real. */
+  const failures = new Set<string>();
+
+  function credentialIri2(flow: "employment" | "credit"): string {
+    return `${pod2Base}mortgage/credentials/${flow === "employment" ? "income" : "credit"}`;
+  }
+  function anchorIri2(flow: "employment" | "credit"): string {
+    return `${pod2Base}${ANCHOR_POD_PATHS[flow].slice(1)}`;
+  }
+
+  async function readVault2(iri: string): Promise<string> {
+    const response = await owner2.authFetch(iri, { headers: { accept: "text/turtle" } });
+    if (!response.ok) throw new Error(`GET ${iri} failed: ${response.status}`);
+    return response.text();
+  }
+
+  /** The real verifier, pinned to the suite's `…-fi` lists via the doc itself. */
+  function verifyStored2(
+    body: string,
+    flow: "employment" | "credit",
+    expectShape: MortgageResourceKind,
+    at: Date,
+  ): Promise<VerifyCredentialResult> {
+    return verifyCredential(body, {
+      expectShape,
+      now: at,
+      statusFetch: fetch,
+      trustedIssuers: [issuerWebIds[flow]],
+      webIdFetch: fetch,
+    });
+  }
+
+  beforeAll(async () => {
+    owner2 = await pods.provisionAccount();
+    pod2Base = `${owner2.baseUrl}/`;
+    borrower2 = await startDevOidcIssuer({ storage: pod2Base });
+    await seedPod(
+      owner2.baseUrl,
+      [profileCardFixture({ webid: borrower2.webid, name: "Jordan Avery", storage: pod2Base })],
+      { fetch: owner2.authFetch, ownerWebid: owner2.webid },
+    );
+    const container = await owner2.authFetch(`${pod2Base}mortgage/`, {
+      method: "PUT",
+      headers: { "content-type": "text/turtle" },
+      body: "",
+    });
+    if (!container.ok) throw new Error(`container seed failed (${container.status})`);
+    const acl = await owner2.authFetch(`${pod2Base}mortgage/.acl`, {
+      method: "PUT",
+      headers: { "content-type": "text/turtle" },
+      body: containerGrantAcl({
+        containerPath: "/mortgage/",
+        ownerWebid: owner2.webid,
+        agents: [{ webid: serviceIssuer.webid }],
+      }),
+    });
+    if (!acl.ok) throw new Error(`issuer grant seed failed (${acl.status})`);
+
+    for (const flow of ["employment", "assets", "credit"] as const) {
+      fiStatusListUrls[flow] = `${issuerHost.baseUrl}/status/${flow}-fi`;
+    }
+    // The REAL service-identity fetch (client_credentials + DPoP), wrapped in
+    // the one-shot failure seam — the auth path is never stubbed.
+    const realServiceFetch = createServicePodFetch({
+      allowInsecureLoopback: true,
+      clientId: SERVICE_CLIENT.clientId,
+      clientSecret: SERVICE_CLIENT.clientSecret,
+      issuer: serviceIssuer.issuer,
+    });
+    const flakyPodFetch: typeof fetch = async (input, init) => {
+      const request = new Request(input instanceof Request ? input : String(input), init);
+      const key = `${request.method} ${request.url}`;
+      if (failures.has(key)) {
+        failures.delete(key);
+        return new Response("injected transport failure", { status: 500 });
+      }
+      return realServiceFetch(request);
+    };
+
+    const config2: VerificationsConfig = {
+      ...config,
+      issuers: {
+        assets: { ...config.issuers.assets, statusListUrl: fiStatusListUrls.assets },
+        credit: { ...config.issuers.credit, statusListUrl: fiStatusListUrls.credit },
+        employment: { ...config.issuers.employment, statusListUrl: fiStatusListUrls.employment },
+      },
+      podAllowedOrigins: [owner2.baseUrl],
+      trustedOidcIssuers: [borrower2.issuer],
+    };
+    service2 = createIssuerService({
+      config: config2,
+      keys: { credit: issuerKeys.credit, employment: issuerKeys.employment },
+      now: () => clock2,
+      podFetch: flakyPodFetch,
+      statusHostFetch: fetch,
+    });
+  }, 120_000);
+
+  afterAll(async () => {
+    await borrower2?.stop();
+  });
+
+  let employmentIndex2: string | undefined;
+
+  test("FIX A: a failed anchor write leaves no anchor-less credential — retry completes the issue", async () => {
+    failures.add(`PUT ${anchorIri2("employment")}`);
+    const failed = await service2.issue(
+      await authedRequest(borrower2, "POST", "issue", {
+        body: JSON.stringify({ flow: "employment" }),
+      }),
+    );
+    expect(failed.status).toBe(502);
+
+    // The anchor is written FIRST, so the failure left NOTHING in the pod:
+    // no anchor-less credential is reachable by anyone.
+    expect((await owner2.authFetch(credentialIri2("employment"))).status).toBe(404);
+    expect((await owner2.authFetch(anchorIri2("employment"))).status).toBe(404);
+
+    // Retry is not locked out by already_issued — it completes the flow.
+    const retry = await service2.issue(
+      await authedRequest(borrower2, "POST", "issue", {
+        body: JSON.stringify({ flow: "employment" }),
+      }),
+    );
+    expect(retry.status).toBe(200);
+    const payload = (await retry.json()) as {
+      credential: { statusListIndex?: string };
+      anchor: { id: string } | null;
+    };
+    employmentIndex2 = payload.credential.statusListIndex;
+    expect(payload.anchor?.id).toBe(anchorIri2("employment"));
+
+    const body = await readVault2(credentialIri2("employment"));
+    const outcome = await verifyStored2(body, "employment", "employment-income-credential", clock2);
+    expect(outcome.errors).toEqual([]);
+    expect(outcome.verified).toBe(true);
+    const anchorBody = await readVault2(anchorIri2("employment"));
+    const anchorOutcome = await verifyStored2(
+      anchorBody,
+      "employment",
+      "zk-operand-anchor",
+      clock2,
+    );
+    expect(anchorOutcome.errors).toEqual([]);
+    expect(anchorOutcome.verified).toBe(true);
+  }, 120_000);
+
+  test("FIX A: a failed credential write is resumable — the orphan anchor is replaced and the credential lands", async () => {
+    failures.add(`PUT ${credentialIri2("credit")}`);
+    const failed = await service2.issue(
+      await authedRequest(borrower2, "POST", "issue", { body: JSON.stringify({ flow: "credit" }) }),
+    );
+    expect(failed.status).toBe(502);
+
+    // Intermediate state: an orphan anchor, NO credential — never the other
+    // way round (an anchor-less credential is the un-provable state).
+    expect((await owner2.authFetch(credentialIri2("credit"))).status).toBe(404);
+    expect((await owner2.authFetch(anchorIri2("credit"))).status).toBe(200);
+
+    const retry = await service2.issue(
+      await authedRequest(borrower2, "POST", "issue", { body: JSON.stringify({ flow: "credit" }) }),
+    );
+    expect(retry.status).toBe(200);
+    const payload = (await retry.json()) as { resumed?: boolean; anchor: { id: string } | null };
+    expect(payload.resumed).toBe(true);
+    expect(payload.anchor?.id).toBe(anchorIri2("credit"));
+
+    const body = await readVault2(credentialIri2("credit"));
+    const outcome = await verifyStored2(body, "credit", "credit-score-credential", clock2);
+    expect(outcome.errors).toEqual([]);
+    const anchorBody = await readVault2(anchorIri2("credit"));
+    const anchorOutcome = await verifyStored2(anchorBody, "credit", "zk-operand-anchor", clock2);
+    expect(anchorOutcome.errors).toEqual([]);
+    expect(anchorBody).toContain(CAPTURED_OPERAND_ENC[742]);
+  }, 120_000);
+
+  test("FIX A: a present credential with a missing anchor is repaired, never skipped", async () => {
+    const deleted = await owner2.authFetch(anchorIri2("employment"), { method: "DELETE" });
+    expect(deleted.ok).toBe(true);
+
+    const response = await service2.issue(
+      await authedRequest(borrower2, "POST", "issue", {
+        body: JSON.stringify({ flow: "employment" }),
+      }),
+    );
+    expect(response.status).toBe(200);
+    const payload = (await response.json()) as {
+      repaired?: boolean;
+      anchor: { id: string; validFrom: string; validUntil?: string } | null;
+      credential: { validFrom: string; validUntil?: string };
+    };
+    expect(payload.repaired).toBe(true);
+    expect(payload.anchor?.id).toBe(anchorIri2("employment"));
+    // The repaired anchor rides the STORED credential's own asserted window.
+    expect(payload.anchor?.validFrom).toBe(payload.credential.validFrom);
+    expect(payload.anchor?.validUntil).toBe(payload.credential.validUntil);
+
+    const anchorBody = await readVault2(anchorIri2("employment"));
+    const anchorOutcome = await verifyStored2(
+      anchorBody,
+      "employment",
+      "zk-operand-anchor",
+      clock2,
+    );
+    expect(anchorOutcome.errors).toEqual([]);
+    expect(anchorOutcome.verified).toBe(true);
+  }, 120_000);
+
+  test("FIX B: a failed pod write after revocation is compensated — the live credential is never left revoked", async () => {
+    const staleAt = new Date(clock2.getTime() + 15 * DAY_MS);
+    clock2 = staleAt;
+    const oldBody = await readVault2(credentialIri2("employment"));
+    expect(employmentIndex2).toBeDefined();
+    const oldIndex = Number(employmentIndex2);
+
+    failures.add(`PUT ${credentialIri2("employment")}`);
+    const failed = await service2.reissue(
+      await authedRequest(borrower2, "POST", "reissue", {
+        body: JSON.stringify({ flow: "employment" }),
+      }),
+    );
+    expect(failed.status).toBe(502);
+
+    // CONSISTENT: the pod still holds the OLD credential, and its index was
+    // REINSTATED after the failed write — expired, yes; revoked, no.
+    expect(await readVault2(credentialIri2("employment"))).toBe(oldBody);
+    const list = new StatusListClient({
+      fetch,
+      issuer: issuerWebIds.employment,
+      key: issuerKeys.employment,
+      url: fiStatusListUrls.employment,
+    });
+    expect(await list.readBit(oldIndex, { now: clock2 })).toBe(false);
+    const staleOutcome = await verifyStored2(
+      oldBody,
+      "employment",
+      "employment-income-credential",
+      clock2,
+    );
+    expect(staleOutcome.verified).toBe(false);
+    expect(staleOutcome.errors.map((error) => error.code)).toEqual(["EXPIRED"]);
+
+    // RETRYABLE: the same one click now completes; only then is the old
+    // index revoked, and the replacement verifies fresh.
+    const retry = await service2.reissue(
+      await authedRequest(borrower2, "POST", "reissue", {
+        body: JSON.stringify({ flow: "employment" }),
+      }),
+    );
+    expect(retry.status).toBe(200);
+    const payload = (await retry.json()) as { revokedIndex: number; newIndex: number };
+    expect(payload.revokedIndex).toBe(oldIndex);
+    expect(await list.readBit(oldIndex, { now: clock2 })).toBe(true);
+
+    const freshBody = await readVault2(credentialIri2("employment"));
+    const freshOutcome = await verifyStored2(
+      freshBody,
+      "employment",
+      "employment-income-credential",
+      clock2,
+    );
+    expect(freshOutcome.errors).toEqual([]);
+    expect(freshOutcome.verified).toBe(true);
+    expect(isFresh(freshOutcome.credential ?? {}, clock2)).toBe(true);
+    const revokedOutcome = await verifyStored2(
+      oldBody,
+      "employment",
+      "employment-income-credential",
+      clock2,
+    );
+    expect(revokedOutcome.errors.map((error) => error.code)).toEqual(
+      expect.arrayContaining(["EXPIRED", "STATUS_REVOKED"]),
+    );
+  }, 120_000);
 });
