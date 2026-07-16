@@ -435,6 +435,27 @@ describe("scene 5 receipt/ACL consistency under receipt-write failure", () => {
     expectDenied((await mismatchAgent.authFetch(record)).status);
     expect(await actionsFor(mismatchAgent)).toEqual([]);
   }, 60_000);
+
+  test("SHACL-INVALID RDF at the colliding IRI never suppresses rollback", async () => {
+    // Parseable Turtle that is not a conforming consent receipt: recovery must
+    // fail SHACL validation and fall through to the fail-safe compensation.
+    const collidingIri = `${podBase}mortgage/consent-receipt-0-grant-${encodeURIComponent(
+      mismatchAgent.webid,
+    )}`;
+    const colliding = {
+      ...working,
+      podFetch: receiptCollisionServingFetch(
+        service.authFetch,
+        collidingIri,
+        `<${collidingIri}> a <http://example.org/NotAReceipt> .`,
+      ),
+    };
+    await expect(
+      changeServicingAccess(podBase, owner.webid, mismatchAgent.webid, "grant", colliding),
+    ).rejects.toMatchObject({ name: "PodAccessError" });
+    expectDenied((await mismatchAgent.authFetch(record)).status);
+    expect(await actionsFor(mismatchAgent)).toEqual([]);
+  }, 60_000);
 });
 
 describe("decision 0015 fail-closed authenticated pod rail", () => {
