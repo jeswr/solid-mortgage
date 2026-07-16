@@ -192,6 +192,27 @@ describe("lender-53 real Tier A verifier", () => {
     expect(response.status).toBe(413);
   });
 
+  test("multibyte anchor documents are bounded by UTF-8 bytes", async () => {
+    const response = await service.verify(
+      await authedRequest(VERIFY_URL, {
+        presentations: {
+          income: {
+            nonce: "unused",
+            proof: {},
+            // 65,537 two-byte code points: short in UTF-16 units, 131,074 bytes in UTF-8.
+            anchorVc: "é".repeat(65_537),
+          },
+          score: { nonce: "unused", proof: {}, anchorVc: "not reached" },
+        },
+      }),
+    );
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({
+      error: "malformed_request",
+      detail: "presentations.income.anchorVc exceeds the size bound",
+    });
+  });
+
   test(
     "forgery with a mismatched operand anchor is rejected 403",
     async () => {

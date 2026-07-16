@@ -171,7 +171,10 @@ test.describe("lender-53 thin competing quote (sm-31)", () => {
   test.afterAll(async () => {
     runner.stopAll();
     await issuer?.stop();
-    await new Promise<void>((resolve) => fixtures?.server.close(() => resolve()));
+    const fixtureServer = fixtures?.server;
+    if (fixtureServer !== undefined) {
+      await new Promise<void>((resolve) => fixtureServer.close(() => resolve()));
+    }
   });
 
   async function expectBannerAndAxe(page: Page) {

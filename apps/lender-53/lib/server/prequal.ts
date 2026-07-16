@@ -132,7 +132,7 @@ function parsePresentations(body: unknown): readonly ParsedPresentation[] {
     if (typeof anchorVc !== "string" || anchorVc.length === 0) {
       throw new BadRequestError(`presentations.${id}.anchorVc must be a Turtle document string`);
     }
-    if (anchorVc.length > MAX_ANCHOR_VC_BYTES) {
+    if (new TextEncoder().encode(anchorVc).byteLength > MAX_ANCHOR_VC_BYTES) {
       throw new BadRequestError(`presentations.${id}.anchorVc exceeds the size bound`);
     }
     parsed.push({ id, nonce, proofJson: proof, anchorVc });
