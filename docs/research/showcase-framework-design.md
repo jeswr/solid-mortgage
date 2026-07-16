@@ -96,16 +96,18 @@ consumer repo (solid-mortgage), usually as *data* feeding a generic component.
 
 ## 2. The JSON walkthrough schema
 
-One document drives the whole tour site. Opinionated defaults are stated inline; the
-TypeScript types are normative, the JSON-Schema is generated from them (zod v4 →
-`z.toJSONSchema()`) and shipped as a package artifact.
+One document drives the whole tour site. Opinionated defaults are stated inline. **The zod
+v4 schemas are the single source of truth**: the TypeScript contracts below are the
+`z.infer` output (shown expanded for review), and the JSON-Schema is generated from the
+same zod schemas (`z.toJSONSchema()`) and shipped as a package artifact — so neither the
+types nor the JSON-Schema can drift from the runtime validator (roborev 5646 Low).
 
 `$schema` resolution: the artifact is exported at
 `@jeswr/solid-showcase/schema/walkthrough.v1.json` (package subpath export). A hosted,
 dereferenceable IRI is a follow-up gated on solid-sdk repo visibility — no minted IRI until
 it actually resolves (house rule).
 
-### 2.1 TypeScript types (normative)
+### 2.1 TypeScript contracts (z.infer of the normative zod schemas)
 
 ```ts
 /** The whole tour site, as data. Version is a literal — breaking changes bump it. */
@@ -248,11 +250,17 @@ export interface ChapterStep {
   tryLive: { app: string; label: string };  // app must be a registry key
 }
 
+/**
+ * Overrides may only TIGHTEN the schema floors, never loosen them: the generated
+ * JSON-Schema pins the absolute minimums (steps minItems 2, underneath minLength 20),
+ * and zod rejects minSteps < 2 / minUnderneathChars < 20 — so no valid override can
+ * conflict with the schema (roborev 5646 Medium).
+ */
 export interface EditorialLimits {
   maxLeadWords?: number;              // default 40
   maxStepWords?: number;              // default 65
-  minSteps?: number;                  // default 2
-  minUnderneathChars?: number;        // default 20 per point
+  minSteps?: number;                  // default 2; must be ≥ 2
+  minUnderneathChars?: number;        // default 20 per point; must be ≥ 20
 }
 
 export interface ComplianceLens {
@@ -285,14 +293,17 @@ chapter/step-naming error messages):
 
 | Rule | Default |
 |---|---|
+| Every `registry.apps` record key equals its entry's `slug` | hard error |
 | Every `steps[].tryLive.app` and `roles[].apps[]` resolves in `registry.apps` | hard error |
 | Every `launcherOrder` entry resolves; no duplicates | hard error |
-| Exactly one role has `center: true` and matches `registry.center` | hard error |
-| `scene` numbers contiguous 1..N in array order; slugs unique | hard error |
+| Role slugs unique; exactly one role has `center: true` and matches `registry.center` | hard error |
+| Every `roles[].scene` names an existing chapter scene | hard error |
+| Chapter `scene` numbers contiguous 1..N in array order; slugs unique | hard error |
 | Word budgets (lead/step), `minSteps` | hard error (editorial gates are the point) |
-| `underneathRequired` ⇒ `underneath` non-empty, each point ≥ 20 chars | hard error |
-| `compliance.checks[].chapterSlug` resolves | hard error |
+| `underneathRequired` ⇒ `underneath` non-empty, each point ≥ `minUnderneathChars` | hard error |
+| `compliance.checks[].chapterSlug` resolves AND the check's `scene` equals that chapter's `scene` | hard error |
 | `persona.descriptor` contains "fictional" or "simulated" | hard error (honesty floor) |
+| `editorial` overrides at least as strict as the schema floors (§2.1 note) | hard error |
 | `modelledOn` never appears inside `appName` (role-first rule, R4-adjacent) | warning |
 
 ### 2.2 JSON-Schema (generated artifact, condensed)
@@ -682,11 +693,13 @@ export function ShowcaseCompliancePage(props: { document: WalkthroughDocument })
 export { ChapterPlayer, EcosystemMap, Launcher, TryLiveButton,
          DemoIdentityCard, StatusDot, useServiceStatuses };
 
-// subpath "@jeswr/solid-showcase/next"
+// subpath "@jeswr/solid-showcase/next" (everything that consumes the document for deploy)
 export function zoneRewrites(doc: WalkthroughDocument,
   opts?: { fallbackSuffix?: string }): Promise<Rewrite[]>;   // replaces apps/tour/next.config.ts zones
 export function healthRoute(): { GET(): Response };
 export function showcaseMetadata(doc: WalkthroughDocument): Metadata; // via kit demoMetadata, variant "own"
+export function envMatrix(doc: WalkthroughDocument): EnvVarSpec[];  // incl. *_TRUST_FORWARDED_HEADERS
+export function appVercelJson(app: RegisteredApp): object;          // turbo-ignore + framework pin
 ```
 
 Moves here: `apps/tour/app/components/*` (7 files), the data *types* from
@@ -720,19 +733,22 @@ export function themeFromSpec(spec: ThemeSpec, modelledOn: string): OrgTheme;
 export function insigniaFindings(text: string,
   opts: { preset?: "us-finance"; bannedMarks?: BannedMark[] }): InsigniaFinding[];
 export const disclaimerAssertions: { /* e2e helpers asserting banner/footer presence */ };
-
-// subpath "@jeswr/solid-showcase-kit/deploy"
-export function envMatrix(doc: WalkthroughDocument): EnvVarSpec[];  // incl. *_TRUST_FORWARDED_HEADERS
-export function appVercelJson(app: RegisteredApp): object;          // turbo-ignore + framework pin
 ```
+
+Type ownership (roborev 5646 Medium — the dependency edge must stay acyclic): **kit owns
+the branding/theming contracts** (`BrandingConfig`, `ThemeSpec`, `BannedMark`) since they
+are disclaimer/theme domain types; `@jeswr/solid-showcase` imports them for the
+`branding`/`theme` fields of `WalkthroughDocument` and re-exports them for consumers.
+Document-shaped types (`WalkthroughDocument`, `RegisteredApp`, …) live only in showcase —
+so the deploy helpers that consume the *document* (`envMatrix`, `appVercelJson`) live in
+showcase's `/next` subpath (§3.1), not in kit. Kit never imports from showcase.
 
 Opinionated invariants preserved in code, not config: the banner is rendered by AppShell
 unconditionally (four-Ps adjacency); safety copy is non-removable; DemoLockedField's hint
 always renders; interstitial keeps the §4.2 four-paragraph structure with only the
 convener/negation substitutions.
 
-Deps: `@jeswr/app-shell` (`cn`), `react`. Browser-safe except `/deploy` (pure functions,
-node-agnostic anyway) and `/testing`.
+Deps: `@jeswr/app-shell` (`cn`), `react`. Browser-safe except `/testing`.
 
 ### 3.3 `@jeswr/solid-pod-guard` — the decision-0015 auth boundary (sm-75)
 
@@ -801,10 +817,17 @@ solid-pod-guard ──▶ solid-api-auth, fetch-rdf, guarded-fetch   (no showcas
 
 Unscoped npm name (npx convention, mirroring `create-solid-app`); lives at
 `solid-sdk/packages/create-solid-demo`, mirror-published to `jeswr/create-solid-demo`.
-Follows create-solid-app's proven conventions: bundled `template/` in the tarball, Node 24
-native type-stripping (no build step), the dotfile-rename gotcha (`npmrc`→`.npmrc`,
-`gitignore`→`.gitignore`, `env.example`→`.env.example` — npm pack strips the literals),
-`--no-install`, scaffold tests that gate the generated repo.
+Follows create-solid-app's proven conventions: bundled `template/` in the tarball, the
+dotfile-rename gotcha (`npmrc`→`.npmrc`, `gitignore`→`.gitignore`,
+`env.example`→`.env.example` — npm pack strips the literals), `--no-install`, scaffold
+tests that gate the generated repo.
+
+**Bin format (roborev 5646 High):** the published executable is **JavaScript**, compiled
+from TS during packaging (`prepack` esbuild bundle → `dist/bin.mjs`) — Node's native
+type-stripping does NOT apply inside `node_modules`, so an `npx`-installed TS bin would
+fail. (create-solid-app gets away with `node bin.ts` only because it is unpublished and
+run from a checkout.) The packed artifact is exercised through a real install in tests:
+`npm pack` → install the tarball into a temp dir → run the bin.
 
 ### 4.1 UX
 
@@ -878,9 +901,10 @@ my-demo/
 
 Parallels to `create-solid-app`: same bin argument parser shape, same scaffold-then-verify
 test style (`test/scaffold.test.ts` gates `pnpm lint/typecheck/test` inside a scaffolded
-tree), same template-source-of-truth seam (`resolveTemplateDir()`). Differences: pnpm
-workspace + turbo (multi-app) instead of a single npm app; no interactive auth flow (the
-tour has no Solid login of its own — showcase-patterns §1).
+tree), same template-source-of-truth seam (`resolveTemplateDir()`). Differences: compiled
+JS bin (published, unlike create-solid-app today); pnpm workspace + turbo (multi-app)
+instead of a single npm app; no interactive auth flow (the tour has no Solid login of its
+own — showcase-patterns §1).
 
 ---
 
@@ -908,13 +932,13 @@ touching framework code.
 2. `parseWalkthrough` enforces every §2.1 validation rule with chapter/step-naming errors; property-tested against malformed documents (unknown try-live app, budget overrun, missing required underneath, duplicate slugs).
 3. JSON-Schema artifact generated from the zod schema, exported at `schema/walkthrough.v1.json`, and asserted in a test to stay in sync with the types.
 4. The mortgage walkthrough (fixture: §2.3 completed) renders via the four page renderers; component tests cover: keyboard stepper, try-live honest degradation (live/checking/not-deployed), launcher placeholder-link pattern, ecosystem map selection, compliance checklist, persona card copy actions.
-5. `zoneRewrites(mortgageDoc)` reproduces the rewrite output of today's `apps/tour/next.config.ts` (unit test with env set/unset).
+5. `zoneRewrites(mortgageDoc)` reproduces the rewrite output of today's `apps/tour/next.config.ts` (unit test with env set/unset); `envMatrix` includes `*_TRUST_FORWARDED_HEADERS` for every app with a pod route.
 6. Zero use-case strings in `src/` (grep gate: mortgage/EDMA/lender/org names) — all such strings enter via the document.
 
 ### sm-75 — `@jeswr/solid-showcase-kit` + `@jeswr/solid-pod-guard`
 
 1. Kit: all ten `packages/ui` components moved; `createDisclaimerPack(mortgageBranding)` reproduces today's exact strings (existing `packages/ui/test/disclaimers.test.ts` vectors ported as golden tests); safety copy proven non-removable (no prop/config path can drop it).
-2. Kit: `/testing` insignia scanner reproduces `scripts/check-insignia.mjs` findings under the `us-finance` preset (golden run against the mortgage tree); `/deploy` `envMatrix` includes `*_TRUST_FORWARDED_HEADERS` for every app with a pod route.
+2. Kit: `/testing` insignia scanner reproduces `scripts/check-insignia.mjs` findings under the `us-finance` preset (golden run against the mortgage tree).
 3. Kit is browser-safe at the root export (no node builtins); SKILL.md documents the R1–R8 knob surface and what is deliberately NOT configurable.
 4. pod-guard: `"securityCritical": true`; pipeline order fixed and proven by porting the lender-boa pod-rail test suite (anonymous ⇒ 401 before param validation; overrides ⇒ 400; binding failure ⇒ 403; unconfigured ⇒ 503; zero-or-multiple allowlisted claims ⇒ 403 never pick-first).
 5. pod-guard: `createServicePodFetch` moved with its full test suite (redirect refusal, token cache, per-request proof, secret never echoed); decision-0015 trust assumption + L3 consumer obligation documented in SKILL.md; adversarial review before merge, never auto-merged.
@@ -922,7 +946,7 @@ touching framework code.
 
 ### sm-76 — `create-solid-demo`
 
-1. Package at `solid-sdk/packages/create-solid-demo` (unscoped npm name); npx-runnable via Node 24 type-stripping; template ships in the tarball with the dotfile-rename shims (verified via `npm pack` in a test, per create-solid-app's gotcha note).
+1. Package at `solid-sdk/packages/create-solid-demo` (unscoped npm name); the published bin is compiled JavaScript (§4 — Node does not type-strip inside `node_modules`), proven by a test that runs `npm pack`, installs the tarball into a temp dir, and executes the bin; template ships in the tarball with the dotfile-rename shims.
 2. Flags + prompts per §4.1; generated `walkthrough.json` passes `parseWalkthrough`; placeholder chapters pass editorial gates.
 3. Scaffold test: generated repo runs `pnpm lint`, `typecheck`, `test` green in CI (the create-solid-app `scaffold-tsc` pattern); the sample pod-guard route returns 401 to an anonymous request in a generated-app test.
 4. Generated `docs/deploy.md` contains the sm-37 learnings (rootDirectory, cleared overrides, `*_TRUST_FORWARDED_HEADERS`, preview-SSO posture, R4 neutral slugs).
