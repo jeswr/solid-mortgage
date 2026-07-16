@@ -1,32 +1,21 @@
-import { ConceptDemoBanner } from "@mortgage/ui";
+import { demoMetadata } from "@mortgage/ui";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
 import { site } from "./site";
 
-const title = `${site.appName} — Concept Demo (not ${site.organization})`;
-const description = `This is not ${site.organization}. Concept demonstration only; not an offer of credit.`;
-
-export const metadata: Metadata = {
-  title,
-  description,
-  openGraph: {
-    title,
-    description,
-  },
-  robots: {
-    index: false,
-    follow: false,
-  },
-};
+// The property app hosts two branded flows, so the root layout commits to
+// NEITHER org theme — each route wraps its own `AppShell` (with the flow's
+// banner + header + footer) and error/hub routes render their own banner.
+export const metadata: Metadata = demoMetadata({
+  appName: site.appName,
+  organization: site.organization,
+});
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="en">
-      <body>
-        {children}
-        <ConceptDemoBanner organization={site.organization} />
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
