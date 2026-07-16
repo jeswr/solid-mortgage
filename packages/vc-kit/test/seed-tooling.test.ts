@@ -301,9 +301,11 @@ describe("SparqCredentialSeedPipeline.issue (seeder-design section 5.2 seam)", (
     expect(sent?.status.indexBlindingHex).toBe(fixtureIndexBlindingHex(DEMO_ZK_STATUS.employment));
   });
 
-  it("rejects an invalid Schnorr seed at CONSTRUCTION (roborev 5560)", async () => {
+  it("rejects an invalid Schnorr seed at CONSTRUCTION (roborev 5560/5564)", async () => {
     const { bridge, jobs } = stubBridge();
-    for (const bad of [-1, 1.5, Number.NaN]) {
+    // 1e100 passes Number.isInteger but not u64 deserialization - it must be
+    // rejected HERE, not after a credential has been signed.
+    for (const bad of [-1, 1.5, Number.NaN, 1e100, Number.MAX_SAFE_INTEGER + 1]) {
       expect(
         () =>
           new SparqCredentialSeedPipeline({
@@ -316,6 +318,32 @@ describe("SparqCredentialSeedPipeline.issue (seeder-design section 5.2 seam)", (
     }
     // Nothing was signed or sent to the native bridge.
     expect(jobs).toHaveLength(0);
+  });
+
+  it("snapshots its configuration - post-construction mutation is inert", async () => {
+    const host = stubHost();
+    const list = await hostedStatusList(host);
+    const { bridge, jobs } = stubBridge();
+    const mutable = {
+      issuer: ISSUER,
+      key: await issuerKey(),
+      schnorrIssuerSeed: 4101,
+      native: bridge,
+    };
+    const pipeline = new SparqCredentialSeedPipeline(mutable);
+    mutable.schnorrIssuerSeed = -999; // must not reach the validated snapshot
+    await pipeline.issue({
+      kind: "employment-income-credential",
+      credentialId: CREDENTIAL_ID,
+      subjectWebid: SUBJECT,
+      claims: employmentClaims(),
+      validFrom: BACKDATED_VALIDITY.validFrom,
+      validUntil: BACKDATED_VALIDITY.validUntil,
+      status: list.entry(42),
+      zkStatus: DEMO_ZK_STATUS.employment,
+    });
+    const sent = jobs.find((job) => (job.credentials ?? []).length > 0)?.credentials?.[0];
+    expect(sent?.issuerSeed).toBe(4101);
   });
 
   it("rejects a half-configured call BEFORE issuing or signing anything", async () => {

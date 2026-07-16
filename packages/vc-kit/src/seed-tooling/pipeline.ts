@@ -129,14 +129,19 @@ export class SparqCredentialSeedPipeline implements CredentialSeedPipeline {
 
   constructor(options: SparqCredentialSeedPipelineOptions) {
     // Fail at CONSTRUCTION, not after a credential has been signed (roborev
-    // 5560): an invalid Schnorr seed must never produce partial side effects.
-    if (!Number.isInteger(options.schnorrIssuerSeed) || options.schnorrIssuerSeed < 0) {
+    // 5560/5564): an invalid Schnorr seed must never produce partial side
+    // effects. Safe-integer bound: a non-safe double (e.g. 1e100) would pass
+    // Number.isInteger yet fail u64 deserialization in the native helper -
+    // AFTER signing.
+    if (!Number.isSafeInteger(options.schnorrIssuerSeed) || options.schnorrIssuerSeed < 0) {
       throw new SeedToolingError(
         "BAD_ISSUER_SEED",
-        "schnorrIssuerSeed must be a non-negative integer (deterministic DEMO key seed)",
+        "schnorrIssuerSeed must be a non-negative safe integer (deterministic DEMO key seed)",
       );
     }
-    this.#options = options;
+    // Snapshot: the validated configuration must not be mutable through the
+    // caller's retained options object.
+    this.#options = Object.freeze({ ...options });
   }
 
   async issue(input: CredentialSeedInput): Promise<CredentialSeedResult> {
