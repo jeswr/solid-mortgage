@@ -49,14 +49,6 @@ export type FreshnessSeams = Pick<
 
 export async function checkEmploymentFreshness(
   pod: string,
-  /**
-   * The borrower this pod belongs to (holder binding). The employment VC's
-   * `credentialSubject` MUST equal this WebID — otherwise a valid credential
-   * belonging to someone else, placed in the selected pod, could earn a green
-   * tick. When caller authentication lands (sm-28) this WebID comes from the
-   * authenticated grant rather than the request.
-   */
-  webid: string,
   config: LenderConfig,
   options: { now?: () => Date; seams?: FreshnessSeams } = {},
 ): Promise<FreshnessReport> {
@@ -65,9 +57,6 @@ export async function checkEmploymentFreshness(
       503,
       "MORTGAGE_TRUSTED_CREDENTIAL_ISSUERS is unset — the freshness rail fails closed",
     );
-  }
-  if (typeof webid !== "string" || webid.length === 0) {
-    throw new PodAccessError(400, "webid (the borrower) is required");
   }
   const base = assertAllowedPodBase(pod, config);
   const now = (options.now ?? (() => new Date()))();
@@ -92,10 +81,16 @@ export async function checkEmploymentFreshness(
     trustedIssuers: config.trustedCredentialIssuers,
     ...seams,
   });
-  // Holder binding: the credential subject must be THIS borrower (decision
-  // 0012 discipline). A foreign valid credential must never green a tick.
+  // Holder binding (decision 0012 discipline), caller-INDEPENDENT: the
+  // credential subject must be THIS pod's own owner WebID — derived from the
+  // pod being checked (the conventional `<pod>/profile/card#me`), NEVER from a
+  // caller-supplied parameter. A valid credential attesting a different subject
+  // (dropped into this pod) can therefore never green the tick. Full binding to
+  // an authenticated borrower session arrives with the wallet grant pipeline
+  // (sm-28); this is the strongest binding available without a caller identity.
+  const podOwner = `${base}profile/card#me`;
   const subjectOk =
-    verification.credential?.subject !== undefined && verification.credential.subject === webid;
+    verification.credential?.subject !== undefined && verification.credential.subject === podOwner;
   const verifyErrors = [
     ...verification.errors.map((error) => error.code),
     ...(subjectOk ? [] : ["SUBJECT_MISMATCH"]),

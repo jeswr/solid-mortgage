@@ -17,7 +17,6 @@ interface FreshnessResponse {
 
 export interface FreshnessPanelProps {
   pod: string;
-  webid: string;
   apiBase: string;
 }
 
@@ -34,7 +33,7 @@ const DECISION_COPY: Record<FreshnessResponse["decision"], string> = {
  * request the one-click re-issue when stale, and re-run until the replacement
  * credential appears.
  */
-export function FreshnessPanel({ pod, webid, apiBase }: FreshnessPanelProps) {
+export function FreshnessPanel({ pod, apiBase }: FreshnessPanelProps) {
   const [report, setReport] = useState<FreshnessResponse | null>(null);
   const [reissue, setReissue] = useState<{ dispatched: boolean; nextStep: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -48,9 +47,7 @@ export function FreshnessPanel({ pod, webid, apiBase }: FreshnessPanelProps) {
     setReport(null);
     setReissue(null);
     try {
-      const response = await fetch(
-        `${apiBase}/freshness?pod=${encodeURIComponent(pod)}&webid=${encodeURIComponent(webid)}`,
-      );
+      const response = await fetch(`${apiBase}/freshness?pod=${encodeURIComponent(pod)}`);
       const body = (await response.json()) as FreshnessResponse;
       if (!response.ok) {
         setError(body.detail ?? `freshness check failed (${response.status})`);
@@ -62,7 +59,7 @@ export function FreshnessPanel({ pod, webid, apiBase }: FreshnessPanelProps) {
     } finally {
       setBusy(false);
     }
-  }, [apiBase, pod, webid]);
+  }, [apiBase, pod]);
 
   async function requestReissue() {
     setBusy(true);

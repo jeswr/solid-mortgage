@@ -182,7 +182,6 @@ describe("scene 4 — freshness re-check (decision 0007)", () => {
     await expect(
       checkEmploymentFreshness(
         podBase,
-        webId,
         { ...config, trustedCredentialIssuers: [] },
         {
           now: () => NOW,
@@ -195,7 +194,7 @@ describe("scene 4 — freshness re-check (decision 0007)", () => {
     // The seeded persona employment VC is a shape-conforming but UNSIGNED graph
     // (signing arrives with the sm-26 seed tooling); SHACL conformance alone must
     // never earn a green tick — the signature/issuer gate fails closed.
-    const report = await checkEmploymentFreshness(podBase, webId, config, {
+    const report = await checkEmploymentFreshness(podBase, config, {
       now: () => NOW,
       seams: offlineSeams,
     });
@@ -212,7 +211,7 @@ describe("scene 4 — freshness re-check (decision 0007)", () => {
     const config = configWith(account.baseUrl);
     const credentialId = `${stalePod}mortgage/credentials/income`;
     const stale = await rig.issueEmployment({
-      subject: webId,
+      subject: `${stalePod}profile/card#me`,
       credentialId,
       validFrom: new Date(NOW.getTime() - 40 * DAY_MS),
       validUntil: new Date(NOW.getTime() - 2 * DAY_MS),
@@ -220,7 +219,7 @@ describe("scene 4 — freshness re-check (decision 0007)", () => {
     });
     await seedPod(account.baseUrl, [{ path: "/mortgage/credentials/income", body: stale.body }]);
 
-    const staleReport = await checkEmploymentFreshness(stalePod, webId, config, {
+    const staleReport = await checkEmploymentFreshness(stalePod, config, {
       now: () => NOW,
       seams,
     });
@@ -249,7 +248,7 @@ describe("scene 4 — freshness re-check (decision 0007)", () => {
     });
     expect(replace.ok).toBe(true);
 
-    const freshReport = await checkEmploymentFreshness(stalePod, webId, config, {
+    const freshReport = await checkEmploymentFreshness(stalePod, config, {
       now: () => NOW,
       seams,
     });
@@ -264,7 +263,7 @@ describe("scene 4 — freshness re-check (decision 0007)", () => {
     const pod = `${account.baseUrl}/`;
     const config = configWith(account.baseUrl);
     const revoked = await rig.issueEmployment({
-      subject: webId,
+      subject: `${pod}profile/card#me`,
       credentialId: `${pod}mortgage/credentials/income`,
       validFrom: new Date(NOW.getTime() - 1 * DAY_MS),
       validUntil: new Date(NOW.getTime() + 14 * DAY_MS),
@@ -272,7 +271,7 @@ describe("scene 4 — freshness re-check (decision 0007)", () => {
     });
     await seedPod(account.baseUrl, [{ path: "/mortgage/credentials/income", body: revoked.body }]);
     await rig.list.revoke(77, { now: NOW });
-    const report = await checkEmploymentFreshness(pod, webId, config, { now: () => NOW, seams });
+    const report = await checkEmploymentFreshness(pod, config, { now: () => NOW, seams });
     expect(report.fresh).toBe(true);
     expect(report.verified).toBe(false); // STATUS_REVOKED
     expect(report.verifyErrors).toContain("STATUS_REVOKED");
@@ -288,14 +287,14 @@ describe("scene 4 — freshness re-check (decision 0007)", () => {
       trustedCredentialIssuers: ["https://someone-else.example/org"],
     };
     const vc = await rig.issueEmployment({
-      subject: webId,
+      subject: `${pod}profile/card#me`,
       credentialId: `${pod}mortgage/credentials/income`,
       validFrom: new Date(NOW.getTime() - 1 * DAY_MS),
       validUntil: new Date(NOW.getTime() + 14 * DAY_MS),
       index: 88,
     });
     await seedPod(account.baseUrl, [{ path: "/mortgage/credentials/income", body: vc.body }]);
-    const report = await checkEmploymentFreshness(pod, webId, config, { now: () => NOW, seams });
+    const report = await checkEmploymentFreshness(pod, config, { now: () => NOW, seams });
     expect(report.verified).toBe(false);
     expect(report.verifyErrors).toContain("UNTRUSTED_ISSUER");
     expect(report.greenTick).toBe(false);
@@ -317,8 +316,8 @@ describe("scene 4 — freshness re-check (decision 0007)", () => {
       index: 91,
     });
     await seedPod(account.baseUrl, [{ path: "/mortgage/credentials/income", body: foreign.body }]);
-    // Run the check FOR our borrower (webId), not the credential's subject.
-    const report = await checkEmploymentFreshness(pod, webId, config, { now: () => NOW, seams });
+    // The credential subject is NOT this pod's owner — caller-independent binding rejects it.
+    const report = await checkEmploymentFreshness(pod, config, { now: () => NOW, seams });
     expect(report.fresh).toBe(true);
     expect(report.verifyErrors).toContain("SUBJECT_MISMATCH");
     expect(report.verified).toBe(false);
@@ -326,16 +325,10 @@ describe("scene 4 — freshness re-check (decision 0007)", () => {
     expect(report.decision).toBe("blocked-invalid");
   }, 60_000);
 
-  test("400 when the borrower webid is missing", async () => {
-    await expect(
-      checkEmploymentFreshness(podBase, "", config, { now: () => NOW, seams: offlineSeams }),
-    ).rejects.toMatchObject({ status: 400 });
-  });
-
   test("a pod without the credential 404s", async () => {
     const account = await server.provisionAccount();
     await expect(
-      checkEmploymentFreshness(`${account.baseUrl}/`, webId, configWith(account.baseUrl), {
+      checkEmploymentFreshness(`${account.baseUrl}/`, configWith(account.baseUrl), {
         now: () => NOW,
         seams: offlineSeams,
       }),

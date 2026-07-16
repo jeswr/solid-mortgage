@@ -6,17 +6,17 @@ import { checkEmploymentFreshness } from "../../../lib/server/freshness";
 import { lenderConfig, podErrorResponse } from "../../../lib/server/service";
 
 export async function GET(request: Request): Promise<Response> {
-  const params = new URL(request.url).searchParams;
-  const pod = params.get("pod");
-  const webid = params.get("webid");
-  if (pod === null || webid === null) {
+  // The borrower identity is derived server-side from the pod's own owner WebID
+  // (holder binding), NOT from a caller parameter — see checkEmploymentFreshness.
+  const pod = new URL(request.url).searchParams.get("pod");
+  if (pod === null) {
     return Response.json(
-      { simulated: true, error: "malformed_request", detail: "pod and webid are required" },
+      { simulated: true, error: "malformed_request", detail: "pod is required" },
       { status: 400 },
     );
   }
   try {
-    return Response.json(await checkEmploymentFreshness(pod, webid, lenderConfig()));
+    return Response.json(await checkEmploymentFreshness(pod, lenderConfig()));
   } catch (error) {
     return podErrorResponse(error);
   }
