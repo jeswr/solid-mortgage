@@ -61,16 +61,40 @@ test("endpoints update independently: a stalled zone does not hold a live one at
   expect(result.current["/wallet/api/health"]).toBe("not-deployed");
 });
 
-test("refresh cycles never overlap: while a cycle is still in flight, interval ticks are skipped", async () => {
-  // Pathological zone: the fetch ignores its abort signal entirely, so the first
-  // cycle never finishes. Later interval ticks must skip, not stack more requests.
+test("a zone that ignores its abort still settles at the timeout, and polling resumes", async () => {
+  // Pathological zone: the fetch never settles, not even on abort. The timeout race
+  // must settle the endpoint as not-deployed and the next interval must probe again —
+  // exactly one fetch per interval, never a stack of overlapping requests.
   const fetchMock = vi.fn(stalledFetch({ respectAbort: false }));
   vi.stubGlobal("fetch", fetchMock);
-  renderHook(() => useServiceStatuses(["/wallet/api/health"]));
+  const { result } = renderHook(() => useServiceStatuses(["/wallet/api/health"]));
   await act(async () => {
-    await vi.advanceTimersByTimeAsync(REFRESH_INTERVAL_MS * 3 + 1);
+    await vi.advanceTimersByTimeAsync(PROBE_TIMEOUT_MS + 1);
   });
+  expect(result.current["/wallet/api/health"]).toBe("not-deployed");
   expect(fetchMock).toHaveBeenCalledTimes(1);
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(REFRESH_INTERVAL_MS);
+  });
+  expect(fetchMock).toHaveBeenCalledTimes(2);
+});
+
+test("a wedged zone never stops healthy endpoints from refreshing", async () => {
+  const calls: string[] = [];
+  const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+    calls.push(String(input));
+    if (String(input) === "/api/health") return Promise.resolve(liveResponse());
+    return stalledFetch({ respectAbort: false })(input, init);
+  });
+  vi.stubGlobal("fetch", fetchMock);
+  const { result } = renderHook(() => useServiceStatuses(["/api/health", "/wallet/api/health"]));
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(REFRESH_INTERVAL_MS * 2 + 1);
+  });
+  expect(result.current["/api/health"]).toBe("live");
+  expect(result.current["/wallet/api/health"]).toBe("not-deployed");
+  // Initial probe + one per interval: the healthy endpoint kept polling throughout.
+  expect(calls.filter((call) => call === "/api/health")).toHaveLength(3);
 });
 
 test("completed cycles keep refreshing on the interval", async () => {

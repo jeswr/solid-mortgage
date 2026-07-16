@@ -37,42 +37,49 @@ export function useServiceStatuses(healthPaths: string[]): Record<string, Servic
   useEffect(() => {
     const paths = JSON.parse(pathsKey) as string[];
     let cancelled = false;
-    let inFlight = false;
+    const inFlight = new Set<string>();
     const controllers = new Set<AbortController>();
 
-    async function refresh() {
-      // Never stack cycles: if a previous cycle is still running when the interval
-      // fires (e.g. a probe outliving its abort), skip this tick instead of piling up.
-      if (inFlight) return;
-      inFlight = true;
+    async function refreshPath(path: string) {
+      // Per-endpoint guard: a pending probe for this path is never doubled up
+      // (e.g. interval ticks replayed in a burst after a background-tab wake),
+      // and one endpoint's pending probe never gates any other endpoint.
+      if (inFlight.has(path)) return;
+      inFlight.add(path);
+      const controller = new AbortController();
+      controllers.add(controller);
+      let timer: ReturnType<typeof setTimeout> | undefined;
       try {
-        // Each endpoint updates independently as its probe settles, and every probe
-        // is aborted after PROBE_TIMEOUT_MS — one stalled zone cannot block the rest.
-        await Promise.all(
-          paths.map(async (path) => {
-            const controller = new AbortController();
-            controllers.add(controller);
-            const timer = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
-            try {
-              const status = await probe(path, controller.signal);
-              if (!cancelled) {
-                setStatuses((previous) =>
-                  previous[path] === status ? previous : { ...previous, [path]: status },
-                );
-              }
-            } finally {
-              clearTimeout(timer);
-              controllers.delete(controller);
-            }
+        // The timeout SETTLES the probe as well as aborting it: even a fetch that
+        // ignores its abort signal cannot wedge this endpoint — the race resolves
+        // "not-deployed" and polling resumes on the next interval.
+        const status = await Promise.race([
+          probe(path, controller.signal),
+          new Promise<ServiceStatus>((resolve) => {
+            timer = setTimeout(() => {
+              controller.abort();
+              resolve("not-deployed");
+            }, PROBE_TIMEOUT_MS);
           }),
-        );
+        ]);
+        if (!cancelled) {
+          setStatuses((previous) =>
+            previous[path] === status ? previous : { ...previous, [path]: status },
+          );
+        }
       } finally {
-        inFlight = false;
+        clearTimeout(timer);
+        controllers.delete(controller);
+        inFlight.delete(path);
       }
     }
 
-    void refresh();
-    const interval = setInterval(() => void refresh(), REFRESH_INTERVAL_MS);
+    function refreshAll() {
+      for (const path of paths) void refreshPath(path);
+    }
+
+    refreshAll();
+    const interval = setInterval(refreshAll, REFRESH_INTERVAL_MS);
     return () => {
       cancelled = true;
       clearInterval(interval);
