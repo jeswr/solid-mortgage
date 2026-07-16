@@ -72,6 +72,7 @@ const apps: AppDefinition[] = [
     organization: "Freddie Mac",
     packageName: "@mortgage/app-gse",
     path: "/gse",
+    role: "automated underwriting service",
     zoneEnv: "MORTGAGE_UNDERWRITING_ZONE_URL",
   },
   {
