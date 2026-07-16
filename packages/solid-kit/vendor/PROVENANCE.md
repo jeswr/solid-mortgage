@@ -18,6 +18,16 @@ Jesse), and npm cannot install a subdirectory of a git repo, so the tarball is b
 sparq checkout and committed here (docs/research/lws-survey.md §3). Delete this directory and
 switch `packages/solid-kit/package.json` to the registry version once sm-50 lands.
 
+## Browser artifact (Mode-1 in-browser pods, sm-23)
+
+The packed `wasm/` directory IS the `--target web` build (`build:lws-wasm` passes
+`--target web`; the Node host wraps the same glue by reading the binary itself), so this ONE
+vendored artifact serves both the sm-4 dev/test harness and the in-browser pod runtime
+(`@mortgage/solid-kit/browser-pod`, decision 0011). `scripts/vendor-solid-server.mjs`
+verifies the web-target glue shape on every re-vendor. Binary size:
+2143035 bytes raw / 786117 bytes gzipped — within the ~1 MB-gz budget
+decision 0013 measured for wasm pod hosting.
+
 ## Install-time patch
 
 `patches/@jeswr__solid-server.patch` (wired via the `pnpm.patchedDependencies` field of the

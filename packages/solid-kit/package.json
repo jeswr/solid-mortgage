@@ -16,6 +16,14 @@
       "types": "./dist/auth/api.d.ts",
       "import": "./dist/auth/api.js"
     },
+    "./browser-pod": {
+      "types": "./dist/browser-pod/index.d.ts",
+      "import": "./dist/browser-pod/index.js"
+    },
+    "./browser-pod/worker": {
+      "types": "./dist/browser-pod/worker.d.ts",
+      "import": "./dist/browser-pod/worker.js"
+    },
     "./testing": {
       "types": "./dist/testing.d.ts",
       "import": "./dist/testing.js"
@@ -37,6 +45,7 @@
     "jose": "^5.10.0"
   },
   "devDependencies": {
+    "@mortgage/data-model": "workspace:*",
     "@types/node": "^25.9.2"
   }
 }
