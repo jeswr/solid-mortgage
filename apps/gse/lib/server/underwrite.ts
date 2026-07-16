@@ -1,9 +1,18 @@
 /**
  * The AUS run (scenes 3 + 4): read the granted loan file, run the
- * DETERMINISTIC rules, and deliver the decision + findings BOTH ways —
- * back to the requesting party as the response payload AND into the
- * borrower's pod as the shape-validated `/mortgage/decision` document
+ * DETERMINISTIC rules, and deliver the result two ways — the FULL findings
+ * report to the requesting party as the response payload, and the
+ * shape-validated `/mortgage/decision` DOCUMENT into the borrower's pod
  * (conditional PUT through the service identity's granted WAC write).
+ *
+ * HONESTY NOTE (what the pod document contains): the decision resource
+ * carries the decision status, the AUS recommendation, the approved amount
+ * (approve only), and the conditions — where every FAILED finding is quoted
+ * verbatim (rule, observed value, threshold). The per-rule PASS findings
+ * exist only in the response payload: the closed
+ * `mshape:UnderwritingDecisionShape` admits no findings predicate, and this
+ * repo never writes unshaped RDF, so findings-as-RDF needs a data-model
+ * shape first (follow-up bead). Every UI/README claim states exactly this.
  *
  * A scene-4 re-run is the same call: after the stale employment credential
  * is re-issued through the existing grant, the run re-reads the loan file,
@@ -56,7 +65,11 @@ export interface AusRunReport {
   readonly qualifying: AusQualifying;
   readonly conditions: readonly string[];
   readonly applicationIri: string;
-  /** Where the decision + findings landed in the borrower's pod. */
+  /**
+   * Where the decision DOCUMENT landed in the borrower's pod (status,
+   * recommendation, conditions quoting the failed findings — see the module
+   * header; the full findings report exists only in this payload).
+   */
   readonly decisionIri: string;
   readonly evaluatedAt: string;
   /** The regulatory anchor the scene-4 evidence gate demonstrates. */

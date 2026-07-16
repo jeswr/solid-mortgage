@@ -63,7 +63,8 @@ export interface AusFinding {
 }
 
 /** Derived qualifying figures (all deterministic; all illustrative in the demo). */
-export interface AusQualifying {
+export interface AusQualifyingFigures {
+  readonly evaluated: true;
   readonly qualifyingRatePercent: number;
   readonly proposedMonthlyPaymentUsd: number;
   readonly dtiPercent: number;
@@ -71,8 +72,24 @@ export interface AusQualifying {
   readonly reservesMonths: number;
 }
 
+/**
+ * FAIL-CLOSED presentation: when the evidence gate fails, the risk rules are
+ * never evaluated and NO qualifying figures exist — figures derived from
+ * numbers the verifier could not trust must never be presented as evaluated.
+ */
+export interface AusQualifyingUnevaluated {
+  readonly evaluated: false;
+  readonly reason: string;
+}
+
+export type AusQualifying = AusQualifyingFigures | AusQualifyingUnevaluated;
+
 export interface AusResult {
   readonly outcome: AusOutcome;
+  /**
+   * Every EVALUATED finding. On "refer" this is the evidence findings only —
+   * risk rules that never ran are not reported as if they had been.
+   */
   readonly findings: readonly AusFinding[];
   readonly qualifying: AusQualifying;
   /** Conditions for the written underwriting decision (non-empty on every path). */
@@ -177,6 +194,26 @@ export function runAusRules(file: AusLoanFile): AusResult {
     };
   });
 
+  // FAIL-CLOSED STOP (the evidence gate): when any credential cannot be
+  // relied on, the risk rules are NOT evaluated and no qualifying figures
+  // are derived — untrusted numbers are never risk-scored, and nothing
+  // downstream may present them as if they had been.
+  const failedEvidence = evidenceFindings.filter((finding) => !finding.pass);
+  if (failedEvidence.length > 0) {
+    return {
+      conditions: failedEvidence.map(
+        (finding) => `${finding.rule} — observed: ${finding.observed} (${finding.threshold}).`,
+      ),
+      findings: evidenceFindings,
+      outcome: "refer",
+      qualifying: {
+        evaluated: false,
+        reason:
+          "the evidence gate failed — risk rules and qualifying figures were not evaluated on unverified data",
+      },
+    };
+  }
+
   // ── Risk rules (decide "caution") ──────────────────────────────────────
   const payment = proposedMonthlyPaymentUsd(
     file.requestedAmountUsd,
@@ -232,15 +269,13 @@ export function runAusRules(file: AusLoanFile): AusResult {
   ];
 
   const findings = [...evidenceFindings, ...riskFindings];
-  const failedEvidence = evidenceFindings.filter((finding) => !finding.pass);
   const failedRisk = riskFindings.filter((finding) => !finding.pass);
-  const outcome: AusOutcome =
-    failedEvidence.length > 0 ? "refer" : failedRisk.length > 0 ? "caution" : "approve";
+  const outcome: AusOutcome = failedRisk.length > 0 ? "caution" : "approve";
 
   const conditions =
     outcome === "approve"
       ? [APPROVAL_CONDITION]
-      : (outcome === "refer" ? failedEvidence : failedRisk).map(
+      : failedRisk.map(
           (finding) => `${finding.rule} — observed: ${finding.observed} (${finding.threshold}).`,
         );
 
@@ -250,6 +285,7 @@ export function runAusRules(file: AusLoanFile): AusResult {
     outcome,
     qualifying: {
       dtiPercent,
+      evaluated: true,
       ltvPercent,
       proposedMonthlyPaymentUsd: payment,
       qualifyingRatePercent: t.qualifyingRatePercent,

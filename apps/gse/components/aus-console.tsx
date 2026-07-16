@@ -25,13 +25,16 @@ interface AusRunResponse {
   recommendation: string;
   findings: AusFindingView[];
   evidence: AusEvidenceView[];
-  qualifying: {
-    qualifyingRatePercent: number;
-    proposedMonthlyPaymentUsd: number;
-    dtiPercent: number | null;
-    ltvPercent: number | null;
-    reservesMonths: number | null;
-  };
+  qualifying:
+    | {
+        evaluated: true;
+        qualifyingRatePercent: number;
+        proposedMonthlyPaymentUsd: number;
+        dtiPercent: number | null;
+        ltvPercent: number | null;
+        reservesMonths: number | null;
+      }
+    | { evaluated: false; reason: string };
   conditions: string[];
   applicationIri: string;
   decisionIri: string;
@@ -46,7 +49,7 @@ export interface AusConsoleProps {
 
 const OUTCOME_COPY: Record<AusRunResponse["outcome"], string> = {
   approve:
-    "Approve — every credential verified and every risk rule passed. The decision and findings were written into the borrower's pod.",
+    "Approve — every credential verified and every risk rule passed. The decision document was written into the borrower's pod.",
   refer:
     "Refer — the evidence cannot be relied on (a credential failed verification, attests a different subject, or its validity window lapsed). Re-verify through the existing grant, then re-run.",
   caution:
@@ -57,7 +60,9 @@ const OUTCOME_COPY: Record<AusRunResponse["outcome"], string> = {
  * The AUS run console: one click runs the deterministic rules over the
  * caller's OWN granted loan file (decision 0015 — the API derives borrower
  * and pod from the authenticated session; no pod parameter exists) and shows
- * the findings exactly as they were written into the pod. Without an
+ * the full findings report from the response payload — the pod receives the
+ * decision DOCUMENT (status, recommendation, conditions quoting the failed
+ * findings), and the "Delivered" copy below says exactly that. Without an
  * authenticated Solid session (the default in-browser demo) the API answers
  * 401 and the panel says so honestly instead of simulating a run.
  */
@@ -134,34 +139,40 @@ export function AusConsole({ apiBase }: AusConsoleProps) {
           </p>
           <p className="mt-2 text-sm text-foreground">{OUTCOME_COPY[report.outcome]}</p>
 
-          <dl className="mt-4 grid gap-3 sm:grid-cols-4">
-            <div>
-              <dt className="text-sm text-muted-foreground">Qualifying payment</dt>
-              <dd className="text-sm font-semibold tabular-nums">
-                {report.qualifying.proposedMonthlyPaymentUsd > 0
-                  ? `$${report.qualifying.proposedMonthlyPaymentUsd.toLocaleString("en-US")}/mo`
-                  : "—"}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-sm text-muted-foreground">Debt-to-income</dt>
-              <dd className="text-sm font-semibold tabular-nums">
-                {report.qualifying.dtiPercent ?? "—"}%
-              </dd>
-            </div>
-            <div>
-              <dt className="text-sm text-muted-foreground">Loan-to-value</dt>
-              <dd className="text-sm font-semibold tabular-nums">
-                {report.qualifying.ltvPercent ?? "—"}%
-              </dd>
-            </div>
-            <div>
-              <dt className="text-sm text-muted-foreground">Reserves</dt>
-              <dd className="text-sm font-semibold tabular-nums">
-                {report.qualifying.reservesMonths ?? "—"} months
-              </dd>
-            </div>
-          </dl>
+          {report.qualifying.evaluated ? (
+            <dl className="mt-4 grid gap-3 sm:grid-cols-4">
+              <div>
+                <dt className="text-sm text-muted-foreground">Qualifying payment</dt>
+                <dd className="text-sm font-semibold tabular-nums">
+                  {report.qualifying.proposedMonthlyPaymentUsd > 0
+                    ? `$${report.qualifying.proposedMonthlyPaymentUsd.toLocaleString("en-US")}/mo`
+                    : "—"}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-sm text-muted-foreground">Debt-to-income</dt>
+                <dd className="text-sm font-semibold tabular-nums">
+                  {report.qualifying.dtiPercent ?? "—"}%
+                </dd>
+              </div>
+              <div>
+                <dt className="text-sm text-muted-foreground">Loan-to-value</dt>
+                <dd className="text-sm font-semibold tabular-nums">
+                  {report.qualifying.ltvPercent ?? "—"}%
+                </dd>
+              </div>
+              <div>
+                <dt className="text-sm text-muted-foreground">Reserves</dt>
+                <dd className="text-sm font-semibold tabular-nums">
+                  {report.qualifying.reservesMonths ?? "—"} months
+                </dd>
+              </div>
+            </dl>
+          ) : (
+            <p className="mt-4 text-sm text-muted-foreground" data-aus-qualifying="unevaluated">
+              Qualifying figures not evaluated: {report.qualifying.reason}.
+            </p>
+          )}
 
           <h3 className="mt-6 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
             Findings
@@ -196,8 +207,10 @@ export function AusConsole({ apiBase }: AusConsoleProps) {
             Delivered
           </h3>
           <p className="mt-2 break-all text-sm text-muted-foreground" data-aus-decision-iri="">
-            Decision + findings written to <code>{report.decisionIri}</code> — readable by the
-            borrower and by every party the borrower's grant names.
+            Decision document written to <code>{report.decisionIri}</code> — the decision status,
+            the recommendation, and the conditions (every failed finding quoted verbatim) — readable
+            by the borrower and by every party the borrower's grant names. The full per-rule
+            findings report above is returned only in this response.
           </p>
           <p className="mt-2 text-xs text-muted-foreground">{report.rule}</p>
         </div>

@@ -58,6 +58,8 @@ describe("the approve path", () => {
 
   test("the qualifying figures are exact and deterministic", () => {
     const { qualifying } = runAusRules(approvableFile());
+    expect(qualifying.evaluated).toBe(true);
+    if (!qualifying.evaluated) throw new Error("unreachable: approve emits figures");
     // 340,000 @ 6.125% / 360 months — the standard amortization formula.
     expect(qualifying.proposedMonthlyPaymentUsd).toBe(
       proposedMonthlyPaymentUsd(340000, AUS_THRESHOLDS.qualifyingRatePercent, 360),
@@ -131,6 +133,20 @@ describe("the refer path (evidence gate)", () => {
       }),
     );
     expect(result.outcome).toBe("refer");
+  });
+
+  test("a failed evidence gate emits NO qualifying figures and NO risk findings (fail-closed presentation)", () => {
+    const result = runAusRules(
+      approvableFile({ evidence: greenEvidence({ "employment-income": { fresh: false } }) }),
+    );
+    // The stop is total: figures derived from unverified numbers are never
+    // presented as evaluated, and risk rules that never ran are not reported.
+    expect(result.qualifying).toEqual({
+      evaluated: false,
+      reason: expect.stringContaining("not evaluated"),
+    });
+    expect(result.findings.every((finding) => finding.category === "evidence")).toBe(true);
+    expect(result.findings.some((finding) => finding.category === "risk")).toBe(false);
   });
 });
 

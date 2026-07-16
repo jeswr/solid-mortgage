@@ -25,8 +25,11 @@ export default function UnderwritingPage() {
       <p className="mt-4 text-muted-foreground">
         The {site.role} role in the GSE model: read the loan file the borrower granted, verify every
         credential (signature, trusted issuer, validity window, revocation status, shape), run the
-        deterministic rules, and write the decision + findings back into the borrower's pod for the
-        lender to pick up. Unverifiable or stale evidence refers the file — it is never risk-scored.
+        deterministic rules, return the full findings report to the requesting party, and write the
+        decision document — status, recommendation, and conditions quoting every failed finding —
+        back into the borrower's pod for the lender to pick up. Unverifiable or stale evidence
+        refers the file: the risk rules are not even evaluated on numbers the verifier could not
+        trust.
       </p>
 
       <div className="mt-8">

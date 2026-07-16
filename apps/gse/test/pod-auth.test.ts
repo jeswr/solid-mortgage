@@ -344,6 +344,7 @@ describe("the authenticated happy path (scene 3 — REAL grant read + REAL verif
     expect(report.outcome).toBe("approve");
     expect(report.recommendation).toBe("Approve");
     expect(report.findings.every((finding) => finding.pass)).toBe(true);
+    expect(report.qualifying.evaluated).toBe(true);
 
     // EVERY credential came back from the REAL verifier green: signature,
     // trusted issuer, validity window, Bitstring status, and shape — over
@@ -356,9 +357,9 @@ describe("the authenticated happy path (scene 3 — REAL grant read + REAL verif
       expect(evidence.verifyErrors).toEqual([]);
     }
 
-    // The decision + findings landed in the borrower's pod, shape-valid,
-    // attributed to the AUS service identity — proven on a REAL
-    // authenticated read of the written document.
+    // The decision DOCUMENT (status, recommendation, conditions) landed in
+    // the borrower's pod, shape-valid, attributed to the AUS service
+    // identity — proven on a REAL authenticated read of the written document.
     expect(report.decisionIri).toBe(decisionIri());
     const written = await readDecision();
     const shapeReport = await validate(written.turtle, {
@@ -397,6 +398,10 @@ describe("scene 4 — stale evidence refers; the re-issued credential re-runs to
       (entry) => entry.kind === "employment-income",
     );
     expect(employment?.fresh).toBe(false);
+    // Fail-closed presentation over the wire too: no qualifying figures and
+    // no risk findings are emitted when the evidence gate failed.
+    expect(report.qualifying.evaluated).toBe(false);
+    expect(report.findings.some((finding) => finding.category === "risk")).toBe(false);
 
     // The pod decision now records the referral (scene-4 truth in the vault).
     const written = await readDecision();

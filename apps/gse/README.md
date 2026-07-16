@@ -18,10 +18,16 @@ names are rendered anywhere.
 - Runs **DETERMINISTIC rules** (`lib/aus/rules.ts` — pure functions, no clock, no
   randomness): an evidence gate ahead of four published threshold rules (credit score,
   DTI, LTV, reserves). Outcomes: `approve` / `refer` (evidence cannot be relied on) /
-  `caution` (risk threshold failed).
-- **Delivers the decision + findings both ways**: the response payload for the requesting
-  party, and the shape-validated `/mortgage/decision` document written back into the pod
-  (conditional PUT via the granted service write).
+  `caution` (risk threshold failed). When the evidence gate fails, the risk rules are
+  NOT evaluated and no qualifying figures are emitted (`qualifying.evaluated: false`) —
+  untrusted numbers are never presented as risk-scored.
+- **Delivers the result two ways**: the FULL findings report goes to the requesting
+  party in the response payload; the shape-validated `/mortgage/decision` DOCUMENT —
+  decision status, AUS recommendation, approved amount (approve only), and conditions
+  quoting every FAILED finding verbatim — is written back into the pod (conditional PUT
+  via the granted service write). The per-rule pass findings are NOT persisted in the
+  pod: the closed `mshape:UnderwritingDecisionShape` admits no findings predicate and
+  this repo writes no unshaped RDF, so findings-as-RDF is a data-model follow-up.
 - **Scene 4**: a lapsed employment credential refers the file; after the one-click
   re-issue through the existing grant, the same route re-runs to approve.
 

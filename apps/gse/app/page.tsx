@@ -28,8 +28,9 @@ export default function Home() {
       </h1>
       <p className="mt-5 max-w-2xl text-lg text-muted-foreground">
         The {site.role} (AUS) seat in the journey — the {site.organization} role in the GSE model.
-        Deterministic underwriting rules run over the borrower's granted loan file, and the decision
-        plus findings land back in the borrower's pod as well as with the lender.
+        Deterministic underwriting rules run over the borrower's granted loan file; the full
+        findings report returns to the requesting party, and the decision document lands in the
+        borrower's pod.
       </p>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-3">
