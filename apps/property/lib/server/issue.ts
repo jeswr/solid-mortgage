@@ -149,9 +149,12 @@ function statusEntry(index: number, statusListCredential: string) {
  * The write runs over the injectable `podFetch` seam (decision 0015 L4). The
  * DEFAULT is anonymous, which a WAC-enabled pod refuses for a private container
  * (fail-closed — the demo never silently depends on an open pod); it succeeds
- * against the seeded fixed-owner demo/e2e pod. Because the authenticated caller
- * here is the pod OWNER, the honest production path is either the borrower's own
- * Solid session performing this store client-side, or an sm-28
+ * against the seeded fixed-owner demo/e2e pod. The decision-0015 L2 binding has
+ * established that the authenticated caller is the pod's ACKNOWLEDGED owner
+ * (bidirectional `pim:storage`), but this anonymous write does NOT present that
+ * caller's credentials — so it carries no write authority of its own and relies
+ * entirely on the pod's WAC. The honest production path is therefore either the
+ * borrower's own Solid session performing this store client-side, or an sm-28
  * grant-authenticated fetch injected as `podFetch` — roborev sm-33 High,
  * tracked as a follow-up bead; the seam is already the injection point.
  */
