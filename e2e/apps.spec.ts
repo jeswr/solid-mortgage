@@ -44,7 +44,10 @@ const apps: AppDefinition[] = [
   },
   {
     appName: "Verification Services",
-    organization: "The Work Number (Equifax), Mastercard Finicity, and Equifax",
+    hasInterstitial: true,
+    // One canonical string across banner + interstitial (app/site.ts): the
+    // copy reads "this is not {organization}", covering all three brands.
+    organization: "The Work Number, Finicity, or Equifax",
     packageName: "@mortgage/app-verifications",
     path: "/verifications",
     zoneEnv: "MORTGAGE_VERIFICATIONS_ZONE_URL",
