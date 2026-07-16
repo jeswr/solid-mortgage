@@ -28,6 +28,7 @@ export const MORT = {
   DecisionStatusScheme: "https://solid-mortgage-vocab.vercel.app/mort#DecisionStatusScheme",
   EmploymentIncomeCredential:
     "https://solid-mortgage-vocab.vercel.app/mort#EmploymentIncomeCredential",
+  eNoteReference: "https://solid-mortgage-vocab.vercel.app/mort#eNoteReference",
   field: "https://solid-mortgage-vocab.vercel.app/mort#field",
   loanTermMonths: "https://solid-mortgage-vocab.vercel.app/mort#loanTermMonths",
   maritalStatus: "https://solid-mortgage-vocab.vercel.app/mort#maritalStatus",

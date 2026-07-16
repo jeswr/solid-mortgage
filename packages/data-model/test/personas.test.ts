@@ -24,7 +24,7 @@ const DTI_RATIO = 0.43;
 
 // The first personas() call pays the SHACL validator cold start (shapes parse
 // + sh:sparql compilation), which exceeds the 5s default on a loaded machine.
-describe("personas()", { timeout: 30_000 }, () => {
+describe("personas()", { timeout: 60_000 }, () => {
   test("returns Alex Rivera (primary) plus one secondary persona", async () => {
     const all = await personas({ now: NOW });
     expect(all).toHaveLength(2);

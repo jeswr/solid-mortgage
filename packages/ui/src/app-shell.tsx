@@ -42,6 +42,12 @@ export function AppShell({
       data-app-shell=""
       style={themeCssProperties(theme)}
     >
+      <a
+        className="sr-only z-50 rounded bg-card px-4 py-2 text-foreground focus:not-sr-only focus:absolute focus:left-4 focus:top-4"
+        href="#main-content"
+      >
+        Skip to main content
+      </a>
       <header className="border-border border-b bg-card">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-6 py-4">
           <div>

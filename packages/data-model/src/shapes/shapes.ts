@@ -404,6 +404,14 @@ mshape:ClosingRecordShape
     sh:minLength 1 ;
   ] ;
   sh:property [
+    # Borrower-facing reference only; authoritative eNote custody stays in the eVault.
+    sh:path mort:eNoteReference ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
     # The servicer of record (Truist-modelled after the scene 5 transfer).
     sh:path fibo-loan-ln-ln:isServicedBy ;
     sh:minCount 1 ;
@@ -562,6 +570,56 @@ mshape:AppraisedPropertyShape
     sh:path fibo-fnd-arr-asmt:hasEstimatedValue ;
     sh:minCount 1 ;
     sh:message "an appraised property must carry its appraised value" ;
+  ] .
+`,
+  "consent-receipt": `@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix dpv: <https://w3id.org/dpv#> .
+@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+
+# Decision 0006: this is an APP-LEVEL receipt. WAC enforces the access change;
+# neither WAC nor the Solid protocol is represented as an audit provider.
+mshape:ConsentReceiptShape
+  a sh:NodeShape ;
+  sh:targetClass dpv:ConsentReceipt ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue dpv:ConsentReceipt ;
+  ] ;
+  sh:property [
+    sh:path dpv:hasDataSubject ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path dpv:hasDataController ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path odrl:target ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path dpv:hasConsentStatus ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:in ( dpv:ConsentGiven dpv:ConsentWithdrawn ) ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path dcterms:issued ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dateTime ;
   ] .
 `,
   "credit-score-credential": `@prefix sh: <http://www.w3.org/ns/shacl#> .
@@ -1225,5 +1283,5 @@ export type ShapesDocumentKey = keyof typeof SHAPES_TURTLE;
 /** Every bundled shapes document, in one Turtle-parseable list. */
 export const ALL_SHAPES_DOCUMENTS: readonly string[] = Object.values(SHAPES_TURTLE);
 
-/** File stem of the 11 bundled shapes documents. */
+/** File stem of the 12 bundled shapes documents. */
 export const SHAPES_DOCUMENT_KEYS = Object.keys(SHAPES_TURTLE) as readonly ShapesDocumentKey[];

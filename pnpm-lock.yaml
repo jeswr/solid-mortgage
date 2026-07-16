@@ -52,10 +52,28 @@ importers:
 
   apps/closing:
     dependencies:
+      '@jeswr/rdf-serialize':
+        specifier: github:jeswr/rdf-serialize#9c3a34dd93f318fd00d9e6f22081123e502a0578
+        version: https://codeload.github.com/jeswr/rdf-serialize/tar.gz/9c3a34dd93f318fd00d9e6f22081123e502a0578
+      '@mortgage/data-model':
+        specifier: workspace:*
+        version: link:../../packages/data-model
+      '@mortgage/solid-kit':
+        specifier: workspace:*
+        version: link:../../packages/solid-kit
       '@mortgage/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@rdfjs/types':
+        specifier: ^2.0.1
+        version: 2.0.1
+      '@solid/object':
+        specifier: ^0.6.0
+        version: 0.6.0
       clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
+      n3:
         specifier: ^2.1.1
         version: 2.1.1
       next:
@@ -74,6 +92,9 @@ importers:
       '@tailwindcss/postcss':
         specifier: ^4.3.2
         version: 4.3.2
+      '@types/n3':
+        specifier: ^1.26.1
+        version: 1.26.1
       '@types/node':
         specifier: ^25.9.2
         version: 25.9.5
@@ -461,6 +482,9 @@ importers:
       '@types/n3':
         specifier: ^1.26.1
         version: 1.26.1
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
 
   packages/solid-kit:
     dependencies:
@@ -489,6 +513,9 @@ importers:
       '@types/node':
         specifier: ^25.9.2
         version: 25.9.5
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
 
   packages/ui:
     dependencies:
@@ -563,6 +590,9 @@ importers:
       '@types/node':
         specifier: ^25.9.2
         version: 25.9.5
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
 
 packages:
 

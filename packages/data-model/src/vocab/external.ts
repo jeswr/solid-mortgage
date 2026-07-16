@@ -1,5 +1,5 @@
 /**
- * IRI constants for the real, dereferenceable external vocabularies the nine
+ * IRI constants for the real, dereferenceable external vocabularies the mortgage
  * mortgage resources use (SPEC section 5; decision 0010: no minted IRIs -
  * project residue terms live in ./mort.js, generated from vocab/mort.ttl).
  *
@@ -73,6 +73,25 @@ export const DCTERMS = {
   type: `${DCTERMS_NS}type`,
 } as const;
 
+const DPV_NS = "https://w3id.org/dpv#";
+
+/** DPV consent-receipt terms (decision 0006 app-level ledger). */
+export const DPV = {
+  ConsentGiven: `${DPV_NS}ConsentGiven`,
+  ConsentReceipt: `${DPV_NS}ConsentReceipt`,
+  ConsentWithdrawn: `${DPV_NS}ConsentWithdrawn`,
+  hasConsentStatus: `${DPV_NS}hasConsentStatus`,
+  hasDataController: `${DPV_NS}hasDataController`,
+  hasDataSubject: `${DPV_NS}hasDataSubject`,
+} as const;
+
+const ODRL_NS = "http://www.w3.org/ns/odrl/2/";
+
+/** ODRL relation used to identify the pod resource covered by a receipt. */
+export const ODRL = {
+  target: `${ODRL_NS}target`,
+} as const;
+
 const FIBO_NS = "https://spec.edmcouncil.org/fibo/ontology/";
 const FBC_DEBT = `${FIBO_NS}FBC/DebtAndEquities/Debt/`;
 const LOAN_APP = `${FIBO_NS}LOAN/LoansGeneral/LoanApplications/`;
@@ -140,6 +159,7 @@ export const FIBO = {
 export const TURTLE_PREFIXES: Readonly<Record<string, string>> = {
   cred: CRED_NS,
   dcterms: DCTERMS_NS,
+  dpv: DPV_NS,
   "fibo-fbc-dae-dbt": FBC_DEBT,
   "fibo-fnd-arr-asmt": FND_ASMT,
   "fibo-fnd-arr-rep": FND_REP,
@@ -150,6 +170,7 @@ export const TURTLE_PREFIXES: Readonly<Record<string, string>> = {
   "fibo-loan-reln-mtg": LOAN_MTG,
   "fibo-loan-reln-org": LOAN_ORIG,
   mort: "https://solid-mortgage-vocab.vercel.app/mort#",
+  odrl: ODRL_NS,
   schema: SCHEMA_NS,
   xsd: XSD_NS,
 };
