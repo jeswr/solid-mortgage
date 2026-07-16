@@ -128,6 +128,18 @@ describe("mortgage composite manifest (Tier B)", () => {
     const rootResult = verifyCompositeBindings(parseProofManifest(mintedRoot), options);
     expect(rootResult.bound).toBe(false);
     expect(rootResult.failures.join(" ")).toContain("status-list root");
+
+    // (e) a SHARED-PREDICATE join (slots 1/1) must not masquerade as the
+    // same-SUBJECT relation (roborev 5561 finding 1): the slot pair IS the
+    // proven relation and is pinned to 0/0 by default.
+    const predicateJoin = fixtureCopy();
+    const joinSlots = (predicateJoin.subProofs as { member: string; publicInputs: string[] }[])[0];
+    if (joinSlots === undefined) throw new Error("fixture shape changed");
+    joinSlots.publicInputs[4] = `0x${"0".repeat(63)}1`;
+    joinSlots.publicInputs[5] = `0x${"0".repeat(63)}1`;
+    const slotResult = verifyCompositeBindings(parseProofManifest(predicateJoin), options);
+    expect(slotResult.bound).toBe(false);
+    expect(slotResult.failures.join(" ")).toContain("join slot");
   });
 
   it(

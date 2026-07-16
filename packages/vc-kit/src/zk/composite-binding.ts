@@ -65,11 +65,22 @@ export interface CompositeBindingOptions {
   /** The verifier's authoritative trusted-issuer key-set root. */
   readonly issuerKeySetRoot: string;
   /**
-   * The challenge field the verifier expects (for a live presentation, its
-   * own derived nonce field; for a Tier B capture, the recorded capture
-   * challenge - decision 0012: precomputed manifests are NEVER fresh).
+   * The challenge field the verifier expects - REQUIRED (roborev 5561): an
+   * internally-derived reference would degrade the check to "the sub-proofs
+   * agree with each other", which any wholesale-replayed manifest satisfies.
+   * For a live presentation this is the verifier's own derived nonce field;
+   * for a Tier B capture, the recorded capture challenge (decision 0012:
+   * precomputed manifests are NEVER fresh - label accordingly).
    */
-  readonly challenge?: string;
+  readonly challenge: string;
+  /**
+   * The expected join slots. The slot pair IS the proven relation: 0/0 is
+   * "same SUBJECT"; anything else proves only "some shared value at these
+   * positions" (e.g. 1/1 matches on a shared predicate IRI, which almost any
+   * two credentials satisfy - roborev 5561 finding 1). Defaults to 0/0.
+   */
+  readonly slotA?: number;
+  readonly slotB?: number;
 }
 
 export interface CompositeBindingResult {
@@ -121,20 +132,33 @@ export function verifyCompositeBindings(
   const revoke = memberWithPrefix(manifest, "revoke_unset_", failures);
   const issuer = memberWithPrefix(manifest, "hidden_issuer_", failures);
 
-  // One shared challenge (public input 0 of every member), optionally pinned
-  // to the verifier-expected value.
-  const reference = options.challenge ?? join?.publicInputs[0];
-  if (reference === undefined) {
-    failures.push("no challenge available to bind against");
-  } else {
-    for (const sub of [join, revoke, issuer]) {
-      checkInput(sub, 0, reference, "shared challenge", failures);
-    }
+  // One shared challenge (public input 0 of every member), pinned to the
+  // VERIFIER-supplied value - never derived from the manifest itself.
+  for (const sub of [join, revoke, issuer]) {
+    checkInput(sub, 0, options.challenge, "shared challenge", failures);
   }
 
-  // join_eq public inputs: challenge, commit_a, commit_b, join_commitment, slots.
+  // join_eq public inputs: challenge, commit_a, commit_b, join_commitment,
+  // slot_a, slot_b.
   checkInput(join, 1, options.credentialA.commitment, "graph-A commitment", failures);
   checkInput(join, 2, options.credentialB.commitment, "graph-B commitment", failures);
+  // The slot pair is the relation being proved - pin it (default same-subject
+  // 0/0), or a shared-predicate join would masquerade as same-subject.
+  const slotA = options.slotA ?? 0;
+  const slotB = options.slotB ?? 0;
+  if (
+    !Number.isInteger(slotA) ||
+    slotA < 0 ||
+    slotA > 2 ||
+    !Number.isInteger(slotB) ||
+    slotB < 0 ||
+    slotB > 2
+  ) {
+    failures.push("expected join slots must be integers in {0,1,2} (s/p/o)");
+  } else {
+    checkInput(join, 4, `0x${slotA.toString(16)}`, "join slot_a", failures);
+    checkInput(join, 5, `0x${slotB.toString(16)}`, "join slot_b", failures);
+  }
 
   // revoke_unset public inputs: challenge, root, index_commitment.
   checkInput(revoke, 1, options.statusListRoot, "authoritative status-list root", failures);

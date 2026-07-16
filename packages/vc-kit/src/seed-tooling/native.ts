@@ -139,6 +139,13 @@ export interface SparqCompositeContext {
    * proof was built against - a prover cannot substitute an all-unset
    * snapshot of their own making. Signature verification is native tooling
    * (Poseidon2/Schnorr are not reimplemented in JS).
+   *
+   * TRUST MODEL (roborev 5560): `issuerPublicKey` here is INFORMATIVE - a
+   * document that carried both signature and key would otherwise
+   * self-authenticate. A verifier MUST resolve the list issuer's key from
+   * its own trust store (issuer registry / pinned key-set) and verify
+   * `rootSignature` against THAT key. In this demo the list issuer is the
+   * credential issuer (each issuer maintains its own revocation list).
    */
   readonly statusList: {
     readonly iri: string;

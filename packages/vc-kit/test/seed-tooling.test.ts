@@ -301,6 +301,23 @@ describe("SparqCredentialSeedPipeline.issue (seeder-design section 5.2 seam)", (
     expect(sent?.status.indexBlindingHex).toBe(fixtureIndexBlindingHex(DEMO_ZK_STATUS.employment));
   });
 
+  it("rejects an invalid Schnorr seed at CONSTRUCTION (roborev 5560)", async () => {
+    const { bridge, jobs } = stubBridge();
+    for (const bad of [-1, 1.5, Number.NaN]) {
+      expect(
+        () =>
+          new SparqCredentialSeedPipeline({
+            issuer: ISSUER,
+            key: undefined as unknown as Awaited<ReturnType<typeof issuerKey>>,
+            schnorrIssuerSeed: bad,
+            native: bridge,
+          }),
+      ).toThrow(SeedToolingError);
+    }
+    // Nothing was signed or sent to the native bridge.
+    expect(jobs).toHaveLength(0);
+  });
+
   it("rejects a half-configured call BEFORE issuing or signing anything", async () => {
     const { jobs, pipeline } = await rig();
     let statusCallbackHits = 0;

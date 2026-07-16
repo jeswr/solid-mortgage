@@ -469,6 +469,52 @@ fn build_hidden_issuer_relation(
     )
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sparq_zk::sig::verify;
+
+    /// The status-root attestation is a REAL signature a verifier can check
+    /// against a trust-store key - and it rejects every substitution
+    /// (roborev 5560 finding 2: no self-authentication; the key must come
+    /// from the verifier's own registry, not the manifest).
+    #[test]
+    fn status_root_signature_verifies_and_rejects_substitutions() {
+        let sk = SecretKey::from_seed(4101);
+        let other_sk = SecretKey::from_seed(4202);
+        let iri = "https://issuer.example/status/zk-employment";
+        let root = field("0x2a", "root");
+        let version = 1;
+
+        let list_id = status_list_id_to_field(iri);
+        let digest = accepted_status_leaf(&list_id, version, &root);
+        let signature = sign_deterministic(&sk, &digest);
+
+        // Genuine (key from the verifier's trust store) - verifies.
+        assert!(verify(&sk.public_key(), &digest, &signature));
+
+        // A DIFFERENT trusted key does not authenticate this signature - a
+        // prover shipping their own key alongside their own signature gains
+        // nothing once the verifier pins keys independently.
+        assert!(!verify(&other_sk.public_key(), &digest, &signature));
+
+        // Substituted root / version / list IRI all change the signed digest.
+        let wrong_root = accepted_status_leaf(&list_id, version, &field("0x2b", "root"));
+        assert!(!verify(&sk.public_key(), &wrong_root, &signature));
+        let wrong_version = accepted_status_leaf(&list_id, 2, &root);
+        assert!(!verify(&sk.public_key(), &wrong_version, &signature));
+        let wrong_list =
+            status_list_id_to_field("https://mallory.example/status/zk-employment");
+        let wrong_iri = accepted_status_leaf(&wrong_list, version, &root);
+        assert!(!verify(&sk.public_key(), &wrong_iri, &signature));
+
+        // And the hex round-trip used in the JSON output stays verifiable.
+        let rehydrated = signature_from_hex(&signature_to_hex(&signature))
+            .expect("signature hex round-trips");
+        assert!(verify(&sk.public_key(), &digest, &rehydrated));
+    }
+}
+
 fn main() {
     let mut raw = String::new();
     if std::io::stdin().read_to_string(&mut raw).is_err() {

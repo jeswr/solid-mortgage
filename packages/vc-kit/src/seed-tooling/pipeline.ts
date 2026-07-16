@@ -128,6 +128,14 @@ export class SparqCredentialSeedPipeline implements CredentialSeedPipeline {
   readonly #options: SparqCredentialSeedPipelineOptions;
 
   constructor(options: SparqCredentialSeedPipelineOptions) {
+    // Fail at CONSTRUCTION, not after a credential has been signed (roborev
+    // 5560): an invalid Schnorr seed must never produce partial side effects.
+    if (!Number.isInteger(options.schnorrIssuerSeed) || options.schnorrIssuerSeed < 0) {
+      throw new SeedToolingError(
+        "BAD_ISSUER_SEED",
+        "schnorrIssuerSeed must be a non-negative integer (deterministic DEMO key seed)",
+      );
+    }
     this.#options = options;
   }
 
