@@ -12,7 +12,7 @@
  * authorization request is auto-approved (there is no resource owner to ask), and the
  * whole thing serves loopback HTTP. Exported via `@mortgage/solid-kit/testing` only.
  */
-import { createHash, randomUUID } from "node:crypto";
+import { createHash, randomUUID, timingSafeEqual } from "node:crypto";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import type { PersistedSession, SessionStore } from "@jeswr/solid-auth-core";
 import {
@@ -120,6 +120,30 @@ export interface DevOidcIssuer {
 export interface StartDevOidcIssuerOptions {
   /** Access-token lifetime (seconds). Default 300. */
   tokenLifetimeSeconds?: number;
+  /**
+   * A pod base IRI to advertise as this identity's `pim:storage` in the served WebID
+   * profile — the forward claim of the decision-0015 bidirectional owner binding
+   * (verifier apps derive the authorized pod from the TOKEN WebID's profile, never from a
+   * request parameter). Omit for an identity with no storage claim (negative tests).
+   */
+  storage?: string;
+  /**
+   * Enable the `client_credentials` grant for ONE confidential client (a headless app
+   * SERVICE identity — decision 0015 L4). The token endpoint then mints DPoP-bound
+   * `at+jwt` tokens for this issuer's single WebID when the request authenticates with
+   * exactly these credentials (`client_secret_post` or `client_secret_basic`). Off by
+   * default: an issuer without a configured client refuses the grant.
+   */
+  clientCredentials?: { clientId: string; clientSecret: string };
+  /**
+   * Scheme of the minted WebID. Default `"https"` — API-caller identities, because
+   * `@jeswr/solid-api-auth` hard-requires https WebID claims and callers inject
+   * {@link DevOidcIssuer.profileFetch} as the TLS-terminator stand-in. Pass `"http"` for a
+   * SERVICE identity whose tokens a POD must verify: pod-side verifiers (e.g.
+   * `@solid/access-token-verifier` inside the sparq server) dereference the WebID with a
+   * plain fetch — no stand-in seam — so the WebID must resolve over real loopback HTTP.
+   */
+  webidScheme?: "https" | "http";
 }
 
 interface AuthorizationCodeRecord {
@@ -144,6 +168,13 @@ class TokenEndpointError extends Error {
   ) {
     super(message);
   }
+}
+
+/** Constant-time credential comparison (length-safe via digest normalisation). */
+function timingSafeEqualStrings(a: string, b: string): boolean {
+  const digestA = createHash("sha256").update(a, "utf8").digest();
+  const digestB = createHash("sha256").update(b, "utf8").digest();
+  return timingSafeEqual(digestA, digestB);
 }
 
 function sendJson(response: ServerResponse, status: number, body: unknown): void {
@@ -311,6 +342,38 @@ export async function startDevOidcIssuer(
       return;
     }
 
+    if (grantType === "client_credentials") {
+      const configured = options.clientCredentials;
+      if (configured === undefined) {
+        throw new TokenEndpointError(
+          "unauthorized_client",
+          "client_credentials is not enabled on this issuer",
+        );
+      }
+      // client_secret_basic takes precedence over client_secret_post (RFC 6749 §2.3.1).
+      let presentedId = form.get("client_id") ?? "";
+      let presentedSecret = form.get("client_secret") ?? "";
+      const basic = request.headers.authorization;
+      if (typeof basic === "string" && /^Basic /i.test(basic)) {
+        const decoded = Buffer.from(basic.slice(6), "base64").toString("utf8");
+        const separator = decoded.indexOf(":");
+        presentedId = decodeURIComponent(separator === -1 ? decoded : decoded.slice(0, separator));
+        presentedSecret = separator === -1 ? "" : decodeURIComponent(decoded.slice(separator + 1));
+      }
+      const idOk = timingSafeEqualStrings(presentedId, configured.clientId);
+      const secretOk = timingSafeEqualStrings(presentedSecret, configured.clientSecret);
+      if (!idOk || !secretOk) {
+        throw new TokenEndpointError("invalid_client", "client authentication failed");
+      }
+      sendJson(response, 200, {
+        access_token: await mintAccessToken(jkt),
+        token_type: "DPoP",
+        expires_in: tokenLifetimeSeconds,
+        scope: "webid",
+      });
+      return;
+    }
+
     if (grantType === "refresh_token") {
       const presented = form.get("refresh_token") ?? "";
       const record = refreshTokens.get(presented);
@@ -349,10 +412,18 @@ export async function startDevOidcIssuer(
         authorization_endpoint: `${issuer}/authorize`,
         token_endpoint: `${issuer}/token`,
         response_types_supported: ["code"],
-        grant_types_supported: ["authorization_code", "refresh_token"],
+        grant_types_supported: [
+          "authorization_code",
+          "refresh_token",
+          ...(options.clientCredentials === undefined ? [] : ["client_credentials"]),
+        ],
         code_challenge_methods_supported: ["S256"],
         scopes_supported: ["openid", "webid", "offline_access"],
-        token_endpoint_auth_methods_supported: ["none"],
+        token_endpoint_auth_methods_supported: [
+          "none",
+          "client_secret_post",
+          "client_secret_basic",
+        ],
         dpop_signing_alg_values_supported: ["ES256"],
         // oauth4webapi defaults to expecting RS256 ID tokens without this.
         id_token_signing_alg_values_supported: ["ES256"],
@@ -365,7 +436,13 @@ export async function startDevOidcIssuer(
     }
     if (request.method === "GET" && url.pathname === "/profile") {
       response.setHeader("content-type", "text/turtle");
-      response.end(`<${webid}> <http://www.w3.org/ns/solid/terms#oidcIssuer> <${issuer}> .\n`);
+      const storageTriple =
+        options.storage === undefined
+          ? ""
+          : `<${webid}> <http://www.w3.org/ns/pim/space#storage> <${options.storage}> .\n`;
+      response.end(
+        `<${webid}> <http://www.w3.org/ns/solid/terms#oidcIssuer> <${issuer}> .\n${storageTriple}`,
+      );
       return;
     }
     if (request.method === "GET" && url.pathname === "/authorize") {
@@ -396,7 +473,7 @@ export async function startDevOidcIssuer(
   }
   issuer = `http://localhost:${address.port}`;
   const httpsOrigin = `https://localhost:${address.port}`;
-  webid = `${httpsOrigin}/profile#me`;
+  webid = `${options.webidScheme === "http" ? issuer : httpsOrigin}/profile#me`;
 
   const profileFetch: typeof fetch = (input, init) => {
     const url = input instanceof Request ? input.url : String(input);

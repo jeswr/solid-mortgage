@@ -28,6 +28,7 @@
     "shacl-engine": "^1.1.2"
   },
   "devDependencies": {
-    "@types/n3": "^1.26.1"
+    "@types/n3": "^1.26.1",
+    "typescript": "^6.0.3"
   }
 }

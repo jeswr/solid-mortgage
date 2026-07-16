@@ -8,6 +8,7 @@ import { DemoLockedField } from "../src/demo-locked-field.js";
 import { bannerFullText, DEMO_FIELD_HINT, footerLegalLine } from "../src/disclaimers.js";
 import { HonestyPanel } from "../src/honesty-panel.js";
 import { IllustrativeFigure } from "../src/illustrative-figure.js";
+import { ReceiptCard } from "../src/receipt-card.js";
 import { StatCard } from "../src/stat-card.js";
 import { orgThemes } from "../src/themes.js";
 
@@ -121,4 +122,24 @@ test("HonestyPanel is a native disclosure with injected real/simulated content",
   cleanup();
   const { container: openContainer } = render(<HonestyPanel defaultOpen real="r" simulated="s" />);
   expect(openContainer.querySelector<HTMLDetailsElement>("details")?.open).toBe(true);
+});
+
+test("ReceiptCard renders the app-level who, what, and when trail", () => {
+  const { container } = render(
+    <ReceiptCard
+      action="revoke"
+      actor="https://pod.example/profile/card#me"
+      issuedAt="2026-07-16T14:30:00.000Z"
+      recipient="https://lender.example/profile/card#service"
+      resource="https://pod.example/mortgage/closing-record"
+    />,
+  );
+  expect(screen.getByRole("heading", { name: "Access revoked", level: 3 })).toBeDefined();
+  expect(screen.getByText("https://pod.example/profile/card#me")).toBeDefined();
+  expect(screen.getByText("https://lender.example/profile/card#service")).toBeDefined();
+  expect(screen.getByText("https://pod.example/mortgage/closing-record")).toBeDefined();
+  expect(container.querySelector("time")?.getAttribute("datetime")).toBe(
+    "2026-07-16T14:30:00.000Z",
+  );
+  expect(screen.getByText(/written by this application/)).toBeDefined();
 });

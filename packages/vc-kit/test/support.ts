@@ -7,30 +7,37 @@
 import { generateKeyPairForSuite, type KeyPair } from "@jeswr/solid-vc";
 import type { DatasetCore } from "@rdfjs/types";
 import { Parser, Store } from "n3";
-import type {
-  AppraisalClaims,
-  AssetClaims,
-  CreditScoreClaims,
-  EmploymentIncomeClaims,
-  TitleClearClaims,
-  ZkOperandAnchorClaims,
-} from "../src/index.js";
+import type { AppraisalClaims, TitleClearClaims, ZkOperandAnchorClaims } from "../src/index.js";
 import { issueCredential, StatusListClient } from "../src/index.js";
+// The canonical demo-persona values live in src/seed-tooling/demo.ts so the
+// capture script and this rig can never drift (sm-26).
+import {
+  DAY_MS,
+  DEMO_BACKDATED_VALIDITY,
+  DEMO_INCOME_CREDENTIAL_ID,
+  DEMO_ISSUER,
+  DEMO_NOW,
+  DEMO_STATUS_LIST_URL,
+  DEMO_SUBJECT,
+  demoEmploymentClaims,
+} from "../src/seed-tooling/demo.js";
 
-export const DAY_MS = 24 * 60 * 60 * 1000;
+export {
+  demoAssetClaims as assetClaims,
+  demoCreditScoreClaims as creditScoreClaims,
+  demoEmploymentClaims as employmentClaims,
+} from "../src/seed-tooling/demo.js";
+export { DAY_MS };
 /** The suite's "wall clock" - explicit everywhere. */
-export const NOW = new Date("2026-07-15T12:00:00Z");
+export const NOW = DEMO_NOW;
 /** Scene-4 backdated window (decision 0012): -30d .. +14d around NOW. */
-export const BACKDATED_VALIDITY = {
-  validFrom: new Date(NOW.getTime() - 30 * DAY_MS),
-  validUntil: new Date(NOW.getTime() + 14 * DAY_MS),
-};
+export const BACKDATED_VALIDITY = DEMO_BACKDATED_VALIDITY;
 
-export const ISSUER = "https://issuer.example/org";
+export const ISSUER = DEMO_ISSUER;
 export const KEY_ID = `${ISSUER}#key-1`;
-export const SUBJECT = "https://alex.example/profile/card#me";
-export const LIST_URL = "https://issuer.example/status/employment";
-export const CREDENTIAL_ID = "https://alex.example/credentials/income";
+export const SUBJECT = DEMO_SUBJECT;
+export const LIST_URL = DEMO_STATUS_LIST_URL;
+export const CREDENTIAL_ID = DEMO_INCOME_CREDENTIAL_ID;
 
 let cachedKey: Promise<KeyPair> | undefined;
 /** One deterministic-enough Ed25519 issuer key per suite run. */
@@ -102,41 +109,6 @@ export async function hostedStatusList(
   return client;
 }
 
-export function employmentClaims(
-  overrides: Partial<EmploymentIncomeClaims> = {},
-): EmploymentIncomeClaims {
-  return {
-    kind: "employment-income-credential",
-    employer: { name: "Ridgeline Analytics LLC" },
-    jobTitle: "Senior Data Engineer",
-    startDate: "2021-03-01",
-    monthlyGrossIncomeUsd: 8500,
-    ...overrides,
-  };
-}
-
-export function assetClaims(): AssetClaims {
-  return {
-    kind: "asset-credential",
-    accounts: [
-      {
-        provider: { name: "First Example Bank" },
-        amountUsd: 64_000,
-        accountLast4: "4821",
-      },
-    ],
-  };
-}
-
-export function creditScoreClaims(overrides: Partial<CreditScoreClaims> = {}): CreditScoreClaims {
-  return {
-    kind: "credit-score-credential",
-    creditScoreValue: 742,
-    totalMonthlyDebtUsd: 1180,
-    ...overrides,
-  };
-}
-
 export function appraisalClaims(): AppraisalClaims {
   return {
     kind: "appraisal-credential",
@@ -188,7 +160,7 @@ export async function issueEmployment(list: StatusListClient, index = 42) {
     credentialId: CREDENTIAL_ID,
     issuer: ISSUER,
     subject: SUBJECT,
-    claims: employmentClaims(),
+    claims: demoEmploymentClaims(),
     validity: BACKDATED_VALIDITY,
     status: list.entry(index),
     key: await issuerKey(),

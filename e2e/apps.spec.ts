@@ -1,5 +1,3 @@
-import { type ChildProcess, spawn } from "node:child_process";
-import { createServer } from "node:net";
 import { expect, type Page, test } from "@playwright/test";
 import {
   bannerFullText,
@@ -9,6 +7,7 @@ import {
   INTERSTITIAL_HEADING,
   interstitialParagraphs,
 } from "../packages/ui/src/disclaimers";
+import { AppRunner } from "./support/app-runner";
 
 interface AppDefinition {
   appName: string;
@@ -19,11 +18,16 @@ interface AppDefinition {
   variant?: DisclaimerVariant;
   hasInterstitial?: boolean;
   zoneEnv?: string;
+  /** The landing page's h1 when it differs from {@link appName}. */
+  heading?: string;
+  /** Interstitial copy's organization when it differs from the banner's. */
+  interstitialOrganization?: string;
 }
 
 const apps: AppDefinition[] = [
   {
     appName: "Solid Mortgage Tour",
+    hasInterstitial: true,
     organization: "EDMA Solid Community of Practice",
     packageName: "@mortgage/app-tour",
     path: "/",
@@ -50,6 +54,7 @@ const apps: AppDefinition[] = [
     organization: "Bank of America",
     packageName: "@mortgage/app-lender-boa",
     path: "/lender-boa",
+    role: "primary mortgage lender",
     zoneEnv: "MORTGAGE_PRIMARY_LENDER_ZONE_URL",
   },
   {
@@ -75,91 +80,36 @@ const apps: AppDefinition[] = [
   },
   {
     appName: "Digital Closing and Servicing",
-    organization: "Wolters Kluwer (eOriginal) and Truist",
+    // The scene page leads with its headline; the shell banner is the eClose
+    // brand and the servicer section carries its own banner (sm-34).
+    hasInterstitial: true,
+    heading: "Sign once. See every consent change.",
+    interstitialOrganization: "Wolters Kluwer (eOriginal) or Truist",
+    organization: "Wolters Kluwer (eOriginal)",
     packageName: "@mortgage/app-closing",
     path: "/closing",
+    role: "digital closing platform",
     zoneEnv: "MORTGAGE_CLOSING_ZONE_URL",
   },
 ];
 
-const childProcesses: ChildProcess[] = [];
-const logsByPackage = new Map<string, string[]>();
+const runner = new AppRunner();
 let shellOrigin = "";
 
-async function reservePort() {
-  const server = createServer();
-  await new Promise<void>((resolve, reject) => {
-    server.once("error", reject);
-    server.listen(0, "127.0.0.1", resolve);
-  });
-  const address = server.address();
-  if (address === null || typeof address === "string") {
-    server.close();
-    throw new Error("Could not allocate a dynamic app port");
-  }
-  const { port } = address;
-  await new Promise<void>((resolve, reject) => {
-    server.close((error) => (error ? reject(error) : resolve()));
-  });
-  return port;
-}
-
-async function waitUntilReady(url: string, child: ChildProcess, logs: string[]) {
-  await expect
-    .poll(
-      async () => {
-        if (child.exitCode !== null) {
-          throw new Error(`App server exited early (${child.exitCode})\n${logs.join("")}`);
-        }
-        try {
-          const response = await fetch(url, { redirect: "manual" });
-          return response.status;
-        } catch {
-          return 0;
-        }
-      },
-      { message: `Wait for ${url}`, timeout: 60_000 },
-    )
-    .toBe(200);
-}
-
 async function startApp(app: AppDefinition, env: NodeJS.ProcessEnv = {}) {
-  const port = await reservePort();
-  const origin = `http://127.0.0.1:${port}`;
-  const logs: string[] = [];
-  logsByPackage.set(app.packageName, logs);
-  const pnpm = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
-  const command = app.zoneEnv === undefined ? "dev" : "start";
-  const child = spawn(
-    pnpm,
-    ["--filter", app.packageName, command, "--hostname", "127.0.0.1", "--port", String(port)],
-    {
-      cwd: process.cwd(),
-      detached: process.platform !== "win32",
-      env: { ...process.env, ...env },
-      stdio: ["ignore", "pipe", "pipe"],
-    },
-  );
-  child.stdout?.on("data", (chunk: Buffer) => logs.push(chunk.toString()));
-  child.stderr?.on("data", (chunk: Buffer) => logs.push(chunk.toString()));
-  childProcesses.push(child);
-  await waitUntilReady(`${origin}${app.path}`, child, logs);
-  return origin;
-}
-
-async function stopApps() {
-  for (const child of childProcesses.reverse()) {
-    if (child.exitCode !== null || child.pid === undefined) continue;
-    try {
-      process.kill(process.platform === "win32" ? child.pid : -child.pid, "SIGTERM");
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== "ESRCH") throw error;
-    }
-  }
+  return runner.start({
+    // `dev` for the shell so next.config reads zone envs at start time; `start` for zones.
+    command: app.zoneEnv === undefined ? "dev" : "start",
+    env,
+    packageName: app.packageName,
+    readyPath: app.path,
+  });
 }
 
 async function expectBannerVisible(page: Page, app: AppDefinition) {
-  const banner = page.locator("[data-concept-demo-banner]");
+  // `.first()`: pages may carry additional per-section banners (e.g. the
+  // closing app's servicer section); the shell banner always renders first.
+  const banner = page.locator("[data-concept-demo-banner]").first();
   await expect(banner).toBeVisible();
   await expect(banner).toContainText(
     bannerFullText({ organization: app.organization, role: app.role, variant: app.variant }),
@@ -167,11 +117,15 @@ async function expectBannerVisible(page: Page, app: AppDefinition) {
   await expect(banner.getByRole("link", { name: "About this demo" })).toBeVisible();
 }
 
-async function acknowledgeInterstitial(page: Page, organization: string) {
+async function acknowledgeInterstitial(
+  page: Page,
+  organization: string,
+  variant: DisclaimerVariant = "modelled",
+) {
   const dialog = page.getByRole("dialog", { name: INTERSTITIAL_HEADING });
   await expect(dialog).toBeVisible();
-  // Source-negation paragraph (regn-optics §4.2) must be present verbatim.
-  await expect(dialog).toContainText(copyText(interstitialParagraphs(organization)[1]));
+  // Negation paragraph (regn-optics §4.2; own variant per sm-90e) must be present verbatim.
+  await expect(dialog).toContainText(copyText(interstitialParagraphs(organization, variant)[1]));
   await dialog.getByRole("button", { name: INTERSTITIAL_CONTINUE_LABEL }).click();
   await expect(dialog).toBeHidden();
 }
@@ -189,15 +143,23 @@ test.describe("app concept-demo banners", () => {
     shellOrigin = await startApp(apps[0], shellEnv);
   });
 
-  test.afterAll(stopApps);
+  test.afterAll(() => runner.stopAll());
 
   for (const app of apps) {
     test(`${app.packageName} renders its required banner @smoke`, async ({ page }) => {
       const response = await page.goto(`${shellOrigin}${app.path}`);
-      expect(response?.status(), logsByPackage.get("@mortgage/app-tour")?.join("")).toBe(200);
-      await expect(page.getByRole("heading", { level: 1, name: app.appName })).toBeVisible();
+      expect(response?.status(), runner.logsByPackage.get("@mortgage/app-tour")?.join("")).toBe(
+        200,
+      );
+      await expect(
+        page.getByRole("heading", { level: 1, name: app.heading ?? app.appName }),
+      ).toBeVisible();
       if (app.hasInterstitial === true) {
-        await acknowledgeInterstitial(page, app.organization);
+        await acknowledgeInterstitial(
+          page,
+          app.interstitialOrganization ?? app.organization,
+          app.variant,
+        );
         // Consent is cookie-persisted: the interstitial must not reappear on reload.
         await page.reload();
         await expect(page.getByRole("dialog", { name: INTERSTITIAL_HEADING })).toBeHidden();
@@ -209,6 +171,8 @@ test.describe("app concept-demo banners", () => {
   test("@mortgage/app-tour renders the banner on unknown routes (404) @smoke", async ({ page }) => {
     const response = await page.goto(`${shellOrigin}/route-that-does-not-exist`);
     expect(response?.status()).toBe(404);
+    // Fresh browser context: the own-variant interstitial shows on the error route too.
+    await acknowledgeInterstitial(page, apps[0].organization, apps[0].variant);
     await expect(page.getByRole("heading", { level: 1, name: "Page not found" })).toBeVisible();
     await expectBannerVisible(page, apps[0]);
   });

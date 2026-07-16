@@ -1,0 +1,15 @@
+/** Client-safe display formatting (no data-model imports here). */
+
+const usd = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  maximumFractionDigits: 0,
+});
+
+export function formatUsd(value: number): string {
+  return usd.format(value);
+}
+
+export function formatPercent(value: number): string {
+  return `${value}%`;
+}

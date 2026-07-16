@@ -1,0 +1,86 @@
+{
+  "provenance": {
+    "see": "PROVENANCE.json",
+    "sparqCommit": "947480b02fcbd174f80f9247b55ee02202d2e345",
+    "capturedAt": "2026-07-16"
+  },
+  "noir_version": "1.0.0-beta.21+89a0f0faf3a5f1273c8ac4843b7877882437e277",
+  "hash": "9468692530181639281",
+  "abi": {
+    "parameters": [
+      {
+        "name": "challenge",
+        "type": {
+          "kind": "field"
+        },
+        "visibility": "public"
+      },
+      {
+        "name": "root",
+        "type": {
+          "kind": "field"
+        },
+        "visibility": "public"
+      },
+      {
+        "name": "index_commitment",
+        "type": {
+          "kind": "field"
+        },
+        "visibility": "public"
+      },
+      {
+        "name": "index",
+        "type": {
+          "kind": "field"
+        },
+        "visibility": "private"
+      },
+      {
+        "name": "bit",
+        "type": {
+          "kind": "field"
+        },
+        "visibility": "private"
+      },
+      {
+        "name": "blinding",
+        "type": {
+          "kind": "field"
+        },
+        "visibility": "private"
+      },
+      {
+        "name": "siblings",
+        "type": {
+          "kind": "array",
+          "length": 10,
+          "type": {
+            "kind": "field"
+          }
+        },
+        "visibility": "private"
+      }
+    ],
+    "return_type": null,
+    "error_types": {
+      "8856744074012982588": {
+        "error_kind": "string",
+        "string": "index commitment does not bind the proven-unset index"
+      },
+      "9179197609339925693": {
+        "error_kind": "string",
+        "string": "credential is revoked: status bit is set"
+      },
+      "10244601560069299579": {
+        "error_kind": "string",
+        "string": "Field failed to decompose into specified 10 limbs"
+      },
+      "11013352419280348563": {
+        "error_kind": "string",
+        "string": "merkle inclusion does not recompute the committed root"
+      }
+    }
+  },
+  "bytecode": "H4sIAAAAAAAA/7WZy28bVRjF7Th13g+/7T5CSQMkobRpXkAbaG3n5TZxQpySNFBFE88kmdaZMWM7qmGB5h9A8dioiAoJKUlBbZEQQggWLJDYW2LTTVlkgQQrYMGCRQnuI7dpPO6c2/pm9Wl87jlz7vebVSxa5urGCidKpjumQfWGP5EQlOScoMjZtYz282HTk//MlYYSk3ozoIixmLgU5GKxnCmrXo+I0lJMwAIsQAAxXDMU19KIKzLqpl9RuPSnzTa7w+lye7w+5JxZ/ToQ46KXA/KV4ZQUvddb3Zzyh0eGNPWLGTEpCYlEMyKyISI7InIgIiciciEiNyLyICIvIvKZHyf3GgJWQdPFh5WtE593fD859J2qzl5s7/l9NP1DPBPc+if7V0HUbKD5c3t722asuWs31vzrMNb87TTWbLmMNT+5jTWqx1hj9hpq/jP7gA949/IyWePdWZszwPb2P0Wykae1WQPYsgJvd4Dy7daQygdZmB4qaVpBTIu/0W8n5YQg8rLUPSkoK6kklxRlScuRb3Y/mQ6Q6SCZDuVanjv8PDUYVTak0AIDMGwtSHKUdj85gLYWILgV8FkANEwKVAEFjiB7LdMG6GFuJdMRXZjbXnjxJWqYq+0IUjwDmO1tSLLAgoU2ILgd8OEBDZMC1UCBDmSvZdoAPcztZOrQhbnz5aOvUMNc40CQWmQAs6MTSV5iwUInEHwM8FkENEwK1AAFjiN7LdMG6GE+RqbjujB3nejuoYa51okgtcwAZmcXkiyyYKELCO4FfJYBDZMCtUCBPmSvZdoAPcy9ZOrThbn/1ddep4a5zoUgdYkBzK5+JPkyCxb6geCTgM8lQMOkQB1Q4BSy1zJtgB7mk2Q6pQvzwBtvnqaGud6NIBVjALN7AEleYcHCABB8BvCJARomBeqBAn5kr2XaAD3MZ8jk14U5EBwcooa5wYMgJTGA2RNAkmUWLASA4GHARwI0TAo0AAVGkL2WaQP0MA+TaUQX5tHQ2XPUMDd6EaTiDGD2jiLJ77FgYRQIHgN84oCGSYFGoMA4stcybYAe5jEyjevCHJ6YfIsa5iYfgpTCAGZfGElOsGAhDARPAT4KoGFSoAkoEEH2WqYN0MM8RaaILszT59+eefxeNOBdzcDdTbP4z9JsadO5c5HQyHwoSG96oaSp5RlufpZMFjLtI9OF3Nw7716kv/kK4ObnjG/+M0vlPmtVdU1tXX1DY1PWZK4ofA/qhj8qKiYt/2G06eq1X3p/XHv4qF7Lf3S09XbfzK8f7Dw6reU/uR26leF/y+48Cmr59/9I5yX33YHCtX/Di4oQTYqrwnxSnlc4Xrxyx2RTN4OylEhm1euD938uXEhISgpLgrJ+vqcbIGbPeSvdefPe81V05y3qrXu757kkF5TjaWJjeuRHim0EuV1B5kfD7sS971ND9z616s2AKHFKunBoIv4xeYt1P8/ftye2JP2rBweGRSHGT8RzOz9YbjzMHRRXi1pVlDpVuT6eihELQB5JLRS5V6qbkaSsCFrR21bq16spWc+qro/Lq1pRhEXfqPrLscKnOL3MSbpuhWWeTa3EQ4vEsLrqmRe2UegazxR3Nf8P2ZH10VglAAA="
+}

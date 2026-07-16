@@ -37,7 +37,11 @@
     "gate": "pnpm run lint && pnpm run check:vocab && pnpm run check:shapes && pnpm run check:insignia && pnpm run build && pnpm run typecheck && pnpm run test"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
     "@biomejs/biome": "^2.5.1",
+    "@mortgage/data-model": "workspace:*",
+    "@mortgage/solid-kit": "workspace:*",
+    "@mortgage/vc-kit": "workspace:*",
     "@playwright/test": "^1.59.1",
     "@types/node": "^25.9.2",
     "jsdom": "^29.1.1",

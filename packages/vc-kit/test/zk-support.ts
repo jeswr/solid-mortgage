@@ -7,6 +7,8 @@
  * ~1-2 s, witness ~70 ms, prove ~2 s, verify ~180 ms.
  */
 
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { MORT } from "@mortgage/data-model";
 import {
   type IssuedCredential,
@@ -27,25 +29,22 @@ import {
 } from "./support.js";
 
 /**
- * PROVENANCE: genuine sparq term encodings of `"<value>"^^xsd:integer`,
- * captured from `sparq_zk_compose::build::encode_int_literal` at sparq
- * checkout commit 947480b02fcbd174f80f9247b55ee02202d2e345 (see
- * fixtures/README.md). In production the ISSUER computes these at issuance
- * and signs them into the operand-anchor VC; the encoding is deterministic
- * and salt-free, so an ADVERSARY can equally compute one for any value they
- * like - which is the decision-0012 forgeability scenario the verifier's
- * anchor-equality gate exists to stop.
+ * PROVENANCE: genuine sparq term encodings of `"<value>"^^xsd:integer` from
+ * `sparq_zk_compose::build::encode_int_literal`, captured programmatically by
+ * `scripts/capture-fixtures.mjs` into `fixtures/operand-enc.json` (sm-26; see
+ * fixtures/PROVENANCE.json for the checkout commit + toolchain). In
+ * production the ISSUER computes these at issuance and signs them into the
+ * operand-anchor VC; the encoding is deterministic and salt-free, so an
+ * ADVERSARY can equally compute one for any value they like - which is the
+ * decision-0012 forgeability scenario the verifier's anchor-equality gate
+ * exists to stop.
  */
-export const OPERAND_ENC: Readonly<Record<number, string>> = {
-  8500: "0x205f3625597a2bc55792ed23304c85f878e5caa3d3d1decdd94fb477ef6ff6bc",
-  7000: "0x205e4dd0c2526b48ae2a94bfcdbbe30e19de4e8b85ce29ec0e7b35cba051b053",
-  6500: "0x0512ecf0649dbd68336fbbf4edb3f9d70b40a7bbf41da0667487bd10205c48ae",
-  9999: "0x0ad5c5f2163a0400c5cd2a1a80fb43229689797c2b53ac9f93c6af28930e3c91",
-  742: "0x23b9c0f1ac8b90f9b1fd5d567d6994644332ac788d4254d76cc9ca025c7543f1",
-  700: "0x05263ee44f48dfe07f3d25739db12b4cd1a9ef2386779bb11db1aab10b43e345",
-  620: "0x09b16305ec3bec27eafb59084b1d9467a9ed4e410350afa4cd19958892bab4db",
-  619: "0x2e9210f8e3a6de858e7adc2884f8d0fc9a8c5984388fd6bbf25115096ff351e2",
-};
+const OPERAND_ENC_FIXTURE = JSON.parse(
+  readFileSync(join(import.meta.dirname, "fixtures", "operand-enc.json"), "utf8"),
+) as { encodings: Record<string, string> };
+export const OPERAND_ENC: Readonly<Record<number, string>> = Object.fromEntries(
+  Object.entries(OPERAND_ENC_FIXTURE.encodings).map(([value, enc]) => [Number(value), enc]),
+);
 
 export function encOf(value: number): string {
   const enc = OPERAND_ENC[value];

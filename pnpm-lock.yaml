@@ -13,9 +13,21 @@ importers:
 
   .:
     devDependencies:
+      '@axe-core/playwright':
+        specifier: ^4.12.1
+        version: 4.12.1(playwright-core@1.59.1)
       '@biomejs/biome':
         specifier: ^2.5.1
         version: 2.5.4
+      '@mortgage/data-model':
+        specifier: workspace:*
+        version: link:packages/data-model
+      '@mortgage/solid-kit':
+        specifier: workspace:*
+        version: link:packages/solid-kit
+      '@mortgage/vc-kit':
+        specifier: workspace:*
+        version: link:packages/vc-kit
       '@playwright/test':
         specifier: ^1.59.1
         version: 1.59.1
@@ -40,10 +52,28 @@ importers:
 
   apps/closing:
     dependencies:
+      '@jeswr/rdf-serialize':
+        specifier: github:jeswr/rdf-serialize#9c3a34dd93f318fd00d9e6f22081123e502a0578
+        version: https://codeload.github.com/jeswr/rdf-serialize/tar.gz/9c3a34dd93f318fd00d9e6f22081123e502a0578
+      '@mortgage/data-model':
+        specifier: workspace:*
+        version: link:../../packages/data-model
+      '@mortgage/solid-kit':
+        specifier: workspace:*
+        version: link:../../packages/solid-kit
       '@mortgage/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@rdfjs/types':
+        specifier: ^2.0.1
+        version: 2.0.1
+      '@solid/object':
+        specifier: ^0.6.0
+        version: 0.6.0
       clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
+      n3:
         specifier: ^2.1.1
         version: 2.1.1
       next:
@@ -62,6 +92,9 @@ importers:
       '@tailwindcss/postcss':
         specifier: ^4.3.2
         version: 4.3.2
+      '@types/n3':
+        specifier: ^1.26.1
+        version: 1.26.1
       '@types/node':
         specifier: ^25.9.2
         version: 25.9.5
@@ -160,10 +193,31 @@ importers:
 
   apps/lender-boa:
     dependencies:
+      '@jeswr/fetch-rdf':
+        specifier: ^0.1.0
+        version: 0.1.0
+      '@jeswr/guarded-fetch':
+        specifier: github:jeswr/guarded-fetch#81926b4481310ff74a5c02c3c4eaa2a51ce2dee6
+        version: https://codeload.github.com/jeswr/guarded-fetch/tar.gz/81926b4481310ff74a5c02c3c4eaa2a51ce2dee6
+      '@mortgage/data-model':
+        specifier: workspace:*
+        version: link:../../packages/data-model
+      '@mortgage/solid-kit':
+        specifier: workspace:*
+        version: link:../../packages/solid-kit
       '@mortgage/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@mortgage/vc-kit':
+        specifier: workspace:*
+        version: link:../../packages/vc-kit
+      '@solid/object':
+        specifier: ^0.6.0
+        version: 0.6.0
       clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
+      n3:
         specifier: ^2.1.1
         version: 2.1.1
       next:
@@ -179,9 +233,15 @@ importers:
         specifier: ^3.6.0
         version: 3.6.0
     devDependencies:
+      '@rdfjs/types':
+        specifier: ^2.0.1
+        version: 2.0.1
       '@tailwindcss/postcss':
         specifier: ^4.3.2
         version: 4.3.2
+      '@types/n3':
+        specifier: ^1.26.1
+        version: 1.26.1
       '@types/node':
         specifier: ^25.9.2
         version: 25.9.5
@@ -200,10 +260,31 @@ importers:
 
   apps/property:
     dependencies:
+      '@jeswr/fetch-rdf':
+        specifier: ^0.1.0
+        version: 0.1.0
+      '@jeswr/guarded-fetch':
+        specifier: github:jeswr/guarded-fetch#81926b4481310ff74a5c02c3c4eaa2a51ce2dee6
+        version: https://codeload.github.com/jeswr/guarded-fetch/tar.gz/81926b4481310ff74a5c02c3c4eaa2a51ce2dee6
+      '@mortgage/data-model':
+        specifier: workspace:*
+        version: link:../../packages/data-model
+      '@mortgage/solid-kit':
+        specifier: workspace:*
+        version: link:../../packages/solid-kit
       '@mortgage/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@mortgage/vc-kit':
+        specifier: workspace:*
+        version: link:../../packages/vc-kit
+      '@solid/object':
+        specifier: ^0.6.0
+        version: 0.6.0
       clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
+      n3:
         specifier: ^2.1.1
         version: 2.1.1
       next:
@@ -219,9 +300,15 @@ importers:
         specifier: ^3.6.0
         version: 3.6.0
     devDependencies:
+      '@rdfjs/types':
+        specifier: ^2.0.1
+        version: 2.0.1
       '@tailwindcss/postcss':
         specifier: ^4.3.2
         version: 4.3.2
+      '@types/n3':
+        specifier: ^1.26.1
+        version: 1.26.1
       '@types/node':
         specifier: ^25.9.2
         version: 25.9.5
@@ -262,6 +349,12 @@ importers:
       '@tailwindcss/postcss':
         specifier: ^4.3.2
         version: 4.3.2
+      '@testing-library/dom':
+        specifier: ^10.4.1
+        version: 10.4.1
+      '@testing-library/react':
+        specifier: ^16.3.0
+        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@types/node':
         specifier: ^25.9.2
         version: 25.9.5
@@ -416,6 +509,9 @@ importers:
       '@types/n3':
         specifier: ^1.26.1
         version: 1.26.1
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
 
   packages/solid-kit:
     dependencies:
@@ -447,6 +543,9 @@ importers:
       '@types/node':
         specifier: ^25.9.2
         version: 25.9.5
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
 
   packages/ui:
     dependencies:
@@ -508,6 +607,9 @@ importers:
       n3:
         specifier: ^2.1.1
         version: 2.1.1
+      smol-toml:
+        specifier: ^1.7.0
+        version: 1.7.0
     devDependencies:
       '@mortgage/solid-kit':
         specifier: workspace:*
@@ -518,6 +620,9 @@ importers:
       '@types/node':
         specifier: ^25.9.2
         version: 25.9.5
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
 
 packages:
 
@@ -539,6 +644,11 @@ packages:
 
   '@asamuzakjp/nwsapi@2.3.9':
     resolution: {integrity: sha512-n8GuYSrI9bF7FFZ/SjhwevlHc8xaVlb/7HmHelnc/PZXBD2ZR49NnN9sMMuDdEGPeeRQ5d0hqlSlEpgCX3Wl0Q==}
+
+  '@axe-core/playwright@4.12.1':
+    resolution: {integrity: sha512-rMd7xriptqKpP+w5265i4Hdkv2X5kbu6uiBi/B2I7uf3hieRBM3qDCfaKPtxfiYb2mKXfF+yLODJwIx+Jv1GDw==}
+    peerDependencies:
+      playwright-core: '>= 1.0.0'
 
   '@aztec/bb.js@5.0.0-nightly.20260324':
     resolution: {integrity: sha512-d7QJwqDW8DBBJZ1PF8zfHJEz/jL1MrPbxQ3qMjfNeCBrYjYYqseTHnjD4+omuHbKgNtwhbqWBVedHZfLwTmvlQ==}
@@ -2547,6 +2657,10 @@ packages:
   asyncjoin@1.2.4:
     resolution: {integrity: sha512-7/1g5uV2/iTDQteJ/pxqZq6qkO5406V+vNyOCYtHJ+mo6bmvvQHHrZgd7AtU/rx+cnz08NPWlwk8daW61thnlA==}
 
+  axe-core@4.12.1:
+    resolution: {integrity: sha512-s7iGf5GaVMxEG0ENN9x+xTr7GFZCb1ZP/1uATUpCEK2X78nDB3RwbtFCo9pGAf9ru+VwoQ464DkaLEeRM08wJA==}
+    engines: {node: '>=4'}
+
   base64-js@1.5.1:
     resolution: {integrity: sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==}
 
@@ -3262,6 +3376,10 @@ packages:
   siginfo@2.0.0:
     resolution: {integrity: sha512-ybx0WO1/8bSBLEWXZvEd7gMW3Sn3JFlW3TvX1nREbDLRNQNaeNN8WK0meBwPdAaOI7TtRRRJn/Es1zhrrCHu7g==}
 
+  smol-toml@1.7.0:
+    resolution: {integrity: sha512-aqVvWoyO21L23mb+drl4RmMXbf6N7FdHjAhTRA9ZBL7apWBgfWC16KjrASI+1p9GAroljyMHj6fK67i0UiTNvQ==}
+    engines: {node: '>= 18'}
+
   source-map-js@1.2.1:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
     engines: {node: '>=0.10.0'}
@@ -3605,6 +3723,11 @@ snapshots:
   '@asamuzakjp/generational-cache@1.0.1': {}
 
   '@asamuzakjp/nwsapi@2.3.9': {}
+
+  '@axe-core/playwright@4.12.1(playwright-core@1.59.1)':
+    dependencies:
+      axe-core: 4.12.1
+      playwright-core: 1.59.1
 
   '@aztec/bb.js@5.0.0-nightly.20260324':
     dependencies:
@@ -7184,6 +7307,8 @@ snapshots:
     dependencies:
       asynciterator: 3.10.0
 
+  axe-core@4.12.1: {}
+
   base64-js@1.5.1: {}
 
   baseline-browser-mapping@2.10.43: {}
@@ -7992,6 +8117,8 @@ snapshots:
     optional: true
 
   siginfo@2.0.0: {}
+
+  smol-toml@1.7.0: {}
 
   source-map-js@1.2.1: {}
 

@@ -2,11 +2,12 @@ import { LiteralFrom, RequiredAs } from "@rdfjs/wrapper";
 import { DataFactory, Parser, Store } from "n3";
 import { describe, expect, test } from "vitest";
 import { validate } from "../src/shacl.js";
-import { FIBO } from "../src/vocab/external.js";
+import { DPV, FIBO } from "../src/vocab/external.js";
 import { MORT } from "../src/vocab/mort.js";
 import {
   type BorrowerProfileInit,
   buildBorrowerProfile,
+  buildConsentReceipt,
   buildCreditScoreCredential,
   buildEmploymentIncomeCredential,
   buildLoanApplication,
@@ -16,6 +17,7 @@ import {
 import { literalFromXsdDate, literalFromXsdDecimal } from "../src/wrappers/mappings.js";
 import {
   BorrowerProfile,
+  ConsentReceipt,
   EmploymentIncomeCredential,
   LoanApplication,
 } from "../src/wrappers/resources.js";
@@ -115,6 +117,25 @@ describe("wrapper round-trip (build -> serialize -> parse -> read)", () => {
     const first = await resourceToTurtle(buildEmploymentIncomeCredential(EMPLOYMENT_INIT));
     const second = await resourceToTurtle(buildEmploymentIncomeCredential(EMPLOYMENT_INIT));
     expect(second).toBe(first);
+  });
+
+  test("DPV consent receipt", async () => {
+    const iri = "https://alex.pod.example/consent/receipts/grant-1";
+    const built = buildConsentReceipt({
+      iri,
+      dataSubject: WEB_ID,
+      dataController: "https://servicer.example/profile/card#service",
+      target: "https://alex.pod.example/mortgage/closing-record",
+      consentStatus: DPV.ConsentGiven,
+      issued: new Date("2026-07-16T14:30:00.000Z"),
+    });
+    const turtle = await resourceToTurtle(built);
+    const readBack = new ConsentReceipt(iri, reparse(turtle), DataFactory);
+    expect(readBack.dataSubjectIri).toBe(WEB_ID);
+    expect(readBack.dataControllerIri).toBe("https://servicer.example/profile/card#service");
+    expect(readBack.targetIri).toBe("https://alex.pod.example/mortgage/closing-record");
+    expect(readBack.consentStatus).toBe(DPV.ConsentGiven);
+    expect(readBack.issued.toISOString()).toBe("2026-07-16T14:30:00.000Z");
   });
 });
 

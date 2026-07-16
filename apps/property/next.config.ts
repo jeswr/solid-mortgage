@@ -12,6 +12,11 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: workspaceRoot,
   },
+  // `@jeswr/guarded-fetch` stays external because its `/node` entry (the
+  // DNS-pinning WebID-profile fetch the decision-0015 owner binding uses,
+  // lib/server/owner.ts) imports undici + node builtins that must not be
+  // client-bundled.
+  serverExternalPackages: ["@jeswr/guarded-fetch"],
 };
 
 export default nextConfig;

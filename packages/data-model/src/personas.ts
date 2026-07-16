@@ -43,6 +43,12 @@ import { resourceToTurtle } from "./wrappers/serialize.js";
 
 export type PersonaId = "alex-rivera" | "jordan-avery";
 
+/** Resource kinds present in a deterministic persona seed (action receipts are written later). */
+export type PersonaResourceKind = Exclude<
+  MortgageResourceKind,
+  "consent-receipt" | "zk-operand-anchor"
+>;
+
 /**
  * Pod-root-relative resource paths (SPEC section 3 pod layout: profile and
  * application documents beside the access-controlled `/mortgage/credentials/`
@@ -50,9 +56,7 @@ export type PersonaId = "alex-rivera" | "jordan-avery";
  * design). The ZK operand anchor is excluded: anchors are minted by the
  * sm-26 seed tooling, which owns operand_enc.
  */
-export const RESOURCE_POD_PATHS: Readonly<
-  Record<Exclude<MortgageResourceKind, "zk-operand-anchor">, string>
-> = {
+export const RESOURCE_POD_PATHS: Readonly<Record<PersonaResourceKind, string>> = {
   "borrower-profile": "/mortgage/profile",
   "employment-income-credential": "/mortgage/credentials/income",
   "asset-credential": "/mortgage/credentials/assets",
@@ -93,13 +97,21 @@ export interface PersonaFactoryOptions {
   seed?: string;
   /** Per-persona pod base IRI override (must end with `/`). */
   podBases?: Partial<Record<PersonaId, string>>;
+  /**
+   * Per-persona WebID override for identities NOT rooted in the pod (e.g. a dev-issuer
+   * WebID in e2e). Defaults to the pod-rooted convention `${podBase}profile/card#me`.
+   * The profile focus node and every credential's `credentialSubject` follow it, so the
+   * decision-0015 subject binding (`credentialSubject == token WebID`) holds for
+   * issuer-hosted identities too.
+   */
+  webIds?: Partial<Record<PersonaId, string>>;
   /** Issuer identity overrides for seeding against deployed org pods. */
   issuers?: Partial<PersonaIssuers>;
 }
 
 /** One seeded pod resource: dataset + validated deterministic Turtle. */
 export interface PersonaResource {
-  kind: Exclude<MortgageResourceKind, "zk-operand-anchor">;
+  kind: PersonaResourceKind;
   /** Pod-root-relative path (RESOURCE_POD_PATHS). */
   path: string;
   /** Absolute resource IRI (podBase + path). */
@@ -275,7 +287,7 @@ function statusEntry(issuer: string, list: string, index: number): string {
 }
 
 async function personaResource(
-  kind: Exclude<MortgageResourceKind, "zk-operand-anchor">,
+  kind: PersonaResourceKind,
   podBase: string,
   focusNode: string,
   resource: MortgageResource,
@@ -303,13 +315,13 @@ async function buildPersona(
   if (!podBase.endsWith("/")) {
     throw new RangeError(`podBase must end with "/": ${podBase}`);
   }
-  const webId = `${podBase}profile/card#me`;
-  const resourceIri = (kind: Exclude<MortgageResourceKind, "zk-operand-anchor">): string =>
+  const webId = options.webIds?.[values.id] ?? `${podBase}profile/card#me`;
+  const resourceIri = (kind: PersonaResourceKind): string =>
     `${podBase}${RESOURCE_POD_PATHS[kind].slice(1)}`;
   const derived = (label: string, modulus: number): number =>
     fnv1a32(`${seed}:${values.id}:${label}`) % modulus;
   const envelope = (
-    kind: Exclude<MortgageResourceKind, "zk-operand-anchor">,
+    kind: PersonaResourceKind,
     issuer: string,
     list: string,
     validFromDays: number,
@@ -415,6 +427,9 @@ async function buildPersona(
     closingDate,
     recordingReference: `${values.recordingCounty} Instrument ${utcDateStem(closingDate)}${String(
       derived("recording", 100000),
+    ).padStart(5, "0")}`,
+    eNoteReference: `SIMULATED-ENOTE-${utcDateStem(closingDate)}-${String(
+      derived("enote", 100000),
     ).padStart(5, "0")}`,
     servicerName: values.servicerName,
   });

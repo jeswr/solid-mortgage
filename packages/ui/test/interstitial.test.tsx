@@ -67,3 +67,18 @@ test("Tab is trapped inside the dialog", () => {
   fireEvent.keyDown(dialog, { key: "Tab", shiftKey: true });
   expect(document.activeElement).toBe(learnMoreLink);
 });
+
+test("own variant (sm-90e): collective role negation, no self-negation of the convener", () => {
+  render(
+    <ConsentInterstitial
+      appId={APP_ID}
+      organization="EDMA Solid Community of Practice"
+      variant="own"
+    />,
+  );
+  const dialog = screen.getByRole("dialog", { name: INTERSTITIAL_HEADING });
+  for (const paragraph of interstitialParagraphs("EDMA Solid Community of Practice", "own")) {
+    expect(dialog.textContent).toContain(copyText(paragraph));
+  }
+  expect(dialog.textContent).not.toContain("not built by EDMA");
+});

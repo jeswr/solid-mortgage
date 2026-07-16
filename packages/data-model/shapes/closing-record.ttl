@@ -79,6 +79,14 @@ mshape:ClosingRecordShape
     sh:minLength 1 ;
   ] ;
   sh:property [
+    # Borrower-facing reference only; authoritative eNote custody stays in the eVault.
+    sh:path mort:eNoteReference ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
     # The servicer of record (Truist-modelled after the scene 5 transfer).
     sh:path fibo-loan-ln-ln:isServicedBy ;
     sh:minCount 1 ;

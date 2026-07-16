@@ -12,5 +12,10 @@ export { DemoLockedField, type DemoLockedFieldProps } from "./demo-locked-field"
 export * from "./disclaimers";
 export { HonestyPanel, type HonestyPanelProps } from "./honesty-panel";
 export { IllustrativeFigure, type IllustrativeFigureProps } from "./illustrative-figure";
+export {
+  type ReceiptAction,
+  ReceiptCard,
+  type ReceiptCardProps,
+} from "./receipt-card";
 export { StatCard, type StatCardProps } from "./stat-card";
 export * from "./themes";

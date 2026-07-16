@@ -29,6 +29,7 @@ export const RESOURCE_TARGET_CLASSES = {
     "https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoanApplications/UnderwritingDecision",
   "closing-record":
     "https://spec.edmcouncil.org/fibo/ontology/LOAN/RealEstateLoans/Mortgages/Mortgage",
+  "consent-receipt": "https://w3id.org/dpv#ConsentReceipt",
   "zk-operand-anchor": MORT.ZkOperandAnchor,
 } as const;
 

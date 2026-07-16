@@ -112,8 +112,56 @@ export const INTERSTITIAL_HEADING = "You're entering a concept demonstration";
 export const INTERSTITIAL_CONTINUE_LABEL = "I understand — enter the demo";
 export const INTERSTITIAL_LEARN_MORE_LABEL = "Learn more about the project";
 
-/** The four interstitial paragraphs, with the §4.2 bold phrases marked. */
-export function interstitialParagraphs(organization: string): CopySegment[][] {
+/** §4.2 simulation paragraph — shared verbatim by both interstitial variants. */
+const SIMULATED_PARAGRAPH: CopySegment[] = [
+  { strong: true, text: "Everything here is simulated." },
+  {
+    text: " Rates, fees, credit decisions, documents, and personas are fictitious and illustrative. Nothing on this site is an offer or solicitation of credit or of any financial product or service.",
+  },
+];
+
+/** §4.2 do-not-enter paragraph — shared verbatim by both interstitial variants. */
+const DO_NOT_ENTER_PARAGRAPH: CopySegment[] = [
+  { strong: true, text: "Do not enter real personal or financial information." },
+  { text: " Use the demo personas provided." },
+];
+
+/**
+ * The four interstitial paragraphs, with the §4.2 bold phrases marked.
+ *
+ * `variant: "own"` (the convener-branded tour app, sm-90e) keeps the §4.2 structure but
+ * replaces the org-negation paragraph — negating the convener against itself would be
+ * self-contradictory — with a collective negation of every organisation named inside the
+ * demo. The simulation and do-not-enter paragraphs are shared verbatim with the modelled
+ * variant so the R8 core copy cannot drift between variants.
+ */
+export function interstitialParagraphs(
+  organization: string,
+  variant: DisclaimerVariant = "modelled",
+): CopySegment[][] {
+  if (variant === "own") {
+    return [
+      [
+        { text: "This site is a research prototype built by the " },
+        { strong: true, text: EDMA_NAME },
+        { text: " to show how a US mortgage journey could work on Solid personal data stores." },
+      ],
+      [
+        { text: "The organisations named inside the demo " },
+        { strong: true, text: "illustrate market roles only" },
+        { text: ". " },
+        { strong: true, text: "None of them built this demo" },
+        { text: ", and " },
+        {
+          strong: true,
+          text: "none is affiliated with, sponsors, or endorses it",
+        },
+        { text: "." },
+      ],
+      SIMULATED_PARAGRAPH,
+      DO_NOT_ENTER_PARAGRAPH,
+    ];
+  }
   return [
     [
       { text: "This site is a research prototype built by the " },
@@ -129,16 +177,8 @@ export function interstitialParagraphs(organization: string): CopySegment[][] {
       { strong: true, text: `not affiliated with, sponsored by, or endorsed by ${organization}` },
       { text: `. The ${organization} name is used only to identify that market role.` },
     ],
-    [
-      { strong: true, text: "Everything here is simulated." },
-      {
-        text: " Rates, fees, credit decisions, documents, and personas are fictitious and illustrative. Nothing on this site is an offer or solicitation of credit or of any financial product or service.",
-      },
-    ],
-    [
-      { strong: true, text: "Do not enter real personal or financial information." },
-      { text: " Use the demo personas provided." },
-    ],
+    SIMULATED_PARAGRAPH,
+    DO_NOT_ENTER_PARAGRAPH,
   ];
 }
 

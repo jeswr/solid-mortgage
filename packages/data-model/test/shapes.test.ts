@@ -32,13 +32,14 @@ test("committed shapes module matches shapes/*.ttl (codegen freshness)", () => {
   });
 });
 
-test("the ten shape documents are bundled", () => {
+test("the eleven shape documents are bundled", () => {
   expect([...SHAPES_DOCUMENT_KEYS].sort()).toEqual([
     "appraisal-credential",
     "asset-credential",
     "borrower-profile",
     "closing-record",
     "common",
+    "consent-receipt",
     "credit-score-credential",
     "employment-income-credential",
     "loan-application",
@@ -51,7 +52,7 @@ test("the ten shape documents are bundled", () => {
 test("every targeted resource shape is closed", () => {
   const store = shapesStore();
   const targeted = store.getSubjects(`${SH}targetClass`, null, null);
-  expect(targeted.length).toBe(10);
+  expect(targeted.length).toBe(11);
   for (const shape of targeted) {
     const closed = store.getObjects(shape, `${SH}closed`, null);
     expect(
@@ -115,6 +116,10 @@ const cases: readonly {
     expectedViolations: ["MinCountConstraintComponent", "DatatypeConstraintComponent"],
   },
   {
+    name: "consent-receipt",
+    expectedViolations: ["InConstraintComponent"],
+  },
+  {
     name: "zk-operand-anchor",
     expectedViolations: [
       "InConstraintComponent",
@@ -126,7 +131,7 @@ const cases: readonly {
 
 // Generous timeout: the first validation pays comunica's cold start for the
 // sh:sparql constraint (over 5s on a cold cache).
-const VALIDATE_TIMEOUT_MS = 30_000;
+const VALIDATE_TIMEOUT_MS = 60_000;
 
 describe.each(cases)("$name", ({ name, expectedViolations }) => {
   const kind = name as MortgageResourceKind;
