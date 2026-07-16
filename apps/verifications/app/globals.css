@@ -10,6 +10,8 @@
   --border: oklch(0.869 0.022 252.894);
   --primary: oklch(0.279 0.041 260.031);
   --primary-foreground: oklch(0.984 0.003 247.858);
+  --accent: oklch(0.55 0.1 250);
+  --accent-foreground: oklch(0.985 0.003 250);
   --radius: 0.625rem;
 }
 
@@ -23,6 +25,8 @@
   --color-border: var(--border);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
   --radius-lg: var(--radius);
 }
 
