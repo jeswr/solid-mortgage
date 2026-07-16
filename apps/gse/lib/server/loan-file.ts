@@ -12,9 +12,13 @@
  * discipline), and every credential must ADDITIONALLY pass vc-kit's
  * fail-closed `verifyCredential` (signature + trusted issuer + validity
  * window + Bitstring status + shape) and attest the AUTHENTICATED borrower
- * (decision 0015 L3). Verification verdicts are carried into the rules as
- * explicit evidence inputs — an unverifiable credential downgrades the run
- * to "refer", never crashes it and never silently passes.
+ * (decision 0015 L3). The APPRAISAL must additionally appraise the
+ * APPLICATION's subject property (canonicalized-address binding — see
+ * {@link sameSubjectProperty}): a genuine appraisal of a different,
+ * higher-value property must never set the LTV denominator. Verification
+ * verdicts are carried into the rules as explicit evidence inputs — an
+ * unverifiable, unbound, or mismatched credential downgrades the run to
+ * "refer", never crashes it and never silently passes.
  */
 import {
   AppraisalCredential,
@@ -23,6 +27,7 @@ import {
   EmploymentIncomeCredential,
   LoanApplication,
   type PersonaResourceKind,
+  type PostalAddress,
   RESOURCE_POD_PATHS,
   validate,
 } from "@mortgage/data-model";
@@ -138,6 +143,9 @@ async function readCredential(
     evidence: {
       fresh: isFresh(window, options.now),
       kind,
+      // Vacuously true here; the appraisal's binding to the APPLICATION's
+      // property is applied by the caller, which holds both documents.
+      propertyBound: true,
       subjectBound,
       verified: verification.verified,
       verifyErrors: [
@@ -147,6 +155,39 @@ async function readCredential(
     },
     iri,
   };
+}
+
+/** Canonicalize an address token: trim, collapse whitespace, case-fold. */
+function canonicalToken(value: string): string {
+  return value.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+/** ZIP and ZIP+4 compare on the 5-digit prefix; anything else compares whole. */
+function canonicalZip(value: string): string {
+  const match = /^(\d{5})(?:-\d{4})?$/.exec(value.trim());
+  return match?.[1] ?? canonicalToken(value);
+}
+
+/**
+ * FIX-3 property binding key: neither the loan-application nor the appraisal
+ * shape exposes a property IRI or parcel identifier (both property nodes are
+ * blank nodes), so the binding key is the canonicalized postal address the
+ * typed wrappers surface on BOTH documents. Comparison is conservative: any
+ * doubt (missing/malformed field) is a MISMATCH, never a pass — a genuine,
+ * verified appraisal of a DIFFERENT property must never set the LTV
+ * denominator.
+ */
+function sameSubjectProperty(application: PostalAddress, appraisal: PostalAddress): boolean {
+  try {
+    return (
+      canonicalToken(application.streetAddress) === canonicalToken(appraisal.streetAddress) &&
+      canonicalToken(application.addressLocality) === canonicalToken(appraisal.addressLocality) &&
+      canonicalToken(application.addressRegion) === canonicalToken(appraisal.addressRegion) &&
+      canonicalZip(application.postalCode) === canonicalZip(appraisal.postalCode)
+    );
+  } catch {
+    return false; // untrusted RDF: an unreadable address is a mismatch, never a crash
+  }
 }
 
 /**
@@ -218,18 +259,34 @@ export async function readGrantedLoanFile(
       credit.dataset,
       DataFactory,
     ).credentialSubject;
-    const appraisedValue = new AppraisalCredential(
+    const appraisalProperty = new AppraisalCredential(
       DataFactory.namedNode(appraisal.iri),
       appraisal.dataset,
       DataFactory,
-    ).credentialSubject.subjectProperty.appraisedValue;
+    ).credentialSubject.subjectProperty;
+    const appraisedValue = appraisalProperty.appraisedValue;
     if (appraisedValue === undefined) {
       throw new PodAccessError(502, "the appraisal credential carries no appraised value");
     }
+    // FIX-3 evidence gate: the appraisal must appraise the APPLICATION's
+    // subject property. A mismatch fails the appraisal's evidence finding —
+    // the run refers and (per the FIX-1 stop) no LTV is ever computed from
+    // the mismatched value.
+    const propertyBound = sameSubjectProperty(
+      application.subjectProperty.address,
+      appraisalProperty.address,
+    );
+    const appraisalEvidence: AusEvidence = {
+      ...appraisal.evidence,
+      propertyBound,
+      verifyErrors: propertyBound
+        ? appraisal.evidence.verifyErrors
+        : [...appraisal.evidence.verifyErrors, "PROPERTY_MISMATCH"],
+    };
     file = {
       appraisedValueUsd: appraisedValue.amountValue,
       creditScoreValue: creditSubject.creditScoreValue,
-      evidence: [employment.evidence, assets.evidence, credit.evidence, appraisal.evidence],
+      evidence: [employment.evidence, assets.evidence, credit.evidence, appraisalEvidence],
       liquidAssetsUsd: [...assetAccounts].reduce(
         (total, account) => total + account.accountAmount.amountValue,
         0,

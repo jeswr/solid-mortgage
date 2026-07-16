@@ -428,6 +428,70 @@ describe("scene 4 — stale evidence refers; the re-issued credential re-runs to
   }, 120_000);
 });
 
+describe("the appraisal must appraise the APPLICATION's property (real pod)", () => {
+  test("a verified appraisal for a DIFFERENT property refers the run — no LTV from a mismatched appraisal", async () => {
+    // A GENUINE, fully-signed, fresh, subject-bound appraisal — of another,
+    // much higher-value property. Only the property binding can stop it.
+    const appraisalIri = `${podBase}mortgage/credentials/appraisal`;
+    const foreign = await rig.issueAppraisal({
+      address: {
+        addressLocality: "Columbus",
+        addressRegion: "OH",
+        postalCode: "43004",
+        streetAddress: "9 Grander Estate Boulevard",
+      },
+      appraisedValueUsd: 900000,
+      credentialId: appraisalIri,
+      index: 31,
+      subject: borrower.webid,
+      window: FRESH_WINDOW,
+    });
+    await ownerPut(appraisalIri, foreign.body);
+
+    const response = await service.run(await authedRequest(borrower, "POST", "/aus/run"));
+    expect(response.status).toBe(200);
+    const report = (await response.json()) as AusRunReport;
+    expect(report.outcome).toBe("refer");
+
+    // The verifier itself GREENED this credential (it is genuine) — the
+    // property BINDING is what fails, and only it.
+    const appraisalEvidence = (report.evidence as AusEvidence[]).find(
+      (entry) => entry.kind === "appraisal",
+    );
+    expect(appraisalEvidence?.verified).toBe(true);
+    expect(appraisalEvidence?.subjectBound).toBe(true);
+    expect(appraisalEvidence?.fresh).toBe(true);
+    expect(appraisalEvidence?.propertyBound).toBe(false);
+    expect(appraisalEvidence?.verifyErrors).toContain("PROPERTY_MISMATCH");
+    const finding = report.findings.find((entry) => entry.code === "EVIDENCE_APPRAISAL");
+    expect(finding?.pass).toBe(false);
+    expect(finding?.observed).toContain("different property");
+
+    // Fail-closed presentation: the inflated denominator never becomes an
+    // LTV — no qualifying figures, no risk findings.
+    expect(report.qualifying.evaluated).toBe(false);
+    expect(report.findings.some((entry) => entry.category === "risk")).toBe(false);
+
+    // The pod decision records the referral.
+    const written = await readDecision();
+    expect(written.decision.decisionStatus).toBe(MORT.DecisionStatus_Suspended);
+    expect(written.decision.ausRecommendation).toBe(FIBO.UnderwritingDecision_Refer);
+
+    // Restore the matching appraisal and prove the run greens again — the
+    // referral above was the binding, not some other drift.
+    const restored = await rig.issueAppraisal({
+      credentialId: appraisalIri,
+      index: 32,
+      subject: borrower.webid,
+      window: FRESH_WINDOW,
+    });
+    await ownerPut(appraisalIri, restored.body);
+    const rerun = await service.run(await authedRequest(borrower, "POST", "/aus/run"));
+    expect(rerun.status).toBe(200);
+    expect(((await rerun.json()) as AusRunReport).outcome).toBe("approve");
+  }, 120_000);
+});
+
 describe("revocation genuinely shuts the run off (REAL WAC)", () => {
   test("after the borrower revokes the grant, the AUS is denied by the pod", async () => {
     // The borrower's wallet withdraws the AUS grant: the rewritten container

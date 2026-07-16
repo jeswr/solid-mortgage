@@ -16,6 +16,7 @@ import {
   type IssuedCredential,
   issueCredential,
   type KeyPair,
+  type PostalAddressClaims,
   StatusListClient,
 } from "@mortgage/vc-kit";
 
@@ -126,6 +127,8 @@ export interface CredentialRig {
     window: WindowDays;
     index: number;
     appraisedValueUsd?: number;
+    /** Property address override — a mismatched-property appraisal fixture. */
+    address?: PostalAddressClaims;
   }): Promise<IssuedCredential>;
 }
 
@@ -153,7 +156,7 @@ export async function credentialRig(now: Date): Promise<CredentialRig> {
           appraiser: { licenseId: alex.appraiserLicenseId, name: alex.appraiserName },
           kind: "appraisal-credential",
           property: {
-            address: alex.subjectPropertyAddress,
+            address: options.address ?? alex.subjectPropertyAddress,
             appraisedValueUsd: options.appraisedValueUsd ?? alex.appraisedValueUsd,
           },
           reportIssued: new Date(now.getTime() - 8 * DAY_MS).toISOString().slice(0, 10),

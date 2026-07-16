@@ -59,8 +59,8 @@ export default function UnderwritingPage() {
         </ul>
         <p className="mt-2 text-sm text-muted-foreground">
           Plus the evidence gate ahead of them: every credential must verify, attest the applicant,
-          and be within its validity window — otherwise the run refers instead of scoring numbers it
-          cannot trust.
+          and be within its validity window, and the appraisal must appraise the application's own
+          subject property — otherwise the run refers instead of scoring numbers it cannot trust.
         </p>
       </section>
 

@@ -25,6 +25,7 @@ function greenEvidence(overrides: Partial<Record<EvidenceKind, Partial<AusEviden
     (kind): AusEvidence => ({
       fresh: true,
       kind,
+      propertyBound: true,
       subjectBound: true,
       verified: true,
       verifyErrors: [],
@@ -111,6 +112,22 @@ describe("the refer path (evidence gate)", () => {
     expect(
       result.findings.find((entry) => entry.code === "EVIDENCE_CREDIT_SCORE")?.observed,
     ).toContain("different subject");
+  });
+
+  test("a verified appraisal bound to a DIFFERENT property refers the file (no LTV from it)", () => {
+    const result = runAusRules(
+      approvableFile({
+        appraisedValueUsd: 900000, // the mismatched appraisal's inflated value
+        evidence: greenEvidence({ appraisal: { propertyBound: false } }),
+      }),
+    );
+    expect(result.outcome).toBe("refer");
+    const finding = result.findings.find((entry) => entry.code === "EVIDENCE_APPRAISAL");
+    expect(finding?.pass).toBe(false);
+    expect(finding?.observed).toContain("different property");
+    // The FIX-1 stop guarantees the inflated denominator is never scored.
+    expect(result.qualifying.evaluated).toBe(false);
+    expect(result.findings.some((entry) => entry.code === "LOAN_TO_VALUE")).toBe(false);
   });
 
   test("a missing credential refers the file (never scored around)", () => {

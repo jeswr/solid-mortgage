@@ -32,6 +32,13 @@ export interface AusEvidence {
   readonly subjectBound: boolean;
   /** Decision-0007 validity-window check at the evaluation instant. */
   readonly fresh: boolean;
+  /**
+   * The credential attests the APPLICATION's subject property (the appraisal
+   * binding — a genuine appraisal of a different, higher-value property must
+   * never set the LTV denominator). Vacuously true for credential kinds that
+   * are not property-scoped.
+   */
+  readonly propertyBound: boolean;
   /** Distinct verifier failure codes (diagnostics; never secrets). */
   readonly verifyErrors: readonly string[];
 }
@@ -154,20 +161,32 @@ export function proposedMonthlyPaymentUsd(
 }
 
 function evidenceFinding(evidence: AusEvidence): AusFinding {
+  // The property binding is appraisal-specific; other kinds carry it
+  // vacuously true and their finding copy does not claim it.
+  const propertyScoped = evidence.kind === "appraisal";
   const failures: string[] = [];
   if (!evidence.verified) failures.push("failed fail-closed verification");
   if (!evidence.subjectBound) failures.push("attests a different subject");
+  if (!evidence.propertyBound) {
+    failures.push("appraises a different property than the application");
+  }
   if (!evidence.fresh) failures.push("validity window lapsed");
   const pass = failures.length === 0;
   return {
     category: "evidence",
     code: `EVIDENCE_${evidence.kind.toUpperCase().replace(/-/g, "_")}`,
     observed: pass
-      ? "verified, subject-bound, and within its validity window"
+      ? propertyScoped
+        ? "verified, subject-bound, property-bound, and within its validity window"
+        : "verified, subject-bound, and within its validity window"
       : failures.join("; "),
     pass,
-    rule: `The ${EVIDENCE_LABELS[evidence.kind]} must fully verify, attest the applicant, and be within its validity window`,
-    threshold: "verified AND subject-bound AND fresh",
+    rule: propertyScoped
+      ? `The ${EVIDENCE_LABELS[evidence.kind]} must fully verify, attest the applicant, appraise the application's subject property, and be within its validity window`
+      : `The ${EVIDENCE_LABELS[evidence.kind]} must fully verify, attest the applicant, and be within its validity window`,
+    threshold: propertyScoped
+      ? "verified AND subject-bound AND property-bound AND fresh"
+      : "verified AND subject-bound AND fresh",
   };
 }
 

@@ -14,7 +14,11 @@ names are rendered anywhere.
   There is no anonymous fallback; a missing or revoked grant fails the run closed.
 - **Verifies every credential** (employment+income, assets, credit score, appraisal) with
   vc-kit's fail-closed `verifyCredential`: signature, trusted issuer, validity window,
-  Bitstring status, SHACL shape — plus the decision-0015 L3 subject binding.
+  Bitstring status, SHACL shape — plus the decision-0015 L3 subject binding. The
+  appraisal must ADDITIONALLY appraise the application's subject property
+  (canonicalized-address binding — the shapes expose no property IRI/parcel id): a
+  genuine appraisal of a different property fails the evidence gate and can never set
+  the LTV denominator.
 - Runs **DETERMINISTIC rules** (`lib/aus/rules.ts` — pure functions, no clock, no
   randomness): an evidence gate ahead of four published threshold rules (credit score,
   DTI, LTV, reserves). Outcomes: `approve` / `refer` (evidence cannot be relied on) /
