@@ -1,4 +1,5 @@
 export const site = {
   appName: "Verification Services",
-  organization: "The Work Number (Equifax), Mastercard Finicity, and Equifax",
+  /** Disclaimer copy reads "this is not {organization}" — one string covers all three brands. */
+  organization: "The Work Number, Finicity, or Equifax",
 } as const;

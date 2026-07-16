@@ -1,0 +1,139 @@
+"use client";
+
+/**
+ * The live issue/re-issue panel for one issuer flow. Calls the app's Mode-2
+ * rail (`/api/issue`, `/api/reissue`), which requires a REAL DPoP-bound
+ * Solid-OIDC session and a borrower grant naming this app's service identity.
+ * Without one the rail answers 401 and this panel says so honestly — it never
+ * fakes a success (the disclosed-simulation posture of decision 0015).
+ */
+import { useCallback, useState } from "react";
+import { BASE_PATH } from "@/lib/paths";
+
+interface IssuedSummary {
+  id: string;
+  kind: string;
+  validFrom: string;
+  validUntil?: string;
+  statusListCredential: string;
+  statusListIndex?: string;
+}
+
+interface RailResult {
+  simulated?: boolean;
+  credential?: IssuedSummary;
+  anchor?: IssuedSummary | null;
+  revokedIndex?: number;
+  newIndex?: number;
+  error?: string;
+  detail?: string;
+}
+
+type PanelState =
+  | { phase: "idle" }
+  | { phase: "busy"; action: string }
+  | { phase: "done"; action: string; result: RailResult }
+  | { phase: "failed"; action: string; status: number; result: RailResult };
+
+export interface IssuePanelProps {
+  flow: string;
+  reissueHint: string;
+}
+
+export function IssuePanel({ flow, reissueHint }: IssuePanelProps) {
+  const [state, setState] = useState<PanelState>({ phase: "idle" });
+
+  const call = useCallback(
+    async (action: "issue" | "reissue") => {
+      setState({ action, phase: "busy" });
+      try {
+        const response = await fetch(`${BASE_PATH}/api/${action}`, {
+          body: JSON.stringify({ flow }),
+          headers: { "content-type": "application/json" },
+          method: "POST",
+        });
+        const result = (await response.json().catch(() => ({}))) as RailResult;
+        setState(
+          response.ok
+            ? { action, phase: "done", result }
+            : { action, phase: "failed", result, status: response.status },
+        );
+      } catch {
+        setState({ action, phase: "failed", result: {}, status: 0 });
+      }
+    },
+    [flow],
+  );
+
+  return (
+    <section
+      aria-labelledby={`${flow}-panel`}
+      className="rounded-lg border border-border bg-card p-6"
+    >
+      <h2 className="font-semibold text-xl" id={`${flow}-panel`}>
+        Issue into the Data Vault
+      </h2>
+      <p className="mt-2 text-muted-foreground text-sm">{reissueHint}</p>
+      <div className="mt-4 flex flex-wrap gap-3">
+        <button
+          className="rounded-md px-4 py-2 font-medium text-sm disabled:opacity-60"
+          disabled={state.phase === "busy"}
+          onClick={() => call("issue")}
+          style={{ background: "var(--primary)", color: "var(--primary-foreground)" }}
+          type="button"
+        >
+          {state.phase === "busy" && state.action === "issue" ? "Issuing…" : "Issue credential"}
+        </button>
+        <button
+          className="rounded-md border border-border px-4 py-2 font-medium text-sm disabled:opacity-60"
+          disabled={state.phase === "busy"}
+          onClick={() => call("reissue")}
+          type="button"
+        >
+          {state.phase === "busy" && state.action === "reissue"
+            ? "Re-issuing…"
+            : "Re-issue (freshness)"}
+        </button>
+      </div>
+      <div aria-live="polite" className="mt-4 text-sm">
+        {state.phase === "done" && (
+          <div data-panel-outcome="ok">
+            <p className="font-medium" style={{ color: "var(--primary)" }}>
+              {state.action === "issue" ? "Issued." : "Re-issued — validity restored."}
+            </p>
+            {state.result.credential !== undefined && (
+              <ul className="mt-2 list-none space-y-1 p-0 text-muted-foreground">
+                <li>
+                  Credential: <code>{state.result.credential.id}</code>
+                </li>
+                <li>
+                  Valid {state.result.credential.validFrom} → {state.result.credential.validUntil}
+                </li>
+                {state.result.anchor != null && (
+                  <li>
+                    Operand anchor: <code>{state.result.anchor.id}</code>
+                  </li>
+                )}
+                {state.result.revokedIndex !== undefined && (
+                  <li>
+                    Old status index {state.result.revokedIndex} revoked; replacement holds index{" "}
+                    {state.result.newIndex}.
+                  </li>
+                )}
+              </ul>
+            )}
+          </div>
+        )}
+        {state.phase === "failed" && (
+          <p className="text-muted-foreground" data-panel-outcome="failed">
+            {state.status === 401
+              ? "Not signed in: this rail requires a real DPoP-bound Solid-OIDC session and a vault grant naming this issuer's service identity. Nothing was issued — this demo never fakes a success."
+              : `The rail refused the request (${state.status || "network error"}${
+                  state.result.error !== undefined ? `: ${state.result.error}` : ""
+                }). ${state.result.detail ?? ""}`}
+          </p>
+        )}
+      </div>
+    </section>
+  );
+}

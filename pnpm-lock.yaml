@@ -403,10 +403,22 @@ importers:
 
   apps/verifications:
     dependencies:
+      '@mortgage/data-model':
+        specifier: workspace:*
+        version: link:../../packages/data-model
+      '@mortgage/solid-kit':
+        specifier: workspace:*
+        version: link:../../packages/solid-kit
       '@mortgage/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@mortgage/vc-kit':
+        specifier: workspace:*
+        version: link:../../packages/vc-kit
       clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
+      n3:
         specifier: ^2.1.1
         version: 2.1.1
       next:
@@ -422,9 +434,15 @@ importers:
         specifier: ^3.6.0
         version: 3.6.0
     devDependencies:
+      '@rdfjs/types':
+        specifier: ^2.0.1
+        version: 2.0.1
       '@tailwindcss/postcss':
         specifier: ^4.3.2
         version: 4.3.2
+      '@types/n3':
+        specifier: ^1.26.1
+        version: 1.26.1
       '@types/node':
         specifier: ^25.9.2
         version: 25.9.5
