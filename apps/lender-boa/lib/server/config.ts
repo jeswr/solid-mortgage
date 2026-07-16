@@ -16,6 +16,14 @@ export interface LenderConfig {
   readonly trustedOidcIssuers: readonly string[];
   /** Issuers trusted to sign operand-anchor VCs (decision 0012). */
   readonly trustedAnchorIssuers: readonly string[];
+  /**
+   * Issuers trusted to sign the borrower's credentials (employment/asset/
+   * credit VCs) the lender reads under a grant. REQUIRED for a credential to
+   * pass full `verifyCredential` (signature + issuer + window + status +
+   * shape); an empty list fails those credentials closed — no green tick, no
+   * "verified" claim.
+   */
+  readonly trustedCredentialIssuers: readonly string[];
   /** Pod ORIGINS the server-side pod reads/writes may touch (SSRF allowlist). */
   readonly podAllowedOrigins: readonly string[];
   /** Dev/e2e only — see the module header. */
@@ -37,6 +45,7 @@ export function configFromEnv(env: NodeJS.ProcessEnv = process.env): LenderConfi
   return {
     trustedOidcIssuers: splitList(env.MORTGAGE_TRUSTED_OIDC_ISSUERS),
     trustedAnchorIssuers: splitList(env.MORTGAGE_TRUSTED_ANCHOR_ISSUERS),
+    trustedCredentialIssuers: splitList(env.MORTGAGE_TRUSTED_CREDENTIAL_ISSUERS),
     podAllowedOrigins: splitList(env.MORTGAGE_POD_ALLOWED_ORIGINS),
     allowInsecureLoopback: env.MORTGAGE_DEV_ALLOW_LOOPBACK === "1",
     // Vercel terminates TLS ahead of the function, so the forwarded headers are

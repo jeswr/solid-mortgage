@@ -5,12 +5,12 @@ import { useCallback, useState } from "react";
 interface FreshnessResponse {
   simulated: true;
   credentialIri: string;
-  window: { validFrom: string; validUntil?: string };
+  window: { validFrom?: string; validUntil?: string };
   fresh: boolean;
-  status: string;
-  statusReason?: string;
+  verified: boolean;
+  verifyErrors: string[];
   greenTick: boolean;
-  decision: "stands" | "blocked-stale" | "blocked-status";
+  decision: "stands" | "blocked-stale" | "blocked-invalid";
   rule: string;
   detail?: string;
 }
@@ -21,11 +21,11 @@ export interface FreshnessPanelProps {
 }
 
 const DECISION_COPY: Record<FreshnessResponse["decision"], string> = {
-  stands: "Decision stands — evidence is fresh and not revoked.",
+  stands: "Decision stands — the credential fully verifies and is within its validity window.",
   "blocked-stale":
     "Decision blocked — the employment credential's validity window has lapsed. Request a re-verification.",
-  "blocked-status":
-    "Decision blocked — the credential's revocation status could not be positively confirmed.",
+  "blocked-invalid":
+    "Decision blocked — the credential did not fully verify (signature, trusted issuer, or revocation status).",
 };
 
 /**
@@ -103,7 +103,7 @@ export function FreshnessPanel({ pod, apiBase }: FreshnessPanelProps) {
             <div>
               <dt className="text-sm text-muted-foreground">Validity window</dt>
               <dd className="text-sm">
-                {report.window.validFrom.slice(0, 10)} →{" "}
+                {report.window.validFrom?.slice(0, 10) ?? "—"} →{" "}
                 {report.window.validUntil?.slice(0, 10) ?? "—"}
               </dd>
             </div>
@@ -112,8 +112,10 @@ export function FreshnessPanel({ pod, apiBase }: FreshnessPanelProps) {
               <dd className="text-sm font-semibold">{report.fresh ? "fresh" : "stale"}</dd>
             </div>
             <div>
-              <dt className="text-sm text-muted-foreground">Revocation status</dt>
-              <dd className="text-sm font-semibold">{report.status}</dd>
+              <dt className="text-sm text-muted-foreground">Credential verification</dt>
+              <dd className="text-sm font-semibold">
+                {report.verified ? "verified" : "not verified"}
+              </dd>
             </div>
             <div>
               <dt className="text-sm text-muted-foreground">Green tick</dt>

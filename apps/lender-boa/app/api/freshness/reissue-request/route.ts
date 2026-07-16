@@ -36,10 +36,14 @@ export async function POST(request: Request): Promise<Response> {
     }
     return Response.json({ simulated: true, error: "internal_error" }, { status: 500 });
   }
+  // SIMULATION: this endpoint dispatches/persists nothing. In the built-for-
+  // real product it would notify the employment verifier's re-issue endpoint
+  // over the borrower's existing grant; in the demo the re-issue is performed
+  // out-of-band (the verifications app) and the borrower re-runs the check.
   return Response.json({
     simulated: true,
-    requested: true,
+    dispatched: false,
     nextStep:
-      "The employment verifier re-issues through the existing grant (one click for the borrower); re-run the freshness check to pick up the replacement credential.",
+      "Simulated request — nothing was sent. In production this notifies the employment verifier, which re-issues through the existing grant (one click for the borrower). Re-run the freshness check to pick up the replacement credential.",
   });
 }

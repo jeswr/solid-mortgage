@@ -15,7 +15,14 @@ import { checkEmploymentFreshness } from "../lib/server/freshness";
 import { monthlyPrincipalAndInterest, submitApplication, TRID_LE_TIMING } from "../lib/server/loan";
 import { PodAccessError } from "../lib/server/pod";
 import { demoPrefill, prefillFromPod } from "../lib/server/prefill";
-import { type AnchorRig, anchorRig, issuerControls, issuerKey, resolveIssuerKey } from "./support";
+import {
+  ANCHOR_ISSUER,
+  type AnchorRig,
+  anchorRig,
+  issuerControls,
+  issuerKey,
+  resolveIssuerKey,
+} from "./support";
 
 const NOW = new Date();
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -50,6 +57,7 @@ beforeAll(async () => {
   config = {
     trustedOidcIssuers: [],
     trustedAnchorIssuers: [],
+    trustedCredentialIssuers: [ANCHOR_ISSUER],
     podAllowedOrigins: [server.baseUrl],
     allowInsecureLoopback: true,
     trustForwardedHeaders: false,
@@ -163,15 +171,37 @@ describe("scene 4 — freshness re-check (decision 0007)", () => {
   function rigStatusFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
     return rig.host.fetch(input, init);
   }
+  /** Offline seams that reach neither a WebID doc nor a status list (network-free). */
+  const offlineSeams = {
+    resolveKey: async () => undefined,
+    statusFetch: async () => new Response(null, { status: 404 }),
+    webIdFetch: async () => new Response(null, { status: 404 }),
+  };
 
-  test("the seeded near-expiry persona VC is window-fresh but status-unconfirmable (fail closed)", async () => {
-    const report = await checkEmploymentFreshness(podBase, config, { now: () => NOW });
-    // Window: seeded validFrom −30d / validUntil +14d ⇒ fresh.
-    expect(report.fresh).toBe(true);
-    // Its status list lives on an unreachable fixture origin ⇒ NEVER a pass.
-    expect(report.status).toBe("unreachable");
+  test("503s when no credential-issuer allowlist is configured (fail closed)", async () => {
+    await expect(
+      checkEmploymentFreshness(
+        podBase,
+        { ...config, trustedCredentialIssuers: [] },
+        {
+          now: () => NOW,
+        },
+      ),
+    ).rejects.toMatchObject({ status: 503 });
+  });
+
+  test("the UNSIGNED persona VC is window-fresh but does NOT verify (no green tick)", async () => {
+    // The seeded persona employment VC is a shape-conforming but UNSIGNED graph
+    // (signing arrives with the sm-26 seed tooling); SHACL conformance alone must
+    // never earn a green tick — the signature/issuer gate fails closed.
+    const report = await checkEmploymentFreshness(podBase, config, {
+      now: () => NOW,
+      seams: offlineSeams,
+    });
+    expect(report.fresh).toBe(true); // validFrom −30d / validUntil +14d
+    expect(report.verified).toBe(false);
     expect(report.greenTick).toBe(false);
-    expect(report.decision).toBe("blocked-status");
+    expect(report.decision).toBe("blocked-invalid");
   });
 
   test("stale → one-click re-issue → green tick", async () => {
@@ -223,7 +253,7 @@ describe("scene 4 — freshness re-check (decision 0007)", () => {
       seams,
     });
     expect(freshReport.fresh).toBe(true);
-    expect(freshReport.status).toBe("valid");
+    expect(freshReport.verified).toBe(true);
     expect(freshReport.greenTick).toBe(true);
     expect(freshReport.decision).toBe("stands");
   }, 60_000);
@@ -243,9 +273,31 @@ describe("scene 4 — freshness re-check (decision 0007)", () => {
     await rig.list.revoke(77, { now: NOW });
     const report = await checkEmploymentFreshness(pod, config, { now: () => NOW, seams });
     expect(report.fresh).toBe(true);
-    expect(report.status).toBe("revoked");
+    expect(report.verified).toBe(false); // STATUS_REVOKED
+    expect(report.verifyErrors).toContain("STATUS_REVOKED");
     expect(report.greenTick).toBe(false);
-    expect(report.decision).toBe("blocked-status");
+    expect(report.decision).toBe("blocked-invalid");
+  }, 60_000);
+
+  test("an untrusted issuer never verifies (no green tick)", async () => {
+    const account = await server.provisionAccount();
+    const pod = `${account.baseUrl}/`;
+    const config = {
+      ...configWith(account.baseUrl),
+      trustedCredentialIssuers: ["https://someone-else.example/org"],
+    };
+    const vc = await rig.issueEmployment({
+      subject: webId,
+      credentialId: `${pod}mortgage/credentials/income`,
+      validFrom: new Date(NOW.getTime() - 1 * DAY_MS),
+      validUntil: new Date(NOW.getTime() + 14 * DAY_MS),
+      index: 88,
+    });
+    await seedPod(account.baseUrl, [{ path: "/mortgage/credentials/income", body: vc.body }]);
+    const report = await checkEmploymentFreshness(pod, config, { now: () => NOW, seams });
+    expect(report.verified).toBe(false);
+    expect(report.verifyErrors).toContain("UNTRUSTED_ISSUER");
+    expect(report.greenTick).toBe(false);
   }, 60_000);
 
   test("a pod without the credential 404s", async () => {
@@ -253,6 +305,7 @@ describe("scene 4 — freshness re-check (decision 0007)", () => {
     await expect(
       checkEmploymentFreshness(`${account.baseUrl}/`, configWith(account.baseUrl), {
         now: () => NOW,
+        seams: offlineSeams,
       }),
     ).rejects.toMatchObject({ status: 404 });
   });

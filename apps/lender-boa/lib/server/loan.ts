@@ -103,6 +103,12 @@ export async function submitApplication(
   const base = assertAllowedPodBase(pod, config);
   const now = (options.now ?? (() => new Date()))();
   const prefill = await prefillFromPod(pod, webId, config);
+  // The borrower's OWN identity + pod-read profile drive the application; the
+  // LOAN TERMS (requested amount, term, subject property, and the "approved
+  // with conditions" outcome) are illustrative persona constants — a real
+  // application would carry the borrower's requested amount and a real AUS
+  // decision. Everything is marked `simulated: true` + wrapped in
+  // IllustrativeFigure at the UI. Follow-up: derive terms from submitted input.
   const values = demoLoanValues();
 
   const applicationIri = `${base}${RESOURCE_POD_PATHS["loan-application"].slice(1)}`;

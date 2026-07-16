@@ -43,6 +43,7 @@ function makeConfig(overrides: Partial<LenderConfig> = {}): LenderConfig {
   return {
     trustedOidcIssuers: [issuer.issuer],
     trustedAnchorIssuers: [ANCHOR_ISSUER],
+    trustedCredentialIssuers: [ANCHOR_ISSUER],
     podAllowedOrigins: [],
     allowInsecureLoopback: true,
     trustForwardedHeaders: false,

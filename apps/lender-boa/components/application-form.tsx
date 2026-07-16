@@ -150,12 +150,14 @@ export function ApplicationForm({ prefill, pod, webid, apiBase }: ApplicationFor
           data-loan-estimate=""
         >
           <h2 id="le-heading" className="text-xl font-semibold text-card-foreground">
-            Loan Estimate — delivered to your pod
+            Loan Estimate
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            TRID requires the Loan Estimate to be {result.loanEstimate.tridTiming}. Here it landed
-            in your pod immediately: <code className="break-all">{result.applicationIri}</code> and{" "}
-            <code className="break-all">{result.decisionIri}</code>.
+            TRID requires the Loan Estimate to be {result.loanEstimate.tridTiming}. The application
+            and its decision were written to your pod immediately:{" "}
+            <code className="break-all">{result.applicationIri}</code> and{" "}
+            <code className="break-all">{result.decisionIri}</code>. The estimate figures below are
+            derived from that decision (illustrative — not an offer).
           </p>
           <dl className="mt-4 grid gap-3 sm:grid-cols-2">
             <div>

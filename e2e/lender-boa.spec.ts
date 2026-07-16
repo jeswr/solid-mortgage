@@ -263,6 +263,10 @@ test.describe("lender-boa (sm-30)", () => {
     appOrigin = await startApp({
       MORTGAGE_TRUSTED_OIDC_ISSUERS: issuer.issuer,
       MORTGAGE_TRUSTED_ANCHOR_ISSUERS: anchorIssuer,
+      // The seeded persona employment VC's issuer (unsigned in the seed layer
+      // until sm-26 — so it fails full verifyCredential and never greens).
+      MORTGAGE_TRUSTED_CREDENTIAL_ISSUERS:
+        "https://verifications.example/orgs/employment-verifier#id",
       MORTGAGE_POD_ALLOWED_ORIGINS: pods.baseUrl,
       MORTGAGE_DEV_ALLOW_LOOPBACK: "1",
       // Reconstruct the DPoP htu from the forwarded host (the Vercel posture).
