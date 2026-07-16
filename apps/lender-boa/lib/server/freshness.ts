@@ -49,6 +49,14 @@ export type FreshnessSeams = Pick<
 
 export async function checkEmploymentFreshness(
   pod: string,
+  /**
+   * The borrower this pod belongs to (holder binding). The employment VC's
+   * `credentialSubject` MUST equal this WebID — otherwise a valid credential
+   * belonging to someone else, placed in the selected pod, could earn a green
+   * tick. When caller authentication lands (sm-28) this WebID comes from the
+   * authenticated grant rather than the request.
+   */
+  webid: string,
   config: LenderConfig,
   options: { now?: () => Date; seams?: FreshnessSeams } = {},
 ): Promise<FreshnessReport> {
@@ -57,6 +65,9 @@ export async function checkEmploymentFreshness(
       503,
       "MORTGAGE_TRUSTED_CREDENTIAL_ISSUERS is unset — the freshness rail fails closed",
     );
+  }
+  if (typeof webid !== "string" || webid.length === 0) {
+    throw new PodAccessError(400, "webid (the borrower) is required");
   }
   const base = assertAllowedPodBase(pod, config);
   const now = (options.now ?? (() => new Date()))();
@@ -81,6 +92,15 @@ export async function checkEmploymentFreshness(
     trustedIssuers: config.trustedCredentialIssuers,
     ...seams,
   });
+  // Holder binding: the credential subject must be THIS borrower (decision
+  // 0012 discipline). A foreign valid credential must never green a tick.
+  const subjectOk =
+    verification.credential?.subject !== undefined && verification.credential.subject === webid;
+  const verifyErrors = [
+    ...verification.errors.map((error) => error.code),
+    ...(subjectOk ? [] : ["SUBJECT_MISMATCH"]),
+  ];
+  const verified = verification.verified && subjectOk;
   // The decision-0007 window sub-signal, from the same (already structurally
   // read) credential projection.
   const window = {
@@ -91,7 +111,7 @@ export async function checkEmploymentFreshness(
 
   const decision: FreshnessDecision = !fresh
     ? "blocked-stale"
-    : verification.verified
+    : verified
       ? "stands"
       : "blocked-invalid";
   return {
@@ -102,9 +122,9 @@ export async function checkEmploymentFreshness(
       ...(window.validUntil !== undefined ? { validUntil: window.validUntil } : {}),
     },
     fresh,
-    verified: verification.verified,
-    verifyErrors: verification.errors.map((error) => error.code),
-    greenTick: fresh && verification.verified,
+    verified,
+    verifyErrors,
+    greenTick: fresh && verified,
     decision,
     rule: VOE_RULE,
   };

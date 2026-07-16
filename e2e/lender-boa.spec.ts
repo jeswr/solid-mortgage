@@ -491,7 +491,9 @@ test.describe("lender-boa (sm-30)", () => {
   });
 
   test("freshness page runs the scene-4 re-check", async ({ page }) => {
-    await page.goto(`${appOrigin}/lender-boa/freshness?pod=${encodeURIComponent(podBase)}`);
+    await page.goto(
+      `${appOrigin}/lender-boa/freshness?pod=${encodeURIComponent(podBase)}&webid=${encodeURIComponent(borrowerWebId)}`,
+    );
     await page.getByRole("button", { name: "Run freshness check" }).click();
     const result = page.locator("[data-freshness-result]");
     await expect(result).toBeVisible();

@@ -17,6 +17,7 @@ interface FreshnessResponse {
 
 export interface FreshnessPanelProps {
   pod: string;
+  webid: string;
   apiBase: string;
 }
 
@@ -33,17 +34,23 @@ const DECISION_COPY: Record<FreshnessResponse["decision"], string> = {
  * request the one-click re-issue when stale, and re-run until the replacement
  * credential appears.
  */
-export function FreshnessPanel({ pod, apiBase }: FreshnessPanelProps) {
+export function FreshnessPanel({ pod, webid, apiBase }: FreshnessPanelProps) {
   const [report, setReport] = useState<FreshnessResponse | null>(null);
-  const [requested, setRequested] = useState(false);
+  const [reissue, setReissue] = useState<{ dispatched: boolean; nextStep: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const check = useCallback(async () => {
     setBusy(true);
     setError(null);
+    // Invalidate any prior result so a stale (e.g. previously green) report is
+    // never shown beside a fresh error or during the in-flight re-check.
+    setReport(null);
+    setReissue(null);
     try {
-      const response = await fetch(`${apiBase}/freshness?pod=${encodeURIComponent(pod)}`);
+      const response = await fetch(
+        `${apiBase}/freshness?pod=${encodeURIComponent(pod)}&webid=${encodeURIComponent(webid)}`,
+      );
       const body = (await response.json()) as FreshnessResponse;
       if (!response.ok) {
         setError(body.detail ?? `freshness check failed (${response.status})`);
@@ -55,7 +62,7 @@ export function FreshnessPanel({ pod, apiBase }: FreshnessPanelProps) {
     } finally {
       setBusy(false);
     }
-  }, [apiBase, pod]);
+  }, [apiBase, pod, webid]);
 
   async function requestReissue() {
     setBusy(true);
@@ -66,8 +73,14 @@ export function FreshnessPanel({ pod, apiBase }: FreshnessPanelProps) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ pod }),
       });
-      if (response.ok) setRequested(true);
-      else setError(`re-verification request failed (${response.status})`);
+      const body = (await response.json()) as { dispatched?: boolean; nextStep?: string };
+      if (!response.ok) {
+        setError(`re-verification request failed (${response.status})`);
+        return;
+      }
+      // The endpoint is a simulated no-op (dispatched:false); reflect exactly
+      // what happened rather than implying a request was sent.
+      setReissue({ dispatched: body.dispatched === true, nextStep: body.nextStep ?? "" });
     } catch {
       setError("re-verification request failed");
     } finally {
@@ -130,16 +143,19 @@ export function FreshnessPanel({ pod, apiBase }: FreshnessPanelProps) {
             <div className="mt-4">
               <button
                 className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground disabled:opacity-50"
-                disabled={busy || requested}
+                disabled={busy || reissue !== null}
                 onClick={requestReissue}
                 type="button"
               >
-                {requested ? "Re-verification requested" : "Request re-verification (one click)"}
+                {reissue !== null
+                  ? reissue.dispatched
+                    ? "Re-verification requested"
+                    : "Re-verification (simulated)"
+                  : "Request re-verification (one click)"}
               </button>
-              {requested && (
+              {reissue !== null && (
                 <p className="mt-2 text-sm text-muted-foreground" data-reissue-requested="">
-                  The verifier re-issues through your existing grant — no new paperwork. Re-run the
-                  check once the replacement credential lands in the pod.
+                  {reissue.nextStep}
                 </p>
               )}
             </div>

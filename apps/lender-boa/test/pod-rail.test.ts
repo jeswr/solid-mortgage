@@ -182,6 +182,7 @@ describe("scene 4 — freshness re-check (decision 0007)", () => {
     await expect(
       checkEmploymentFreshness(
         podBase,
+        webId,
         { ...config, trustedCredentialIssuers: [] },
         {
           now: () => NOW,
@@ -194,7 +195,7 @@ describe("scene 4 — freshness re-check (decision 0007)", () => {
     // The seeded persona employment VC is a shape-conforming but UNSIGNED graph
     // (signing arrives with the sm-26 seed tooling); SHACL conformance alone must
     // never earn a green tick — the signature/issuer gate fails closed.
-    const report = await checkEmploymentFreshness(podBase, config, {
+    const report = await checkEmploymentFreshness(podBase, webId, config, {
       now: () => NOW,
       seams: offlineSeams,
     });
@@ -219,7 +220,7 @@ describe("scene 4 — freshness re-check (decision 0007)", () => {
     });
     await seedPod(account.baseUrl, [{ path: "/mortgage/credentials/income", body: stale.body }]);
 
-    const staleReport = await checkEmploymentFreshness(stalePod, config, {
+    const staleReport = await checkEmploymentFreshness(stalePod, webId, config, {
       now: () => NOW,
       seams,
     });
@@ -248,7 +249,7 @@ describe("scene 4 — freshness re-check (decision 0007)", () => {
     });
     expect(replace.ok).toBe(true);
 
-    const freshReport = await checkEmploymentFreshness(stalePod, config, {
+    const freshReport = await checkEmploymentFreshness(stalePod, webId, config, {
       now: () => NOW,
       seams,
     });
@@ -271,7 +272,7 @@ describe("scene 4 — freshness re-check (decision 0007)", () => {
     });
     await seedPod(account.baseUrl, [{ path: "/mortgage/credentials/income", body: revoked.body }]);
     await rig.list.revoke(77, { now: NOW });
-    const report = await checkEmploymentFreshness(pod, config, { now: () => NOW, seams });
+    const report = await checkEmploymentFreshness(pod, webId, config, { now: () => NOW, seams });
     expect(report.fresh).toBe(true);
     expect(report.verified).toBe(false); // STATUS_REVOKED
     expect(report.verifyErrors).toContain("STATUS_REVOKED");
@@ -294,16 +295,47 @@ describe("scene 4 — freshness re-check (decision 0007)", () => {
       index: 88,
     });
     await seedPod(account.baseUrl, [{ path: "/mortgage/credentials/income", body: vc.body }]);
-    const report = await checkEmploymentFreshness(pod, config, { now: () => NOW, seams });
+    const report = await checkEmploymentFreshness(pod, webId, config, { now: () => NOW, seams });
     expect(report.verified).toBe(false);
     expect(report.verifyErrors).toContain("UNTRUSTED_ISSUER");
     expect(report.greenTick).toBe(false);
   }, 60_000);
 
+  test("SUBSTITUTION: a valid credential for a DIFFERENT borrower never greens (holder binding)", async () => {
+    // A fully valid, signed, non-revoked, in-window employment VC — but its
+    // subject is someone else. Dropping it into this pod must NOT green the
+    // tick: the subject must equal the borrower the check is run for.
+    const victim = "https://victim.example/profile/card#me";
+    const account = await server.provisionAccount();
+    const pod = `${account.baseUrl}/`;
+    const config = configWith(account.baseUrl);
+    const foreign = await rig.issueEmployment({
+      subject: victim,
+      credentialId: `${pod}mortgage/credentials/income`,
+      validFrom: new Date(NOW.getTime() - 1 * DAY_MS),
+      validUntil: new Date(NOW.getTime() + 14 * DAY_MS),
+      index: 91,
+    });
+    await seedPod(account.baseUrl, [{ path: "/mortgage/credentials/income", body: foreign.body }]);
+    // Run the check FOR our borrower (webId), not the credential's subject.
+    const report = await checkEmploymentFreshness(pod, webId, config, { now: () => NOW, seams });
+    expect(report.fresh).toBe(true);
+    expect(report.verifyErrors).toContain("SUBJECT_MISMATCH");
+    expect(report.verified).toBe(false);
+    expect(report.greenTick).toBe(false);
+    expect(report.decision).toBe("blocked-invalid");
+  }, 60_000);
+
+  test("400 when the borrower webid is missing", async () => {
+    await expect(
+      checkEmploymentFreshness(podBase, "", config, { now: () => NOW, seams: offlineSeams }),
+    ).rejects.toMatchObject({ status: 400 });
+  });
+
   test("a pod without the credential 404s", async () => {
     const account = await server.provisionAccount();
     await expect(
-      checkEmploymentFreshness(`${account.baseUrl}/`, configWith(account.baseUrl), {
+      checkEmploymentFreshness(`${account.baseUrl}/`, webId, configWith(account.baseUrl), {
         now: () => NOW,
         seams: offlineSeams,
       }),

@@ -6,15 +6,17 @@ import { checkEmploymentFreshness } from "../../../lib/server/freshness";
 import { lenderConfig, podErrorResponse } from "../../../lib/server/service";
 
 export async function GET(request: Request): Promise<Response> {
-  const pod = new URL(request.url).searchParams.get("pod");
-  if (pod === null) {
+  const params = new URL(request.url).searchParams;
+  const pod = params.get("pod");
+  const webid = params.get("webid");
+  if (pod === null || webid === null) {
     return Response.json(
-      { simulated: true, error: "malformed_request", detail: "pod is required" },
+      { simulated: true, error: "malformed_request", detail: "pod and webid are required" },
       { status: 400 },
     );
   }
   try {
-    return Response.json(await checkEmploymentFreshness(pod, lenderConfig()));
+    return Response.json(await checkEmploymentFreshness(pod, webid, lenderConfig()));
   } catch (error) {
     return podErrorResponse(error);
   }

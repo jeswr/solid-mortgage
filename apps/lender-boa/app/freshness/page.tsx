@@ -16,9 +16,9 @@ export const metadata = {
 export default async function FreshnessPage({
   searchParams,
 }: {
-  searchParams: Promise<{ pod?: string }>;
+  searchParams: Promise<{ pod?: string; webid?: string }>;
 }) {
-  const { pod } = await searchParams;
+  const { pod, webid } = await searchParams;
   return (
     <main className="mx-auto w-full max-w-3xl px-6 py-12">
       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -34,13 +34,13 @@ export default async function FreshnessPage({
       </p>
 
       <div className="mt-8">
-        {pod !== undefined ? (
-          <FreshnessPanel apiBase="/lender-boa/api" pod={pod} />
+        {pod !== undefined && webid !== undefined ? (
+          <FreshnessPanel apiBase="/lender-boa/api" pod={pod} webid={webid} />
         ) : (
           <p className="rounded-lg border border-border bg-card p-5 text-sm text-muted-foreground">
-            Connect a granted pod (<code>?pod=</code>) to run the live re-check against the
-            employment credential in the pod. The credential is seeded near-expiry (validFrom −30
-            days, validUntil +14 days), so the beat is genuine — no fake clock.
+            Connect a granted pod (<code>?pod=&amp;webid=</code>) to run the live re-check against
+            the employment credential in the pod. The credential is seeded near-expiry (validFrom
+            −30 days, validUntil +14 days), so the beat is genuine — no fake clock.
           </p>
         )}
       </div>

@@ -48,9 +48,10 @@ them breaks server-side WASM instantiation (proofs then fail to verify).
   the pod's own WAC; they do not yet DPoP-authenticate the caller or bind to an approved grant
   (that arrives with the wallet grant pipeline). Real private-pod grants need a
   grant-authenticated fetch and OIDC/WAC-enabled pods.
-- **Prefill signature verification** — the scene-3 prefill SHACL-validates pod credentials but
-  does not yet run full `verifyCredential` on them (the seed layer signs them only once sm-26
-  lands); the copy states this and the authoritative check runs at underwriting. Scene-4
-  freshness DOES run full `verifyCredential`.
+- **Prefill signature verification** — the scene-3 prefill only SHACL-validates pod
+  credentials; it does not yet run full `verifyCredential` on them (the seed layer signs them
+  only once sm-26 lands), and no separate underwriting-verification step exists yet. The UI
+  copy states this plainly. Scene-4 freshness DOES run full `verifyCredential` (signature +
+  trusted issuer + validity window + status) and binds the credential subject to the borrower.
 - **Loan terms** — the requested amount, subject property, and "approved with conditions"
   outcome are illustrative persona constants, not derived from borrower input.

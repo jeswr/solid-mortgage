@@ -47,7 +47,7 @@ export default async function ApplicationPage({
       </h1>
       <p className="mt-4 text-muted-foreground">
         {prefill.source === "pod"
-          ? "These values were read live from your granted pod data — not re-typed into a form. (Full credential-signature verification runs at underwriting; this prefill is a display convenience.)"
+          ? "These values were read live from your granted pod data — not re-typed into a form. This prefill only checks the data's shape (SHACL); full credential-signature verification is not yet wired into this demo path (tracked)."
           : "Showing the demo persona. Connect a granted pod to prefill from live pod data."}
       </p>
       {podError !== null && (
