@@ -23,7 +23,7 @@
  *   - decision-0015 boundary: anonymous 401, pod/webid overrides 400,
  *     unbound caller 403, unconfigured service identity / issuer flow 503.
  */
-import type { MortgageResourceKind } from "@mortgage/data-model";
+import { MORT, type MortgageResourceKind } from "@mortgage/data-model";
 import { createServicePodFetch } from "@mortgage/solid-kit/auth/service";
 import type { DevOidcIssuer, SolidTestAccount, SolidTestServer } from "@mortgage/solid-kit/testing";
 import {
@@ -38,6 +38,7 @@ import {
   exportPrivateJwk,
   generateKeyPairForSuite,
   isFresh,
+  issueCredential,
   publishVerificationMethod,
   StatusListClient,
   verifyCredential,
@@ -572,7 +573,7 @@ describe("scene 1 — REAL issuance into a real WAC-enforcing pod", () => {
  * stay fully real. Dedicated status-list URLs (`…-fi`) keep this suite's
  * hosted lists independent of the main suite's.
  */
-describe("partial-failure recovery (failure injection; FIXES A + B)", () => {
+describe("partial-failure recovery (failure injection; FIXES A/B/D/E)", () => {
   let owner2: SolidTestAccount;
   let borrower2: DevOidcIssuer;
   let pod2Base = "";
@@ -581,6 +582,12 @@ describe("partial-failure recovery (failure injection; FIXES A + B)", () => {
   const fiStatusListUrls = {} as Record<IssuerFlowId, string>;
   /** One-shot injected failures, keyed "METHOD url". Everything else is real. */
   const failures = new Set<string>();
+  /**
+   * One-shot COMMIT-THEN-THROW injections (FIX E): the real authenticated
+   * request is performed — the pod COMMITS the write — and only then does the
+   * seam report a transport failure, modelling a timeout after commit.
+   */
+  const commitThenFailures = new Set<string>();
 
   function credentialIri2(flow: "employment" | "credit"): string {
     return `${pod2Base}mortgage/credentials/${flow === "employment" ? "income" : "credit"}`;
@@ -655,6 +662,11 @@ describe("partial-failure recovery (failure injection; FIXES A + B)", () => {
         failures.delete(key);
         return new Response("injected transport failure", { status: 500 });
       }
+      if (commitThenFailures.has(key)) {
+        commitThenFailures.delete(key);
+        await realServiceFetch(request); // the pod COMMITS the write…
+        return new Response("injected post-commit transport failure", { status: 500 });
+      }
       return realServiceFetch(request);
     };
 
@@ -682,6 +694,8 @@ describe("partial-failure recovery (failure injection; FIXES A + B)", () => {
   });
 
   let employmentIndex2: string | undefined;
+  /** The CURRENT live employment index on pod2, tracked across re-issues. */
+  let liveEmploymentIndex: number | undefined;
 
   test("FIX A: a failed anchor write leaves no anchor-less credential — retry completes the issue", async () => {
     failures.add(`PUT ${anchorIri2("employment")}`);
@@ -831,6 +845,7 @@ describe("partial-failure recovery (failure injection; FIXES A + B)", () => {
     expect(retry.status).toBe(200);
     const payload = (await retry.json()) as { revokedIndex: number; newIndex: number };
     expect(payload.revokedIndex).toBe(oldIndex);
+    liveEmploymentIndex = payload.newIndex;
     expect(await list.readBit(oldIndex, { now: clock2 })).toBe(true);
 
     const freshBody = await readVault2(credentialIri2("employment"));
@@ -852,5 +867,115 @@ describe("partial-failure recovery (failure injection; FIXES A + B)", () => {
     expect(revokedOutcome.errors.map((error) => error.code)).toEqual(
       expect.arrayContaining(["EXPIRED", "STATUS_REVOKED"]),
     );
+  }, 120_000);
+
+  test("FIX D: a wrong-kind document at the anchor path is never re-signed — a correct anchor is minted instead", async () => {
+    // A VALID issuer-signed operand anchor for the WRONG field (the credit
+    // flow's score anchor), parked at the employment anchor path — the
+    // adversarial shape: it passes proof + revocation checks, so a blind
+    // re-sign would return success without restoring a usable income anchor.
+    const list = new StatusListClient({
+      fetch,
+      issuer: issuerWebIds.employment,
+      key: issuerKeys.employment,
+      url: fiStatusListUrls.employment,
+    });
+    const wrongKind = await issueCredential({
+      claims: {
+        field: MORT.creditScoreValue,
+        kind: "zk-operand-anchor",
+        operandEnc: CAPTURED_OPERAND_ENC[742],
+      },
+      credentialId: anchorIri2("employment"),
+      issuer: issuerWebIds.employment,
+      key: issuerKeys.employment,
+      kind: "zk-operand-anchor",
+      status: list.entry(4242),
+      subject: borrower2.webid,
+      validity: { validFrom: clock2, validUntil: new Date(clock2.getTime() + 14 * DAY_MS) },
+    });
+    const cleared = await owner2.authFetch(anchorIri2("employment"), { method: "DELETE" });
+    expect(cleared.ok).toBe(true);
+    const planted = await owner2.authFetch(anchorIri2("employment"), {
+      method: "PUT",
+      headers: { "content-type": "text/turtle", "if-none-match": "*" },
+      body: wrongKind.body,
+    });
+    expect(planted.ok).toBe(true);
+
+    const response = await service2.reissue(
+      await authedRequest(borrower2, "POST", "reissue", {
+        body: JSON.stringify({ flow: "employment" }),
+      }),
+    );
+    expect(response.status).toBe(200);
+    const payload = (await response.json()) as {
+      anchor: { id: string } | null;
+      newIndex: number;
+    };
+    expect(payload.anchor?.id).toBe(anchorIri2("employment"));
+    liveEmploymentIndex = payload.newIndex;
+
+    // The pod-resident anchor is now the CORRECT income anchor — the planted
+    // document was replaced, not re-signed into a broken "renewed" state.
+    const anchorBody = await readVault2(anchorIri2("employment"));
+    expect(anchorBody).toContain(CAPTURED_OPERAND_ENC[8500]);
+    expect(anchorBody).toContain("monthlyGrossIncomeUsd");
+    expect(anchorBody).not.toContain(CAPTURED_OPERAND_ENC[742]);
+    const anchorOutcome = await verifyStored2(
+      anchorBody,
+      "employment",
+      "zk-operand-anchor",
+      clock2,
+    );
+    expect(anchorOutcome.errors).toEqual([]);
+    expect(anchorOutcome.verified).toBe(true);
+  }, 120_000);
+
+  test("FIX E: a committed-but-thrown pod write completes forward — the replacement's index is never released", async () => {
+    // 15 more days on, the employment credential re-issued in the FIX D test
+    // is stale again; this time the pod COMMITS the replacement write and the
+    // transport throws afterwards.
+    clock2 = new Date(clock2.getTime() + 15 * DAY_MS);
+    expect(liveEmploymentIndex).toBeDefined();
+    const oldIndex = liveEmploymentIndex as number;
+    commitThenFailures.add(`PUT ${credentialIri2("employment")}`);
+
+    const response = await service2.reissue(
+      await authedRequest(borrower2, "POST", "reissue", {
+        body: JSON.stringify({ flow: "employment" }),
+      }),
+    );
+    // The write actually landed, so the rail completes FORWARD (no
+    // reinstate, no release) instead of "compensating" a committed write.
+    expect(response.status).toBe(200);
+    const payload = (await response.json()) as { revokedIndex: number; newIndex: number };
+    expect(payload.revokedIndex).toBe(oldIndex);
+    expect(payload.newIndex).not.toBe(oldIndex);
+
+    // Consistent on the REAL hosted list: the superseded index STAYS revoked
+    // (never reinstated) and the delivered replacement's index is live and
+    // clear — a later credential can never be coupled onto it.
+    const list = new StatusListClient({
+      fetch,
+      issuer: issuerWebIds.employment,
+      key: issuerKeys.employment,
+      url: fiStatusListUrls.employment,
+    });
+    expect(await list.readBit(oldIndex, { now: clock2 })).toBe(true);
+    expect(await list.readBit(payload.newIndex, { now: clock2 })).toBe(false);
+
+    // The pod-resident document IS the delivered replacement and fully
+    // verifies (status resolution included) at the same instant.
+    const freshBody = await readVault2(credentialIri2("employment"));
+    const freshOutcome = await verifyStored2(
+      freshBody,
+      "employment",
+      "employment-income-credential",
+      clock2,
+    );
+    expect(freshOutcome.errors).toEqual([]);
+    expect(freshOutcome.verified).toBe(true);
+    expect(isFresh(freshOutcome.credential ?? {}, clock2)).toBe(true);
   }, 120_000);
 });

@@ -27,7 +27,7 @@
  * a single demo instance can never hand a replacement its revoked index.
  */
 
-import { fitsZkBudget } from "@mortgage/data-model";
+import { fitsZkBudget, ZkOperandAnchor } from "@mortgage/data-model";
 import {
   createApiVerifier,
   type DpopApiVerifier,
@@ -58,6 +58,7 @@ import {
   verifyCredential,
 } from "@mortgage/vc-kit";
 import type { DatasetCore } from "@rdfjs/types";
+import { DataFactory } from "n3";
 import { type OwnerBindingSeams, resolveAuthorizedPod } from "../../../lender-boa/lib/server/owner";
 import {
   PodAccessError,
@@ -520,6 +521,120 @@ export function createIssuerService(options: IssuerServiceOptions): IssuerServic
     return operandEnc;
   }
 
+  /**
+   * FIX D: an EXISTING document at the anchor path may be renewed by
+   * re-signing ONLY when it is genuinely THIS flow's operand anchor. Four
+   * fail-closed checks: (1) it fully verifies as a `zk-operand-anchor`
+   * (shape, signature, status) with at most an EXPIRED window; (2) it is
+   * signed by THIS flow's trusted issuer; (3) its subject is the
+   * AUTHENTICATED caller; (4) its typed claims carry EXACTLY the flow's
+   * anchored field IRI and CAPTURED operand encoding. Anything else — e.g. a
+   * valid issuer-signed credential of a different kind or field parked at
+   * the anchor path — must never be blindly re-signed (that would return
+   * success without restoring a usable Tier-A anchor); the caller mints a
+   * fresh correct anchor over it instead.
+   */
+  async function anchorUsableForRenewal(
+    anchorIri: string,
+    anchorDataset: DatasetCore,
+    runtime: FlowRuntime,
+    expectedField: string,
+    expectedEnc: string,
+    webid: string,
+    now: Date,
+  ): Promise<boolean> {
+    const outcome = await verifyCredential(anchorDataset, {
+      expectShape: "zk-operand-anchor",
+      now,
+      trustedIssuers: [runtime.issuerWebId],
+      ...verifySeams(),
+    });
+    if (outcome.errors.some((error) => error.code !== "EXPIRED")) return false;
+    if (outcome.credential?.subject !== webid) return false;
+    try {
+      // Typed read (RDF discipline) of the anchored field + encoding.
+      const subject = new ZkOperandAnchor(anchorIri, anchorDataset, DataFactory).credentialSubject;
+      return subject.fieldIri === expectedField && subject.operandEnc === expectedEnc;
+    } catch {
+      return false;
+    }
+  }
+
+  type ReplacementWriteOutcome = "committed" | "failed" | "indeterminate";
+
+  /**
+   * FIX E: a THROWN pod write is not proof the write failed — a transport
+   * error can fire after the pod committed. Re-read and discriminate:
+   * `committed` when the resource now carries the replacement's (unique)
+   * proofValue — robust to the pod re-serialising the Turtle; `failed` when
+   * the resource is provably unchanged (same ETag as the pre-mutation read);
+   * anything else — unreadable, foreign content, missing ETags — is
+   * `indeterminate`.
+   */
+  async function confirmReplacementWrite(
+    iri: string,
+    proofValue: string,
+    oldEtag: string | null,
+    podFetch: PodIoFetch,
+  ): Promise<ReplacementWriteOutcome> {
+    try {
+      const after = await podFetch(iri, {
+        headers: { accept: "text/turtle" },
+        redirect: "error",
+      });
+      if (!after.ok) return "indeterminate";
+      const body = await after.text();
+      if (body.includes(proofValue)) return "committed";
+      const etag = after.headers.get("etag");
+      if (etag !== null && oldEtag !== null && etag === oldEtag) return "failed";
+      return "indeterminate";
+    } catch {
+      return "indeterminate";
+    }
+  }
+
+  /**
+   * Deliver a replacement whose OLD status index `reissueCredential` already
+   * revoked. On a thrown write the outcome is disambiguated (FIX E):
+   *  - committed → the throw was post-commit transport noise; complete
+   *    FORWARD (no reinstate, no release — the pod references the new index);
+   *  - failed → the old document is still pod-resident; COMPENSATE (FIX B):
+   *    reinstate its index and release the undelivered replacement's slot —
+   *    a fully-old, retryable state;
+   *  - indeterminate → fail safe: NEVER reinstate (that could un-revoke a
+   *    possibly-superseded credential) and NEVER release (the index may be
+   *    referenced by a committed document); surface the error.
+   */
+  async function writeReplacement(args: {
+    iri: string;
+    body: string;
+    proofValue: string;
+    oldEtag: string | null;
+    revokedIndex: number;
+    newIndex: number;
+    runtime: FlowRuntime;
+    now: Date;
+    podFetch: PodIoFetch;
+  }): Promise<void> {
+    try {
+      await writePodTurtle(args.iri, args.body, { etag: args.oldEtag, podFetch: args.podFetch });
+      return;
+    } catch (writeError) {
+      const outcome = await confirmReplacementWrite(
+        args.iri,
+        args.proofValue,
+        args.oldEtag,
+        args.podFetch,
+      );
+      if (outcome === "committed") return;
+      if (outcome === "failed") {
+        await args.runtime.statusList.reinstate(args.revokedIndex, { now: args.now });
+        args.runtime.allocator.release(args.newIndex);
+      }
+      throw writeError;
+    }
+  }
+
   return {
     async flows(request) {
       const authenticated = await caller(request);
@@ -816,7 +931,24 @@ export function createIssuerService(options: IssuerServiceOptions): IssuerServic
         // credential beside a stale anchor, and every failure state retries.
         let anchorSummary: IssuedSummary | undefined;
         if (definition.anchor !== undefined && anchorIri !== undefined) {
-          if (anchorResource !== undefined) {
+          const operandEnc = capturedEncodingFor(definition);
+          if (operandEnc instanceof Response) return operandEnc;
+          // FIX D: only a document that provably IS this flow's anchor
+          // (shape + issuer + subject + exact field/encoding) is renewed by
+          // re-signing; anything else at the path is REPLACED with a fresh
+          // correct anchor, never blindly re-signed.
+          const renewable =
+            anchorResource !== undefined &&
+            (await anchorUsableForRenewal(
+              anchorIri,
+              anchorResource.dataset,
+              runtime,
+              definition.anchor.field,
+              operandEnc,
+              authenticated.webid,
+              now,
+            ));
+          if (anchorResource !== undefined && renewable) {
             const anchorResult = await reissueCredential(anchorResource.dataset, {
               allocator: runtime.allocator,
               key: runtime.key,
@@ -824,19 +956,17 @@ export function createIssuerService(options: IssuerServiceOptions): IssuerServic
               statusList: runtime.statusList,
               validity,
             });
-            try {
-              await writePodTurtle(anchorIri, anchorResult.issued.body, {
-                etag: anchorResource.etag,
-                podFetch,
-              });
-            } catch (writeError) {
-              // The old anchor is still the pod-resident document — un-revoke
-              // its index so pod and list agree again, and release the
-              // undelivered replacement's slot. State: fully old, retryable.
-              await runtime.statusList.reinstate(anchorResult.revokedIndex, { now });
-              runtime.allocator.release(anchorResult.newIndex);
-              throw writeError;
-            }
+            await writeReplacement({
+              body: anchorResult.issued.body,
+              iri: anchorIri,
+              newIndex: anchorResult.newIndex,
+              now,
+              oldEtag: anchorResource.etag,
+              podFetch,
+              proofValue: anchorResult.issued.proof.proofValue,
+              revokedIndex: anchorResult.revokedIndex,
+              runtime,
+            });
             anchorSummary = summarize(
               anchorResult.issued,
               runtime,
@@ -844,12 +974,10 @@ export function createIssuerService(options: IssuerServiceOptions): IssuerServic
               validity.validUntil,
             );
           } else {
-            // Repair a missing anchor as part of the same click: the main
-            // credential just passed the gate for THIS caller, so mint the
-            // anchor fresh with the re-issue window (strict create; no status
-            // mutation to compensate).
-            const operandEnc = capturedEncodingFor(definition);
-            if (operandEnc instanceof Response) return operandEnc;
+            // Missing anchor, or an unusable document parked at the anchor
+            // path: mint the correct anchor fresh with the re-issue window
+            // (strict create when absent, conditional overwrite when
+            // replacing; no prior revocation to compensate).
             const anchorIssued = await issueCredential({
               claims: { field: definition.anchor.field, kind: "zk-operand-anchor", operandEnc },
               credentialId: anchorIri,
@@ -860,7 +988,10 @@ export function createIssuerService(options: IssuerServiceOptions): IssuerServic
               subject: authenticated.webid,
               validity,
             });
-            await writePodTurtle(anchorIri, anchorIssued.body, { etag: undefined, podFetch });
+            await writePodTurtle(anchorIri, anchorIssued.body, {
+              etag: anchorResource?.etag,
+              podFetch,
+            });
             anchorSummary = summarize(
               anchorIssued,
               runtime,
@@ -883,16 +1014,17 @@ export function createIssuerService(options: IssuerServiceOptions): IssuerServic
           statusList: runtime.statusList,
           validity,
         });
-        try {
-          await writePodTurtle(credentialIri, result.issued.body, {
-            etag: resource.etag,
-            podFetch,
-          });
-        } catch (writeError) {
-          await runtime.statusList.reinstate(result.revokedIndex, { now });
-          runtime.allocator.release(result.newIndex);
-          throw writeError;
-        }
+        await writeReplacement({
+          body: result.issued.body,
+          iri: credentialIri,
+          newIndex: result.newIndex,
+          now,
+          oldEtag: resource.etag,
+          podFetch,
+          proofValue: result.issued.proof.proofValue,
+          revokedIndex: result.revokedIndex,
+          runtime,
+        });
 
         return Response.json({
           anchor: anchorSummary ?? null,

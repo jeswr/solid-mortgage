@@ -38,10 +38,16 @@ The SUPPLIER side of the journey (scenes 1 + 4):
   documents before any pod mutation and writes the anchor first, so no failure point can
   leave an anchor-less credential reachable; every partial state (failed write, external
   anchor deletion) is completed or repaired on retry instead of being locked out by
-  `already_issued`. Re-issue compensates: if the conditional pod write fails after
-  `reissueCredential` revoked the old index, the index is REINSTATED and the replacement's
-  slot released — the pod-resident credential is never left pointing at a revoked index,
-  and every single-failure state retries cleanly.
+  `already_issued`. Re-issue compensates with a disambiguating re-read: a thrown pod
+  write is confirmed against the pod before acting — if the replacement actually landed
+  (its unique proofValue is present) the flow completes FORWARD; only a provably
+  unchanged resource (same ETag) triggers compensation (old index REINSTATED,
+  replacement's slot released); an indeterminate outcome fails safe — never reinstating
+  a possibly-superseded credential's index and never releasing a possibly-referenced
+  one. An existing document at the anchor path is renewed by re-signing ONLY after it
+  fully verifies as THIS flow's anchor (shape, trusted issuer, caller as subject, exact
+  field + captured operand encoding); anything else is replaced with a fresh correct
+  anchor, never blindly re-signed.
 - **`GET /api/flows`**: the flow catalogue plus the caller's live per-flow vault state
   (issued / verified / fresh), each entry the verdict of the full fail-closed
   `verifyCredential` chain.
