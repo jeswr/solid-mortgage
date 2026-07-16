@@ -715,11 +715,17 @@ The whole of `packages/ui`, de-branded behind `createDisclaimerPack`.
 
 ```ts
 // zod contracts kit OWNS — the single source of truth showcase composes its document
-// schema from (roborev 5648 Medium). Exported as schemas AND inferred types.
-export const brandingConfigSchema: z.ZodType<BrandingConfig>;
-export const themeSpecSchema: z.ZodType<ThemeSpec>;
-export const bannedMarkSchema: z.ZodType<BannedMark>;
-export type { BrandingConfig, ThemeSpec, BannedMark };   // = z.infer<typeof …>
+// schema from (roborev 5648 Medium). Schema-first: each schema is defined WITHOUT a
+// type annotation, and the contract is INFERRED from it — no circular reference
+// (roborev 5650 Medium). e.g.:
+//   export const brandingConfigSchema = z.object({ convener: z.string().min(1), … });
+//   export type BrandingConfig = z.infer<typeof brandingConfigSchema>;
+export const brandingConfigSchema;   // z.object({ … })
+export const themeSpecSchema;
+export const bannedMarkSchema;
+export type BrandingConfig = z.infer<typeof brandingConfigSchema>;
+export type ThemeSpec = z.infer<typeof themeSpecSchema>;
+export type BannedMark = z.infer<typeof bannedMarkSchema>;
 
 // copy factories (all of packages/ui/src/disclaimers.ts, parameterised)
 export interface DisclaimerPack { /* bannerFullCopy, bannerCompactCopy, footerLegalLine,
