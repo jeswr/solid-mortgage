@@ -20,4 +20,21 @@ data model (FIBO/MISMO-grounded), and the sparq-backed infrastructure once resea
 - `apps/` — one Next.js app per stakeholder, deployed to Vercel
 - `packages/` — shared data-model / solid-kit / vc-kit / ui workspaces
 
+## ZK proving — COOP/COEP (apps must wire these headers)
+
+`packages/vc-kit`'s Tier A prover (sm-25) runs sparq's `filter_int` circuits in-browser with
+`@noir-lang/noir_js@1.0.0-beta.21` + `@aztec/bb.js@5.0.0-nightly.20260324`. bb.js
+multithreading (~4× faster proving) requires cross-origin isolation, so every app that mounts
+a proving surface must send both headers on its ZK routes (Next.js `headers()` in
+`next.config`):
+
+```
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Embedder-Policy: require-corp
+```
+
+Without them proving still works, single-threaded. Verification is unaffected. Call
+`prewarmProver()` on route mount so the first proof pays no WASM cold start. Each app wires
+its own headers in its app bead.
+
 Every commit is reviewed by roborev (`.roborev.toml`: codex / gpt-5.6-sol).
