@@ -32,21 +32,35 @@ file follow-ups as beads (`--deps discovered-from:<id>`), never TODOs; `surface:
 3. `gh pr merge <n> --merge --delete-branch`; `git pull --rebase`; `bd close <id>`; `bd sync`;
    commit `.beads` on main; remove the worktree.
 
-## State at handoff (2026-07-16)
+## State at handoff (2026-07-16, updated end-of-session)
 **Merged (main):** all shared packages (data-model incl. vocab+shapes+fixtures, solid-kit incl.
 harness+auth+browser-pod, vc-kit incl. ZK Tier-A+anchors+status+seed-tooling, ui incl. disclaimer
-pack); apps **tour, lender-boa, lender-53, property, closing, vocab**. Upstream in jeswr/solid-sdk:
-agent personas + roborev/beads skills, `@jeswr/synthetic-rdf`, `@jeswr/solid-seed`, mirror sweep,
-dependabot + CI-hygiene fixes. Showcase-framework DESIGN merged (`docs/research/
-showcase-framework-design.md`, epic sm-72; build children sm-74/75/76/77 gated on apps landing).
-**Tour deployed** (Vercel, SSO-gated preview) — see the URL in the session / `bd show sm-37`.
+pack); **ALL 9 stakeholder apps — tour, lender-boa, lender-53, property, closing, vocab, wallet
+(sm-28), verifications (sm-29), gse (sm-32)**. The stakeholder-apps epic (sm-8) app children are
+all closed. Upstream in jeswr/solid-sdk: agent personas + roborev/beads skills, `@jeswr/synthetic-rdf`,
+`@jeswr/solid-seed`, mirror sweep, dependabot + CI-hygiene fixes. Showcase-framework DESIGN merged
+(`docs/research/showcase-framework-design.md`, epic sm-72; build children sm-74/75/76/77 now UNBLOCKED
+— apps have landed). **Tour deployed** (Vercel, SSO-gated preview) — URL in `bd show sm-37`.
 
-**In-flight when handed off (RE-CHECK — their laptop agents die on disconnect):**
-- **sm-28 wallet** (Fable) — central borrower Data Vault; if no open PR, re-dispatch to Fable.
-- **sm-29 verifications** (Sol), **sm-32 gse** (Sol) — issuer/AUS apps; if claimed with no open
-  PR, re-dispatch (Sol); hold to the real-auth-path bar.
-On resume: `bd list --json | jq '.[]|select(.status=="in_progress")'` and
-`gh pr list --repo jeswr/solid-mortgage --state open` — reconcile claimed-but-dead beads.
+**sm-28/sm-29/sm-32 all MERGED this session** under the full security bar (pnpm gate green; roborev
+security lane clean; independent adversarial agents confirmed real OIDC/DPoP/pod/verifier — NO mocked
+auth/issue/verify — on each). verifications took 3 hardening rounds (multi-write atomicity, anchor-kind
+validation, revoked-anchor refusal, index-release) + an e2e reconcile; gse took 3 rounds (evidence-gate,
+honesty, appraisal-property binding) + e2e role. ~20 follow-up beads filed for deferred/lower-severity
+items (Mode-2b login UIs sm-2oq/sm-ee5bf00d/sm-11ad63a0, serviceWebId sm-4oq/sm-8k0, findings-as-RDF
+sm-89r, property-IRI sm-g0p, ZIP+4 sm-cc4, flows verified-state sm-zxg, allocator residuals sm-bpu/sm-1nc,
+tooling PATH bug sm-9503b20b, etc.) — all `discovered-from` + `surface:`-labelled.
+
+**Ops notes learned this session (see `bd memories`):** (1) The HANDOFF Sol/codex path FAILS on this box
+(bwrap can't nest; the `--dangerously-bypass-approvals-and-sandbox` fix is classifier-blocked) — route
+app/authoring work to **Fable 5 solid-app-builder agents via the Agent tool** in pre-made worktrees
+instead (also the stronger security routing). (2) `bd create/label` do NOT auto-flush issues.jsonl —
+run `bd export --output .beads/issues.jsonl` before committing beads or they strand. (3) Per-app builders
+can't run the cross-app e2e (`e2e/apps.spec.ts`); banner copy/role/org or interstitial changes there break
+it — brief builders to update the app's e2e-table entry and run the full e2e locally.
+
+**No open PRs, no in_progress beads at handoff.** On resume: `gh pr list --state open` and
+`bd list --json | jq '.[]|select(.status=="in_progress")'` to reconcile anything new.
 
 **Remaining after the apps:** sm-65 (seeder integration), sm-37 (full 8-project Vercel deploy —
 env lessons in its notes: rootDirectory=apps/<app>, `MORTGAGE_TRUST_FORWARDED_HEADERS=1` on every
