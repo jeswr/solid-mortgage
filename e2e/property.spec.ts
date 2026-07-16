@@ -59,6 +59,11 @@ test.describe("property (sm-33)", () => {
         MORTGAGE_POD_ALLOWED_ORIGINS: pods.baseUrl,
         MORTGAGE_DEV_ALLOW_LOOPBACK: "1",
         MORTGAGE_ENABLE_RUNTIME_ISSUANCE: "1",
+        // Reconstruct the DPoP htu from the request host (the Vercel posture:
+        // TLS terminates ahead of the function). Without this, `next start`
+        // reconstructs a mismatching htu host/scheme and every DPoP-bound call
+        // is rejected 401 — matches apps/lender-boa's e2e recipe.
+        MORTGAGE_TRUST_FORWARDED_HEADERS: "1",
       },
     });
   });
