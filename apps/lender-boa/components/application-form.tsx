@@ -44,6 +44,7 @@ export interface ApplicationFormProps {
 export function ApplicationForm({ demoPrefill, apiBase }: ApplicationFormProps) {
   const [prefill, setPrefill] = useState<UrlaPrefill>(demoPrefill);
   const [podConnected, setPodConnected] = useState(false);
+  const [prefillError, setPrefillError] = useState<string | null>(null);
   const [result, setResult] = useState<SubmitResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -53,13 +54,26 @@ export function ApplicationForm({ demoPrefill, apiBase }: ApplicationFormProps) 
     (async () => {
       try {
         const response = await fetch(`${apiBase}/application/prefill`);
-        if (!response.ok) return; // 401 = no authenticated session: demo persona stands
+        // ONLY 401 means "no authenticated session" — the honest demo fallback.
+        if (response.status === 401) return;
+        if (!response.ok) {
+          // An AUTHENTICATED failure (403 binding, 5xx pod/config) is a real
+          // error — surface it instead of masquerading as the demo fallback.
+          if (!cancelled) {
+            setPrefillError(
+              `live pod prefill failed (${response.status}) — showing the demo persona`,
+            );
+          }
+          return;
+        }
         const body = (await response.json()) as UrlaPrefill;
         if (cancelled || body.source !== "pod") return;
         setPrefill(body);
         setPodConnected(true);
       } catch {
-        // Network failure: the demo persona stands.
+        if (!cancelled) {
+          setPrefillError("live pod prefill failed (network) — showing the demo persona");
+        }
       }
     })();
     return () => {
@@ -93,6 +107,11 @@ export function ApplicationForm({ demoPrefill, apiBase }: ApplicationFormProps) 
           ? "These values were read live from your granted pod data — not re-typed into a form. This prefill only checks the data's shape (SHACL) and its subject binding; full credential-signature verification is not yet wired into this demo path (tracked)."
           : "Showing the demo persona. The live pod prefill requires an authenticated borrower session (hosted mode) — in the default in-browser demo there is no real login, so this rail honestly stays off."}
       </p>
+      {prefillError !== null && (
+        <p className="mt-2 text-sm text-accent" data-prefill-error="" role="alert">
+          {prefillError}
+        </p>
+      )}
       <form aria-label="Uniform Residential Loan Application (URLA subset, demo)" className="mt-6">
         <fieldset className="rounded-lg border border-border bg-card p-5">
           <legend className="px-1 text-sm font-semibold text-foreground">

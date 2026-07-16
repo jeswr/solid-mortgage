@@ -16,7 +16,9 @@
  *
  * Fail-closed invariants (do NOT weaken): unconfigured issuer allowlist ⇒
  * 503; any binding failure ⇒ 403; malformed payloads ⇒ 400 before any pod IO;
- * unexpected errors ⇒ 500, never a pass.
+ * unexpected errors ⇒ 500, never a pass. Handler order is strict:
+ * authenticate (anonymous ⇒ 401, even with malformed params) → reject
+ * overrides → validate the body → ONLY THEN the pod binding + IO.
  */
 import {
   createApiVerifier,
@@ -105,25 +107,36 @@ export function createPodRailService(options: PodRailServiceOptions): PodRailSer
   };
 
   /**
-   * The decision-0015 boundary: authenticate, refuse overrides, derive the pod.
-   * Returns the caller or the error `Response` the handler must return as-is.
+   * Step 1 — authenticate. Anonymous is ALWAYS 401 (even with malformed
+   * params: the caller's identity is established before anything else).
    */
-  async function requireCaller(request: Request): Promise<AuthenticatedPodCaller | Response> {
+  async function authenticate(request: Request): Promise<{ webid: string } | Response> {
     if (config.trustedOidcIssuers.length === 0) {
       return notConfigured("MORTGAGE_TRUSTED_OIDC_ISSUERS is unset");
     }
+    return verifyApiRequest(
+      { headers: request.headers, method: request.method, url: publicRequestUrl(request) },
+      { verifier: getVerifier(), rateLimiter },
+    );
+  }
+
+  /** Step 2 — refuse query overrides. `undefined` = clean. */
+  function queryOverrides(request: Request): Response | undefined {
     const url = new URL(request.url);
     if (OVERRIDE_PARAMS.some((name) => url.searchParams.has(name))) {
       return overrideRejection("query");
     }
-    const caller = await verifyApiRequest(
-      { headers: request.headers, method: request.method, url: publicRequestUrl(request) },
-      { verifier: getVerifier(), rateLimiter },
-    );
-    if (caller instanceof Response) return caller;
+    return undefined;
+  }
+
+  /**
+   * Final step — derive the authorized pod (the first pod/network IO of the
+   * pipeline; runs only after authentication + payload validation).
+   */
+  async function bindPod(webid: string): Promise<AuthenticatedPodCaller | Response> {
     try {
-      const podBase = await resolveAuthorizedPod(caller.webid, config, options.ownerSeams ?? {});
-      return { webid: caller.webid, podBase };
+      const podBase = await resolveAuthorizedPod(webid, config, options.ownerSeams ?? {});
+      return { webid, podBase };
     } catch (error) {
       return podErrorResponse(error);
     }
@@ -155,7 +168,11 @@ export function createPodRailService(options: PodRailServiceOptions): PodRailSer
 
   return {
     async prefill(request: Request): Promise<Response> {
-      const caller = await requireCaller(request);
+      const identity = await authenticate(request);
+      if (identity instanceof Response) return identity;
+      const rejected = queryOverrides(request);
+      if (rejected !== undefined) return rejected;
+      const caller = await bindPod(identity.webid);
       if (caller instanceof Response) return caller;
       try {
         return Response.json(await prefillFromPod(caller.podBase, caller.webid, config));
@@ -165,10 +182,14 @@ export function createPodRailService(options: PodRailServiceOptions): PodRailSer
     },
 
     async submit(request: Request): Promise<Response> {
-      const caller = await requireCaller(request);
-      if (caller instanceof Response) return caller;
+      const identity = await authenticate(request);
+      if (identity instanceof Response) return identity;
+      const rejected = queryOverrides(request);
+      if (rejected !== undefined) return rejected;
       const body = await readBody(request);
       if (body instanceof Response) return body;
+      const caller = await bindPod(identity.webid);
+      if (caller instanceof Response) return caller;
       try {
         return Response.json(
           await submitApplication(caller.podBase, caller.webid, config, { now }),
@@ -179,7 +200,11 @@ export function createPodRailService(options: PodRailServiceOptions): PodRailSer
     },
 
     async freshness(request: Request): Promise<Response> {
-      const caller = await requireCaller(request);
+      const identity = await authenticate(request);
+      if (identity instanceof Response) return identity;
+      const rejected = queryOverrides(request);
+      if (rejected !== undefined) return rejected;
+      const caller = await bindPod(identity.webid);
       if (caller instanceof Response) return caller;
       try {
         return Response.json(
@@ -194,10 +219,14 @@ export function createPodRailService(options: PodRailServiceOptions): PodRailSer
     },
 
     async reissueRequest(request: Request): Promise<Response> {
-      const caller = await requireCaller(request);
-      if (caller instanceof Response) return caller;
+      const identity = await authenticate(request);
+      if (identity instanceof Response) return identity;
+      const rejected = queryOverrides(request);
+      if (rejected !== undefined) return rejected;
       const body = await readBody(request);
       if (body instanceof Response) return body;
+      const caller = await bindPod(identity.webid);
+      if (caller instanceof Response) return caller;
       // SIMULATION: dispatches/persists nothing. In the built-for-real product
       // this notifies the employment verifier's re-issue endpoint over the
       // borrower's existing grant; in the demo the re-issue is performed

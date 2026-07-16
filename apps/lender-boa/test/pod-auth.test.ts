@@ -162,6 +162,13 @@ describe("anonymous callers (decision 0015 L1)", () => {
 });
 
 describe("param overrides are rejected loudly (decision 0015 L2.4)", () => {
+  test("an ANONYMOUS caller with override params is still 401 (identity before validation)", async () => {
+    const response = await service.prefill(
+      new Request(`${apiUrl("/application/prefill")}?pod=${encodeURIComponent(podBase)}`),
+    );
+    expect(response.status).toBe(401);
+  });
+
   test("a query pod= is rejected 400 even for an authenticated caller", async () => {
     const request = await authedRequest(borrower, "GET", "/application/prefill", {
       query: `?pod=${encodeURIComponent(podBase)}`,

@@ -19,6 +19,15 @@
  *      already read from an owner-controlled pod resource and one fetch serves
  *      both checks.
  *
+ *      TRUST ASSUMPTION (decision 0015; roborev security 5579): the backward
+ *      acknowledgment is meaningful only because `<pod>profile/card` is
+ *      OWNER-ONLY-WRITABLE — an operator requirement on every allowlisted pod
+ *      host that this code cannot verify from outside. Harmless today (pod IO
+ *      is anonymous and the L3 subject binding blocks foreign credentials);
+ *      MUST be revisited when sm-28/sm-x39 wires a privileged lender fetch:
+ *      bind via the grant registry where a grant exists, or fail-closed-check
+ *      that acknowledgment cards are not anonymously writable.
+ *
  * All RDF via `@jeswr/fetch-rdf` + `@solid/object` typed accessors (house
  * rule). The WebID profile fetch is DNS-pinned SSRF-guarded in production
  * (`@jeswr/guarded-fetch/node`); the dev/e2e loopback flag swaps ONLY the

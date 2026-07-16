@@ -498,9 +498,15 @@ test.describe("lender-boa (sm-30)", () => {
   });
 
   test("caller-supplied pod params are rejected 400 (decision 0015)", async () => {
-    const response = await fetch(
-      `${appOrigin}/lender-boa/api/freshness?pod=${encodeURIComponent(podBase)}`,
-    );
+    const url = `${appOrigin}/lender-boa/api/freshness`;
+    // Anonymous + override: identity comes first — 401, not 400.
+    const anonymous = await fetch(`${url}?pod=${encodeURIComponent(podBase)}`);
+    expect(anonymous.status).toBe(401);
+    // Authenticated + override: rejected loudly.
+    const headers: Record<string, string> = await issuer.authHeaders("GET", url);
+    headers["x-forwarded-host"] = new URL(url).host;
+    headers["x-forwarded-proto"] = "http";
+    const response = await fetch(`${url}?pod=${encodeURIComponent(podBase)}`, { headers });
     expect(response.status).toBe(400);
     const body = (await response.json()) as { error: string };
     expect(body.error).toBe("param_rejected");
@@ -517,6 +523,24 @@ test.describe("lender-boa (sm-30)", () => {
       "demo",
     );
     await expectBannerAndAxe(page);
+  });
+
+  test("an AUTHENTICATED prefill failure surfaces an alert — never the silent demo fallback", async ({
+    page,
+  }) => {
+    await page.route("**/lender-boa/api/application/prefill", (route) =>
+      route.fulfill({
+        status: 503,
+        contentType: "application/json",
+        body: JSON.stringify({ simulated: true, error: "not_configured" }),
+      }),
+    );
+    await page.goto(`${appOrigin}/lender-boa/application`);
+    await expect(page.locator("[data-prefill-error]")).toBeVisible();
+    await expect(page.locator("[data-prefill-source]")).toHaveAttribute(
+      "data-prefill-source",
+      "demo",
+    );
   });
 
   test("application page prefills the URLA subset FROM the token-bound pod", async ({ page }) => {

@@ -38,6 +38,14 @@ token WebID by a bidirectional `pim:storage` binding, never from a parameter:
    cannot separate `https://pods.example/alex/` from `https://pods.example/mallory/`, and the
    forward claim is attacker-authored (anyone can put any IRI in their own profile). Only the
    victim pod's refusal to name the attacker stops cross-pod substitution.
+
+   **Stated trust assumption** (roborev security 5579): the acknowledgment is meaningful only
+   because `<pod>profile/card` is owner-only-writable — an operator REQUIREMENT on every
+   allowlisted pod host, which the lender cannot verify from outside. Today a forged
+   acknowledgment gains nothing (pod IO is anonymous and L3 blocks foreign credentials), but
+   once sm-28 wires a PRIVILEGED lender fetch into `podIoFetch`, the implementing bead
+   (sm-x39) must bind via the grant registry where a grant exists and/or fail-closed-check
+   that acknowledgment cards on allowlisted origins are not anonymously writable.
 4. Requests that carry `pod`/`webid` parameters anyway are rejected 400 (`param_rejected`) —
    overrides are refused loudly, not ignored.
 
@@ -81,10 +89,11 @@ driveable without test-injected headers (follow-up).
 
 ## Interface (for other reader apps and for sm-28)
 
-`apps/lender-boa/lib/server/caller.ts` `createPodCallerBoundary({ config, verifier?,
-rateLimiter?, seams? }).require(request) → { webid, podBase } | Response` — built on solid-kit
-`createApiVerifier`/`verifyApiRequest` + `resolveAuthorizedPod` (`lib/server/owner.ts`). When a
-second app needs it, hoist boundary + resolver into solid-kit unchanged (extract-on-second-use
-rule). sm-28's grant pipeline swaps `podIoFetch` for the lender service identity and MAY swap
+`apps/lender-boa/lib/server/pod-rail.ts` `createPodRailService({ config, verifier?,
+rateLimiter?, ownerSeams?, freshnessSeams?, now? })` — per-route handlers over a strict
+pipeline (authenticate → reject overrides → validate body → bind pod via
+`resolveAuthorizedPod` (`lib/server/owner.ts`) → scene logic), built on solid-kit
+`createApiVerifier`/`verifyApiRequest`. When a second app needs it, hoist boundary + resolver
+into solid-kit unchanged (extract-on-second-use rule). sm-28's grant pipeline swaps `podIoFetch` for the lender service identity and MAY swap
 `resolveAuthorizedPod` for a grant-registry-backed resolver (grantor == token WebID, pod +
 resource scope from the grant record) — the boundary contract above does not change.
