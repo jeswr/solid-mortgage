@@ -46,8 +46,10 @@ token WebID by a bidirectional `pim:storage` binding, never from a parameter:
    once sm-28 wires a PRIVILEGED lender fetch into `podIoFetch`, the implementing bead
    (sm-x39) must bind via the grant registry where a grant exists and/or fail-closed-check
    that acknowledgment cards on allowlisted origins are not anonymously writable.
-4. Requests that carry `pod`/`webid` parameters anyway are rejected 400 (`param_rejected`) —
-   overrides are refused loudly, not ignored.
+4. AUTHENTICATED requests that carry `pod`/`webid` parameters anyway are rejected 400
+   (`param_rejected`) — overrides are refused loudly, not ignored. Identity comes first:
+   an anonymous request is 401 regardless of its parameters (L1 precedes parameter
+   validation), and body validation precedes any pod/profile network IO.
 
 **L3 — Subject binding.** `pod-owner == token-webid` is L2's invariant; every credential the
 route consumes must additionally satisfy `credentialSubject == token-webid` (prefill now
