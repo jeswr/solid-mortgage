@@ -1,10 +1,15 @@
 /**
- * SECURITY regression (roborev sm-28 round-4): the fresh-create WINDOW.
+ * SECURITY regression (roborev sm-28 round-4/5): the fresh-create WINDOW.
  *
  *   1. Between the wallet's container PUT and its lock PUT, the new
  *      `/mortgage/receipts/` inherits the parent ACL — a racing write could
- *      plant a forged receipt. `ensureReceiptsStore` closes this by listing the
- *      just-locked store and failing closed unless it is EMPTY.
+ *      plant a forged receipt. Once the lock lands the wallet is the only
+ *      writer, so `ensureReceiptsStore` DELETES any planted `vault-*` member
+ *      (forged by construction) and proceeds with a clean store — it never
+ *      seals the plant under its own lock (which a retry would launder into
+ *      trusted policy). The forged withdrawal therefore never enters policy:
+ *      the grant completes AND the planted-against party stays grantable, even
+ *      across a retry.
  *   2. `verifyReceiptsLock` requires a POSITIVE `acl:default` write rule for the
  *      owner (+ service) — a lock with only `accessTo` rules (members keep
  *      inheriting parent Write) is refused.
@@ -21,6 +26,7 @@ import { describe, expect, test } from "vitest";
 import {
   changeContainerAccess,
   mortgageContainerIri,
+  readGrantStandings,
   receiptsContainerIri,
 } from "../lib/grants/engine";
 
@@ -50,12 +56,14 @@ async function freshPod(): Promise<{
 }
 
 describe("fresh-create window + positive lock verification", () => {
-  test("a receipt planted between the container and lock PUTs is caught (fail closed)", async () => {
+  test("a receipt planted between the container and lock PUTs is cleaned, never laundered", async () => {
     const { pods, owner, podBase } = await freshPod();
     try {
       const container = receiptsContainerIri(podBase);
-      // Inject a forged receipt right AFTER the wallet creates the container,
-      // before its lock lands — simulating a race by an inherited-Write party.
+      // Inject a forged WITHDRAWAL for AGENT right AFTER the wallet creates the
+      // container, before its lock lands — simulating a race by an
+      // inherited-Write party. If it laundered into policy, AGENT would look
+      // permanently revoked (immutable) and the grant would fail.
       let planted = false;
       const injecting: typeof fetch = async (input, init) => {
         const url = String(input instanceof Request ? input.url : input);
@@ -79,9 +87,27 @@ describe("fresh-create window + positive lock verification", () => {
         }
         return response;
       };
-      await expect(
-        changeContainerAccess(podBase, owner.webid, AGENT, "grant", MODES, { podFetch: injecting }),
-      ).rejects.toThrow(/planted before the integrity lock|records at lock time/);
+      // The grant COMPLETES: the plant is deleted, the store is clean, AGENT is
+      // granted — the forged withdrawal never made AGENT look revoked.
+      const receipt = await changeContainerAccess(podBase, owner.webid, AGENT, "grant", MODES, {
+        podFetch: injecting,
+      });
+      expect(receipt.action).toBe("grant");
+      expect(receipt.recipient).toBe(AGENT);
+
+      // A follow-up transition (the round-5 laundering vector) confirms the
+      // forgery never entered policy: AGENT is granted, not revoked; revoking
+      // then behaves normally (no false "already revoked").
+      const standings = await readGrantStandings(podBase, owner.webid, {
+        podFetch: owner.authFetch,
+      });
+      const standing = standings.find((entry) => entry.agent === AGENT);
+      expect(standing?.granted).toBe(true);
+      expect(standing?.revoked).toBe(false);
+      const revoke = await changeContainerAccess(podBase, owner.webid, AGENT, "revoke", MODES, {
+        podFetch: owner.authFetch,
+      });
+      expect(revoke.action).toBe("revoke");
     } finally {
       await pods.stop();
     }

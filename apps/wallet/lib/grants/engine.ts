@@ -253,13 +253,16 @@ async function ensureReceiptsStore(
     redirect: "error",
   });
   if (aclResponse.ok) {
-    // CLOSE THE CREATE→LOCK WINDOW (roborev sm-28 round-4): between the
+    // CLOSE THE CREATE→LOCK WINDOW (roborev sm-28 round-4/5): between the
     // container PUT and this lock PUT the new container inherited the parent's
     // ACL, so a party with inherited Write could have RACED a forged receipt
-    // in. The store is only trustworthy if it is EMPTY at lock time — anything
-    // present was planted in the window, so we fail closed (never reachable in
-    // the intended flow, where the fresh create runs before any party grant).
-    await assertReceiptsStoreEmpty(container, podBase, podFetch);
+    // in. The lock is now EFFECTIVE (only owner/service can write the store
+    // henceforth), and this call created the container MILLISECONDS ago, so any
+    // `vault-*` member present is a forgery by construction — DELETE it and
+    // proceed with a clean store. Detecting-then-throwing would seal the plant
+    // under our own canonical lock and let a retry launder it (the round-3
+    // mistake, reintroduced one write later — roborev sm-28 round-5).
+    await reconcileFreshStore(container, podBase, podFetch);
     return;
   }
   // A concurrent transition (multi-instance) locked our fresh container first:
@@ -271,24 +274,58 @@ async function ensureReceiptsStore(
   throw new PodAccessError(502, `could not lock the receipt store (${aclResponse.status})`);
 }
 
-/** Fail closed unless the just-locked receipt store has NO `vault-*` members. */
-async function assertReceiptsStoreEmpty(
+/** The `vault-*` members currently listed in the receipts container. */
+async function listPlantedMembers(
+  container: string,
+  podBase: string,
+  podFetch: PodIoFetch,
+): Promise<readonly string[]> {
+  const resource = await readPodResource(container, podBase, podFetch);
+  if (resource === undefined) {
+    // The container we created milliseconds ago must exist — a 404 here is an
+    // anomalous fault, not "empty" (roborev sm-28 round-5 Low). Fail closed.
+    throw new PodAccessError(502, "the just-created receipt store is unexpectedly absent");
+  }
+  const listing = new ContainerDataset(resource.dataset, DataFactory).container;
+  // An EMPTY fresh container reads as untyped on the sparq server (no
+  // ldp:contains, no typed root) — that is the ordinary empty state, not a
+  // fault: no members to reconcile.
+  if (listing === undefined) return [];
+  return [...listing.contains]
+    .map((entry) => entry.value)
+    .filter((memberIri) => memberIri.startsWith(`${container}${VAULT_RECEIPT_PREFIX}`));
+}
+
+/**
+ * Reconcile a just-created, just-locked store: DELETE any `vault-*` member
+ * planted in the create→lock window (forged by construction — the store did
+ * not exist a moment ago), then confirm the store is clean. If a member cannot
+ * be removed, or a re-plant survives (a Control party racing the lock — the
+ * beaded residual), FAIL CLOSED rather than proceed over untrusted records.
+ */
+async function reconcileFreshStore(
   container: string,
   podBase: string,
   podFetch: PodIoFetch,
 ): Promise<void> {
-  const resource = await readPodResource(container, podBase, podFetch);
-  if (resource === undefined) return; // just created — a transient 404 is not a plant
-  const listing = new ContainerDataset(resource.dataset, DataFactory).container;
-  if (listing === undefined) return; // no typed root ⇒ no members
-  const planted = [...listing.contains]
-    .map((entry) => entry.value)
-    .some((memberIri) => memberIri.startsWith(`${container}${VAULT_RECEIPT_PREFIX}`));
-  if (planted) {
+  const planted = await listPlantedMembers(container, podBase, podFetch);
+  if (planted.length === 0) return;
+  for (const memberIri of planted) {
+    const deleted = await podFetch(memberIri, { method: "DELETE", redirect: "error" });
+    if (!deleted.ok && deleted.status !== 404) {
+      throw new PodAccessError(
+        409,
+        "a record planted in the receipt store before its lock could not be removed — " +
+          "refusing to trust the store; reconcile it out of band",
+      );
+    }
+  }
+  const remaining = await listPlantedMembers(container, podBase, podFetch);
+  if (remaining.length > 0) {
     throw new PodAccessError(
       409,
-      "the consent-receipt store held records at lock time — refusing to trust it " +
-        "(a record was planted before the integrity lock landed); reconcile it out of band",
+      "the receipt store still holds records after reconciliation (a writer is racing the " +
+        "integrity lock) — refusing to trust it; reconcile it out of band",
     );
   }
 }

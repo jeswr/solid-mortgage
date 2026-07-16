@@ -51,9 +51,12 @@ The central app of the journey (scenes 1/2/3/5):
     ledger additionally shows other apps' root-level records but tolerates junk
     (skip-and-surface) and tags them `external` provenance — the UI marks them "third-party
     record, not verified by the wallet". The lock is written ONLY on a container the wallet
-    just created, then the fresh store is listed and must be empty (closing the create→lock
-    race window); a pre-existing lock is GET-verified to grant owner+service member-covering
-    `acl:default` write and NOTHING else (no agentClass/agentGroup/public/foreign-target).
+    just created; any `vault-*` member present when the lock lands was planted in the
+    create→lock window (forged by construction — the store did not exist a moment ago) and is
+    DELETED before proceeding, so a plant is never sealed under the wallet's own lock for a
+    retry to launder. A pre-existing lock is GET-verified to grant owner+service
+    member-covering `acl:default` write and NOTHING else (no
+    agentClass/agentGroup/public/foreign-target).
     Regression-tested across `test/ledger-integrity.test.ts`, `test/receipt-store-tamper.test.ts`,
     and `test/receipt-store-window.test.ts` (forged root receipt, junk, protected-store write
     refusal, strict fail-closed transient read, retry-laundering, race-window plant, defaultless
