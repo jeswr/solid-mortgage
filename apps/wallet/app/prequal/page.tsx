@@ -26,7 +26,11 @@ export default function PrequalPage() {
         Your vault proves <IllustrativeFigure>income ≥ $7,000 / month</IllustrativeFigure> and{" "}
         <IllustrativeFigure>credit score ≥ 620</IllustrativeFigure> with zero-knowledge proofs
         produced right here in your browser, from the credentials and issuer-signed operand anchors
-        in your pod. No values revealed. No credit pull. No PII left behind.
+        in your pod. The exact figures are never <em>disclosed</em>, and the proof cannot be forged.
+        No credit pull. No document leaves your pod. (Honesty caveat below: this research-grade
+        encoding is deterministic, so for a small-range field a determined verifier could still
+        narrow the value by enumeration — &ldquo;not disclosed and not forgeable&rdquo;, never
+        &ldquo;unknowable&rdquo;.)
       </p>
 
       <PrequalClient />

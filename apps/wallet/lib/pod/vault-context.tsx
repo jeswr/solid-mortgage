@@ -8,8 +8,28 @@
  * session object itself is only constructible under the acknowledgement).
  */
 import type { BrowserPodConnection } from "@mortgage/solid-kit/browser-pod";
-import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from "react";
+import { createContext, type ReactNode, useContext, useEffect, useState } from "react";
 import { openWalletPod } from "./connect";
+
+/**
+ * ONE pod connection per page load, opened lazily and SHARED across effect
+ * invocations. React StrictMode double-invokes effects in dev (setup →
+ * cleanup → setup); binding the connection to a module-scoped promise (rather
+ * than a per-mount ref + cancel flag) means the second setup attaches to the
+ * SAME in-flight connection and still applies its result — the earlier bug
+ * where cleanup cancelled the only attempt and the retry was suppressed
+ * (roborev sm-28 Medium) cannot recur. The shared pod outlives any one tab by
+ * design, so there is nothing to tear down.
+ */
+let sharedPod: Promise<BrowserPodConnection> | undefined;
+function connectSharedPod(): Promise<BrowserPodConnection> {
+  sharedPod ??= openWalletPod().catch((error: unknown) => {
+    // A failed open must not poison the singleton — a later mount may retry.
+    sharedPod = undefined;
+    throw error;
+  });
+  return sharedPod;
+}
 
 export type VaultState =
   | { readonly status: "booting" }
@@ -62,21 +82,19 @@ function SimulatedLoginStrip({ state }: { state: VaultState }) {
 
 export function VaultProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<VaultState>({ status: "booting" });
-  const opened = useRef(false);
 
   useEffect(() => {
-    // React 18/19 dev StrictMode double-invokes effects; a SharedWorker
-    // connection is per-visitor state we open exactly once and never tear
-    // down for the page's lifetime (the shared pod outlives any one tab).
-    if (opened.current) return;
-    opened.current = true;
-    let cancelled = false;
-    openWalletPod().then(
+    // Attach to the SHARED connection (see connectSharedPod). `active` guards
+    // only against a post-UNMOUNT state update; it never suppresses applying
+    // the result on a re-mount, because every invocation re-subscribes to the
+    // same promise (StrictMode-safe — roborev sm-28 Medium).
+    let active = true;
+    connectSharedPod().then(
       (connection) => {
-        if (!cancelled) setState({ status: "ready", connection });
+        if (active) setState({ status: "ready", connection });
       },
       (error: unknown) => {
-        if (!cancelled) {
+        if (active) {
           setState({
             status: "error",
             message: error instanceof Error ? error.message : String(error),
@@ -85,7 +103,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
       },
     );
     return () => {
-      cancelled = true;
+      active = false;
     };
   }, []);
 

@@ -16,10 +16,26 @@
  *     carry `acl:default`: the grant covers the `/mortgage/` container AND
  *     its members (that is what lender prefill/AUS/closing consume).
  *
- *   - REVOCATION IS IMMUTABLE at the app level: once the ledger holds a
- *     withdraw receipt for an agent on this container, re-granting that agent
+ *   - POLICY-BEARING receipts are UNFORGEABLE (roborev sm-28 High ×2): a
+ *     grant materialises WAC Write for a party on the `/mortgage/` container,
+ *     so a granted party's service identity could otherwise author or corrupt
+ *     `consent-receipt-…` records — poisoning the ledger to BLOCK the
+ *     borrower's own revocation, or forging a withdraw receipt to lock a
+ *     competitor out permanently. The authoritative ledger therefore lives in
+ *     a dedicated `/mortgage/receipts/` subcontainer whose OWN ACL grants
+ *     write to the borrower + the wallet's service identity ONLY (never a
+ *     granted party — the subcontainer ACL overrides the container's inherited
+ *     `acl:default`). Grant/revoke POLICY reads exclusively from there; the
+ *     DISPLAY ledger additionally shows other apps' root-level records but
+ *     tolerates junk (skip-and-surface) so no untrusted record can brick a
+ *     transition.
+ *
+ *   - REVOCATION IS IMMUTABLE at the app level: once the protected store holds
+ *     a withdraw receipt for an agent on this container, re-granting that agent
  *     is refused (409). WAC stays the real enforcement; the ledger check is
- *     the app-level policy the demo narrates (decision 0006).
+ *     the app-level policy the demo narrates (decision 0006). A REVOKE removes
+ *     live WAC access BEFORE it consults the ledger, so nothing can block the
+ *     borrower from cutting off a party.
  *
  *   - REPEAT operations are loud no-ops: an already-recorded grant or an
  *     already-recorded revocation answers 409 and touches NOTHING (idempotent
@@ -77,8 +93,14 @@ const RDF = { namespace: "http://www.w3.org/1999/02/22-rdf-syntax-ns#" } as cons
 
 /** Shared ledger prefix (decision 0006 — the closing app uses the same one). */
 const RECEIPT_PREFIX = "consent-receipt-";
-/** The wallet's own namespaced slice of the ledger (collision-free by design). */
-const VAULT_RECEIPT_PREFIX = `${RECEIPT_PREFIX}vault-`;
+/**
+ * The AUTHORITATIVE receipt store: a subcontainer whose own ACL admits writes
+ * from the borrower + wallet service ONLY (see the module header). Members are
+ * named `vault-{seq}-{action}-{recipient}` — the `vault-` stem keeps them
+ * distinct from any root-level `consent-receipt-…` the display view also reads.
+ */
+const RECEIPTS_SUBCONTAINER = "receipts/";
+const VAULT_RECEIPT_PREFIX = "vault-";
 
 /** The access modes a grant materialises (Read is always granted). */
 export interface GrantModes {
@@ -146,8 +168,65 @@ export function mortgageContainerIri(podBase: string): string {
   return `${podBase}mortgage/`;
 }
 
+/** The protected receipt subcontainer IRI (see the module header). */
+export function receiptsContainerIri(podBase: string): string {
+  return `${mortgageContainerIri(podBase)}${RECEIPTS_SUBCONTAINER}`;
+}
+
 function aclIri(containerIri: string): string {
   return `${containerIri}.acl`;
+}
+
+/**
+ * Idempotently provision the protected `/mortgage/receipts/` store: create the
+ * subcontainer, then lock it to the borrower (+ wallet service) with an ACL
+ * that OVERRIDES the container's inherited `acl:default` — so no granted party
+ * can write a receipt there even though they hold Write on the parent. Both
+ * writes are strict creates; an existing store (412) is the normal steady
+ * state and is a no-op. THE load-bearing control for receipt integrity.
+ */
+async function ensureReceiptsStore(
+  podBase: string,
+  ownerWebId: string,
+  serviceWebId: string | undefined,
+  podFetch: PodIoFetch,
+): Promise<void> {
+  const container = receiptsContainerIri(podBase);
+  const created = await podFetch(container, {
+    method: "PUT",
+    headers: { "content-type": "text/turtle", "if-none-match": "*" },
+    body: "",
+    redirect: "error",
+  });
+  if (!created.ok && created.status !== 412) {
+    throw new PodAccessError(502, `could not provision the receipt store (${created.status})`);
+  }
+  // The restrictive ACL: owner + service full control (accessTo AND default,
+  // so members inherit it too); NO agentClass, NO party. Strict-create once —
+  // a 412 means it is already locked down.
+  const iri = aclIri(container);
+  const dataset = new Store();
+  const owner = authorization(`${iri}#owner`, dataset, container, ownerWebId);
+  owner.default = container;
+  owner.canRead = true;
+  owner.canWrite = true;
+  owner.canReadWriteAcl = true;
+  if (serviceWebId !== undefined) {
+    const service = authorization(`${iri}#service`, dataset, container, serviceWebId);
+    service.default = container;
+    service.canRead = true;
+    service.canWrite = true;
+    service.canReadWriteAcl = true;
+  }
+  const aclResponse = await podFetch(iri, {
+    method: "PUT",
+    headers: { "content-type": "text/turtle", "if-none-match": "*" },
+    body: await serializeAcl(dataset),
+    redirect: "error",
+  });
+  if (!aclResponse.ok && aclResponse.status !== 412) {
+    throw new PodAccessError(502, `could not lock the receipt store (${aclResponse.status})`);
+  }
 }
 
 function authorization(iri: string, dataset: Store, target: string, agent: string): Authorization {
@@ -286,7 +365,7 @@ function receiptIriFor(
   sequence: number,
   recipient: string,
 ): string {
-  return `${mortgageContainerIri(podBase)}${VAULT_RECEIPT_PREFIX}${sequence}-${action}-${encodeURIComponent(recipient)}`;
+  return `${receiptsContainerIri(podBase)}${VAULT_RECEIPT_PREFIX}${sequence}-${action}-${encodeURIComponent(recipient)}`;
 }
 
 async function writeReceipt(
@@ -341,12 +420,10 @@ async function changeContainerAccessSerialized(
   options: GrantEngineOptions,
 ): Promise<ConsentReceiptView> {
   const containerIri = mortgageContainerIri(podBase);
-  const receipts = await readConsentLedger(podBase, borrowerWebId, options);
-  const history = receipts.filter(
-    (receipt) => receipt.recipient === agentWebId && receipt.resource === containerIri,
-  );
-  const everRevoked = history.some((receipt) => receipt.action === "revoke");
-  const everGranted = history.some((receipt) => receipt.action === "grant");
+  // The protected receipt store must exist AND be locked down before ANY
+  // receipt is written, or the first receipt would land in an unprotected
+  // container (roborev sm-28 High #2). Idempotent — a no-op once established.
+  await ensureReceiptsStore(podBase, borrowerWebId, options.serviceWebId, options.podFetch);
   const snapshot = await readAclSnapshot(
     containerIri,
     borrowerWebId,
@@ -355,22 +432,14 @@ async function changeContainerAccessSerialized(
   );
   const isGranted = snapshot.granted.has(agentWebId);
 
-  if (action === "grant") {
-    if (everRevoked) {
-      throw new PodAccessError(
-        409,
-        "revocation is immutable: this organisation's access was withdrawn by the borrower " +
-          "and is never silently re-granted",
-      );
-    }
-    if (isGranted && everGranted) {
-      throw new PodAccessError(409, "access is already granted and recorded");
-    }
-    if (!isGranted) {
+  // REVOKE removes live WAC access FIRST — before consulting any ledger — so a
+  // poisoned/oversized history can never block the borrower from cutting off a
+  // party (roborev sm-28 High #1). Policy history (protected store only) then
+  // decides idempotency + the receipt sequence.
+  if (action === "revoke") {
+    if (isGranted) {
       const granted = new Map(snapshot.granted);
-      const grantedModes = ["read", ...(modes.write ? ["write"] : [])];
-      if (modes.control) grantedModes.push("control");
-      granted.set(agentWebId, grantedModes);
+      granted.delete(agentWebId);
       await writeAclDocument(
         containerIri,
         borrowerWebId,
@@ -380,79 +449,44 @@ async function changeContainerAccessSerialized(
         options.podFetch,
       );
     }
-    // `isGranted && !everGranted` falls through here too: the repair branch
-    // for a previous crash between ACL write and receipt write.
-    try {
-      return await writeReceipt(
-        podBase,
-        borrowerWebId,
-        agentWebId,
-        "grant",
-        history.length,
-        options,
-      );
-    } catch (error) {
-      if (!isGranted) {
-        // A concurrent repair may have recorded the DETERMINISTIC receipt for
-        // this exact transition (making our create lose its `If-None-Match:
-        // *`): a RECORDED grant must never be compensated away.
-        const transitionIri = receiptIriFor(podBase, "grant", history.length, agentWebId);
-        try {
-          const recorded = await readPodResource(transitionIri, podBase, options.podFetch);
-          if (recorded !== undefined) {
-            const report = await validate(recorded.dataset, {
-              expect: "consent-receipt",
-              focusNode: transitionIri,
-            });
-            if (report.conforms) {
-              const view = receiptView(
-                transitionIri,
-                new ConsentReceipt(transitionIri, recorded.dataset, DataFactory),
-              );
-              if (
-                view.action === "grant" &&
-                view.actor === borrowerWebId &&
-                view.recipient === agentWebId &&
-                view.resource === containerIri
-              ) {
-                return view;
-              }
-            }
-          }
-        } catch {
-          // Could not tell — fall through to the fail-safe rollback below.
-        }
-        // Compensation: an UNRECORDED grant must not survive this request.
-        try {
-          await removeAgentFromAcl(
-            containerIri,
-            borrowerWebId,
-            options.serviceWebId,
-            agentWebId,
-            options.podFetch,
-          );
-        } catch {
-          // Rollback failed too: the grant is applied but unrecorded. A retry
-          // lands in the repair branch above and completes the receipt.
-        }
-      }
-      throw error;
+    const history = await policyHistoryFor(podBase, borrowerWebId, agentWebId, options);
+    const everRevoked = history.some((receipt) => receipt.action === "revoke");
+    const everGranted = history.some((receipt) => receipt.action === "grant");
+    if (!isGranted && everRevoked) {
+      throw new PodAccessError(409, "access is already revoked and recorded");
     }
+    if (!isGranted && !everGranted) {
+      throw new PodAccessError(
+        409,
+        "no grant exists for this organisation, so there is nothing to revoke",
+      );
+    }
+    // Access is now OFF (or already was — the repair branch for a crash between
+    // ACL write and receipt write). A recording failure keeps access off and
+    // stays retryable; it can never resurrect the grant.
+    return writeReceipt(podBase, borrowerWebId, agentWebId, "revoke", history.length, options);
   }
 
-  // action === "revoke"
-  if (!isGranted && everRevoked) {
-    throw new PodAccessError(409, "access is already revoked and recorded");
-  }
-  if (!isGranted && !everGranted) {
+  // action === "grant"
+  const history = await policyHistoryFor(podBase, borrowerWebId, agentWebId, options);
+  const everRevoked = history.some((receipt) => receipt.action === "revoke");
+  const everGranted = history.some((receipt) => receipt.action === "grant");
+
+  if (everRevoked) {
     throw new PodAccessError(
       409,
-      "no grant exists for this organisation, so there is nothing to revoke",
+      "revocation is immutable: this organisation's access was withdrawn by the borrower " +
+        "and is never silently re-granted",
     );
   }
-  if (isGranted) {
+  if (isGranted && everGranted) {
+    throw new PodAccessError(409, "access is already granted and recorded");
+  }
+  if (!isGranted) {
     const granted = new Map(snapshot.granted);
-    granted.delete(agentWebId);
+    const grantedModes = ["read", ...(modes.write ? ["write"] : [])];
+    if (modes.control) grantedModes.push("control");
+    granted.set(agentWebId, grantedModes);
     await writeAclDocument(
       containerIri,
       borrowerWebId,
@@ -462,15 +496,75 @@ async function changeContainerAccessSerialized(
       options.podFetch,
     );
   }
-  // Access is now OFF (or already was — the repair branch for a crash between
-  // ACL write and receipt write). A recording failure keeps access off and
-  // stays retryable; it can never resurrect the grant.
-  return writeReceipt(podBase, borrowerWebId, agentWebId, "revoke", history.length, options);
+  // `isGranted && !everGranted` falls through here too: the repair branch
+  // for a previous crash between ACL write and receipt write.
+  try {
+    return await writeReceipt(podBase, borrowerWebId, agentWebId, "grant", history.length, options);
+  } catch (error) {
+    if (!isGranted) {
+      // A concurrent repair may have recorded the DETERMINISTIC receipt for
+      // this exact transition (making our create lose its `If-None-Match:
+      // *`): a RECORDED grant must never be compensated away.
+      const transitionIri = receiptIriFor(podBase, "grant", history.length, agentWebId);
+      try {
+        const recorded = await readPodResource(transitionIri, podBase, options.podFetch);
+        if (recorded !== undefined) {
+          const report = await validate(recorded.dataset, {
+            expect: "consent-receipt",
+            focusNode: transitionIri,
+          });
+          if (report.conforms) {
+            const view = receiptView(
+              transitionIri,
+              new ConsentReceipt(transitionIri, recorded.dataset, DataFactory),
+            );
+            if (
+              view.action === "grant" &&
+              view.actor === borrowerWebId &&
+              view.recipient === agentWebId &&
+              view.resource === containerIri
+            ) {
+              return view;
+            }
+          }
+        }
+      } catch {
+        // Could not tell — fall through to the fail-safe rollback below.
+      }
+      // Compensation: an UNRECORDED grant must not survive this request.
+      try {
+        await removeAgentFromAcl(
+          containerIri,
+          borrowerWebId,
+          options.serviceWebId,
+          agentWebId,
+          options.podFetch,
+        );
+      } catch {
+        // Rollback failed too: the grant is applied but unrecorded. A retry
+        // lands in the repair branch above and completes the receipt.
+      }
+    }
+    throw error;
+  }
+}
+
+/** The authoritative history for ONE agent on the container (protected store). */
+async function policyHistoryFor(
+  podBase: string,
+  borrowerWebId: string,
+  agentWebId: string,
+  options: GrantEngineOptions,
+): Promise<readonly ConsentReceiptView[]> {
+  const history = await readPolicyHistory(podBase, borrowerWebId, options);
+  return history.filter((receipt) => receipt.recipient === agentWebId);
 }
 
 /**
- * The dashboard view: every agent that currently holds a rule OR ever
- * appeared in the ledger, with live modes and the immutability flag.
+ * The dashboard view: every agent that currently holds a rule OR appears in
+ * the AUTHORITATIVE (protected) history, with live modes and the immutability
+ * flag. `revoked` is derived only from the protected store — a forged
+ * root-level receipt can never make a party look revoked.
  */
 export async function readGrantStandings(
   podBase: string,
@@ -478,65 +572,137 @@ export async function readGrantStandings(
   options: GrantEngineOptions,
 ): Promise<readonly GrantStanding[]> {
   const containerIri = mortgageContainerIri(podBase);
-  const [receipts, snapshot] = await Promise.all([
-    readConsentLedger(podBase, borrowerWebId, options),
+  const [history, snapshot] = await Promise.all([
+    readPolicyHistory(podBase, borrowerWebId, options),
     readAclSnapshot(containerIri, borrowerWebId, options.serviceWebId, options.podFetch),
   ]);
   const agents = new Set<string>(snapshot.granted.keys());
-  for (const receipt of receipts) {
-    if (receipt.resource === containerIri) agents.add(receipt.recipient);
-  }
+  for (const receipt of history) agents.add(receipt.recipient);
   return [...agents].sort().map((agent) => ({
     agent,
     granted: snapshot.granted.has(agent),
     modes: snapshot.granted.get(agent) ?? [],
-    revoked: receipts.some(
-      (receipt) =>
-        receipt.recipient === agent &&
-        receipt.resource === containerIri &&
-        receipt.action === "revoke",
-    ),
+    revoked: history.some((receipt) => receipt.recipient === agent && receipt.action === "revoke"),
   }));
 }
 
 /**
- * The scene-5 consent-receipt ledger: EVERY `consent-receipt-…` record in the
- * `/mortgage/` container — the wallet's own `vault-…` records and any written
- * by other apps (the closing ceremony) — SHACL-validated, subject-checked,
- * time-ordered. An empty/missing container is an empty ledger.
+ * Read receipts out of ONE container, tolerating junk: an entry that is
+ * missing, fails SHACL, or names another data subject is SKIPPED (surfaced by
+ * omission), never thrown. Only `consent-receipt-`/`vault-` prefixed members
+ * are considered. This is what stops an untrusted record — anywhere the
+ * borrower granted write — from bricking a read (roborev sm-28 High #1).
+ */
+async function readReceiptsFrom(
+  listIri: string,
+  prefixes: readonly string[],
+  podBase: string,
+  borrowerWebId: string,
+  options: GrantEngineOptions,
+): Promise<ConsentReceiptView[]> {
+  const resource = await readPodResource(listIri, podBase, options.podFetch);
+  if (resource === undefined) return [];
+  const container = new ContainerDataset(resource.dataset, DataFactory).container;
+  if (container === undefined) return [];
+  const receiptIris = [...container.contains]
+    .map((entry) => entry.value)
+    .filter((iri) => prefixes.some((prefix) => iri.startsWith(`${listIri}${prefix}`)));
+  const views = await Promise.all(
+    receiptIris.map(async (iri): Promise<ConsentReceiptView | undefined> => {
+      try {
+        const stored = await readPodResource(iri, podBase, options.podFetch);
+        if (stored === undefined) return undefined;
+        const report = await validate(stored.dataset, {
+          expect: "consent-receipt",
+          focusNode: iri,
+        });
+        if (!report.conforms) return undefined;
+        const receipt = new ConsentReceipt(iri, stored.dataset, DataFactory);
+        // A record about someone else is not this borrower's history — drop it
+        // (never throw: a foreign record must not block the borrower's reads).
+        if (receipt.dataSubjectIri !== borrowerWebId) return undefined;
+        return receiptView(iri, receipt);
+      } catch {
+        return undefined; // an unsupported status / transient read → skip
+      }
+    }),
+  );
+  return views.filter((view): view is ConsentReceiptView => view !== undefined);
+}
+
+/**
+ * AUTHORITATIVE grant/revoke history: ONLY the protected `/mortgage/receipts/`
+ * store, whose ACL admits writes from the borrower + wallet service alone.
+ * This is the sole input to the immutability + idempotency policy, so a
+ * granted party cannot forge a revocation or corrupt the sequence
+ * (roborev sm-28 High #2). Records are additionally required to sit at the
+ * DETERMINISTIC vault IRI that encodes their own recipient + action, so even
+ * the wallet service cannot mint a policy record whose body contradicts its
+ * name.
+ */
+async function readPolicyHistory(
+  podBase: string,
+  borrowerWebId: string,
+  options: GrantEngineOptions,
+): Promise<readonly ConsentReceiptView[]> {
+  const listIri = receiptsContainerIri(podBase);
+  const views = await readReceiptsFrom(
+    listIri,
+    [VAULT_RECEIPT_PREFIX],
+    podBase,
+    borrowerWebId,
+    options,
+  );
+  const containerIri = mortgageContainerIri(podBase);
+  const authoritative = views.filter((view) => {
+    if (view.resource !== containerIri) return false;
+    // The name must match the body: reconstruct the expected IRI for this
+    // (action, recipient) at every plausible sequence and require an exact hit.
+    const suffix = view.iri.slice(listIri.length);
+    const match = /^vault-(\d+)-(grant|revoke)-(.+)$/.exec(suffix);
+    if (match === null) return false;
+    const [, sequence, action, recipient] = match;
+    return (
+      action === view.action &&
+      recipient === encodeURIComponent(view.recipient) &&
+      view.iri === receiptIriFor(podBase, view.action, Number(sequence), view.recipient)
+    );
+  });
+  return authoritative.sort(
+    (left, right) =>
+      left.issuedAt.localeCompare(right.issuedAt) || left.iri.localeCompare(right.iri),
+  );
+}
+
+/**
+ * The scene-5 DISPLAY ledger (decision 0006): the wallet's authoritative
+ * `/mortgage/receipts/` records PLUS any root-level `consent-receipt-…`
+ * written by other apps in the journey (the closing ceremony) — all
+ * SHACL-validated, subject-checked, and time-ordered, with untrusted/foreign
+ * entries skipped rather than thrown (so the ledger can never be bricked).
  */
 export async function readConsentLedger(
   podBase: string,
   borrowerWebId: string,
   options: GrantEngineOptions,
 ): Promise<readonly ConsentReceiptView[]> {
-  const containerIri = mortgageContainerIri(podBase);
-  const resource = await readPodResource(containerIri, podBase, options.podFetch);
-  if (resource === undefined) return [];
-  const container = new ContainerDataset(resource.dataset, DataFactory).container;
-  if (container === undefined) {
-    throw new PodAccessError(502, "the mortgage container has no typed LDP container root");
-  }
-  const receiptIris = [...container.contains]
-    .map((entry) => entry.value)
-    .filter((iri) => iri.startsWith(`${containerIri}${RECEIPT_PREFIX}`));
-  const receipts = await Promise.all(
-    receiptIris.map(async (iri) => {
-      const stored = await readPodResource(iri, podBase, options.podFetch);
-      if (stored === undefined) throw new PodAccessError(502, `listed receipt ${iri} is missing`);
-      const report = await validate(stored.dataset, {
-        expect: "consent-receipt",
-        focusNode: iri,
-      });
-      if (!report.conforms) throw new PodAccessError(502, `listed receipt ${iri} fails SHACL`);
-      const receipt = new ConsentReceipt(iri, stored.dataset, DataFactory);
-      if (receipt.dataSubjectIri !== borrowerWebId) {
-        throw new PodAccessError(403, "receipt ledger contains a record for another data subject");
-      }
-      return receiptView(iri, receipt);
-    }),
-  );
-  return receipts.sort(
+  const [vault, root] = await Promise.all([
+    readReceiptsFrom(
+      receiptsContainerIri(podBase),
+      [VAULT_RECEIPT_PREFIX],
+      podBase,
+      borrowerWebId,
+      options,
+    ),
+    readReceiptsFrom(
+      mortgageContainerIri(podBase),
+      [RECEIPT_PREFIX],
+      podBase,
+      borrowerWebId,
+      options,
+    ),
+  ]);
+  return [...vault, ...root].sort(
     (left, right) =>
       left.issuedAt.localeCompare(right.issuedAt) || left.iri.localeCompare(right.iri),
   );

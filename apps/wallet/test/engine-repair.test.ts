@@ -70,8 +70,11 @@ describe("grant/revoke failure repair (fault-injected REAL pod)", () => {
     const plain = pods.accounts[0]?.authFetch;
     if (plain === undefined) throw new Error("no owner fetch");
     const isReceiptPut = (url: string, method: string) =>
-      method === "PUT" && url.includes("consent-receipt-vault-");
-    const isAclPut = (url: string, method: string) => method === "PUT" && url.endsWith("/.acl");
+      method === "PUT" && url.includes("/receipts/vault-");
+    // The container ACL (the grant's rollback target) — NOT the receipts-store
+    // ACL, which is written once during the (earlier) store provisioning.
+    const isAclPut = (url: string, method: string) =>
+      method === "PUT" && url.endsWith("/mortgage/.acl");
 
     // 1. Grant whose receipt write fails: COMPENSATED — no grant survives.
     await expect(

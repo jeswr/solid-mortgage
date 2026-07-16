@@ -34,12 +34,23 @@ The central app of the journey (scenes 1/2/3/5):
   typed wrappers — one single-agent rule per party (`acl:accessTo` + `acl:default`; Read
   always, Write/Control only where the scene needs them) — and writes a DPV consent
   receipt. **Revocation is immutable** (a withdrawn party is never silently re-granted) and
-  repeats are loud 409 no-ops. The ledger renders every `consent-receipt-…` record in the
-  container, including the closing app's. The engine is ISOMORPHIC: the same state machine
-  runs client-side against the in-browser pod (the disclosed simulation) and server-side
-  over the wallet's service identity against a real WAC pod (proven by
-  `test/pod-auth.test.ts` with real authenticated grantee reads → 200, then 401/403 after
-  revocation).
+  repeats are loud 409 no-ops. The engine is ISOMORPHIC: the same state machine runs
+  client-side against the in-browser pod (the disclosed simulation) and server-side over the
+  wallet's service identity against a real WAC pod (proven by `test/pod-auth.test.ts` with
+  real authenticated grantee reads → 200, then 401/403 after revocation).
+  - **Receipt integrity** (roborev sm-28 hardening): the authoritative ledger lives in a
+    dedicated `/mortgage/receipts/` subcontainer whose OWN ACL admits writes from the
+    borrower + wallet service ONLY — overriding the container's inherited `acl:default`, so a
+    write-granted party cannot forge a withdrawal to lock out a competitor nor poison the
+    ledger to block the borrower's own revocation. Grant/revoke POLICY reads exclusively from
+    there (at the deterministic vault IRIs, name-must-match-body); the DISPLAY ledger
+    additionally shows other apps' root-level records (the closing ceremony) but tolerates
+    junk (skip-and-surface). A REVOKE removes live WAC access BEFORE consulting the ledger.
+    Regression-tested in `test/ledger-integrity.test.ts` against a real granted party.
+  - **Known residual** (bead — cross-surface): the container grant's `acl:default` Write
+    still exposes non-receipt members (credentials/anchors) to a write-granted party, and the
+    closing party's container Control is broader than the closing-record it needs. Correct
+    least-privilege fix spans this app + lender-boa's write paths + closing's ACL management.
 
 **Mode-2 grant rail boundary (decision 0015):** every `/api/grants*`+`/api/ledger` route
 requires a DPoP-bound Solid-OIDC caller (anonymous ⇒ 401), derives the pod from the token
