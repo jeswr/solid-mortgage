@@ -49,6 +49,7 @@ export type FreshnessSeams = Pick<
 
 export async function checkEmploymentFreshness(
   pod: string,
+  webid: string,
   config: LenderConfig,
   options: { now?: () => Date; seams?: FreshnessSeams } = {},
 ): Promise<FreshnessReport> {
@@ -81,22 +82,15 @@ export async function checkEmploymentFreshness(
     trustedIssuers: config.trustedCredentialIssuers,
     ...seams,
   });
-  // Subject binding (defense in depth): the credential subject must be THIS
-  // pod's own owner WebID (the conventional `<pod>/profile/card#me`). A valid
+  // Subject binding (decision 0015 L3): the credential subject must be the
+  // AUTHENTICATED caller — the route layer derives both `webid` (from the
+  // verified DPoP token) and `pod` (from the bidirectional pim:storage
+  // binding, decision 0015 L2), so this is caller-independent: a valid
   // credential attesting a DIFFERENT subject, dropped into this pod, can never
-  // green the tick.
-  //
-  // NOT AN AUTHORIZATION BOUNDARY (roborev sm-30; tracked in sm-7s8): the `pod`
-  // is still CALLER-SELECTED and this route has no authenticated caller, so a
-  // caller can point at any allowlisted pod whose owner's credential is valid
-  // and read a green result. This reports on the SELECTED pod's own credential;
-  // it does NOT establish that the caller is that borrower. Caller-independent
-  // binding requires an authenticated borrower session / approved grant (the
-  // wallet grant pipeline, sm-28), which will derive the WebID + authorized pod
-  // from the token, not the request.
-  const podOwner = `${base}profile/card#me`;
+  // green the tick, and a caller can never point the check at someone else's
+  // pod (sm-7s8 closes the sm-30 roborev High).
   const subjectOk =
-    verification.credential?.subject !== undefined && verification.credential.subject === podOwner;
+    verification.credential?.subject !== undefined && verification.credential.subject === webid;
   const verifyErrors = [
     ...verification.errors.map((error) => error.code),
     ...(subjectOk ? [] : ["SUBJECT_MISMATCH"]),

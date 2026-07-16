@@ -15,8 +15,10 @@ const nextConfig: NextConfig = {
   // The ZK verify path (`@mortgage/vc-kit`) runs Barretenberg + noir_js WASM
   // server-side. Bundling them through Turbopack breaks WASM instantiation
   // (proofs then fail to verify); keep them external so they load as real
-  // Node ESM at runtime.
-  serverExternalPackages: ["@aztec/bb.js", "@noir-lang/noir_js"],
+  // Node ESM at runtime. `@jeswr/guarded-fetch` stays external because its
+  // `/node` entry (the DNS-pinning WebID-profile fetch, decision 0015) imports
+  // undici + node builtins that must not be client-bundled.
+  serverExternalPackages: ["@aztec/bb.js", "@noir-lang/noir_js", "@jeswr/guarded-fetch"],
   async headers() {
     return [
       {

@@ -4,10 +4,18 @@
  * writes serialise via the data-model wrapper layer upstream of this module
  * and land here as shape-validated Turtle for a conditional PUT.
  *
- * SSRF posture: the pod base arrives from the request (`?pod=`), so every
- * request is confined to the operator-configured `MORTGAGE_POD_ALLOWED_ORIGINS`
- * allowlist, non-loopback origins must be https, and redirects are refused.
+ * SSRF posture: the pod base is DERIVED from the authenticated caller
+ * (decision 0015 — never a request parameter), and defence-in-depth confines
+ * every pod IO to the operator-configured `MORTGAGE_POD_ALLOWED_ORIGINS`
+ * allowlist; non-loopback origins must be https, and redirects are refused.
  * No allowlist ⇒ every pod route fails closed (503).
+ *
+ * GRANT SEAM (decision 0015 L4, sm-28): read/write AUTHORIZATION is enforced
+ * by the POD (the borrower's approved ODRL/DPV grant materialised as WAC), so
+ * pod IO accepts an injectable fetch — the lender's own grant-authenticated
+ * service identity once sm-28 lands. The DEFAULT is a plain redirect-refusing
+ * fetch, i.e. ANONYMOUS: against a WAC-enabled pod it is refused for private
+ * resources (fail closed — the demo can never silently depend on open pods).
  */
 import { fetchRdf, RdfFetchError } from "@jeswr/fetch-rdf";
 import type { DatasetCore } from "@rdfjs/types";
@@ -63,8 +71,15 @@ export function assertAllowedPodBase(pod: string, config: LenderConfig): string 
   return url.href.endsWith("/") ? url.href : `${url.href}/`;
 }
 
-/** Redirect-refusing fetch for all pod IO (an allowlisted origin must not bounce us out). */
-function guardedPodFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+/**
+ * The pod-IO fetch: the sm-28 grant-authenticated seam (see the module
+ * header). Redirect-refusing always — an allowlisted origin must not bounce
+ * us out of the boundary.
+ */
+export type PodIoFetch = typeof fetch;
+
+/** The default (ANONYMOUS) pod-IO fetch — see the module-header grant seam note. */
+export function anonymousPodFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
   return fetch(input, { ...init, redirect: "error" });
 }
 
@@ -74,9 +89,15 @@ export interface PodResource {
 }
 
 /** GET+parse one pod RDF resource. 404 → `undefined`; other failures throw. */
-export async function readPodResource(iri: string, base: string): Promise<PodResource | undefined> {
+export async function readPodResource(
+  iri: string,
+  base: string,
+  podFetch: PodIoFetch = anonymousPodFetch,
+): Promise<PodResource | undefined> {
   try {
-    const { dataset, etag } = await fetchRdf(iri, { fetch: guardedPodFetch });
+    const { dataset, etag } = await fetchRdf(iri, {
+      fetch: (input, init) => podFetch(input, { ...init, redirect: "error" }),
+    });
     return { dataset, etag };
   } catch (error) {
     if (error instanceof RdfFetchError && error.status === 404) return undefined;
@@ -94,12 +115,18 @@ export async function readPodResource(iri: string, base: string): Promise<PodRes
 export async function writePodTurtle(
   iri: string,
   turtle: string,
-  options: { etag: string | null | undefined },
+  options: { etag: string | null | undefined; podFetch?: PodIoFetch },
 ): Promise<void> {
   const headers: Record<string, string> = { "content-type": "text/turtle" };
   if (options.etag !== null && options.etag !== undefined) headers["if-match"] = options.etag;
   else headers["if-none-match"] = "*";
-  const response = await guardedPodFetch(iri, { method: "PUT", headers, body: turtle });
+  const podFetch = options.podFetch ?? anonymousPodFetch;
+  const response = await podFetch(iri, {
+    method: "PUT",
+    headers,
+    body: turtle,
+    redirect: "error",
+  });
   if (!response.ok) {
     throw new PodAccessError(502, `pod write to ${iri} failed with ${response.status}`);
   }

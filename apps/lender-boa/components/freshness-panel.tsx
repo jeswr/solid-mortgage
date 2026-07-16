@@ -16,7 +16,6 @@ interface FreshnessResponse {
 }
 
 export interface FreshnessPanelProps {
-  pod: string;
   apiBase: string;
 }
 
@@ -29,25 +28,34 @@ const DECISION_COPY: Record<FreshnessResponse["decision"], string> = {
 };
 
 /**
- * Scene-4 client panel: run the freshness re-check against the granted pod,
- * request the one-click re-issue when stale, and re-run until the replacement
- * credential appears.
+ * Scene-4 client panel: run the freshness re-check against the caller's OWN
+ * granted pod (decision 0015 — the API derives both borrower and pod from the
+ * authenticated session; no pod parameter exists), request the one-click
+ * re-issue when stale, and re-run until the replacement credential appears.
+ * Without an authenticated Solid session (the default in-browser demo) the API
+ * answers 401 and the panel says so honestly instead of simulating a check.
  */
-export function FreshnessPanel({ pod, apiBase }: FreshnessPanelProps) {
+export function FreshnessPanel({ apiBase }: FreshnessPanelProps) {
   const [report, setReport] = useState<FreshnessResponse | null>(null);
   const [reissue, setReissue] = useState<{ dispatched: boolean; nextStep: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [authRequired, setAuthRequired] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const check = useCallback(async () => {
     setBusy(true);
     setError(null);
+    setAuthRequired(false);
     // Invalidate any prior result so a stale (e.g. previously green) report is
     // never shown beside a fresh error or during the in-flight re-check.
     setReport(null);
     setReissue(null);
     try {
-      const response = await fetch(`${apiBase}/freshness?pod=${encodeURIComponent(pod)}`);
+      const response = await fetch(`${apiBase}/freshness`);
+      if (response.status === 401) {
+        setAuthRequired(true);
+        return;
+      }
       const body = (await response.json()) as FreshnessResponse;
       if (!response.ok) {
         setError(body.detail ?? `freshness check failed (${response.status})`);
@@ -59,17 +67,13 @@ export function FreshnessPanel({ pod, apiBase }: FreshnessPanelProps) {
     } finally {
       setBusy(false);
     }
-  }, [apiBase, pod]);
+  }, [apiBase]);
 
   async function requestReissue() {
     setBusy(true);
     setError(null);
     try {
-      const response = await fetch(`${apiBase}/freshness/reissue-request`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ pod }),
-      });
+      const response = await fetch(`${apiBase}/freshness/reissue-request`, { method: "POST" });
       const body = (await response.json()) as { dispatched?: boolean; nextStep?: string };
       if (!response.ok) {
         setError(`re-verification request failed (${response.status})`);
@@ -102,6 +106,13 @@ export function FreshnessPanel({ pod, apiBase }: FreshnessPanelProps) {
       >
         {busy ? "Checking…" : report === null ? "Run freshness check" : "Re-run check"}
       </button>
+      {authRequired && (
+        <p className="mt-3 text-sm text-muted-foreground" data-freshness-auth-required="">
+          This re-check runs against YOUR granted pod, so it requires an authenticated borrower
+          session (hosted mode). The default in-browser demo has no real login — the rail honestly
+          stays off rather than simulating a security property it does not have.
+        </p>
+      )}
       {error !== null && (
         <p className="mt-3 text-sm text-accent" role="alert">
           {error}

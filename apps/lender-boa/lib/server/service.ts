@@ -6,13 +6,21 @@
  */
 import { configFromEnv, type LenderConfig } from "./config";
 import { PodAccessError } from "./pod";
+import { createPodRailService, type PodRailService } from "./pod-rail";
 import { createPrequalService, type PrequalService } from "./prequal";
 
 let prequal: PrequalService | undefined;
+let podRail: PodRailService | undefined;
 
 export function prequalService(): PrequalService {
   prequal ??= createPrequalService({ config: configFromEnv() });
   return prequal;
+}
+
+/** Scene-3/4 pod routes behind the decision-0015 authenticated-caller boundary. */
+export function podRailService(): PodRailService {
+  podRail ??= createPodRailService({ config: configFromEnv() });
+  return podRail;
 }
 
 export function lenderConfig(): LenderConfig {

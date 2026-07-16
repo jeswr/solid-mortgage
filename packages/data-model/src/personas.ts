@@ -93,6 +93,14 @@ export interface PersonaFactoryOptions {
   seed?: string;
   /** Per-persona pod base IRI override (must end with `/`). */
   podBases?: Partial<Record<PersonaId, string>>;
+  /**
+   * Per-persona WebID override for identities NOT rooted in the pod (e.g. a dev-issuer
+   * WebID in e2e). Defaults to the pod-rooted convention `${podBase}profile/card#me`.
+   * The profile focus node and every credential's `credentialSubject` follow it, so the
+   * decision-0015 subject binding (`credentialSubject == token WebID`) holds for
+   * issuer-hosted identities too.
+   */
+  webIds?: Partial<Record<PersonaId, string>>;
   /** Issuer identity overrides for seeding against deployed org pods. */
   issuers?: Partial<PersonaIssuers>;
 }
@@ -303,7 +311,7 @@ async function buildPersona(
   if (!podBase.endsWith("/")) {
     throw new RangeError(`podBase must end with "/": ${podBase}`);
   }
-  const webId = `${podBase}profile/card#me`;
+  const webId = options.webIds?.[values.id] ?? `${podBase}profile/card#me`;
   const resourceIri = (kind: Exclude<MortgageResourceKind, "zk-operand-anchor">): string =>
     `${podBase}${RESOURCE_POD_PATHS[kind].slice(1)}`;
   const derived = (label: string, modulus: number): number =>

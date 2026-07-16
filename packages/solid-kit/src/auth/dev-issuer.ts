@@ -120,6 +120,13 @@ export interface DevOidcIssuer {
 export interface StartDevOidcIssuerOptions {
   /** Access-token lifetime (seconds). Default 300. */
   tokenLifetimeSeconds?: number;
+  /**
+   * A pod base IRI to advertise as this identity's `pim:storage` in the served WebID
+   * profile — the forward claim of the decision-0015 bidirectional owner binding
+   * (verifier apps derive the authorized pod from the TOKEN WebID's profile, never from a
+   * request parameter). Omit for an identity with no storage claim (negative tests).
+   */
+  storage?: string;
 }
 
 interface AuthorizationCodeRecord {
@@ -365,7 +372,13 @@ export async function startDevOidcIssuer(
     }
     if (request.method === "GET" && url.pathname === "/profile") {
       response.setHeader("content-type", "text/turtle");
-      response.end(`<${webid}> <http://www.w3.org/ns/solid/terms#oidcIssuer> <${issuer}> .\n`);
+      const storageTriple =
+        options.storage === undefined
+          ? ""
+          : `<${webid}> <http://www.w3.org/ns/pim/space#storage> <${options.storage}> .\n`;
+      response.end(
+        `<${webid}> <http://www.w3.org/ns/solid/terms#oidcIssuer> <${issuer}> .\n${storageTriple}`,
+      );
       return;
     }
     if (request.method === "GET" && url.pathname === "/authorize") {

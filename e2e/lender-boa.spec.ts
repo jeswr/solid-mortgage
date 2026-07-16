@@ -225,18 +225,29 @@ test.describe("lender-boa (sm-30)", () => {
 
   test.beforeAll(async () => {
     test.setTimeout(240_000);
-    issuer = await startDevOidcIssuer();
-
-    // Pods: the borrower persona's granted pod, seeded from the fixtures.
+    // Pods FIRST: the dev issuer advertises the pod as the borrower's
+    // pim:storage (decision 0015 forward claim), so it needs the pod origin.
     pods = await startSolidServer({});
     podBase = `${pods.baseUrl}/`;
-    const [alex] = await personas({ now: new Date(), podBases: { "alex-rivera": podBase } });
+    issuer = await startDevOidcIssuer({ storage: podBase });
+
+    // The borrower persona, subject-bound to the ISSUER-hosted WebID (the
+    // authenticated caller), plus the pod-side acknowledgment card (decision
+    // 0015 backward claim — the pod names its owner).
+    const [alex] = await personas({
+      now: new Date(),
+      podBases: { "alex-rivera": podBase },
+      webIds: { "alex-rivera": issuer.webid },
+    });
     if (alex === undefined) throw new Error("persona fixtures missing");
     borrowerWebId = alex.webId;
-    await seedPod(
-      pods.baseUrl,
-      alex.resources.map((resource) => ({ path: resource.path, body: resource.turtle })),
-    );
+    await seedPod(pods.baseUrl, [
+      ...alex.resources.map((resource) => ({ path: resource.path, body: resource.turtle })),
+      {
+        path: "/profile/card",
+        body: `<${issuer.webid}> <http://www.w3.org/ns/pim/space#storage> <${podBase}> .\n`,
+      },
+    ]);
 
     // Anchor issuer: WebID document + verification method + status list, all
     // hosted over loopback HTTP so the app's default resolvers dereference it.
@@ -305,7 +316,7 @@ test.describe("lender-boa (sm-30)", () => {
   test("health probe answers for the tour dock @smoke", async () => {
     const response = await fetch(`${appOrigin}/lender-boa/api/health`);
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ ok: true, app: "lender-boa", simulated: true });
+    expect(await response.json()).toEqual({ ok: true, service: "lender-boa", simulated: true });
   });
 
   test("prequal page: banner, ZK honesty panel, COOP/COEP, axe @smoke", async ({ page }) => {
@@ -457,12 +468,60 @@ test.describe("lender-boa (sm-30)", () => {
     expect(response.headers.get("www-authenticate")).toBeTruthy();
   });
 
-  test("application page prefills the URLA subset FROM the granted pod + axe @smoke", async ({
+  /**
+   * Attach the borrower's REAL DPoP-bound Solid-OIDC session to the page's API
+   * calls (decision 0015: the routes derive borrower + pod from the token, so
+   * this stands in for the Mode-2b browser session lender-boa does not yet
+   * ship a login UI for). Every intercepted request gets a fresh single-use
+   * proof bound to the request's own method + htu.
+   */
+  async function authenticatePage(page: Page): Promise<void> {
+    await page.route("**/lender-boa/api/**", async (route) => {
+      const request = route.request();
+      const url = new URL(request.url());
+      // RFC 9449: htu binds scheme/authority/path only (never the query).
+      const auth = await issuer.authHeaders(request.method(), `${url.origin}${url.pathname}`);
+      await route.continue({ headers: { ...request.headers(), ...auth } });
+    });
+  }
+
+  test("anonymous pod routes are challenged 401 (decision 0015)", async () => {
+    for (const path of ["api/application/prefill", "api/freshness"]) {
+      const response = await fetch(`${appOrigin}/lender-boa/${path}`);
+      expect(response.status, path).toBe(401);
+      expect(response.headers.get("www-authenticate"), path).toBeTruthy();
+    }
+    const submit = await fetch(`${appOrigin}/lender-boa/api/application/submit`, {
+      method: "POST",
+    });
+    expect(submit.status).toBe(401);
+  });
+
+  test("caller-supplied pod params are rejected 400 (decision 0015)", async () => {
+    const response = await fetch(
+      `${appOrigin}/lender-boa/api/freshness?pod=${encodeURIComponent(podBase)}`,
+    );
+    expect(response.status).toBe(400);
+    const body = (await response.json()) as { error: string };
+    expect(body.error).toBe("param_rejected");
+  });
+
+  test("application page WITHOUT a session shows the demo persona honestly + axe @smoke", async ({
     page,
   }) => {
-    const response = await page.goto(
-      `${appOrigin}/lender-boa/application?pod=${encodeURIComponent(podBase)}&webid=${encodeURIComponent(borrowerWebId)}`,
+    const response = await page.goto(`${appOrigin}/lender-boa/application`);
+    expect(response?.status()).toBe(200);
+    await expect(page.getByText("Showing the demo persona", { exact: false })).toBeVisible();
+    await expect(page.locator("[data-prefill-source]")).toHaveAttribute(
+      "data-prefill-source",
+      "demo",
     );
+    await expectBannerAndAxe(page);
+  });
+
+  test("application page prefills the URLA subset FROM the token-bound pod", async ({ page }) => {
+    await authenticatePage(page);
+    const response = await page.goto(`${appOrigin}/lender-boa/application`);
     expect(response?.status()).toBe(200);
     await expect(
       page.getByText("read live from your granted pod data", { exact: false }),
@@ -471,27 +530,39 @@ test.describe("lender-boa (sm-30)", () => {
     await expect(page.getByLabel("Name")).toHaveValue("Alex Rivera");
     await expect(page.getByLabel("Employer")).toHaveValue("Ridgeline Analytics LLC");
     await expect(page.getByLabel("Monthly gross income")).toHaveValue("$8,200");
-    await expectBannerAndAxe(page);
   });
 
-  test("submitting delivers the Loan Estimate back into the pod", async ({ page }) => {
-    await page.goto(
-      `${appOrigin}/lender-boa/application?pod=${encodeURIComponent(podBase)}&webid=${encodeURIComponent(borrowerWebId)}`,
-    );
+  test("submitting delivers the Loan Estimate back into the TOKEN-derived pod", async ({
+    page,
+  }) => {
+    await authenticatePage(page);
+    await page.goto(`${appOrigin}/lender-boa/application`);
     await page.getByRole("button", { name: "Submit application (demo)" }).click();
     const estimate = page.locator("[data-loan-estimate]");
     await expect(estimate).toBeVisible();
     await expect(estimate).toContainText("delivered or placed in the mail within 3 business days");
     await expect(estimate).toContainText("illustrative figure, not an offer");
-    // The application document now exists in the pod.
+    // The application document now exists in the pod the TOKEN derived.
     const written = await fetch(`${podBase}mortgage/application`, {
       headers: { accept: "text/turtle" },
     });
     expect(written.status).toBe(200);
   });
 
-  test("freshness page runs the scene-4 re-check", async ({ page }) => {
-    await page.goto(`${appOrigin}/lender-boa/freshness?pod=${encodeURIComponent(podBase)}`);
+  test("freshness page WITHOUT a session says the rail is off — no simulated check", async ({
+    page,
+  }) => {
+    await page.goto(`${appOrigin}/lender-boa/freshness`);
+    await page.getByRole("button", { name: "Run freshness check" }).click();
+    await expect(page.locator("[data-freshness-auth-required]")).toBeVisible();
+    await expect(page.locator("[data-freshness-result]")).toHaveCount(0);
+  });
+
+  test("freshness page runs the scene-4 re-check for the authenticated borrower", async ({
+    page,
+  }) => {
+    await authenticatePage(page);
+    await page.goto(`${appOrigin}/lender-boa/freshness`);
     await page.getByRole("button", { name: "Run freshness check" }).click();
     const result = page.locator("[data-freshness-result]");
     await expect(result).toBeVisible();

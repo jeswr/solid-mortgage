@@ -13,12 +13,7 @@ export const metadata = {
  * the lender re-checks validity + revocation status and, when stale, the
  * borrower re-issues in one click through the EXISTING grant.
  */
-export default async function FreshnessPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ pod?: string }>;
-}) {
-  const { pod } = await searchParams;
+export default function FreshnessPage() {
   return (
     <main className="mx-auto w-full max-w-3xl px-6 py-12">
       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -34,15 +29,12 @@ export default async function FreshnessPage({
       </p>
 
       <div className="mt-8">
-        {pod !== undefined ? (
-          <FreshnessPanel apiBase="/lender-boa/api" pod={pod} />
-        ) : (
-          <p className="rounded-lg border border-border bg-card p-5 text-sm text-muted-foreground">
-            Connect a granted pod (<code>?pod=</code>) to run the live re-check against the
-            employment credential in the pod. The credential is seeded near-expiry (validFrom −30
-            days, validUntil +14 days), so the beat is genuine — no fake clock.
-          </p>
-        )}
+        <FreshnessPanel apiBase="/lender-boa/api" />
+        <p className="mt-3 text-xs text-muted-foreground">
+          The check runs against YOUR granted pod — the lender derives your identity and pod from
+          your authenticated session (never from a page parameter). The seeded credential is
+          genuinely near-expiry (validFrom −30 days, validUntil +14 days) — no fake clock.
+        </p>
       </div>
 
       <section aria-labelledby="freshness-honesty" className="mt-10">

@@ -90,9 +90,34 @@ async function readValidated(
 }
 
 /**
- * Read the URLA prefill from the granted pod. `webId` names the borrower (the
- * borrower-profile document's root node — supplied by the grant/session, not
- * guessed from the graph).
+ * Enforce decision-0015 L3 on a consumed credential: `credentialSubject` must
+ * be the AUTHENTICATED borrower. A valid credential about someone else,
+ * dropped into the bound pod, never prefills a value.
+ */
+function assertSubjectBinding(
+  credential: { credentialSubjectIri: string },
+  webId: string,
+  kind: string,
+): void {
+  let subject: string | undefined;
+  try {
+    subject = credential.credentialSubjectIri;
+  } catch {
+    subject = undefined; // untrusted RDF: an unreadable subject is a mismatch, never a crash
+  }
+  if (subject !== webId) {
+    throw new PodAccessError(
+      403,
+      `pod ${kind} credential attests a different subject than the authenticated borrower`,
+    );
+  }
+}
+
+/**
+ * Read the URLA prefill from the granted pod. `pod` and `webId` are DERIVED
+ * from the authenticated caller by the route boundary (decision 0015: the
+ * token WebID and its bidirectionally-bound pim:storage pod) — never from
+ * request parameters. Every credential must attest that same WebID (L3).
  */
 export async function prefillFromPod(
   pod: string,
@@ -114,6 +139,7 @@ export async function prefillFromPod(
     employmentDoc.dataset,
     DataFactory,
   );
+  assertSubjectBinding(employment, webId, "employment-income");
 
   const assetDoc = await readValidated(base, "asset-credential");
   const assets = new AssetCredential(
@@ -121,6 +147,7 @@ export async function prefillFromPod(
     assetDoc.dataset,
     DataFactory,
   );
+  assertSubjectBinding(assets, webId, "asset");
 
   const creditDoc = await readValidated(base, "credit-score-credential");
   const credit = new CreditScoreCredential(
@@ -128,6 +155,7 @@ export async function prefillFromPod(
     creditDoc.dataset,
     DataFactory,
   );
+  assertSubjectBinding(credit, webId, "credit-score");
 
   const address = profile.address;
   const employmentSubject = employment.credentialSubject;

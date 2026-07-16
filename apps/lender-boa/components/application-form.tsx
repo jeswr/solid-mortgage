@@ -1,7 +1,7 @@
 "use client";
 
 import { DemoLockedField, IllustrativeFigure } from "@mortgage/ui";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { formatPercent, formatUsd } from "../lib/format";
 import type { UrlaPrefill } from "../lib/server/prefill";
 
@@ -25,34 +25,54 @@ interface SubmitResponse {
 }
 
 export interface ApplicationFormProps {
-  prefill: UrlaPrefill;
-  /** Present only when a granted pod backs the page (`?pod=&webid=`). */
-  pod?: string;
-  webid?: string;
+  /** The demo-persona fallback the RSC page renders immediately. */
+  demoPrefill: UrlaPrefill;
   /** The app's base path (multi-zone: client fetches must carry it). */
   apiBase: string;
 }
 
 /**
  * Scene-3 URLA-subset form: every field is a DemoLockedField (R7 — prefilled
- * from the demo persona or the granted pod, read-only, "do not enter real
- * information"). Submitting delivers the Loan Estimate back into the pod.
+ * from the demo persona or the caller's granted pod, read-only, "do not enter
+ * real information"). Decision 0015: the pod prefill is attempted with the
+ * BROWSER SESSION'S credentials — the API derives both borrower and pod from
+ * the authenticated caller, so no pod/webid ever appears in a request. Without
+ * an authenticated Solid session (the default in-browser demo, decision 0011)
+ * the API answers 401 and the demo persona stays, with copy saying exactly
+ * that.
  */
-export function ApplicationForm({ prefill, pod, webid, apiBase }: ApplicationFormProps) {
+export function ApplicationForm({ demoPrefill, apiBase }: ApplicationFormProps) {
+  const [prefill, setPrefill] = useState<UrlaPrefill>(demoPrefill);
+  const [podConnected, setPodConnected] = useState(false);
   const [result, setResult] = useState<SubmitResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await fetch(`${apiBase}/application/prefill`);
+        if (!response.ok) return; // 401 = no authenticated session: demo persona stands
+        const body = (await response.json()) as UrlaPrefill;
+        if (cancelled || body.source !== "pod") return;
+        setPrefill(body);
+        setPodConnected(true);
+      } catch {
+        // Network failure: the demo persona stands.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [apiBase]);
+
   async function submit() {
-    if (pod === undefined || webid === undefined) return;
+    if (!podConnected) return;
     setBusy(true);
     setError(null);
     try {
-      const response = await fetch(`${apiBase}/application/submit`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ pod, webid }),
-      });
+      const response = await fetch(`${apiBase}/application/submit`, { method: "POST" });
       const body = (await response.json()) as SubmitResponse & { detail?: string };
       if (!response.ok) {
         setError(body.detail ?? `submission failed (${response.status})`);
@@ -68,7 +88,12 @@ export function ApplicationForm({ prefill, pod, webid, apiBase }: ApplicationFor
 
   return (
     <div>
-      <form aria-label="Uniform Residential Loan Application (URLA subset, demo)">
+      <p className="text-muted-foreground" data-prefill-source={prefill.source}>
+        {podConnected
+          ? "These values were read live from your granted pod data — not re-typed into a form. This prefill only checks the data's shape (SHACL) and its subject binding; full credential-signature verification is not yet wired into this demo path (tracked)."
+          : "Showing the demo persona. The live pod prefill requires an authenticated borrower session (hosted mode) — in the default in-browser demo there is no real login, so this rail honestly stays off."}
+      </p>
+      <form aria-label="Uniform Residential Loan Application (URLA subset, demo)" className="mt-6">
         <fieldset className="rounded-lg border border-border bg-card p-5">
           <legend className="px-1 text-sm font-semibold text-foreground">
             Section 1 · Borrower information
@@ -121,7 +146,7 @@ export function ApplicationForm({ prefill, pod, webid, apiBase }: ApplicationFor
       </form>
 
       <div className="mt-6">
-        {pod !== undefined && webid !== undefined ? (
+        {podConnected ? (
           <button
             className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
             disabled={busy || result !== null}
@@ -132,8 +157,9 @@ export function ApplicationForm({ prefill, pod, webid, apiBase }: ApplicationFor
           </button>
         ) : (
           <p className="text-sm text-muted-foreground">
-            Connect a granted pod (<code>?pod=&amp;webid=</code>) to submit and receive the Loan
-            Estimate into the pod. Without one, this form shows the demo persona.
+            Submitting writes the application and the Loan Estimate into YOUR pod, so it needs the
+            authenticated borrower session the prefill above explains. Without one, this form shows
+            the demo persona.
           </p>
         )}
         {error !== null && (
