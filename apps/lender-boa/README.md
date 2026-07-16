@@ -44,10 +44,16 @@ them breaks server-side WASM instantiation (proofs then fail to verify).
 - **Process-local stores** — the VP-POST nonce store, the DPoP jti replay store, and the rate
   limiter are per-process (the solid-kit documented seam). A multi-instance deployment must
   swap in a shared atomic store (Redis `SET … EX NX` / `GETDEL`); the interfaces are the seam.
-- **Pod-route caller authorization** — the scene-3/4 pod routes rely on the SSRF allowlist and
-  the pod's own WAC; they do not yet DPoP-authenticate the caller or bind to an approved grant
-  (that arrives with the wallet grant pipeline). Real private-pod grants need a
-  grant-authenticated fetch and OIDC/WAC-enabled pods.
+- **Pod-route caller authorization (NOT an authorization boundary)** — the scene-3/4 pod
+  routes have no authenticated caller, so the `pod` is caller-selected and any holder binding
+  derived from it (including the freshness `subject === <pod>/profile/card#me` check) is
+  defense-in-depth only: a caller can point at any allowlisted pod whose owner's credential is
+  valid and read a green result. The freshness route reports on the SELECTED pod's own
+  credential; it does not establish that the caller is that borrower. Caller-independent
+  binding requires an authenticated borrower session / approved grant (the wallet grant
+  pipeline) and is tracked in **sm-7s8** (P1): require DPoP auth, derive the WebID + authorized
+  pod from the token, verify pod-owner == token-webid == credentialSubject, use a
+  grant-authenticated fetch, and add cross-pod / anonymous-write substitution tests.
 - **Prefill signature verification** — the scene-3 prefill only SHACL-validates pod
   credentials; it does not yet run full `verifyCredential` on them (the seed layer signs them
   only once sm-26 lands), and no separate underwriting-verification step exists yet. The UI

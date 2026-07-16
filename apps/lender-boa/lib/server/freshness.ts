@@ -81,13 +81,19 @@ export async function checkEmploymentFreshness(
     trustedIssuers: config.trustedCredentialIssuers,
     ...seams,
   });
-  // Holder binding (decision 0012 discipline), caller-INDEPENDENT: the
-  // credential subject must be THIS pod's own owner WebID — derived from the
-  // pod being checked (the conventional `<pod>/profile/card#me`), NEVER from a
-  // caller-supplied parameter. A valid credential attesting a different subject
-  // (dropped into this pod) can therefore never green the tick. Full binding to
-  // an authenticated borrower session arrives with the wallet grant pipeline
-  // (sm-28); this is the strongest binding available without a caller identity.
+  // Subject binding (defense in depth): the credential subject must be THIS
+  // pod's own owner WebID (the conventional `<pod>/profile/card#me`). A valid
+  // credential attesting a DIFFERENT subject, dropped into this pod, can never
+  // green the tick.
+  //
+  // NOT AN AUTHORIZATION BOUNDARY (roborev sm-30; tracked in sm-7s8): the `pod`
+  // is still CALLER-SELECTED and this route has no authenticated caller, so a
+  // caller can point at any allowlisted pod whose owner's credential is valid
+  // and read a green result. This reports on the SELECTED pod's own credential;
+  // it does NOT establish that the caller is that borrower. Caller-independent
+  // binding requires an authenticated borrower session / approved grant (the
+  // wallet grant pipeline, sm-28), which will derive the WebID + authorized pod
+  // from the token, not the request.
   const podOwner = `${base}profile/card#me`;
   const subjectOk =
     verification.credential?.subject !== undefined && verification.credential.subject === podOwner;
