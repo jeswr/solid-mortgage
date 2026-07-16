@@ -41,20 +41,21 @@ export function useServiceStatuses(healthPaths: string[]): Record<string, Servic
     const controllers = new Set<AbortController>();
 
     async function refreshPath(path: string) {
-      // Per-endpoint guard: a pending probe for this path is never doubled up
-      // (e.g. interval ticks replayed in a burst after a background-tab wake),
-      // and one endpoint's pending probe never gates any other endpoint.
+      // Per-endpoint guard, held until the underlying fetch ACTUALLY settles: at
+      // most one outstanding request per endpoint, ever. A zone whose fetch
+      // ignores its abort signal must not accumulate a new zombie request on
+      // every interval, and one endpoint's pending probe never gates any other.
       if (inFlight.has(path)) return;
       inFlight.add(path);
       const controller = new AbortController();
       controllers.add(controller);
       let timer: ReturnType<typeof setTimeout> | undefined;
       try {
-        // The timeout SETTLES the probe as well as aborting it: even a fetch that
-        // ignores its abort signal cannot wedge this endpoint — the race resolves
-        // "not-deployed" and polling resumes on the next interval.
+        const settled = probe(path, controller.signal);
+        // The timeout SETTLES the race as well as aborting the fetch, so the
+        // endpoint's status is published within budget regardless of the zone.
         const status = await Promise.race([
-          probe(path, controller.signal),
+          settled,
           new Promise<ServiceStatus>((resolve) => {
             timer = setTimeout(() => {
               controller.abort();
@@ -67,6 +68,10 @@ export function useServiceStatuses(healthPaths: string[]): Record<string, Servic
             previous[path] === status ? previous : { ...previous, [path]: status },
           );
         }
+        // A late result is discarded — "live" requires answering within budget —
+        // but the guard stays held until the request is truly finished; polling
+        // for this endpoint resumes on the first interval after it settles.
+        await settled;
       } finally {
         clearTimeout(timer);
         controllers.delete(controller);

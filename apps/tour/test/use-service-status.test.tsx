@@ -24,6 +24,23 @@ function stalledFetch(options: { respectAbort: boolean }) {
     });
 }
 
+/** A fetch that ignores abort and only settles when the test says so. */
+function wedgedFetch() {
+  const settlers: Array<() => void> = [];
+  const fn = vi.fn(
+    (_input?: RequestInfo | URL, _init?: RequestInit) =>
+      new Promise<Response>((_resolve, reject) => {
+        settlers.push(() => reject(new Error("connection reset")));
+      }),
+  );
+  return {
+    fn,
+    settle: () => {
+      for (const settle of settlers.splice(0)) settle();
+    },
+  };
+}
+
 beforeEach(() => {
   vi.useFakeTimers();
 });
@@ -61,30 +78,36 @@ test("endpoints update independently: a stalled zone does not hold a live one at
   expect(result.current["/wallet/api/health"]).toBe("not-deployed");
 });
 
-test("a zone that ignores its abort still settles at the timeout, and polling resumes", async () => {
-  // Pathological zone: the fetch never settles, not even on abort. The timeout race
-  // must settle the endpoint as not-deployed and the next interval must probe again —
-  // exactly one fetch per interval, never a stack of overlapping requests.
-  const fetchMock = vi.fn(stalledFetch({ respectAbort: false }));
-  vi.stubGlobal("fetch", fetchMock);
+test("a wedged probe publishes not-deployed at the timeout but never stacks requests", async () => {
+  // Pathological zone: the fetch ignores its abort signal. The timeout race must
+  // publish not-deployed within budget, but the in-flight guard must hold until the
+  // underlying request truly settles — never more than one outstanding request.
+  const wedged = wedgedFetch();
+  vi.stubGlobal("fetch", wedged.fn);
   const { result } = renderHook(() => useServiceStatuses(["/wallet/api/health"]));
   await act(async () => {
     await vi.advanceTimersByTimeAsync(PROBE_TIMEOUT_MS + 1);
   });
   expect(result.current["/wallet/api/health"]).toBe("not-deployed");
-  expect(fetchMock).toHaveBeenCalledTimes(1);
   await act(async () => {
+    await vi.advanceTimersByTimeAsync(REFRESH_INTERVAL_MS * 3);
+  });
+  expect(wedged.fn).toHaveBeenCalledTimes(1);
+  // Once the zombie finally settles, polling for the endpoint resumes.
+  await act(async () => {
+    wedged.settle();
     await vi.advanceTimersByTimeAsync(REFRESH_INTERVAL_MS);
   });
-  expect(fetchMock).toHaveBeenCalledTimes(2);
+  expect(wedged.fn).toHaveBeenCalledTimes(2);
 });
 
 test("a wedged zone never stops healthy endpoints from refreshing", async () => {
   const calls: string[] = [];
+  const wedged = wedgedFetch();
   const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
     calls.push(String(input));
     if (String(input) === "/api/health") return Promise.resolve(liveResponse());
-    return stalledFetch({ respectAbort: false })(input, init);
+    return wedged.fn(input, init);
   });
   vi.stubGlobal("fetch", fetchMock);
   const { result } = renderHook(() => useServiceStatuses(["/api/health", "/wallet/api/health"]));
@@ -93,8 +116,10 @@ test("a wedged zone never stops healthy endpoints from refreshing", async () => 
   });
   expect(result.current["/api/health"]).toBe("live");
   expect(result.current["/wallet/api/health"]).toBe("not-deployed");
-  // Initial probe + one per interval: the healthy endpoint kept polling throughout.
+  // Initial probe + one per interval: the healthy endpoint kept polling throughout,
+  // while the wedged endpoint held a single outstanding request.
   expect(calls.filter((call) => call === "/api/health")).toHaveLength(3);
+  expect(calls.filter((call) => call === "/wallet/api/health")).toHaveLength(1);
 });
 
 test("completed cycles keep refreshing on the interval", async () => {
