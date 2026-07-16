@@ -18,6 +18,10 @@ interface AppDefinition {
   variant?: DisclaimerVariant;
   hasInterstitial?: boolean;
   zoneEnv?: string;
+  /** The landing page's h1 when it differs from {@link appName}. */
+  heading?: string;
+  /** Interstitial copy's organization when it differs from the banner's. */
+  interstitialOrganization?: string;
 }
 
 const apps: AppDefinition[] = [
@@ -76,9 +80,15 @@ const apps: AppDefinition[] = [
   },
   {
     appName: "Digital Closing and Servicing",
-    organization: "Wolters Kluwer (eOriginal) and Truist",
+    // The scene page leads with its headline; the shell banner is the eClose
+    // brand and the servicer section carries its own banner (sm-34).
+    hasInterstitial: true,
+    heading: "Sign once. See every consent change.",
+    interstitialOrganization: "Wolters Kluwer (eOriginal) or Truist",
+    organization: "Wolters Kluwer (eOriginal)",
     packageName: "@mortgage/app-closing",
     path: "/closing",
+    role: "digital closing platform",
     zoneEnv: "MORTGAGE_CLOSING_ZONE_URL",
   },
 ];
@@ -97,7 +107,9 @@ async function startApp(app: AppDefinition, env: NodeJS.ProcessEnv = {}) {
 }
 
 async function expectBannerVisible(page: Page, app: AppDefinition) {
-  const banner = page.locator("[data-concept-demo-banner]");
+  // `.first()`: pages may carry additional per-section banners (e.g. the
+  // closing app's servicer section); the shell banner always renders first.
+  const banner = page.locator("[data-concept-demo-banner]").first();
   await expect(banner).toBeVisible();
   await expect(banner).toContainText(
     bannerFullText({ organization: app.organization, role: app.role, variant: app.variant }),
@@ -139,9 +151,15 @@ test.describe("app concept-demo banners", () => {
       expect(response?.status(), runner.logsByPackage.get("@mortgage/app-tour")?.join("")).toBe(
         200,
       );
-      await expect(page.getByRole("heading", { level: 1, name: app.appName })).toBeVisible();
+      await expect(
+        page.getByRole("heading", { level: 1, name: app.heading ?? app.appName }),
+      ).toBeVisible();
       if (app.hasInterstitial === true) {
-        await acknowledgeInterstitial(page, app.organization, app.variant);
+        await acknowledgeInterstitial(
+          page,
+          app.interstitialOrganization ?? app.organization,
+          app.variant,
+        );
         // Consent is cookie-persisted: the interstitial must not reappear on reload.
         await page.reload();
         await expect(page.getByRole("dialog", { name: INTERSTITIAL_HEADING })).toBeHidden();

@@ -19,8 +19,11 @@
  *     the lender grant (record present, NO lender receipt) is repaired through
  *     the same guarded grant pipeline instead of wedging on 409 forever.
  *
- *   - TRANSFERS REQUIRE THE RECORD: grant/revoke refuse (409) until a closing
- *     record exists — no orphan ACLs or receipts for an unsigned ceremony.
+ *   - TRANSFERS REQUIRE THE COMPLETED CEREMONY: grant/revoke refuse (409)
+ *     until a closing record exists AND the ledger holds the ceremony's first
+ *     receipt — no orphan ACLs/receipts for an unsigned ceremony, and a
+ *     crashed close can never be pre-empted by a servicer grant that would
+ *     wedge its resume behind the any-receipt gate.
  *
  *   - REVOCATION IS IMMUTABLE at the app level: once the ledger holds a
  *     withdraw receipt for an agent, this app refuses to re-grant that agent
@@ -98,22 +101,30 @@ export interface ClosingSceneOptions {
 }
 
 /**
- * IN-PROCESS serialization of servicing transitions, keyed per pod: same-agent
- * races (e.g. a grant overlapping a revoke's ACL-write/receipt-write window)
- * cannot interleave within one instance, which is the only writer in this
- * demo's deploy shape. A multi-instance deployment must swap in a shared lock
- * or reconcile via the deterministic receipt IRIs — the same seam caveat as
- * solid-kit's in-process replay/nonce stores.
+ * IN-PROCESS serialization of close + servicing transitions, keyed per pod:
+ * same-pod operations (e.g. a grant overlapping a revoke's
+ * ACL-write/receipt-write window, or two resumes of a crashed close) cannot
+ * interleave within one instance. ACROSS instances the backstop is the
+ * conditional-write discipline: every ACL/record write is `If-Match` /
+ * `If-None-Match: *` and receipt IRIs are deterministic per transition, so a
+ * cross-instance race loses loudly (412 → 5xx, retryable) instead of silently
+ * diverging. A shared lock for multi-instance deployments is the same seam
+ * caveat as solid-kit's in-process replay/nonce stores (tracked as a bead).
+ * Entries are removed once their queue drains (no per-pod key retention).
  */
-const podTransitionLocks = new Map<string, Promise<unknown>>();
+const podTransitionLocks = new Map<string, Promise<void>>();
 
-async function withPodTransitionLock<T>(podBase: string, run: () => Promise<T>): Promise<T> {
+function withPodTransitionLock<T>(podBase: string, run: () => Promise<T>): Promise<T> {
   const previous = podTransitionLocks.get(podBase) ?? Promise.resolve();
   const next = previous.then(run, run);
-  podTransitionLocks.set(
-    podBase,
-    next.catch(() => undefined),
+  const settled = next.then(
+    () => undefined,
+    () => undefined,
   );
+  podTransitionLocks.set(podBase, settled);
+  void settled.then(() => {
+    if (podTransitionLocks.get(podBase) === settled) podTransitionLocks.delete(podBase);
+  });
   return next;
 }
 
@@ -280,7 +291,21 @@ async function writeReceipt(
   return receiptView(iri, receipt);
 }
 
-export async function executeClosing(
+export function executeClosing(
+  podBase: string,
+  borrowerWebId: string,
+  lenderWebId: string,
+  options: ClosingSceneOptions,
+): Promise<{ iri: string; eNoteReference: string; closedAt: string }> {
+  // The WHOLE close — resume gate included — runs under the per-pod lock, so
+  // two concurrent closes (or a close racing a transfer) cannot both observe
+  // an empty ledger and each mint a grant (roborev 616ad62 Medium).
+  return withPodTransitionLock(podBase, () =>
+    executeClosingSerialized(podBase, borrowerWebId, lenderWebId, options),
+  );
+}
+
+async function executeClosingSerialized(
   podBase: string,
   borrowerWebId: string,
   lenderWebId: string,
@@ -313,7 +338,15 @@ export async function executeClosing(
       );
     }
     const stored = new ClosingRecord(iri, existing.dataset, DataFactory);
-    await changeServicingAccess(podBase, borrowerWebId, lenderWebId, "grant", options);
+    // Lock already held — call the serialized pipeline directly, as the close.
+    await changeServicingAccessSerialized(
+      podBase,
+      borrowerWebId,
+      lenderWebId,
+      "grant",
+      options,
+      "close",
+    );
     return {
       iri,
       eNoteReference: stored.eNoteReference,
@@ -349,8 +382,15 @@ export async function executeClosing(
   });
   // The lender's initial read grant goes through the SAME guarded pipeline as
   // every later transfer, so it is receipt-recorded in the ledger too
-  // (decision 0006: a receipt for every grant/revoke).
-  await changeServicingAccess(podBase, borrowerWebId, lenderWebId, "grant", options);
+  // (decision 0006: a receipt for every grant/revoke). Lock already held.
+  await changeServicingAccessSerialized(
+    podBase,
+    borrowerWebId,
+    lenderWebId,
+    "grant",
+    options,
+    "close",
+  );
   return { iri, eNoteReference, closedAt: now.toISOString() };
 }
 
@@ -369,7 +409,14 @@ export function changeServicingAccess(
   options: ClosingSceneOptions,
 ): Promise<ConsentReceiptView> {
   return withPodTransitionLock(podBase, () =>
-    changeServicingAccessSerialized(podBase, borrowerWebId, agentWebId, action, options),
+    changeServicingAccessSerialized(
+      podBase,
+      borrowerWebId,
+      agentWebId,
+      action,
+      options,
+      "transfer",
+    ),
   );
 }
 
@@ -379,6 +426,7 @@ async function changeServicingAccessSerialized(
   agentWebId: string,
   action: "grant" | "revoke",
   options: ClosingSceneOptions,
+  context: "close" | "transfer",
 ): Promise<ConsentReceiptView> {
   const resourceIri = closingRecordIri(podBase);
   // No transfers before a closing record exists — otherwise a grant would mint
@@ -391,6 +439,18 @@ async function changeServicingAccessSerialized(
     );
   }
   const receipts = await readConsentLedger(podBase, borrowerWebId, options);
+  // Transfers additionally require the ceremony's FIRST receipt: an empty
+  // ledger with a record present is a crashed close, and only the close's own
+  // resume may write into that state — otherwise a servicer grant would become
+  // the record's first receipt and permanently wedge the lender-grant repair
+  // behind the any-receipt resume gate (roborev 616ad62 Low).
+  if (context === "transfer" && !receipts.some((receipt) => receipt.resource === resourceIri)) {
+    throw new PodAccessError(
+      409,
+      "the closing ceremony has not completed — servicing transfers activate once the " +
+        "close-time grant is recorded (re-run the close to repair it)",
+    );
+  }
   const history = receipts.filter(
     (receipt) => receipt.recipient === agentWebId && receipt.resource === resourceIri,
   );
@@ -448,10 +508,27 @@ async function changeServicingAccessSerialized(
         try {
           const recorded = await readPodResource(transitionIri, podBase, options.podFetch);
           if (recorded !== undefined) {
-            return receiptView(
-              transitionIri,
-              new ConsentReceipt(transitionIri, recorded.dataset, DataFactory),
-            );
+            // Accept ONLY a SHACL-valid receipt matching THIS exact transition
+            // (action/actor/recipient/resource) — arbitrary readable RDF at the
+            // IRI must not suppress the rollback (roborev 616ad62 Medium).
+            const report = await validate(recorded.dataset, {
+              expect: "consent-receipt",
+              focusNode: transitionIri,
+            });
+            if (report.conforms) {
+              const view = receiptView(
+                transitionIri,
+                new ConsentReceipt(transitionIri, recorded.dataset, DataFactory),
+              );
+              if (
+                view.action === "grant" &&
+                view.actor === borrowerWebId &&
+                view.recipient === agentWebId &&
+                view.resource === resourceIri
+              ) {
+                return view;
+              }
+            }
           }
         } catch {
           // Could not tell — fall through to the fail-safe rollback below.

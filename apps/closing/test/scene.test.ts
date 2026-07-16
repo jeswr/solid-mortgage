@@ -251,6 +251,12 @@ describe("scene 5 receipt/ACL consistency under receipt-write failure", () => {
     // From beforeAll: record present, agent compensated away, no receipts.
     expectDenied((await closeAgent.authFetch(record)).status);
     expect(await actionsFor(closeAgent)).toEqual([]);
+    // A transfer must NOT pre-empt the crashed ceremony: a servicer grant here
+    // would become the record's first receipt and wedge the lender repair.
+    const wedge = await expect409(() =>
+      changeServicingAccess(podBase, owner.webid, servicer.webid, "grant", working),
+    );
+    expect(wedge).toContain("has not completed");
     // The retry does not wedge on 409 — it repairs the initial grant.
     const resumed = await executeClosing(podBase, owner.webid, closeAgent.webid, working);
     expect(resumed.iri).toBe(record);
