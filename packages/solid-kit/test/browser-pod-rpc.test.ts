@@ -9,8 +9,10 @@ import { SolidServer } from "@jeswr/solid-server/wasm";
 import type { Persona } from "@mortgage/data-model";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import {
+  browserPodFetch,
   connectBrowserPod,
   createPodPortClient,
+  type DedicatedWorkerLike,
   openPodEndpoint,
   type PodMessagePortLike,
   SIMULATED_LOGIN_DISCLOSURE,
@@ -241,8 +243,9 @@ describe("connectBrowserPod — decision-0011 honesty gate + simulated session",
 
 describe("openPodEndpoint — SharedWorker preference and dedicated fallback", () => {
   const fakePort = {} as PodMessagePortLike;
+  const fakeWorker = { terminate: () => {} } as DedicatedWorkerLike;
 
-  test("prefers SharedWorker when available", () => {
+  test("prefers SharedWorker when available (dispose is a no-op for the shared pod)", () => {
     const endpoint = openPodEndpoint({
       createSharedWorker: () => ({ port: fakePort }),
       createDedicatedWorker: () => {
@@ -250,18 +253,25 @@ describe("openPodEndpoint — SharedWorker preference and dedicated fallback", (
       },
       sharedWorkerAvailable: true,
     });
-    expect(endpoint).toEqual({ port: fakePort, kind: "shared" });
+    expect(endpoint.port).toBe(fakePort);
+    expect(endpoint.kind).toBe("shared");
+    expect(() => endpoint.dispose()).not.toThrow();
   });
 
-  test("falls back to a dedicated worker without SharedWorker", () => {
+  test("falls back to a dedicated worker without SharedWorker; dispose terminates it", () => {
+    let terminated = 0;
+    const worker = { terminate: () => (terminated += 1) } as unknown as DedicatedWorkerLike;
     const endpoint = openPodEndpoint({
       createSharedWorker: () => {
         throw new Error("must not construct a SharedWorker when unavailable");
       },
-      createDedicatedWorker: () => fakePort,
+      createDedicatedWorker: () => worker,
       sharedWorkerAvailable: false,
     });
-    expect(endpoint).toEqual({ port: fakePort, kind: "dedicated" });
+    expect(endpoint.port).toBe(worker);
+    expect(endpoint.kind).toBe("dedicated");
+    endpoint.dispose();
+    expect(terminated).toBe(1);
   });
 
   test("throws when no viable transport exists", () => {
@@ -271,8 +281,58 @@ describe("openPodEndpoint — SharedWorker preference and dedicated fallback", (
         sharedWorkerAvailable: false,
       }),
     ).toThrow(/fallback/);
+    expect(() => openPodEndpoint({ createDedicatedWorker: () => fakeWorker }).port).toBeDefined();
     expect(() => openPodEndpoint({})).toThrow(/provide/);
   });
+});
+
+describe("browser pod — dedicated-worker fallback terminates on close (roborev sm-23)", () => {
+  test("connectBrowserPod.close() terminates the fallback Worker", async () => {
+    const host = createBrowserPod(alexOptions());
+    const channel = new MessageChannel();
+    const detach = attachPodHostPort(host, channel.port1 as unknown as PodMessagePortLike);
+    // A dedicated Worker IS its own message port PLUS terminate(); model that over port2.
+    let terminated = 0;
+    const worker = Object.assign(channel.port2 as unknown as DedicatedWorkerLike, {
+      terminate: () => {
+        terminated += 1;
+        channel.port2.close();
+      },
+    });
+    const pod = await connectBrowserPod({
+      createDedicatedWorker: () => worker,
+      sharedWorkerAvailable: false,
+      acknowledgeSimulated: SIMULATED_LOGIN_DISCLOSURE,
+      allowInsecureLoopback: true,
+    });
+    expect(pod.kind).toBe("dedicated");
+    const before = await pod.session.authFetch("/mortgage/profile");
+    expect(before.status).toBe(200);
+    pod.close();
+    expect(terminated).toBe(1);
+    detach();
+    channel.port1.close();
+    host.dispose();
+  }, 60_000);
+});
+
+describe("browserPodFetch — callable low-level pod fetch (the brief's named API)", () => {
+  test("routes pod IO over an open port and exposes ready + close", async () => {
+    const host = createBrowserPod(alexOptions());
+    const channel = new MessageChannel();
+    const detach = attachPodHostPort(host, channel.port1 as unknown as PodMessagePortLike);
+    const podFetch = browserPodFetch(channel.port2 as unknown as PodMessagePortLike);
+    await expect(podFetch.ready).resolves.toMatchObject({ webId: alex.webId });
+    const response = await podFetch("/mortgage/profile");
+    expect(response.status).toBe(200);
+    expect(await response.text()).toContain("Alex Rivera");
+    podFetch.close();
+    await expect(podFetch("/mortgage/profile")).rejects.toThrow(TypeError);
+    detach();
+    channel.port1.close();
+    channel.port2.close();
+    host.dispose();
+  }, 60_000);
 });
 
 describe("startBrowserPodHost — worker-scope detection (scope mocked, wasm real)", () => {

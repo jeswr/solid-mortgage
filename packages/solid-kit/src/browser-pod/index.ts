@@ -14,9 +14,12 @@ export {
 } from "../auth/demo.js";
 export {
   type BrowserPodConnection,
+  type BrowserPodFetch,
+  browserPodFetch,
   type ConnectBrowserPodOptions,
   connectBrowserPod,
   createPodPortClient,
+  type DedicatedWorkerLike,
   type OpenPodEndpointOptions,
   openPodEndpoint,
   type PodEndpoint,

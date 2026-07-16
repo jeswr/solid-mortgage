@@ -163,6 +163,16 @@ export interface SharedWorkerLike {
   port: PodMessagePortLike;
 }
 
+/**
+ * A dedicated-`Worker`-shaped handle. A dedicated `Worker` IS its own message port
+ * (`postMessage`/`addEventListener` on the worker itself), but its teardown verb is
+ * `terminate()` — NOT `close()` — so `openPodEndpoint` must terminate it explicitly on
+ * disconnect, or the wasm pod worker keeps running (roborev sm-23).
+ */
+export interface DedicatedWorkerLike extends PodMessagePortLike {
+  terminate(): void;
+}
+
 export interface OpenPodEndpointOptions {
   /**
    * Preferred transport: ONE pod shared by every same-origin tab. Typically
@@ -174,9 +184,10 @@ export interface OpenPodEndpointOptions {
    * Fallback for browsers without `SharedWorker` (per-tab pod — an honest degradation;
    * state still never leaves the browser). Typically
    * `() => new Worker(new URL("./pod.worker.js", import.meta.url))` — the same entry module
-   * serves both scopes (see `startBrowserPodHost`).
+   * serves both scopes (see `startBrowserPodHost`). The returned worker is `terminate()`d
+   * when the endpoint is disposed.
    */
-  createDedicatedWorker?: () => PodMessagePortLike;
+  createDedicatedWorker?: () => DedicatedWorkerLike;
   /** Override `SharedWorker` availability detection (tests). */
   sharedWorkerAvailable?: boolean;
 }
@@ -184,7 +195,15 @@ export interface OpenPodEndpointOptions {
 export interface PodEndpoint {
   port: PodMessagePortLike;
   kind: "shared" | "dedicated";
+  /**
+   * Tear down the underlying transport. For a dedicated worker this `terminate()`s it (the
+   * pod dies with the tab's connection); for a SharedWorker it is a no-op — the shared pod
+   * outlives any one tab by design, and only the tab's `port` is closed (by the client).
+   */
+  dispose(): void;
 }
+
+const noDispose = (): void => {};
 
 /** Open the worker transport: SharedWorker when available, dedicated worker otherwise. */
 export function openPodEndpoint(options: OpenPodEndpointOptions): PodEndpoint {
@@ -192,10 +211,11 @@ export function openPodEndpoint(options: OpenPodEndpointOptions): PodEndpoint {
     options.sharedWorkerAvailable ??
     typeof (globalThis as { SharedWorker?: unknown }).SharedWorker === "function";
   if (options.createSharedWorker !== undefined && available) {
-    return { port: options.createSharedWorker().port, kind: "shared" };
+    return { port: options.createSharedWorker().port, kind: "shared", dispose: noDispose };
   }
   if (options.createDedicatedWorker !== undefined) {
-    return { port: options.createDedicatedWorker(), kind: "dedicated" };
+    const worker = options.createDedicatedWorker();
+    return { port: worker, kind: "dedicated", dispose: () => worker.terminate() };
   }
   throw new Error(
     options.createSharedWorker !== undefined
@@ -274,6 +294,9 @@ export async function connectBrowserPod(
   }
   let port: PodMessagePortLike;
   let kind: BrowserPodConnection["kind"];
+  // Only a transport this call OPENED is ours to terminate; a caller-supplied port/endpoint
+  // is disposed by whoever created it (they may reuse it), so its dispose stays a no-op here.
+  let disposeEndpoint: () => void = noDispose;
   if (options.endpoint !== undefined) {
     if (isEndpoint(options.endpoint)) {
       ({ port, kind } = options.endpoint);
@@ -282,7 +305,9 @@ export async function connectBrowserPod(
       kind = "port";
     }
   } else {
-    ({ port, kind } = openPodEndpoint(options));
+    const endpoint = openPodEndpoint(options);
+    ({ port, kind } = endpoint);
+    disposeEndpoint = endpoint.dispose;
   }
 
   const client = createPodPortClient(port);
@@ -291,6 +316,7 @@ export async function connectBrowserPod(
     ready = await client.ready;
   } catch (error) {
     client.close();
+    disposeEndpoint();
     throw error;
   }
 
@@ -315,6 +341,36 @@ export async function connectBrowserPod(
     webId: ready.webId,
     ...(ready.displayName !== undefined ? { displayName: ready.displayName } : {}),
     podFetch: client.podFetch,
-    close: client.close,
+    close(): void {
+      client.close();
+      // Terminate the fallback worker we opened (SharedWorker dispose is a no-op — the
+      // shared pod outlives this tab; the client already closed this tab's port).
+      disposeEndpoint();
+    },
   };
+}
+
+/** A `fetch`-shaped pod client with its RPC lifecycle attached (the brief's `browserPodFetch`). */
+export type BrowserPodFetch = typeof fetch & {
+  /** Resolves with the host's ready info; rejects on boot failure or protocol mismatch. */
+  readonly ready: Promise<PodReadyInfo>;
+  /** Reject in-flight requests and close the port (does NOT terminate a worker). */
+  close(): void;
+};
+
+/**
+ * The low-level page-side pod fetch: wrap an already-open worker transport (a
+ * `SharedWorker#port`, dedicated `Worker`, or test `MessagePort`) into a `fetch` you can call
+ * directly — pod-origin requests routed over postMessage RPC, concurrent-safe, with `.ready`
+ * and `.close` attached. Prefer {@link connectBrowserPod}, which additionally binds the
+ * persona's simulated session and enforces the decision-0011 disclosure; reach for
+ * `browserPodFetch` when you only need raw pod IO (e.g. a health probe) and own the
+ * transport's lifecycle yourself.
+ */
+export function browserPodFetch(transport: PodEndpoint | PodMessagePortLike): BrowserPodFetch {
+  const port = isEndpoint(transport) ? transport.port : transport;
+  const client = createPodPortClient(port);
+  const fetchFn = ((input: Parameters<typeof fetch>[0], init?: Parameters<typeof fetch>[1]) =>
+    client.podFetch(input, init)) as BrowserPodFetch;
+  return Object.assign(fetchFn, { ready: client.ready, close: client.close });
 }
