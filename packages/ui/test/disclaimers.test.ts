@@ -102,3 +102,18 @@ test("R6 demoMetadata — own-branded variant", () => {
   );
   expect(metadata.robots).toEqual({ follow: false, index: false });
 });
+
+test("R8 interstitial own variant (sm-90e): shared core copy + collective negation", () => {
+  const own = interstitialParagraphs("EDMA Solid Community of Practice", "own").map(copyText);
+  const modelled = interstitialParagraphs("Verizon").map(copyText);
+  expect(own).toHaveLength(4);
+  // First, third, and fourth paragraphs are shared verbatim with the modelled variant.
+  expect(own[0]).toBe(modelled[0]);
+  expect(own[2]).toBe(modelled[2]);
+  expect(own[3]).toBe(modelled[3]);
+  // The negation paragraph negates the organisations named inside the demo, not the convener.
+  expect(own[1]).toBe(
+    "The organisations named inside the demo illustrate market roles only. None of them built this demo, and none is affiliated with, sponsors, or endorses it.",
+  );
+  expect(own[1]).not.toContain("EDMA");
+});
