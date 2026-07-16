@@ -56,7 +56,12 @@ The central app of the journey (scenes 1/2/3/5):
     DELETED before proceeding, so a plant is never sealed under the wallet's own lock for a
     retry to launder. A pre-existing lock is GET-verified to grant owner+service
     member-covering `acl:default` write and NOTHING else (no
-    agentClass/agentGroup/public/foreign-target).
+    agentClass/agentGroup/public/foreign-target). A readiness sentinel closes the
+    cross-instance races at runtime (auto-scaling deploys): the store is marked ready ONLY
+    after it is provisioned, locked, and reconciled clean, and any transition on a
+    locked-but-unmarked store fails closed (retryable 409) — so a failed reconcile can never be
+    laundered by a retry on another instance, and a concurrent instance cannot write into an
+    un-ready store.
     Regression-tested across `test/ledger-integrity.test.ts`, `test/receipt-store-tamper.test.ts`,
     and `test/receipt-store-window.test.ts` (forged root receipt, junk, protected-store write
     refusal, strict fail-closed transient read, retry-laundering, race-window plant, defaultless

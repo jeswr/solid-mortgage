@@ -149,4 +149,57 @@ describe("fresh-create window + positive lock verification", () => {
       await pods.stop();
     }
   }, 60_000);
+
+  test("a failed reconcile never marks ready, so a retry fails closed (never launders)", async () => {
+    const { pods, owner, podBase } = await freshPod();
+    try {
+      const container = receiptsContainerIri(podBase);
+      const forged = `${container}vault-0-revoke-${encodeURIComponent(AGENT)}`;
+      // Plant in the window AND block its DELETE, so reconcile fails and the
+      // store is left locked+planted but NEVER marked ready.
+      let planted = false;
+      const failingReconcile: typeof fetch = async (input, init) => {
+        const url = String(input instanceof Request ? input.url : input);
+        const method = (input instanceof Request ? input.method : init?.method) ?? "GET";
+        if (method === "DELETE" && url === forged) {
+          return new Response("blocked", { status: 503 }); // reconcile can't clean it
+        }
+        const response = await owner.authFetch(input, init);
+        if (!planted && method === "PUT" && url === container && response.ok) {
+          planted = true;
+          const plant = await owner.authFetch(forged, {
+            method: "PUT",
+            headers: { "content-type": "text/turtle" },
+            body: `@prefix dpv: <https://w3id.org/dpv#> .
+<${forged}> a dpv:ConsentReceipt ;
+  dpv:hasDataSubject <${owner.webid}> ;
+  dpv:hasDataController <${AGENT}> ;
+  dpv:hasConsentStatus dpv:ConsentWithdrawn ;
+  <http://purl.org/dc/terms/references> <${mortgageContainerIri(podBase)}> ;
+  <http://purl.org/dc/terms/issued> "2026-07-16T00:00:00Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+`,
+          });
+          expect(plant.ok).toBe(true);
+        }
+        return response;
+      };
+      // First attempt fails (reconcile could not remove the plant).
+      await expect(
+        changeContainerAccess(podBase, owner.webid, AGENT, "grant", MODES, {
+          podFetch: failingReconcile,
+        }),
+      ).rejects.toThrow();
+
+      // RETRY with a healthy fetch: the store is locked + planted but was never
+      // marked ready, so the transition fails closed at the sentinel — it does
+      // NOT read the forged withdrawal as policy (no laundering).
+      await expect(
+        changeContainerAccess(podBase, owner.webid, AGENT, "grant", MODES, {
+          podFetch: owner.authFetch,
+        }),
+      ).rejects.toThrow(/initializing|awaiting reconciliation/);
+    } finally {
+      await pods.stop();
+    }
+  }, 60_000);
 });

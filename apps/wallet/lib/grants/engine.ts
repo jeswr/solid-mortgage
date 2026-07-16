@@ -60,18 +60,19 @@
  *     what makes the scene-5 ledger read them together).
  *
  *   - Transitions are SERIALIZED per pod in-process; multi-instance deploys
- *     need a shared lock (same seam family as closing — bead sm-9kz). Two of
- *     the receipt-store guarantees below depend on that in-process
- *     serialization and DO NOT hold across instances until the shared lock
- *     lands (bead sm-p6q, dependency of sm-9kz): (a) a failed
- *     reconcile that re-throws could be laundered by a retry that takes the
- *     verify-only 412 path on a DIFFERENT instance; (b) the fresh-create
- *     reconcile's "any member is a plant" premise can misclassify a legitimate
- *     receipt written by a concurrent instance between this instance's lock PUT
- *     and its reconcile listing. Neither is attacker-drivable, and both are
- *     excluded by the single-writer demo deploy; the shared-lock work closes
- *     them (a readiness sentinel or per-pod lock so no other writer treats the
- *     lock as ready until reconciliation completes).
+ *     (e.g. auto-scaling Vercel) need a shared lock for GENERAL transition
+ *     interleavings (a grant racing a revoke across instances) — same seam
+ *     family as closing, bead sm-9kz. The RECEIPT-STORE integrity races
+ *     specifically are closed at runtime by the readiness SENTINEL (roborev
+ *     sm-28 round-7, {@link READY_SENTINEL}): a store is marked ready ONLY
+ *     after it is provisioned, locked, and reconciled clean, and any transition
+ *     on a locked-but-UNMARKED store fails closed (retryable 409). This
+ *     converts both cross-instance races into retry-after-init — (a) a failed
+ *     reconcile never marks the store, so a retry on any instance fails closed
+ *     at the sentinel instead of laundering the plant; (b) a concurrent
+ *     instance cannot write a legitimate receipt into an un-ready store, so the
+ *     creator's reconcile can never misclassify it (bead sm-p6q tracks folding
+ *     this into the general sm-9kz lock).
  *
  * RDF discipline: ACL documents are read AND written through the
  * `@solid/object` typed wrappers (`AclResource`/`Authorization`) and
@@ -115,6 +116,19 @@ const RECEIPT_PREFIX = "consent-receipt-";
  */
 const RECEIPTS_SUBCONTAINER = "receipts/";
 const VAULT_RECEIPT_PREFIX = "vault-";
+/**
+ * The readiness SENTINEL (roborev sm-28 round-7): written INSIDE the locked
+ * store only AFTER a fresh store is provisioned, locked, AND reconciled clean.
+ * A store whose lock verifies but whose sentinel is ABSENT is still
+ * initializing (or a reconcile failed) — every transition fails closed
+ * (retryable) rather than trusting it. This closes the cross-instance races
+ * (a failed-reconcile retry on another instance; a concurrent instance's
+ * legitimate write during the create→reconcile window) at runtime, without a
+ * full distributed lock — the sentinel is monotonic and owner+service-only
+ * (it lives under the store's own lock). NOT `vault-`-prefixed, so it is never
+ * read as a policy receipt nor treated as a plant.
+ */
+const READY_SENTINEL = "initialized";
 
 /** The access modes a grant materialises (Read is always granted). */
 export interface GrantModes {
@@ -233,9 +247,13 @@ async function ensureReceiptsStore(
     redirect: "error",
   });
   // PRE-EXISTING container: verify-only, write NOTHING (see the doc). An absent
-  // or foreign lock throws; only an owner+service-only lock is trusted.
+  // or foreign lock throws; only an owner+service-only lock is trusted. The
+  // READINESS SENTINEL must also be present — a store whose lock verifies but
+  // that was never marked ready is still initializing (or a reconcile failed
+  // and left a plant): fail closed (retryable) rather than read it as policy.
   if (created.status === 412) {
     await verifyReceiptsLock(container, iri, ownerWebId, serviceWebId, podFetch);
+    await assertReceiptsReady(container, podBase, podFetch);
     return;
   }
   if (!created.ok) {
@@ -274,15 +292,61 @@ async function ensureReceiptsStore(
     // under our own canonical lock and let a retry launder it (the round-3
     // mistake, reintroduced one write later — roborev sm-28 round-5).
     await reconcileFreshStore(container, podBase, podFetch);
+    // ONLY NOW mark the store ready — after it is provably clean. A failed
+    // reconcile throws above WITHOUT marking, so every later transition (this
+    // instance or another) fails closed at the sentinel check until the store
+    // is reconciled out of band — the plant is never laundered.
+    await markReceiptsReady(container, podFetch);
     return;
   }
   // A concurrent transition (multi-instance) locked our fresh container first:
-  // verify THAT lock rather than trusting blindly.
+  // verify THAT lock, and require the OTHER instance to have finished
+  // reconcile + marked the store ready before we trust it.
   if (aclResponse.status === 412) {
     await verifyReceiptsLock(container, iri, ownerWebId, serviceWebId, podFetch);
+    await assertReceiptsReady(container, podBase, podFetch);
     return;
   }
   throw new PodAccessError(502, `could not lock the receipt store (${aclResponse.status})`);
+}
+
+/** The readiness sentinel IRI (owner+service-only, under the store's lock). */
+function readySentinelIri(container: string): string {
+  return `${container}${READY_SENTINEL}`;
+}
+
+/** Write the readiness sentinel once (a concurrent writer's 412 is fine). */
+async function markReceiptsReady(container: string, podFetch: PodIoFetch): Promise<void> {
+  const response = await podFetch(readySentinelIri(container), {
+    method: "PUT",
+    headers: { "content-type": "text/turtle", "if-none-match": "*" },
+    body: "",
+    redirect: "error",
+  });
+  if (!response.ok && response.status !== 412) {
+    throw new PodAccessError(502, `could not mark the receipt store ready (${response.status})`);
+  }
+}
+
+/**
+ * Fail closed (retryable 409) unless the store's readiness sentinel is present:
+ * a locked-but-unmarked store is still initializing on another instance, or a
+ * reconcile failed and left a plant — either way it must not be read as policy
+ * (roborev sm-28 round-7). Converts both cross-instance races into
+ * retry-after-initialization.
+ */
+async function assertReceiptsReady(
+  container: string,
+  podBase: string,
+  podFetch: PodIoFetch,
+): Promise<void> {
+  const sentinel = await readPodResource(readySentinelIri(container), podBase, podFetch);
+  if (sentinel === undefined) {
+    throw new PodAccessError(
+      409,
+      "the consent-receipt store is still initializing (or awaiting reconciliation) — retry",
+    );
+  }
 }
 
 /** The `vault-*` members currently listed in the receipts container. */
