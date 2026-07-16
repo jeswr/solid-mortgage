@@ -1,0 +1,203 @@
+/**
+ * sm-26 deliverable - the `CredentialSeedPipeline.issue()` seam of
+ * docs/research/seeder-design.md section 5.2: ONE call materialises every
+ * resource a seeded credential needs (the dual-signed VC, its operand-anchor
+ * VCs, and the borrower-only ZK witness), so issuance is never repeated per
+ * resource and the outputs stay mutually consistent - `operandEnc` is
+ * computed from the SAME claim literal the wrappers emitted, and the Schnorr
+ * attestation covers the SAME claim graph the eddsa proof signs.
+ *
+ * Divergence from the section 5.2 sketch (documented for sm-65): `claims`
+ * takes vc-kit's TYPED `CredentialClaims` today - the `GeneratedInstance`
+ * adapter arrives with sm-63/sm-65; and the VC serialises as Turtle
+ * (vc-kit's issuance format), with the content type carried alongside.
+ */
+
+import type {
+  BitstringStatusListEntry,
+  BitstringStatusListEntryInput,
+  KeyPair,
+} from "@jeswr/solid-vc";
+import type { CredentialClaims } from "../claims.js";
+import type { IssuedCredential, ValidityWindow } from "../issue.js";
+import { issueCredential } from "../issue.js";
+import type { CredentialKind } from "../vocab.js";
+import { ZK_HONESTY } from "../zk/honesty.js";
+import type { MintedAnchor } from "./anchors.js";
+import { mintOperandAnchors } from "./anchors.js";
+import type { ZkStatusEntry } from "./dual-sign.js";
+import { dualSignCredential } from "./dual-sign.js";
+import type { SparqAttestation, SparqNativeBridge } from "./native.js";
+import { SeedToolingError } from "./native.js";
+
+/** One credential's seed-time issuance input (seeder-design section 5.2). */
+export interface CredentialSeedInput {
+  readonly kind: CredentialKind;
+  /** The pod resource URL the credential document will live at. */
+  readonly credentialId: string;
+  readonly subjectWebid: string;
+  readonly claims: CredentialClaims;
+  /** Explicit validity - the injected clock, never ambient (decision 0012). */
+  readonly validFrom: Date;
+  readonly validUntil?: Date;
+  /** W3C Bitstring status entry for the credential (standards rail). */
+  readonly status?: BitstringStatusListEntry | BitstringStatusListEntryInput;
+  /** Hidden field IRIs needing operand anchors (decision 0012). */
+  readonly hiddenFields?: readonly string[];
+  /** Anchor credential IRI per hidden field. */
+  readonly anchorIdFor?: (field: string) => string;
+  /** Status entry per anchor VC. */
+  readonly anchorStatusFor?: (
+    field: string,
+  ) => BitstringStatusListEntry | BitstringStatusListEntryInput;
+  /** The ZK rail's own status entry (required when the credential dual-signs). */
+  readonly zkStatus?: ZkStatusEntry;
+}
+
+export interface SeededAnchor {
+  readonly field: string;
+  readonly operandEnc: string;
+  /** Serialised anchor VC document (a pod `PUT` body). */
+  readonly vc: string;
+  readonly contentType: "text/turtle";
+  readonly credential: IssuedCredential;
+}
+
+export interface CredentialSeedResult {
+  /** Serialised credential document (eddsa-rdfc-2022 signed; a pod `PUT` body). */
+  readonly vc: string;
+  readonly vcContentType: "text/turtle";
+  readonly credential: IssuedCredential;
+  readonly anchors: readonly SeededAnchor[];
+  /**
+   * The borrower-only ZK witness resource (JSON): the Schnorr-BJJ dual-sign
+   * attestation + the private inputs (salt, clear status index, blinding)
+   * future proofs need. ONLY present when the credential participates in ZK
+   * flows (`zkStatus` supplied). Store beside the VC, owner-only ACL.
+   */
+  readonly witness?: string;
+  readonly witnessContentType?: "application/json";
+}
+
+/** The seam sm-65's layout module consumes (seeder-design section 5.2). */
+export interface CredentialSeedPipeline {
+  issue(input: CredentialSeedInput): Promise<CredentialSeedResult>;
+}
+
+export interface SparqCredentialSeedPipelineOptions {
+  /** The issuing party's WebID. */
+  readonly issuer: string;
+  /** The issuer's eddsa-rdfc-2022 signing key. */
+  readonly key: KeyPair;
+  /** Deterministic DEMO Schnorr issuer seed (dual-sign rail; not production). */
+  readonly schnorrIssuerSeed: number;
+  readonly native: SparqNativeBridge;
+}
+
+/** JSON shape of the witness resource (documented for verifiers/tests). */
+export interface SeedWitnessDocument {
+  readonly type: "urn:sparq:zk:SeedWitness";
+  readonly credentialId: string;
+  readonly attestation: SparqAttestation;
+  readonly witness: {
+    readonly saltHex: string;
+    readonly zkStatus: ZkStatusEntry;
+    readonly indexBlindingHex: string;
+  };
+  readonly note: string;
+}
+
+/**
+ * The sparq-backed pipeline: vc-kit issuance (SHACL shape gate before any
+ * signature) + native dual-sign + operand anchors.
+ */
+export class SparqCredentialSeedPipeline implements CredentialSeedPipeline {
+  readonly #options: SparqCredentialSeedPipelineOptions;
+
+  constructor(options: SparqCredentialSeedPipelineOptions) {
+    this.#options = options;
+  }
+
+  async issue(input: CredentialSeedInput): Promise<CredentialSeedResult> {
+    const { issuer, key, native } = this.#options;
+    const validity: ValidityWindow = {
+      validFrom: input.validFrom,
+      ...(input.validUntil !== undefined ? { validUntil: input.validUntil } : {}),
+    };
+    const credential = await issueCredential({
+      kind: input.kind,
+      credentialId: input.credentialId,
+      issuer,
+      subject: input.subjectWebid,
+      claims: input.claims,
+      validity,
+      ...(input.status !== undefined ? { status: input.status } : {}),
+      key,
+    });
+
+    const hiddenFields = input.hiddenFields ?? [];
+    let anchors: MintedAnchor[] = [];
+    if (hiddenFields.length > 0) {
+      if (input.anchorIdFor === undefined || input.anchorStatusFor === undefined) {
+        throw new SeedToolingError(
+          "MISSING_ANCHOR_WIRING",
+          "hiddenFields need anchorIdFor + anchorStatusFor (anchor IRIs and status entries)",
+        );
+      }
+      anchors = await mintOperandAnchors({
+        credential,
+        hiddenFields,
+        subject: input.subjectWebid,
+        issuer,
+        anchorIdFor: input.anchorIdFor,
+        statusFor: input.anchorStatusFor,
+        validity,
+        key,
+        native,
+      });
+    }
+
+    let witness: string | undefined;
+    if (input.zkStatus !== undefined) {
+      const dualSigned = await dualSignCredential({
+        credential,
+        issuerSeed: this.#options.schnorrIssuerSeed,
+        zkStatus: input.zkStatus,
+        native,
+      });
+      const document: SeedWitnessDocument = {
+        type: "urn:sparq:zk:SeedWitness",
+        credentialId: credential.credentialId,
+        attestation: dualSigned.attestation,
+        witness: dualSigned.witness,
+        note:
+          "Borrower-only ZK witness (decision 0012). The clear status index and " +
+          `blinding are PRIVATE proof inputs - never publish this resource. ${ZK_HONESTY.headline}`,
+      };
+      witness = `${JSON.stringify(document, null, 2)}\n`;
+    } else if (hiddenFields.length > 0) {
+      // A credential with anchors but no dual-sign attestation cannot back a
+      // Tier B composite - refuse the half-configured state loudly.
+      throw new SeedToolingError(
+        "MISSING_ZK_STATUS",
+        "hiddenFields were requested without zkStatus - ZK-participating credentials must dual-sign (decision 0004)",
+      );
+    }
+
+    return {
+      vc: credential.body,
+      vcContentType: credential.contentType,
+      credential,
+      anchors: anchors.map((anchor) => ({
+        field: anchor.field,
+        operandEnc: anchor.operandEnc,
+        vc: anchor.credential.body,
+        contentType: anchor.credential.contentType,
+        credential: anchor.credential,
+      })),
+      ...(witness !== undefined
+        ? { witness, witnessContentType: "application/json" as const }
+        : {}),
+    };
+  }
+}
