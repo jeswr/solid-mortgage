@@ -484,10 +484,10 @@ The shipped artifact is generated; this condensed form pins the shape for review
     "editorial": {
       "type": "object",
       "properties": {
-        "maxLeadWords": { "type": "integer", "default": 40 },
-        "maxStepWords": { "type": "integer", "default": 65 },
-        "minSteps": { "type": "integer", "default": 2 },
-        "minUnderneathChars": { "type": "integer", "default": 20 }
+        "maxLeadWords": { "type": "integer", "minimum": 1, "default": 40 },
+        "maxStepWords": { "type": "integer", "minimum": 1, "default": 65 },
+        "minSteps": { "type": "integer", "minimum": 2, "default": 2 },
+        "minUnderneathChars": { "type": "integer", "minimum": 20, "default": 20 }
       }
     },
     "compliance": {
@@ -714,6 +714,13 @@ JSON-Schema emission), `react`. No RDF deps — this package never touches tripl
 The whole of `packages/ui`, de-branded behind `createDisclaimerPack`.
 
 ```ts
+// zod contracts kit OWNS — the single source of truth showcase composes its document
+// schema from (roborev 5648 Medium). Exported as schemas AND inferred types.
+export const brandingConfigSchema: z.ZodType<BrandingConfig>;
+export const themeSpecSchema: z.ZodType<ThemeSpec>;
+export const bannedMarkSchema: z.ZodType<BannedMark>;
+export type { BrandingConfig, ThemeSpec, BannedMark };   // = z.infer<typeof …>
+
 // copy factories (all of packages/ui/src/disclaimers.ts, parameterised)
 export interface DisclaimerPack { /* bannerFullCopy, bannerCompactCopy, footerLegalLine,
   interstitialParagraphs, demoTitle, demoDescription, demoMetadata, illustrativeTag,
@@ -735,20 +742,23 @@ export function insigniaFindings(text: string,
 export const disclaimerAssertions: { /* e2e helpers asserting banner/footer presence */ };
 ```
 
-Type ownership (roborev 5646 Medium — the dependency edge must stay acyclic): **kit owns
-the branding/theming contracts** (`BrandingConfig`, `ThemeSpec`, `BannedMark`) since they
-are disclaimer/theme domain types; `@jeswr/solid-showcase` imports them for the
-`branding`/`theme` fields of `WalkthroughDocument` and re-exports them for consumers.
-Document-shaped types (`WalkthroughDocument`, `RegisteredApp`, …) live only in showcase —
-so the deploy helpers that consume the *document* (`envMatrix`, `appVercelJson`) live in
-showcase's `/next` subpath (§3.1), not in kit. Kit never imports from showcase.
+Type ownership (roborev 5646/5648 Medium — the dependency edge must stay acyclic): **kit
+owns the branding/theming contracts** (`BrandingConfig`, `ThemeSpec`, `BannedMark`) since
+they are disclaimer/theme domain types, and exports them as **zod schemas plus inferred
+types** so `@jeswr/solid-showcase` composes its `WalkthroughDocument` schema from the same
+runtime source (`branding: brandingConfigSchema`, `theme: themeSpecSchema`) without
+duplicating them — this makes `zod` a kit dependency. Document-shaped types
+(`WalkthroughDocument`, `RegisteredApp`, …) live only in showcase — so the deploy helpers
+that consume the *document* (`envMatrix`, `appVercelJson`) live in showcase's `/next`
+subpath (§3.1), not in kit. Kit never imports from showcase.
 
 Opinionated invariants preserved in code, not config: the banner is rendered by AppShell
 unconditionally (four-Ps adjacency); safety copy is non-removable; DemoLockedField's hint
 always renders; interstitial keeps the §4.2 four-paragraph structure with only the
 convener/negation substitutions.
 
-Deps: `@jeswr/app-shell` (`cn`), `react`. Browser-safe except `/testing`.
+Deps: `@jeswr/app-shell` (`cn`), `zod` (branding/theme schemas), `react`. Browser-safe
+except `/testing`.
 
 ### 3.3 `@jeswr/solid-pod-guard` — the decision-0015 auth boundary (sm-75)
 
@@ -822,12 +832,20 @@ dotfile-rename gotcha (`npmrc`→`.npmrc`, `gitignore`→`.gitignore`,
 `env.example`→`.env.example` — npm pack strips the literals), `--no-install`, scaffold
 tests that gate the generated repo.
 
-**Bin format (roborev 5646 High):** the published executable is **JavaScript**, compiled
-from TS during packaging (`prepack` esbuild bundle → `dist/bin.mjs`) — Node's native
-type-stripping does NOT apply inside `node_modules`, so an `npx`-installed TS bin would
-fail. (create-solid-app gets away with `node bin.ts` only because it is unpublished and
-run from a checkout.) The packed artifact is exercised through a real install in tests:
-`npm pack` → install the tarball into a temp dir → run the bin.
+**Bin format (roborev 5646 High):** the published executable is **JavaScript** —
+`dist/bin.mjs`, an esbuild bundle of the TS source. Node's native type-stripping does NOT
+apply inside `node_modules`, so an `npx`-installed TS bin would fail. (create-solid-app
+gets away with `node bin.ts` only because it is unpublished and run from a checkout.)
+
+**Build is EXPLICIT, never a `prepack` hook (roborev 5648 High):** the suite-wide
+`.npmrc` sets `ignore-scripts=true`, which suppresses `prepack`/`prepare` — a hook-built
+`dist/` would be silently omitted from the tarball. So the build runs as an explicit step
+in the packaging flow: the solid-sdk `scripts/mirror-publish.mjs` already builds a package
+before publishing (AGENTS.md rule 3), and for this package that build must emit
+`dist/bin.mjs`; a local `npm pack` for the install-test likewise runs `pnpm --filter
+create-solid-demo build` first. The packed artifact is exercised through a real install in
+tests: build → `npm pack` → install the tarball into a temp dir from a clean checkout →
+run the bin (asserting `dist/bin.mjs` is present in the tarball).
 
 ### 4.1 UX
 
@@ -929,7 +947,7 @@ touching framework code.
 ### sm-74 — `@jeswr/solid-showcase`
 
 1. Package at `solid-sdk/packages/solid-showcase`; SKILL.md colocated; no committed dist; workspace `pnpm run gate` green.
-2. `parseWalkthrough` enforces every §2.1 validation rule with chapter/step-naming errors; property-tested against malformed documents (unknown try-live app, budget overrun, missing required underneath, duplicate slugs).
+2. `parseWalkthrough` enforces every §2.1 validation rule with chapter/step-naming errors; a dedicated malformed-document test asserts a distinct rejection for EACH invariant: unknown try-live app, `roles[].apps[]` unresolved, `launcherOrder` unresolved/duplicated, registry key ≠ `slug`, duplicate role slug, `roles[].scene` with no matching chapter, non-contiguous chapter scenes, budget overrun, `minSteps`, missing/short required `underneath`, `compliance.checks[].chapterSlug` unresolved, compliance `scene` ≠ referenced chapter's scene, `editorial` override below a schema floor, persona descriptor missing "fictional"/"simulated".
 3. JSON-Schema artifact generated from the zod schema, exported at `schema/walkthrough.v1.json`, and asserted in a test to stay in sync with the types.
 4. The mortgage walkthrough (fixture: §2.3 completed) renders via the four page renderers; component tests cover: keyboard stepper, try-live honest degradation (live/checking/not-deployed), launcher placeholder-link pattern, ecosystem map selection, compliance checklist, persona card copy actions.
 5. `zoneRewrites(mortgageDoc)` reproduces the rewrite output of today's `apps/tour/next.config.ts` (unit test with env set/unset); `envMatrix` includes `*_TRUST_FORWARDED_HEADERS` for every app with a pod route.
