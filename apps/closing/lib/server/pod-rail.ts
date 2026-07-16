@@ -21,7 +21,6 @@ import { createServicePodFetch } from "@mortgage/solid-kit/auth/service";
 import { notConfigured } from "../../../lender-boa/lib/server/config";
 import { type OwnerBindingSeams, resolveAuthorizedPod } from "../../../lender-boa/lib/server/owner";
 import { PodAccessError, type PodIoFetch } from "../../../lender-boa/lib/server/pod";
-import type { AuthenticatedPodCaller } from "../../../lender-boa/lib/server/pod-rail";
 import { type ClosingConfig, configuredAgent, requiredConfig } from "./config";
 import {
   type ClosingSceneOptions,
@@ -30,6 +29,18 @@ import {
   readConsentLedger,
 } from "./scene";
 import { publicRequestUrl } from "./url";
+
+/**
+ * The verified caller of a pod route: token WebID + the ONE pod it binds to.
+ * Structurally identical to lender-boa's `AuthenticatedPodCaller` — declared
+ * locally because importing lender-boa's pod-rail module pulls its whole
+ * compile graph (freshness → vc-kit) into this app's isolated Vercel build.
+ * The sm-emv hoist into solid-kit unifies the two.
+ */
+export interface AuthenticatedPodCaller {
+  readonly webid: string;
+  readonly podBase: string;
+}
 
 export interface ClosingServiceOptions {
   readonly config: ClosingConfig;

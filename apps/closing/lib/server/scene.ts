@@ -12,9 +12,15 @@
  *     No rule is ever shared between agents, so granting/revoking one agent
  *     can never widen or narrow another's access.
  *
- *   - CLOSE is single-shot: a second close is 409 and touches NOTHING — in
+ *   - CLOSE is single-shot but RESUMABLE: once any lender receipt exists the
+ *     close is complete and a repeat is 409 that touches NOTHING — in
  *     particular it can never re-grant a lender whose access the borrower
- *     revoked (scene 5's whole thesis).
+ *     revoked (scene 5's whole thesis). A close that crashed before recording
+ *     the lender grant (record present, NO lender receipt) is repaired through
+ *     the same guarded grant pipeline instead of wedging on 409 forever.
+ *
+ *   - TRANSFERS REQUIRE THE RECORD: grant/revoke refuse (409) until a closing
+ *     record exists — no orphan ACLs or receipts for an unsigned ceremony.
  *
  *   - REVOCATION IS IMMUTABLE at the app level: once the ledger holds a
  *     withdraw receipt for an agent, this app refuses to re-grant that agent
@@ -25,16 +31,21 @@
  *     and then records — if recording fails the access stays OFF (fail-safe
  *     direction) and a retry lands in the repair branch, which completes the
  *     missing receipt instead of erroring on "no grant to revoke". A GRANT
- *     records AFTER the ACL change but compensates: a receipt-write failure
- *     rolls the ACL back to its prior agents, so no unrecorded grant survives;
- *     if even the rollback fails, the retry repair branch writes the missing
- *     receipt. All writes are conditional (`If-Match`/`If-None-Match: *`), so
- *     concurrent mutations lose loudly instead of clobbering.
+ *     records AFTER the ACL change but compensates surgically: a receipt-write
+ *     failure removes ONLY that agent from the CURRENT ACL (never a stale
+ *     snapshot restore, which could overwrite a concurrent change), so no
+ *     unrecorded grant survives; if even the rollback fails, the retry repair
+ *     branch writes the missing receipt. Receipt IRIs are DETERMINISTIC per
+ *     logical transition, so concurrent repairs collide on `If-None-Match: *`
+ *     instead of minting duplicates. All writes are conditional
+ *     (`If-Match`/`If-None-Match: *`), so concurrent mutations lose loudly
+ *     instead of clobbering.
  */
 import { serialize } from "@jeswr/rdf-serialize";
 import {
   buildClosingRecord,
   buildConsentReceipt,
+  ClosingRecord,
   ConsentReceipt,
   DPV,
   resourceToTurtle,
@@ -166,16 +177,25 @@ async function writeAclDocument(
   await writePodTurtle(iri, await serializeAcl(dataset), { etag, podFetch });
 }
 
-/** Best-effort ACL restore for grant compensation (re-reads for a fresh ETag). */
-async function restoreAclDocument(
+/**
+ * SURGICAL rollback for grant compensation: re-read the CURRENT ACL and remove
+ * only `agentWebId` from it. Never restores a stale snapshot — a concurrent
+ * mutation (e.g. another agent's revocation) that landed between the grant and
+ * this rollback survives untouched (roborev 79200e5: snapshot-restore could
+ * resurrect concurrently-revoked access).
+ */
+async function removeAgentFromAcl(
   resourceIri: string,
   ownerWebId: string,
   serviceWebId: string,
-  granted: ReadonlySet<string>,
+  agentWebId: string,
   podFetch: PodIoFetch,
 ): Promise<void> {
-  const current = await readPodResource(aclIri(resourceIri), resourceIri, podFetch);
-  await writeAclDocument(resourceIri, ownerWebId, serviceWebId, granted, current?.etag, podFetch);
+  const snapshot = await readAclSnapshot(resourceIri, ownerWebId, serviceWebId, podFetch);
+  if (!snapshot.granted.has(agentWebId)) return;
+  const granted = new Set(snapshot.granted);
+  granted.delete(agentWebId);
+  await writeAclDocument(resourceIri, ownerWebId, serviceWebId, granted, snapshot.etag, podFetch);
 }
 
 function receiptView(iri: string, receipt: ConsentReceipt): ConsentReceiptView {
@@ -198,11 +218,15 @@ async function writeReceipt(
   actor: string,
   recipient: string,
   action: "grant" | "revoke",
+  sequence: number,
   options: ClosingSceneOptions,
 ): Promise<ConsentReceiptView> {
   const now = options.now?.() ?? new Date();
-  const randomId = options.randomId?.() ?? crypto.randomUUID();
-  const iri = `${mortgageContainer(podBase)}${RECEIPT_PREFIX}${now.getTime()}-${randomId}`;
+  // DETERMINISTIC per logical transition (agent + how many receipts precede
+  // it): two concurrent repairs of the same missing receipt target the SAME
+  // IRI, so the strict `If-None-Match: *` create makes the loser fail loudly
+  // instead of minting a duplicate record (roborev 79200e5).
+  const iri = `${mortgageContainer(podBase)}${RECEIPT_PREFIX}${sequence}-${action}-${encodeURIComponent(recipient)}`;
   const receipt = buildConsentReceipt({
     iri,
     dataSubject: actor,
@@ -226,16 +250,34 @@ export async function executeClosing(
 ): Promise<{ iri: string; eNoteReference: string; closedAt: string }> {
   const now = options.now?.() ?? new Date();
   const iri = closingRecordIri(podBase);
-  // Single-shot: a repeat close must NEVER touch the record or its ACL again —
-  // re-running the lender grant here is exactly how a revoked lender would be
-  // silently re-granted (roborev sm-34 High).
+  // Single-shot with ONE exception: a close that crashed between writing the
+  // record and recording the lender grant (no lender receipt exists at all) is
+  // RESUMED — the grant pipeline below repairs ACL and/or receipt, and still
+  // enforces revocation immutability itself. Any lender receipt (grant OR
+  // revoke) means the close completed, and a repeat is 409 that must NEVER
+  // touch the record or its ACL again — re-running the lender grant here is
+  // exactly how a revoked lender would be silently re-granted (roborev sm-34
+  // High; resumability: roborev 79200e5 High).
   const existing = await readPodResource(iri, podBase, options.podFetch);
   if (existing !== undefined) {
-    throw new PodAccessError(
-      409,
-      "the closing package is already signed — servicing access is managed only by the " +
-        "transfer controls, never by re-running the close",
+    const receipts = await readConsentLedger(podBase, borrowerWebId, options);
+    const lenderHistory = receipts.filter(
+      (receipt) => receipt.recipient === lenderWebId && receipt.resource === iri,
     );
+    if (lenderHistory.length > 0) {
+      throw new PodAccessError(
+        409,
+        "the closing package is already signed — servicing access is managed only by the " +
+          "transfer controls, never by re-running the close",
+      );
+    }
+    const stored = new ClosingRecord(iri, existing.dataset, DataFactory);
+    await changeServicingAccess(podBase, borrowerWebId, lenderWebId, "grant", options);
+    return {
+      iri,
+      eNoteReference: stored.eNoteReference,
+      closedAt: stored.closingDate.toISOString(),
+    };
   }
   const eNoteReference = `SIMULATED-ENOTE-${now.toISOString().slice(0, 10)}-${
     options.randomId?.() ?? crypto.randomUUID()
@@ -284,6 +326,15 @@ export async function changeServicingAccess(
   options: ClosingSceneOptions,
 ): Promise<ConsentReceiptView> {
   const resourceIri = closingRecordIri(podBase);
+  // No transfers before a closing record exists — otherwise a grant would mint
+  // an orphan ACL + receipt for a resource the ceremony never produced.
+  const record = await readPodResource(resourceIri, podBase, options.podFetch);
+  if (record === undefined) {
+    throw new PodAccessError(
+      409,
+      "no closing record exists — the closing package must be signed before servicing access changes",
+    );
+  }
   const receipts = await readConsentLedger(podBase, borrowerWebId, options);
   const history = receipts.filter(
     (receipt) => receipt.recipient === agentWebId && receipt.resource === resourceIri,
@@ -324,16 +375,25 @@ export async function changeServicingAccess(
     // `isGranted && !everGranted` falls through here too: the repair branch for
     // a previous crash between ACL write and receipt write.
     try {
-      return await writeReceipt(podBase, borrowerWebId, agentWebId, "grant", options);
+      return await writeReceipt(
+        podBase,
+        borrowerWebId,
+        agentWebId,
+        "grant",
+        history.length,
+        options,
+      );
     } catch (error) {
       if (!isGranted) {
         // Compensation: an UNRECORDED grant must not survive this request.
+        // Surgical (removes ONLY this agent from the CURRENT ACL) so a
+        // concurrent mutation is never overwritten by a stale snapshot.
         try {
-          await restoreAclDocument(
+          await removeAgentFromAcl(
             resourceIri,
             borrowerWebId,
             options.serviceWebId,
-            snapshot.granted,
+            agentWebId,
             options.podFetch,
           );
         } catch {
@@ -367,7 +427,7 @@ export async function changeServicingAccess(
   // Access is now OFF (or already was — the repair branch for a crash between
   // ACL write and receipt write). Recording failure keeps access off and stays
   // retryable; it can never resurrect the grant.
-  return writeReceipt(podBase, borrowerWebId, agentWebId, "revoke", options);
+  return writeReceipt(podBase, borrowerWebId, agentWebId, "revoke", history.length, options);
 }
 
 export async function readConsentLedger(

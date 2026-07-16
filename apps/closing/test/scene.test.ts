@@ -113,6 +113,13 @@ describe("scene 5 lifecycle on a WAC-enforcing pod", () => {
     await pods?.stop();
   });
 
+  test("transfers before any close are refused — no orphan grants", async () => {
+    const message = await expect409(() =>
+      changeServicingAccess(podBase, owner.webid, servicer.webid, "grant", options),
+    );
+    expect(message).toContain("no closing record");
+  }, 60_000);
+
   test("close writes the record and the receipt-recorded lender grant", async () => {
     await executeClosing(podBase, owner.webid, lender.webid, options);
     expect((await lender.authFetch(record)).status).toBe(200);
@@ -192,6 +199,7 @@ describe("scene 5 receipt/ACL consistency under receipt-write failure", () => {
   let pods: SolidTestServer;
   let owner: SolidTestAccount;
   let service: SolidTestAccount;
+  let closeAgent: SolidTestAccount; // the "lender" whose close-time grant crashes
   let servicer: SolidTestAccount;
   let podBase: string;
   let record: string;
@@ -199,12 +207,24 @@ describe("scene 5 receipt/ACL consistency under receipt-write failure", () => {
   let failingReceipts: ClosingSceneOptions;
   let minute = 0;
 
+  /** Ledger actions for one agent, in order. */
+  async function actionsFor(agent: SolidTestAccount): Promise<readonly string[]> {
+    const receipts = await readConsentLedger(podBase, owner.webid, working);
+    return receipts
+      .filter(({ recipient }) => recipient === agent.webid)
+      .map(({ action }) => action);
+  }
+
   beforeAll(async () => {
     pods = await startSolidServer({ oidc: true });
     const primary = pods.accounts[0];
     if (primary === undefined) throw new Error("OIDC harness did not provision an owner");
     owner = primary;
-    [service, servicer] = await Promise.all([pods.provisionAccount(), pods.provisionAccount()]);
+    [service, closeAgent, servicer] = await Promise.all([
+      pods.provisionAccount(),
+      pods.provisionAccount(),
+      pods.provisionAccount(),
+    ]);
     podBase = `${pods.baseUrl}/`;
     record = closingRecordIri(podBase);
     await seedGrantedContainer(owner, service, podBase);
@@ -216,10 +236,10 @@ describe("scene 5 receipt/ACL consistency under receipt-write failure", () => {
       randomId: () => `fail-${minute}`,
     };
     failingReceipts = { ...working, podFetch: receiptFailingFetch(service.authFetch) };
-    // Baseline record without any grant: close against the failing fetch, whose
-    // compensation removes the unrecorded lender grant again (asserted below).
+    // A close whose receipt write fails: the record lands, the compensation
+    // removes the unrecorded lender grant, the caller sees the error.
     await expect(
-      executeClosing(podBase, owner.webid, servicer.webid, failingReceipts),
+      executeClosing(podBase, owner.webid, closeAgent.webid, failingReceipts),
     ).rejects.toMatchObject({ name: "PodAccessError" });
   }, 120_000);
 
@@ -227,17 +247,31 @@ describe("scene 5 receipt/ACL consistency under receipt-write failure", () => {
     await pods?.stop();
   });
 
+  test("a crashed close leaves no unrecorded access and RESUMES on retry", async () => {
+    // From beforeAll: record present, agent compensated away, no receipts.
+    expectDenied((await closeAgent.authFetch(record)).status);
+    expect(await actionsFor(closeAgent)).toEqual([]);
+    // The retry does not wedge on 409 — it repairs the initial grant.
+    const resumed = await executeClosing(podBase, owner.webid, closeAgent.webid, working);
+    expect(resumed.iri).toBe(record);
+    expect(resumed.eNoteReference).toMatch(/^SIMULATED-ENOTE-/);
+    expect((await closeAgent.authFetch(record)).status).toBe(200);
+    expect(await actionsFor(closeAgent)).toEqual(["grant"]);
+    // Once the lender receipt exists the close is complete: repeats are 409.
+    const message = await expect409(() =>
+      executeClosing(podBase, owner.webid, closeAgent.webid, working),
+    );
+    expect(message).toContain("already signed");
+  }, 60_000);
+
   test("a grant whose receipt write fails is ROLLED BACK — no unrecorded access", async () => {
-    // From the failed close in beforeAll: the record exists, but the agent's
-    // grant was compensated away and no receipt was written.
-    expectDenied((await servicer.authFetch(record)).status);
-    expect(await readConsentLedger(podBase, owner.webid, working)).toEqual([]);
-    // Same failure through the transfer path.
     await expect(
       changeServicingAccess(podBase, owner.webid, servicer.webid, "grant", failingReceipts),
     ).rejects.toMatchObject({ name: "PodAccessError" });
     expectDenied((await servicer.authFetch(record)).status);
-    expect(await readConsentLedger(podBase, owner.webid, working)).toEqual([]);
+    expect(await actionsFor(servicer)).toEqual([]);
+    // The surgical rollback touched ONLY the failed agent's rule.
+    expect((await closeAgent.authFetch(record)).status).toBe(200);
     // A retry with a healthy pod connection fully lands.
     const receipt = await changeServicingAccess(
       podBase,
@@ -256,9 +290,7 @@ describe("scene 5 receipt/ACL consistency under receipt-write failure", () => {
     ).rejects.toMatchObject({ name: "PodAccessError" });
     // Fail-safe direction: the WAC read is already gone, only the record lags.
     expectDenied((await servicer.authFetch(record)).status);
-    expect(
-      (await readConsentLedger(podBase, owner.webid, working)).map(({ action }) => action),
-    ).toEqual(["grant"]);
+    expect(await actionsFor(servicer)).toEqual(["grant"]);
     // Retry completes the MISSING receipt instead of erroring on "no grant".
     const receipt = await changeServicingAccess(
       podBase,
@@ -269,9 +301,7 @@ describe("scene 5 receipt/ACL consistency under receipt-write failure", () => {
     );
     expect(receipt.action).toBe("revoke");
     expectDenied((await servicer.authFetch(record)).status);
-    expect(
-      (await readConsentLedger(podBase, owner.webid, working)).map(({ action }) => action),
-    ).toEqual(["grant", "revoke"]);
+    expect(await actionsFor(servicer)).toEqual(["grant", "revoke"]);
     // And the revocation is now immutable.
     await expect(
       changeServicingAccess(podBase, owner.webid, servicer.webid, "grant", working),

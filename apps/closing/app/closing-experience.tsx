@@ -230,7 +230,7 @@ export function ClosingExperience() {
           <div className="mt-6 flex flex-wrap gap-3">
             <button
               className="rounded-lg bg-primary px-5 py-3 font-semibold text-primary-foreground disabled:opacity-50"
-              disabled={active !== undefined || granted}
+              disabled={active !== undefined || granted || closing === undefined}
               onClick={() => run("grant", "grant-servicer", "POST")}
               type="button"
             >

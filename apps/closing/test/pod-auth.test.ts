@@ -166,6 +166,12 @@ describe("the authenticated closing lifecycle (REAL WAC effects)", () => {
   test("close → grant servicer → revoke lender → repeat close stays revoked", async () => {
     const record = closingRecordIri(podBase);
 
+    // Transfers before the ceremony are refused — no orphan grants.
+    const early = await service.grantServicer(
+      await authedRequest(borrower, "POST", "grant-servicer"),
+    );
+    expect(early.status).toBe(409);
+
     const close = await service.close(await authedRequest(borrower, "POST", "close"));
     expect(close.status).toBe(200);
     const closed = (await close.json()) as { iri: string; eNoteReference: string };
