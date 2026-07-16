@@ -3,7 +3,7 @@
  * derivation shared by the dual-sign path and the fixture capture script.
  */
 
-import { createHash } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import type { Quad } from "@rdfjs/types";
 import { Writer } from "n3";
 import { SeedToolingError } from "./native.js";
@@ -45,11 +45,11 @@ export function claimGraphToNTriples(quads: readonly Quad[]): string {
 /**
  * Deterministic BN254 field element from a label: SHA-256, first 31 bytes
  * (always < 2^248 < the modulus - same construction as the Tier A
- * `challengeFieldOf`). Used for SEED-FIXTURE salts and blindings so captures
- * are reproducible byte-for-byte. FIXTURE-ONLY: production issuance draws
- * salts/blinders from OS entropy - deterministic blinders make repeat
- * presentations linkable, which a demo fixture does not care about but a
- * real wallet must.
+ * `challengeFieldOf`). FIXTURE-ONLY: the labels are public, so anything
+ * derived this way is publicly recomputable - a hiding commitment blinded
+ * with it can be brute-forced over its candidate space. Production seeding
+ * uses {@link randomFieldHex} (the default everywhere; deterministic
+ * derivation is an explicit opt-in).
  */
 export function deriveFieldHex(label: string): string {
   if (label.length === 0) {
@@ -57,4 +57,12 @@ export function deriveFieldHex(label: string): string {
   }
   const digest = createHash("sha256").update(label, "utf8").digest();
   return `0x${digest.subarray(0, 31).toString("hex").padStart(64, "0")}`;
+}
+
+/**
+ * OS-entropy BN254 field element (31 random bytes < 2^248 < the modulus) -
+ * the DEFAULT source for RDFC salts and index-commitment blindings.
+ */
+export function randomFieldHex(): string {
+  return `0x${randomBytes(31).toString("hex").padStart(64, "0")}`;
 }

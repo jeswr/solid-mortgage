@@ -25,6 +25,12 @@ export {
   PINNED_NARGO_VERSION,
   PINNED_NOIR_JS_VERSION,
 } from "./circuits/registry.js";
+export {
+  type CompositeBindingOptions,
+  type CompositeBindingResult,
+  verifyCompositeBindings,
+  type ZkCommitmentAttestation,
+} from "./composite-binding.js";
 export { type HonestyItem, ZK_HONESTY, ZK_HONESTY_ITEMS, ZK_TOOLCHAIN } from "./honesty.js";
 export {
   loadProofManifest,

@@ -125,13 +125,32 @@ export interface SparqSeedResult {
     readonly join: SparqSubRelation;
     readonly revoke: SparqSubRelation;
     readonly hiddenIssuer: SparqSubRelation;
-    readonly context: {
-      readonly statusListRoot: string;
-      readonly issuerKeySetRoot: string;
-      readonly issuerKeySet: readonly string[];
-      readonly joinRelation: string;
-    };
+    readonly context: SparqCompositeContext;
   };
+}
+
+/** Verifier-side trust-anchor material the composite build discloses. */
+export interface SparqCompositeContext {
+  /**
+   * The ISSUER-AUTHENTICATED status-list snapshot reference (decision 0012's
+   * Schnorr-bound ZK list): `rootSignature` is a Schnorr-BJJ signature over
+   * sparq's `accepted_status_leaf(H(iri), version, root)` digest, so a
+   * verifier can authenticate the exact (list, version, root) the revocation
+   * proof was built against - a prover cannot substitute an all-unset
+   * snapshot of their own making. Signature verification is native tooling
+   * (Poseidon2/Schnorr are not reimplemented in JS).
+   */
+  readonly statusList: {
+    readonly iri: string;
+    readonly version: number;
+    readonly root: string;
+    readonly rootSignature: string;
+    readonly issuerPublicKey: string;
+    readonly cryptosuite: string;
+  };
+  readonly issuerKeySetRoot: string;
+  readonly issuerKeySet: readonly string[];
+  readonly joinRelation: string;
 }
 
 /**
@@ -256,11 +275,13 @@ export class SparqSeedHelper implements SparqNativeBridge {
         `nargo is not the pinned ${PINNED_NARGO_VERSION} (decision 0005): ${nargoVersion.split("\n")[0]}`,
       );
     }
+    // ALWAYS a fresh copy: a reused work dir could compile stale sources from
+    // an earlier checkout/commit while provenance records the current one
+    // (roborev 5554 finding 3).
     const compose = join(workDir, "zk-compose");
-    if (!existsSync(join(compose, "Nargo.toml"))) {
-      await mkdir(workDir, { recursive: true });
-      await cp(join(this.#checkout, "zk", "compose"), compose, { recursive: true });
-    }
+    await rm(compose, { recursive: true, force: true });
+    await mkdir(workDir, { recursive: true });
+    await cp(join(this.#checkout, "zk", "compose"), compose, { recursive: true });
     const artifacts: Record<string, CompiledCircuitArtifact> = {};
     for (const member of members) {
       await execFileAsync("nargo", ["compile", "--package", member], {

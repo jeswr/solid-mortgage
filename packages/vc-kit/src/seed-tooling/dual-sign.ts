@@ -17,7 +17,7 @@
 import type { IssuedCredential } from "../issue.js";
 import type { SparqAttestation, SparqNativeBridge, SparqZkStatusInput } from "./native.js";
 import { SeedToolingError } from "./native.js";
-import { claimGraphToNTriples, deriveFieldHex } from "./serialize.js";
+import { claimGraphToNTriples, deriveFieldHex, randomFieldHex } from "./serialize.js";
 
 /** The ZK rail's own status-list entry for a credential (decision 0012). */
 export interface ZkStatusEntry {
@@ -37,9 +37,9 @@ export interface DualSignOptions {
   readonly issuerSeed: number;
   readonly zkStatus: ZkStatusEntry;
   readonly native: SparqNativeBridge;
-  /** Override the per-graph RDFC10 salt (defaults to a derived fixture salt). */
+  /** Override the per-graph RDFC10 salt (default: fresh OS entropy). */
   readonly saltHex?: string;
-  /** Override the index-commitment blinding (defaults to a derived fixture value). */
+  /** Override the index-commitment blinding (default: fresh OS entropy). */
   readonly indexBlindingHex?: string;
 }
 
@@ -76,14 +76,17 @@ export function assertZkStatusEntry(status: ZkStatusEntry): void {
 }
 
 /**
- * The default deterministic FIXTURE derivations (see `deriveFieldHex`'s
- * production caveat). Exported so the capture script derives the identical
- * values when it assembles a combined helper job.
+ * Deterministic FIXTURE derivations - EXPLICIT OPT-IN ONLY (roborev 5557
+ * finding 1): the labels are public, so a blinding derived this way is
+ * publicly recomputable and the "hiding" index commitment can be de-hidden
+ * by enumerating the <=1024 candidate indices. Used by the capture script
+ * (and `deterministicFixtureMode`) for byte-stable fixtures; never the
+ * default.
  */
-export function defaultSaltHex(credentialId: string): string {
+export function fixtureSaltHex(credentialId: string): string {
   return deriveFieldHex(`sm-26 rdfc10 salt: ${credentialId}`);
 }
-export function defaultIndexBlindingHex(zkStatus: ZkStatusEntry): string {
+export function fixtureIndexBlindingHex(zkStatus: ZkStatusEntry): string {
   return deriveFieldHex(
     `sm-26 index blinding: ${zkStatus.listIri} ${zkStatus.index} v${zkStatus.version}`,
   );
@@ -102,8 +105,10 @@ export async function dualSignCredential(options: DualSignOptions): Promise<Dual
   if (!Number.isInteger(options.issuerSeed) || options.issuerSeed < 0) {
     throw new SeedToolingError("BAD_ISSUER_SEED", "issuerSeed must be a non-negative integer");
   }
-  const saltHex = options.saltHex ?? defaultSaltHex(credential.credentialId);
-  const indexBlindingHex = options.indexBlindingHex ?? defaultIndexBlindingHex(zkStatus);
+  // SECURE BY DEFAULT: fresh OS entropy per call. Deterministic fixture
+  // values only ever arrive via the explicit overrides.
+  const saltHex = options.saltHex ?? randomFieldHex();
+  const indexBlindingHex = options.indexBlindingHex ?? randomFieldHex();
   const name = "credential";
   const result = await options.native.run({
     credentials: [

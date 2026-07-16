@@ -21,6 +21,8 @@ import {
   claimGraphToNTriples,
   DEMO_ZK_STATUS,
   deriveFieldHex,
+  fixtureIndexBlindingHex,
+  fixtureSaltHex,
   mintOperandAnchors,
   readHiddenFieldValues,
   SeedToolingError,
@@ -242,6 +244,85 @@ describe("SparqCredentialSeedPipeline.issue (seeder-design section 5.2 seam)", (
         anchorStatusFor: () => list.entry(43),
       }),
     ).rejects.toMatchObject({ code: "MISSING_ZK_STATUS" });
+  });
+
+  it("uses fresh OS entropy for salts/blindings by DEFAULT (roborev 5557)", async () => {
+    const { list, jobs, pipeline } = await rig();
+    const input = () => ({
+      kind: "employment-income-credential" as const,
+      credentialId: CREDENTIAL_ID,
+      subjectWebid: SUBJECT,
+      claims: employmentClaims(),
+      validFrom: BACKDATED_VALIDITY.validFrom,
+      validUntil: BACKDATED_VALIDITY.validUntil,
+      status: list.entry(42),
+      zkStatus: DEMO_ZK_STATUS.employment,
+    });
+    await pipeline.issue(input());
+    await pipeline.issue(input());
+    const sent = jobs
+      .filter((job) => (job.credentials ?? []).length > 0)
+      .map((job) => job.credentials?.[0]);
+    expect(sent).toHaveLength(2);
+    // Two identical issues must NOT share salt or blinding - a public-label
+    // blinding would let anyone de-hide the <=1024-entry index commitment.
+    expect(sent[0]?.saltHex).not.toBe(sent[1]?.saltHex);
+    expect(sent[0]?.status.indexBlindingHex).not.toBe(sent[1]?.status.indexBlindingHex);
+    // And neither equals the PUBLIC fixture derivation.
+    expect(sent[0]?.saltHex).not.toBe(fixtureSaltHex(CREDENTIAL_ID));
+    expect(sent[0]?.status.indexBlindingHex).not.toBe(
+      fixtureIndexBlindingHex(DEMO_ZK_STATUS.employment),
+    );
+  });
+
+  it("deterministicFixtureMode is the EXPLICIT opt-in for byte-stable captures", async () => {
+    const host = stubHost();
+    const list = await hostedStatusList(host);
+    const { bridge, jobs } = stubBridge();
+    const pipeline = new SparqCredentialSeedPipeline({
+      issuer: ISSUER,
+      key: await issuerKey(),
+      schnorrIssuerSeed: 4101,
+      native: bridge,
+      deterministicFixtureMode: true,
+    });
+    await pipeline.issue({
+      kind: "employment-income-credential",
+      credentialId: CREDENTIAL_ID,
+      subjectWebid: SUBJECT,
+      claims: employmentClaims(),
+      validFrom: BACKDATED_VALIDITY.validFrom,
+      validUntil: BACKDATED_VALIDITY.validUntil,
+      status: list.entry(42),
+      zkStatus: DEMO_ZK_STATUS.employment,
+    });
+    const sent = jobs.find((job) => (job.credentials ?? []).length > 0)?.credentials?.[0];
+    expect(sent?.saltHex).toBe(fixtureSaltHex(CREDENTIAL_ID));
+    expect(sent?.status.indexBlindingHex).toBe(fixtureIndexBlindingHex(DEMO_ZK_STATUS.employment));
+  });
+
+  it("rejects a half-configured call BEFORE issuing or signing anything", async () => {
+    const { jobs, pipeline } = await rig();
+    let statusCallbackHits = 0;
+    await expect(
+      pipeline.issue({
+        kind: "employment-income-credential",
+        credentialId: CREDENTIAL_ID,
+        subjectWebid: SUBJECT,
+        claims: employmentClaims(),
+        validFrom: BACKDATED_VALIDITY.validFrom,
+        validUntil: BACKDATED_VALIDITY.validUntil,
+        hiddenFields: [MORT.monthlyGrossIncomeUsd],
+        anchorIdFor: () => `${CREDENTIAL_ID}-anchor`,
+        anchorStatusFor: () => {
+          statusCallbackHits += 1;
+          throw new Error("must not be invoked on a rejected call");
+        },
+      }),
+    ).rejects.toMatchObject({ code: "MISSING_ZK_STATUS" });
+    // Nothing was signed, encoded, or dual-signed (roborev 5556 ordering).
+    expect(statusCallbackHits).toBe(0);
+    expect(jobs).toHaveLength(0);
   });
 
   it("sends the claim graph to the native bridge as parseable N-Triples", async () => {

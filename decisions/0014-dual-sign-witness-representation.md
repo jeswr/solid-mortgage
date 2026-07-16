@@ -16,6 +16,7 @@ version))`), so the hidden-index revocation proof is provably about the issuer-s
 the salt is issuer-attested. Consequence for sm-65: the witness resource gets an owner-only ACL;
 verifiers never need it (they consume the manifest + anchors + public attestation values).
 
-Also implied: seed-time salts/blinders derive deterministically (SHA-256 label → 31 bytes) for
-byte-stable fixtures; production issuance must draw them from OS entropy (linkability caveat
-documented in `packages/vc-kit/src/seed-tooling/serialize.ts`).
+Salts/blinders are **OS entropy by default** (`randomFieldHex`); the deterministic SHA-256-label
+derivation is an explicit `deterministicFixtureMode` opt-in for byte-stable golden captures only —
+a public-label blinding is recomputable by anyone, de-hiding the ≤1024-entry index commitment
+(roborev job 5557 finding 1). sm-65 must NOT enable fixture mode when seeding demo pods.

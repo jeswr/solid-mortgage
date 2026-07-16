@@ -15,8 +15,8 @@ import { describe, expect, it } from "vitest";
 import {
   DEMO_OPERAND_VALUES,
   DEMO_ZK_STATUS,
-  defaultIndexBlindingHex,
-  defaultSaltHex,
+  fixtureIndexBlindingHex,
+  fixtureSaltHex,
   SparqSeedHelper,
 } from "../src/seed-tooling/index.js";
 
@@ -55,14 +55,14 @@ describe.skipIf(!enabled)("SparqSeedHelper (native, gated on SPARQ_CHECKOUT)", (
         '<https://alex.example/credentials/income> <https://www.w3.org/2018/credentials#credentialSubject> <https://alex.example/profile/card#me> .\n<https://alex.example/profile/card#me> <https://solid-mortgage-vocab.vercel.app/mort#monthlyGrossIncomeUsd> "8500"^^<http://www.w3.org/2001/XMLSchema#integer> .\n';
       const status = {
         ...DEMO_ZK_STATUS.employment,
-        indexBlindingHex: defaultIndexBlindingHex(DEMO_ZK_STATUS.employment),
+        indexBlindingHex: fixtureIndexBlindingHex(DEMO_ZK_STATUS.employment),
       };
       const job = {
         credentials: [
           {
             name: "employment",
             ntriples,
-            saltHex: defaultSaltHex("https://alex.example/credentials/income"),
+            saltHex: fixtureSaltHex("https://alex.example/credentials/income"),
             issuerSeed: 4101,
             status,
           },

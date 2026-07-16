@@ -19,7 +19,7 @@
 // genuine UltraHonk transcript that self-verified before being written, and
 // deliverable 5 of the bead applies: if the native toolchain cannot run, this
 // script FAILS; it never fakes an operand_enc.
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -48,11 +48,11 @@ import {
   DEMO_ZK_REVOKED_DECOYS,
   DEMO_ZK_STATUS,
   DEMO_ZK_STATUS_LIST_SIZE,
-  defaultIndexBlindingHex,
-  defaultSaltHex,
   demoAssetClaims,
   demoEmploymentClaims,
   deriveFieldHex,
+  fixtureIndexBlindingHex,
+  fixtureSaltHex,
   SparqSeedHelper,
 } from "../dist/seed-tooling/index.js";
 
@@ -126,9 +126,9 @@ async function main() {
   const credentialInput = (name, credential, issuerSeed, zkStatus) => ({
     name,
     ntriples: claimGraphToNTriples(credential.claimQuads),
-    saltHex: defaultSaltHex(credential.credentialId),
+    saltHex: fixtureSaltHex(credential.credentialId),
     issuerSeed,
-    status: { ...zkStatus, indexBlindingHex: defaultIndexBlindingHex(zkStatus) },
+    status: { ...zkStatus, indexBlindingHex: fixtureIndexBlindingHex(zkStatus) },
   });
   const challengeHex = await challengeFieldOf(COMPOSITE_NONCE);
   const result = await helper.run({
@@ -179,9 +179,16 @@ async function main() {
     result.composite.revoke.member,
     result.composite.hiddenIssuer.member,
   ];
-  const workDir = join(tmpdir(), "sm26-zk-compose");
+  // Fresh, unpredictable, owner-only work dir per run (roborev 5557 finding
+  // 2): never a fixed reusable path under the shared system temp dir.
+  const workDir = await mkdtemp(join(tmpdir(), "sm26-zk-compose-"));
   console.log(`[capture-fixtures] compiling ${members.join(", ")} (nargo, ${workDir})`);
-  const circuits = await helper.compileCircuits(members, workDir);
+  let circuits;
+  try {
+    circuits = await helper.compileCircuits(members, workDir);
+  } finally {
+    await rm(workDir, { recursive: true, force: true });
+  }
 
   // ── 4. Prove + self-verify the Tier B composite ────────────────────────────────
   const capturedAt = new Date().toISOString().slice(0, 10);
@@ -237,16 +244,16 @@ async function main() {
             credentialId: employment.credentialId,
             issuerSeed: DEMO_ISSUER_SEEDS.employer,
             zkStatus: DEMO_ZK_STATUS.employment,
-            saltHex: defaultSaltHex(employment.credentialId),
-            indexBlindingHex: defaultIndexBlindingHex(DEMO_ZK_STATUS.employment),
+            saltHex: fixtureSaltHex(employment.credentialId),
+            indexBlindingHex: fixtureIndexBlindingHex(DEMO_ZK_STATUS.employment),
             attestation: result.attestations.employment,
           },
           asset: {
             credentialId: asset.credentialId,
             issuerSeed: DEMO_ISSUER_SEEDS.bank,
             zkStatus: DEMO_ZK_STATUS.asset,
-            saltHex: defaultSaltHex(asset.credentialId),
-            indexBlindingHex: defaultIndexBlindingHex(DEMO_ZK_STATUS.asset),
+            saltHex: fixtureSaltHex(asset.credentialId),
+            indexBlindingHex: fixtureIndexBlindingHex(DEMO_ZK_STATUS.asset),
             attestation: result.attestations.asset,
           },
         },

@@ -26,7 +26,12 @@ import { ZK_HONESTY } from "../zk/honesty.js";
 import type { MintedAnchor } from "./anchors.js";
 import { mintOperandAnchors } from "./anchors.js";
 import type { ZkStatusEntry } from "./dual-sign.js";
-import { dualSignCredential } from "./dual-sign.js";
+import {
+  assertZkStatusEntry,
+  dualSignCredential,
+  fixtureIndexBlindingHex,
+  fixtureSaltHex,
+} from "./dual-sign.js";
 import type { SparqAttestation, SparqNativeBridge } from "./native.js";
 import { SeedToolingError } from "./native.js";
 
@@ -92,6 +97,14 @@ export interface SparqCredentialSeedPipelineOptions {
   /** Deterministic DEMO Schnorr issuer seed (dual-sign rail; not production). */
   readonly schnorrIssuerSeed: number;
   readonly native: SparqNativeBridge;
+  /**
+   * OPT-IN byte-stable fixtures: derive RDFC salts and index-commitment
+   * blindings deterministically from PUBLIC labels instead of OS entropy.
+   * NEVER enable outside golden-fixture capture - a public-label blinding
+   * lets anyone de-hide the status-index commitment by enumerating the
+   * <=1024 candidate indices (roborev 5557 finding 1). Default: entropy.
+   */
+  readonly deterministicFixtureMode?: boolean;
 }
 
 /** JSON shape of the witness resource (documented for verifiers/tests). */
@@ -120,6 +133,28 @@ export class SparqCredentialSeedPipeline implements CredentialSeedPipeline {
 
   async issue(input: CredentialSeedInput): Promise<CredentialSeedResult> {
     const { issuer, key, native } = this.#options;
+    // Configuration gates FIRST (roborev 5556): a call that will reject must
+    // never sign credentials, mint anchors, or invoke status callbacks.
+    const hiddenFields = input.hiddenFields ?? [];
+    if (hiddenFields.length > 0) {
+      if (input.anchorIdFor === undefined || input.anchorStatusFor === undefined) {
+        throw new SeedToolingError(
+          "MISSING_ANCHOR_WIRING",
+          "hiddenFields need anchorIdFor + anchorStatusFor (anchor IRIs and status entries)",
+        );
+      }
+      if (input.zkStatus === undefined) {
+        // A credential with anchors but no dual-sign attestation cannot back
+        // a Tier B composite - refuse the half-configured state loudly.
+        throw new SeedToolingError(
+          "MISSING_ZK_STATUS",
+          "hiddenFields were requested without zkStatus - ZK-participating credentials must dual-sign (decision 0004)",
+        );
+      }
+    }
+    if (input.zkStatus !== undefined) {
+      assertZkStatusEntry(input.zkStatus);
+    }
     const validity: ValidityWindow = {
       validFrom: input.validFrom,
       ...(input.validUntil !== undefined ? { validUntil: input.validUntil } : {}),
@@ -135,15 +170,12 @@ export class SparqCredentialSeedPipeline implements CredentialSeedPipeline {
       key,
     });
 
-    const hiddenFields = input.hiddenFields ?? [];
     let anchors: MintedAnchor[] = [];
-    if (hiddenFields.length > 0) {
-      if (input.anchorIdFor === undefined || input.anchorStatusFor === undefined) {
-        throw new SeedToolingError(
-          "MISSING_ANCHOR_WIRING",
-          "hiddenFields need anchorIdFor + anchorStatusFor (anchor IRIs and status entries)",
-        );
-      }
+    if (
+      hiddenFields.length > 0 &&
+      input.anchorIdFor !== undefined &&
+      input.anchorStatusFor !== undefined
+    ) {
       anchors = await mintOperandAnchors({
         credential,
         hiddenFields,
@@ -159,11 +191,20 @@ export class SparqCredentialSeedPipeline implements CredentialSeedPipeline {
 
     let witness: string | undefined;
     if (input.zkStatus !== undefined) {
+      const fixtureMode = this.#options.deterministicFixtureMode === true;
       const dualSigned = await dualSignCredential({
         credential,
         issuerSeed: this.#options.schnorrIssuerSeed,
         zkStatus: input.zkStatus,
         native,
+        // Entropy by default; PUBLIC-label derivations only in explicit
+        // fixture mode (roborev 5557 finding 1).
+        ...(fixtureMode
+          ? {
+              saltHex: fixtureSaltHex(credential.credentialId),
+              indexBlindingHex: fixtureIndexBlindingHex(input.zkStatus),
+            }
+          : {}),
       });
       const document: SeedWitnessDocument = {
         type: "urn:sparq:zk:SeedWitness",
@@ -175,13 +216,6 @@ export class SparqCredentialSeedPipeline implements CredentialSeedPipeline {
           `blinding are PRIVATE proof inputs - never publish this resource. ${ZK_HONESTY.headline}`,
       };
       witness = `${JSON.stringify(document, null, 2)}\n`;
-    } else if (hiddenFields.length > 0) {
-      // A credential with anchors but no dual-sign attestation cannot back a
-      // Tier B composite - refuse the half-configured state loudly.
-      throw new SeedToolingError(
-        "MISSING_ZK_STATUS",
-        "hiddenFields were requested without zkStatus - ZK-participating credentials must dual-sign (decision 0004)",
-      );
     }
 
     return {

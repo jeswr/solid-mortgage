@@ -10,15 +10,26 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
-import type { CompiledCircuitArtifact } from "../src/index.js";
-import { parseProofManifest, TIER_B_LABEL, verifyProofManifest } from "../src/index.js";
+import type { CompiledCircuitArtifact, ZkCommitmentAttestation } from "../src/index.js";
+import {
+  parseProofManifest,
+  TIER_B_LABEL,
+  verifyCompositeBindings,
+  verifyProofManifest,
+} from "../src/index.js";
 
 const VERIFY_TIMEOUT = 180_000;
 const COMPOSITE_MEMBERS = ["join_eq_na64_nb64", "revoke_unset_d10", "hidden_issuer_d4"];
 
+interface FixtureContext {
+  statusList: { iri: string; version: number; root: string; rootSignature: string };
+  issuerKeySetRoot: string;
+  issuerKeySet: string[];
+}
+
 let fixtureJson: Record<string, unknown>;
 let circuits: Record<string, CompiledCircuitArtifact>;
-let attestations: Record<string, { attestation: { commitment: string; message: string } }>;
+let attestations: Record<string, { attestation: ZkCommitmentAttestation }>;
 
 beforeAll(async () => {
   const fixture = (name: string) => readFile(join(import.meta.dirname, "fixtures", name), "utf8");
@@ -38,6 +49,21 @@ function fixtureCopy(): Record<string, unknown> {
   return structuredClone(fixtureJson);
 }
 
+/** The verifier-held binding inputs (attestations + OWN trust anchors). */
+function bindingOptions() {
+  const context = fixtureJson.context as unknown as FixtureContext;
+  const employment = attestations.employment?.attestation;
+  const asset = attestations.asset?.attestation;
+  if (employment === undefined || asset === undefined) throw new Error("fixture shape changed");
+  return {
+    credentialA: employment,
+    credentialB: asset,
+    statusListRoot: context.statusList.root,
+    issuerKeySetRoot: context.issuerKeySetRoot,
+    challenge: (fixtureJson.challenge as { field: string }).field,
+  };
+}
+
 describe("mortgage composite manifest (Tier B)", () => {
   it("parses as a sparq ProofManifest with the three composite members", () => {
     const manifest = parseProofManifest(fixtureJson);
@@ -48,28 +74,60 @@ describe("mortgage composite manifest (Tier B)", () => {
     }
   });
 
-  it("shares ONE capture-time challenge across every sub-proof", () => {
-    const manifest = parseProofManifest(fixtureJson);
-    const challenge = BigInt((fixtureJson.challenge as { field: string }).field);
-    for (const sub of manifest.subProofs) {
-      expect(BigInt(sub.publicInputs[0] ?? "0x0")).toBe(challenge);
-    }
+  it("carries an ISSUER-SIGNED status-list root (decision 0012 Schnorr-bound list)", () => {
+    const context = fixtureJson.context as unknown as FixtureContext;
+    expect(context.statusList.iri).toContain("zk-employment");
+    expect(context.statusList.root).toMatch(/^0x[0-9a-f]{64}$/);
+    // Signature hex: compressed(R) || s - verified natively (Tier C), carried
+    // so a verifier CAN authenticate the snapshot the proof was built against.
+    expect(context.statusList.rootSignature).toMatch(/^[0-9a-f]{128}$/);
   });
 
-  it("binds the join + issuer sub-proofs to the DUAL-SIGNED credentials", () => {
+  it("binds every sub-proof to the dual-signed credentials + trust anchors", () => {
     const manifest = parseProofManifest(fixtureJson);
-    const joinPublics = (manifest.subProofs[0]?.publicInputs ?? []).map((entry) => BigInt(entry));
-    // join public inputs: challenge, commit_a, commit_b, join_commitment, slots.
-    expect(joinPublics[1]).toBe(BigInt(attestations.employment?.attestation.commitment ?? "0x0"));
-    expect(joinPublics[2]).toBe(BigInt(attestations.asset?.attestation.commitment ?? "0x0"));
-    // hidden-issuer public inputs: challenge, m (the SIGNED message), key-set root.
-    const issuerPublics = (manifest.subProofs[2]?.publicInputs ?? []).map((entry) => BigInt(entry));
-    expect(issuerPublics[1]).toBe(BigInt(attestations.employment?.attestation.message ?? "0x0"));
-    const context = fixtureJson.context as { issuerKeySetRoot: string; statusListRoot: string };
-    expect(issuerPublics[2]).toBe(BigInt(context.issuerKeySetRoot));
-    // revocation public inputs: challenge, status-list root, index commitment.
-    const revokePublics = (manifest.subProofs[1]?.publicInputs ?? []).map((entry) => BigInt(entry));
-    expect(revokePublics[1]).toBe(BigInt(context.statusListRoot));
+    const result = verifyCompositeBindings(manifest, bindingOptions());
+    expect(result.failures).toEqual([]);
+    expect(result.bound).toBe(true);
+  });
+
+  it("REJECTS spliced sub-proofs (roborev 5554 finding 1 regression)", () => {
+    const options = bindingOptions();
+    // (a) a revocation proof about a DIFFERENT credential's status index.
+    const spliceIndex = fixtureCopy();
+    const revoke = (spliceIndex.subProofs as { member: string; publicInputs: string[] }[])[1];
+    if (revoke === undefined) throw new Error("fixture shape changed");
+    revoke.publicInputs[2] = `0x${"11".repeat(32)}`;
+    const indexResult = verifyCompositeBindings(parseProofManifest(spliceIndex), options);
+    expect(indexResult.bound).toBe(false);
+    expect(indexResult.failures.join(" ")).toContain("index commitment");
+
+    // (b) a hidden-issuer proof over a DIFFERENT attested message.
+    const spliceMessage = fixtureCopy();
+    const issuer = (spliceMessage.subProofs as { member: string; publicInputs: string[] }[])[2];
+    if (issuer === undefined) throw new Error("fixture shape changed");
+    issuer.publicInputs[1] = `0x${"22".repeat(32)}`;
+    const messageResult = verifyCompositeBindings(parseProofManifest(spliceMessage), options);
+    expect(messageResult.bound).toBe(false);
+    expect(messageResult.failures.join(" ")).toContain("attested commitment message");
+
+    // (c) a sub-proof produced for a DIFFERENT challenge.
+    const spliceChallenge = fixtureCopy();
+    const joinSub = (spliceChallenge.subProofs as { member: string; publicInputs: string[] }[])[0];
+    if (joinSub === undefined) throw new Error("fixture shape changed");
+    joinSub.publicInputs[0] = `0x${"33".repeat(32)}`;
+    const challengeResult = verifyCompositeBindings(parseProofManifest(spliceChallenge), options);
+    expect(challengeResult.bound).toBe(false);
+    expect(challengeResult.failures.join(" ")).toContain("shared challenge");
+
+    // (d) a prover-minted status-list root (all-unset snapshot of their own
+    // making) fails against the verifier's authoritative root anchor.
+    const mintedRoot = fixtureCopy();
+    const revoke2 = (mintedRoot.subProofs as { member: string; publicInputs: string[] }[])[1];
+    if (revoke2 === undefined) throw new Error("fixture shape changed");
+    revoke2.publicInputs[1] = `0x${"44".repeat(32)}`;
+    const rootResult = verifyCompositeBindings(parseProofManifest(mintedRoot), options);
+    expect(rootResult.bound).toBe(false);
+    expect(rootResult.failures.join(" ")).toContain("status-list root");
   });
 
   it(

@@ -38,9 +38,9 @@ export {
   assertZkStatusEntry,
   type DualSignedCredential,
   type DualSignOptions,
-  defaultIndexBlindingHex,
-  defaultSaltHex,
   dualSignCredential,
+  fixtureIndexBlindingHex,
+  fixtureSaltHex,
   type ZkStatusEntry,
 } from "./dual-sign.js";
 export {
@@ -51,6 +51,7 @@ export {
 export {
   SeedToolingError,
   type SparqAttestation,
+  type SparqCompositeContext,
   type SparqCompositeInput,
   type SparqCredentialInput,
   type SparqNativeBridge,
@@ -70,4 +71,4 @@ export {
   SparqCredentialSeedPipeline,
   type SparqCredentialSeedPipelineOptions,
 } from "./pipeline.js";
-export { claimGraphToNTriples, deriveFieldHex } from "./serialize.js";
+export { claimGraphToNTriples, deriveFieldHex, randomFieldHex } from "./serialize.js";

@@ -32,9 +32,10 @@ use sparq_zk::commit::{commit_triples, GraphCommitment};
 use sparq_zk::encode::encode_term;
 use sparq_zk::field::{field_from_hex_str, field_to_hex};
 use sparq_zk::sig::{
-    commitment_message_with_status, in_circuit_witness, key_set_leaf, public_key_to_hex,
-    signature_from_hex, status_index_commitment, status_list_id_to_field,
-    status_ref_commit_digest, SecretKey, SignatureScheme,
+    accepted_status_leaf, commitment_message_with_status, in_circuit_witness, key_set_leaf,
+    public_key_to_hex, sign_deterministic, signature_from_hex, signature_to_hex,
+    status_index_commitment, status_list_id_to_field, status_ref_commit_digest, SecretKey,
+    SignatureScheme,
 };
 use sparq_zk::Fr;
 use sparq_zk_compose::build::{build_join, encode_int_literal};
@@ -206,11 +207,30 @@ struct SubRelation {
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 struct CompositeContext {
-    status_list_root: String,
+    status_list: StatusListContext,
     issuer_key_set_root: String,
     /// Compressed issuer public keys, leaf order.
     issuer_key_set: Vec<String>,
     join_relation: String,
+}
+
+/// The ISSUER-AUTHENTICATED status-list snapshot reference (decision 0012's
+/// "Schnorr-bound" ZK status list): the list issuer signs the sparq
+/// `accepted_status_leaf(H(list_iri), version, root)` digest, so a verifier
+/// holding the issuer key can authenticate the exact (list, version, root)
+/// the revocation proof was built against — a prover cannot substitute an
+/// all-unset snapshot of their own making.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct StatusListContext {
+    iri: String,
+    version: u64,
+    root: String,
+    /// Schnorr-BJJ signature over `accepted_status_leaf(H(iri), version, root)`.
+    root_signature: String,
+    /// The signing (list-issuer) verification key, compressed hex.
+    issuer_public_key: String,
+    cryptosuite: String,
 }
 
 // ── helpers ────────────────────────────────────────────────────────────────────
@@ -518,6 +538,22 @@ fn main() {
         let revoke_credential = credential_job(&composite.revoke.credential);
         let (revoke, status_root) =
             build_revoke_relation(&composite.revoke, &challenge_fr, revoke_credential);
+        // Issuer-authenticate the snapshot root (decision 0012 "Schnorr-bound"
+        // list): sign the sparq accepted-status-leaf digest for (list, version,
+        // root) with the LIST ISSUER's key, so a verifier can reject a
+        // prover-minted all-unset snapshot (roborev 5554 finding 2).
+        let list_sk = SecretKey::from_seed(revoke_credential.issuer_seed);
+        let list_id = status_list_id_to_field(&revoke_credential.status.list_iri);
+        let accepted =
+            accepted_status_leaf(&list_id, revoke_credential.status.version, &status_root);
+        let status_list = StatusListContext {
+            iri: revoke_credential.status.list_iri.clone(),
+            version: revoke_credential.status.version,
+            root: field_to_hex(&status_root),
+            root_signature: signature_to_hex(&sign_deterministic(&list_sk, &accepted)),
+            issuer_public_key: public_key_to_hex(&list_sk.public_key()),
+            cryptosuite: SignatureScheme::Poseidon2SchnorrV1.cryptosuite_iri().to_string(),
+        };
 
         let issuer_credential = credential_job(&composite.hidden_issuer.credential);
         let attestation = &attestations[&issuer_credential.name];
@@ -536,7 +572,7 @@ fn main() {
             revoke,
             hidden_issuer,
             context: CompositeContext {
-                status_list_root: field_to_hex(&status_root),
+                status_list,
                 issuer_key_set_root: field_to_hex(&key_root),
                 issuer_key_set: key_set,
                 join_relation:

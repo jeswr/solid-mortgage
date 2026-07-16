@@ -20,7 +20,7 @@ import { parse as parseToml } from "smol-toml";
 import type { CompiledCircuitArtifact } from "../zk/circuits/registry.js";
 import { ZK_HONESTY } from "../zk/honesty.js";
 import type { ManifestSubProof } from "../zk/manifest.js";
-import type { SparqSeedResult, SparqSubRelation } from "./native.js";
+import type { SparqCompositeContext, SparqSeedResult, SparqSubRelation } from "./native.js";
 import { SeedToolingError } from "./native.js";
 
 /** The capture output - a superset of the shape `parseProofManifest` reads. */
@@ -30,12 +30,7 @@ export interface CapturedProofManifest {
   readonly capturedAt: string;
   readonly proofOptions: { readonly verifierTarget: "evm" };
   readonly challenge: { readonly nonce: string; readonly field: string };
-  readonly context: {
-    readonly statusListRoot: string;
-    readonly issuerKeySetRoot: string;
-    readonly issuerKeySet: readonly string[];
-    readonly joinRelation: string;
-  };
+  readonly context: SparqCompositeContext;
   readonly subProofs: readonly ManifestSubProof[];
 }
 
@@ -119,10 +114,14 @@ interface ProverBackend {
   ): Promise<boolean>;
 }
 
-async function backendFor(artifact: CompiledCircuitArtifact): Promise<ProverBackend> {
+/** One shared WASM API for the whole capture, destroyed by the caller. */
+interface DisposableApi {
+  destroy(): Promise<void>;
+}
+
+async function backendFor(artifact: CompiledCircuitArtifact, api: unknown): Promise<ProverBackend> {
   const [{ Noir }, bb] = await Promise.all([import("@noir-lang/noir_js"), import("@aztec/bb.js")]);
   const noir = new Noir(artifact as unknown as ConstructorParameters<typeof Noir>[0]);
-  const api = await bb.Barretenberg.new({ threads: 1 });
   const backend = new bb.UltraHonkBackend(
     artifact.bytecode,
     api as ConstructorParameters<typeof bb.UltraHonkBackend>[1],
@@ -139,6 +138,7 @@ async function proveSubRelation(
   relation: SparqSubRelation,
   circuits: Readonly<Record<string, CompiledCircuitArtifact>>,
   relationText: string,
+  api: unknown,
 ): Promise<ManifestSubProof> {
   const artifact = circuits[relation.member];
   if (artifact === undefined) {
@@ -148,7 +148,7 @@ async function proveSubRelation(
     );
   }
   const inputs = parseToml(relation.proverToml) as Record<string, unknown>;
-  const backend = await backendFor(artifact);
+  const backend = await backendFor(artifact, api);
   let witness: Uint8Array;
   try {
     ({ witness } = await backend.execute(inputs));
@@ -199,26 +199,39 @@ export async function captureCompositeManifest(
     throw new SeedToolingError("BAD_CAPTURE_DATE", "capturedAt must be YYYY-MM-DD");
   }
   const relations = options.relations ?? {};
-  const subProofs = [
-    await proveSubRelation(
-      composite.join,
-      options.circuits,
-      relations[composite.join.member] ??
-        "hidden same-subject equality across the two committed credential graphs (join value never disclosed)",
-    ),
-    await proveSubRelation(
-      composite.revoke,
-      options.circuits,
-      relations[composite.revoke.member] ??
-        "credential status bit unset (not revoked) at a HIDDEN status-list index",
-    ),
-    await proveSubRelation(
-      composite.hiddenIssuer,
-      options.circuits,
-      relations[composite.hiddenIssuer.member] ??
-        "a trusted-set issuer Schnorr-attested the commitment (WHICH issuer stays hidden)",
-    ),
-  ];
+  // One shared WASM instance for the whole capture, ALWAYS destroyed - a
+  // long-lived seeding process must not leak worker pools (roborev 5554
+  // finding 4; the capture script's process.exit is no longer load-bearing).
+  const bb = await import("@aztec/bb.js");
+  const api = (await bb.Barretenberg.new({ threads: 1 })) as unknown as DisposableApi;
+  let subProofs: ManifestSubProof[];
+  try {
+    subProofs = [
+      await proveSubRelation(
+        composite.join,
+        options.circuits,
+        relations[composite.join.member] ??
+          "hidden same-subject equality across the two committed credential graphs (join value never disclosed)",
+        api,
+      ),
+      await proveSubRelation(
+        composite.revoke,
+        options.circuits,
+        relations[composite.revoke.member] ??
+          "credential status bit unset (not revoked) at a HIDDEN status-list index",
+        api,
+      ),
+      await proveSubRelation(
+        composite.hiddenIssuer,
+        options.circuits,
+        relations[composite.hiddenIssuer.member] ??
+          "a trusted-set issuer Schnorr-attested the commitment (WHICH issuer stays hidden)",
+        api,
+      ),
+    ];
+  } finally {
+    await api.destroy();
+  }
   return {
     type: "urn:sparq:zk:ProofManifest",
     note:
