@@ -35,6 +35,7 @@ import {
 } from "@mortgage/solid-kit/testing";
 import type { KeyPair, VerifyCredentialResult } from "@mortgage/vc-kit";
 import {
+  deriveStatusIndex,
   exportPrivateJwk,
   generateKeyPairForSuite,
   isFresh,
@@ -573,7 +574,7 @@ describe("scene 1 — REAL issuance into a real WAC-enforcing pod", () => {
  * stay fully real. Dedicated status-list URLs (`…-fi`) keep this suite's
  * hosted lists independent of the main suite's.
  */
-describe("partial-failure recovery (failure injection; FIXES A/B/D/E)", () => {
+describe("partial-failure recovery (failure injection; FIXES A/B/D/E/F/G)", () => {
   let owner2: SolidTestAccount;
   let borrower2: DevOidcIssuer;
   let pod2Base = "";
@@ -605,7 +606,7 @@ describe("partial-failure recovery (failure injection; FIXES A/B/D/E)", () => {
   /** The real verifier, pinned to the suite's `…-fi` lists via the doc itself. */
   function verifyStored2(
     body: string,
-    flow: "employment" | "credit",
+    flow: IssuerFlowId,
     expectShape: MortgageResourceKind,
     at: Date,
   ): Promise<VerifyCredentialResult> {
@@ -696,6 +697,8 @@ describe("partial-failure recovery (failure injection; FIXES A/B/D/E)", () => {
   let employmentIndex2: string | undefined;
   /** The CURRENT live employment index on pod2, tracked across re-issues. */
   let liveEmploymentIndex: number | undefined;
+  /** The CURRENT live employment ANCHOR index on pod2 (captured in FIX E). */
+  let liveAnchorIndex: number | undefined;
 
   test("FIX A: a failed anchor write leaves no anchor-less credential — retry completes the issue", async () => {
     failures.add(`PUT ${anchorIri2("employment")}`);
@@ -949,9 +952,15 @@ describe("partial-failure recovery (failure injection; FIXES A/B/D/E)", () => {
     // The write actually landed, so the rail completes FORWARD (no
     // reinstate, no release) instead of "compensating" a committed write.
     expect(response.status).toBe(200);
-    const payload = (await response.json()) as { revokedIndex: number; newIndex: number };
+    const payload = (await response.json()) as {
+      revokedIndex: number;
+      newIndex: number;
+      anchor: { statusListIndex?: string } | null;
+    };
     expect(payload.revokedIndex).toBe(oldIndex);
     expect(payload.newIndex).not.toBe(oldIndex);
+    liveEmploymentIndex = payload.newIndex;
+    liveAnchorIndex = Number(payload.anchor?.statusListIndex);
 
     // Consistent on the REAL hosted list: the superseded index STAYS revoked
     // (never reinstated) and the delivered replacement's index is live and
@@ -977,5 +986,78 @@ describe("partial-failure recovery (failure injection; FIXES A/B/D/E)", () => {
     expect(freshOutcome.errors).toEqual([]);
     expect(freshOutcome.verified).toBe(true);
     expect(isFresh(freshOutcome.credential ?? {}, clock2)).toBe(true);
+  }, 120_000);
+
+  test("FIX F: an issuer-REVOKED anchor refuses the re-issue — never silently re-minted", async () => {
+    // The issuer explicitly revokes the CURRENT (otherwise-correct) income
+    // anchor on the real hosted list. One-click re-issue must now refuse the
+    // WHOLE flow: re-minting a fresh anchor would launder that decision.
+    expect(liveAnchorIndex).toBeDefined();
+    expect(liveEmploymentIndex).toBeDefined();
+    const anchorIndex = liveAnchorIndex as number;
+    const list = new StatusListClient({
+      fetch,
+      issuer: issuerWebIds.employment,
+      key: issuerKeys.employment,
+      url: fiStatusListUrls.employment,
+    });
+    await list.revoke(anchorIndex, { now: clock2 });
+    const preAnchorBody = await readVault2(anchorIri2("employment"));
+    const preMainBody = await readVault2(credentialIri2("employment"));
+
+    const response = await service2.reissue(
+      await authedRequest(borrower2, "POST", "reissue", {
+        body: JSON.stringify({ flow: "employment" }),
+      }),
+    );
+    expect(response.status).toBe(409);
+    const payload = (await response.json()) as { error: string; verifyErrors?: string[] };
+    expect(payload.error).toBe("reissue_refused");
+    expect(payload.verifyErrors).toContain("STATUS_REVOKED");
+
+    // NOTHING was minted or mutated: the pod-resident anchor is byte-for-byte
+    // the revoked one, its index STAYS revoked on the real hosted list, and
+    // the main credential (and its live index) is untouched.
+    expect(await readVault2(anchorIri2("employment"))).toBe(preAnchorBody);
+    expect(await readVault2(credentialIri2("employment"))).toBe(preMainBody);
+    expect(await list.readBit(anchorIndex, { now: clock2 })).toBe(true);
+    expect(await list.readBit(liveEmploymentIndex as number, { now: clock2 })).toBe(false);
+    const anchorOutcome = await verifyStored2(
+      preAnchorBody,
+      "employment",
+      "zk-operand-anchor",
+      clock2,
+    );
+    expect(anchorOutcome.verified).toBe(false);
+    expect(anchorOutcome.errors.map((error) => error.code)).toContain("STATUS_REVOKED");
+  }, 120_000);
+
+  test("FIX G: a confirmed-failed issue write releases its allocated status index — occupancy does not grow", async () => {
+    // The assets flow was never issued on this pod: its first allocation is
+    // the seed-derived base index. A confirmed-failed write (the pod refuses
+    // the PUT; the re-read proves nothing landed) must RELEASE that slot —
+    // otherwise hammering a write-denied issue route exhausts the finite
+    // per-flow index space. The retry then reuses the SAME base index.
+    const assetsIri = `${pod2Base}mortgage/credentials/assets`;
+    failures.add(`PUT ${assetsIri}`);
+    const failed = await service2.issue(
+      await authedRequest(borrower2, "POST", "issue", { body: JSON.stringify({ flow: "assets" }) }),
+    );
+    expect(failed.status).toBe(502);
+    expect((await owner2.authFetch(assetsIri)).status).toBe(404);
+
+    const retry = await service2.issue(
+      await authedRequest(borrower2, "POST", "issue", { body: JSON.stringify({ flow: "assets" }) }),
+    );
+    expect(retry.status).toBe(200);
+    const payload = (await retry.json()) as { credential: { statusListIndex?: string } };
+    // Index reuse proves the release: with a leaked slot the retry would have
+    // probed PAST the base index instead of landing on it.
+    expect(payload.credential.statusListIndex).toBe(String(deriveStatusIndex(assetsIri)));
+
+    const body = await readVault2(assetsIri);
+    const outcome = await verifyStored2(body, "assets", "asset-credential", clock2);
+    expect(outcome.errors).toEqual([]);
+    expect(outcome.verified).toBe(true);
   }, 120_000);
 });

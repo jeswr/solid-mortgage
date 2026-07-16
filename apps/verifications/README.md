@@ -44,10 +44,14 @@ The SUPPLIER side of the journey (scenes 1 + 4):
   unchanged resource (same ETag) triggers compensation (old index REINSTATED,
   replacement's slot released); an indeterminate outcome fails safe — never reinstating
   a possibly-superseded credential's index and never releasing a possibly-referenced
-  one. An existing document at the anchor path is renewed by re-signing ONLY after it
-  fully verifies as THIS flow's anchor (shape, trusted issuer, caller as subject, exact
-  field + captured operand encoding); anything else is replaced with a fresh correct
-  anchor, never blindly re-signed.
+  one — and on a CONFIRMED-failed fresh write (the re-read proves nothing landed) the
+  just-allocated status indices are released, so a write-refusing pod cannot exhaust the
+  finite per-flow index space. An existing document at the anchor path is renewed by
+  re-signing ONLY after it fully verifies as THIS flow's anchor (shape, trusted issuer,
+  caller as subject, exact field + captured operand encoding); a REVOKED-but-otherwise-
+  correct anchor refuses the whole re-issue (the issuer's revocation is never laundered
+  by re-minting); anything else is replaced with a fresh correct anchor, never blindly
+  re-signed.
 - **`GET /api/flows`**: the flow catalogue plus the caller's live per-flow vault state
   (issued / verified / fresh), each entry the verdict of the full fail-closed
   `verifyCredential` chain.
