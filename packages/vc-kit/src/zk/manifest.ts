@@ -43,6 +43,8 @@ export const TIER_B_LABEL = "proved offline · verified live";
 const MAX_SUBPROOFS = 64;
 const MAX_SUBPROOF_BYTES = 262_144;
 const MAX_PUBLIC_INPUTS = 4_096;
+/** A BN254 field element is a 0x-prefixed hex string of at most 64 hex digits. */
+const FIELD_HEX = /^0x[0-9a-fA-F]{1,64}$/;
 
 /** One captured sub-proof inside a manifest (sparq capture format). */
 export interface ManifestSubProof {
@@ -110,9 +112,16 @@ function parseSubProof(value: unknown, label: string): ManifestSubProof {
     !Array.isArray(publicInputs) ||
     publicInputs.length === 0 ||
     publicInputs.length > MAX_PUBLIC_INPUTS ||
-    !publicInputs.every((entry) => typeof entry === "string")
+    // Each entry must be a bounded BN254 field-hex string - not merely a
+    // string. This makes the payload fed to bb.js field-shaped and caps its
+    // per-entry length (a 66-char regex), so a manifest cannot smuggle huge
+    // strings through the count bound.
+    !publicInputs.every((entry) => typeof entry === "string" && FIELD_HEX.test(entry))
   ) {
-    throw new ZkError("MALFORMED_MANIFEST", `${label} publicInputs must be bounded hex strings`);
+    throw new ZkError(
+      "MALFORMED_MANIFEST",
+      `${label} publicInputs must be bounded 0x field-hex strings`,
+    );
   }
   return {
     member,

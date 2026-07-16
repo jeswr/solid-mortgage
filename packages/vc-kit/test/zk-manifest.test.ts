@@ -71,6 +71,14 @@ describe("parseProofManifest", () => {
     (doc.subProof as Record<string, unknown>).proof = new Array(262_145).fill(0);
     expect(() => parseProofManifest(doc)).toThrow(/bounded/);
   });
+
+  it("rejects public inputs that are not bounded field-hex", () => {
+    for (const bad of [["not-hex"], ["0xZZ"], [`0x${"a".repeat(65)}`], [12345]]) {
+      const doc = fixtureCopy();
+      (doc.subProof as Record<string, unknown>).publicInputs = bad;
+      expect(() => parseProofManifest(doc)).toThrow(/field-hex/);
+    }
+  });
 });
 
 describe("verifyProofManifest", () => {
