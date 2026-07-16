@@ -34,6 +34,16 @@ import {
 /** The mandatory decision-0012 Tier B copy string. Render verbatim. */
 export const TIER_B_LABEL = "proved offline · verified live";
 
+/**
+ * Bounds on an UNTRUSTED pod-resident manifest, enforced before allocation or
+ * any bb.js verify. A full composed family is ~7 sub-proofs; each UltraHonk
+ * transcript is single-digit-kB and each member has a bounded public-input
+ * count. These caps are generous defense-in-depth against a hostile manifest.
+ */
+const MAX_SUBPROOFS = 64;
+const MAX_SUBPROOF_BYTES = 262_144;
+const MAX_PUBLIC_INPUTS = 4_096;
+
 /** One captured sub-proof inside a manifest (sparq capture format). */
 export interface ManifestSubProof {
   /** The circuit member the sub-proof was produced against. */
@@ -88,16 +98,21 @@ function parseSubProof(value: unknown, label: string): ManifestSubProof {
   if (
     !Array.isArray(proof) ||
     proof.length === 0 ||
+    proof.length > MAX_SUBPROOF_BYTES ||
     !proof.every((byte) => Number.isInteger(byte) && byte >= 0 && byte <= 255)
   ) {
-    throw new ZkError("MALFORMED_MANIFEST", `${label} proof bytes must be a non-empty byte array`);
+    throw new ZkError(
+      "MALFORMED_MANIFEST",
+      `${label} proof bytes must be a non-empty, bounded byte array`,
+    );
   }
   if (
     !Array.isArray(publicInputs) ||
     publicInputs.length === 0 ||
+    publicInputs.length > MAX_PUBLIC_INPUTS ||
     !publicInputs.every((entry) => typeof entry === "string")
   ) {
-    throw new ZkError("MALFORMED_MANIFEST", `${label} publicInputs must be hex strings`);
+    throw new ZkError("MALFORMED_MANIFEST", `${label} publicInputs must be bounded hex strings`);
   }
   return {
     member,
@@ -132,6 +147,12 @@ export function parseProofManifest(json: unknown): ProofManifest {
   if (record.subProofs !== undefined) {
     if (!Array.isArray(record.subProofs)) {
       throw new ZkError("MALFORMED_MANIFEST", "subProofs is not an array");
+    }
+    if (record.subProofs.length + subProofs.length > MAX_SUBPROOFS) {
+      throw new ZkError(
+        "MALFORMED_MANIFEST",
+        `manifest bundles more than ${MAX_SUBPROOFS} sub-proofs`,
+      );
     }
     record.subProofs.forEach((entry, index) => {
       subProofs.push(parseSubProof(entry, `subProofs[${index}]`));

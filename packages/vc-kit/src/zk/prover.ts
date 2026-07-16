@@ -37,6 +37,10 @@ import { type FilterIntMember, memberForDigits } from "./circuits/registry.js";
 /** sparq `filter_int` comparison-operator codes (zk/compose ABI). */
 export const OP_CODES = Object.freeze({ ge: 3 });
 
+/** Bounds on an untrusted wire proof payload (the evm transcript is 8 384 B). */
+const MAX_WIRE_PROOF_BYTES = 131_072;
+const MAX_WIRE_PUBLIC_INPUTS = 4_096;
+
 /** A decision-0005 Tier A threshold statement (both shipped statements are >=). */
 export interface TierAStatement {
   /** The proved field's mort IRI - must be one of decision 0005's ZK budgets. */
@@ -122,12 +126,17 @@ export function tierAProofFromJson(json: unknown): {
   if (
     !Array.isArray(proof) ||
     proof.length === 0 ||
+    proof.length > MAX_WIRE_PROOF_BYTES ||
     !proof.every((byte) => Number.isInteger(byte) && byte >= 0 && byte <= 255)
   ) {
-    throw new ZkError("MALFORMED_PROOF", "proof bytes must be a non-empty byte array");
+    throw new ZkError("MALFORMED_PROOF", "proof bytes must be a non-empty, bounded byte array");
   }
-  if (!Array.isArray(publicInputs) || !publicInputs.every((entry) => typeof entry === "string")) {
-    throw new ZkError("MALFORMED_PROOF", "publicInputs must be an array of hex strings");
+  if (
+    !Array.isArray(publicInputs) ||
+    publicInputs.length > MAX_WIRE_PUBLIC_INPUTS ||
+    !publicInputs.every((entry) => typeof entry === "string")
+  ) {
+    throw new ZkError("MALFORMED_PROOF", "publicInputs must be a bounded array of hex strings");
   }
   return {
     member,

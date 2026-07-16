@@ -57,6 +57,20 @@ describe("parseProofManifest", () => {
     (badBytes.subProof as Record<string, unknown>).proof = [1, 2, "x"];
     expect(() => parseProofManifest(badBytes)).toThrow(/byte array/);
   });
+
+  it("rejects an over-large sub-proof array before any bb.js work", () => {
+    const doc = fixtureCopy();
+    const one = doc.subProof;
+    doc.subProof = undefined;
+    doc.subProofs = Array.from({ length: 65 }, () => structuredClone(one));
+    expect(() => parseProofManifest(doc)).toThrow(/more than/);
+  });
+
+  it("rejects an oversized sub-proof byte array", () => {
+    const doc = fixtureCopy();
+    (doc.subProof as Record<string, unknown>).proof = new Array(262_145).fill(0);
+    expect(() => parseProofManifest(doc)).toThrow(/bounded/);
+  });
 });
 
 describe("verifyProofManifest", () => {

@@ -355,6 +355,41 @@ describe("verifyTierA - the negative matrix (every scenario must REJECT)", () =>
     expect(result.errors[0]?.code).toBe("UNKNOWN_FIELD");
   });
 
+  it("an omitted/empty issuer allowlist fails closed (never accepts any issuer)", async () => {
+    for (const bad of [
+      [] as string[],
+      undefined as unknown as string[],
+      "https://issuer.example/org" as unknown as string[],
+    ]) {
+      const result = await verifyTierA(proof8500, {
+        ...baseOptions({ trustedIssuers: bad }),
+      });
+      expect(result.verified).toBe(false);
+      expect(result.errors[0]?.code).toBe("ANCHOR_INVALID");
+      expect(result.errors[0]?.message).toContain("allowlist");
+      // Rejected at gate 0 - before the nonce is even consulted.
+      expect(result.checks.structural).toBe(false);
+    }
+  });
+
+  it("an invalid `now` fails closed (a NaN instant must not bypass the window)", async () => {
+    const result = await verifyTierA(proof8500, {
+      ...baseOptions({ now: new Date("not-a-date") }),
+    });
+    expect(result.verified).toBe(false);
+    expect(result.errors[0]?.code).toBe("ANCHOR_INVALID");
+    expect(result.errors[0]?.message).toContain("valid Date");
+  });
+
+  it("an oversized proof payload is rejected before verification", async () => {
+    const result = await verifyTierA(
+      { ...proof8500, proof: new Uint8Array(131_073) },
+      baseOptions(),
+    );
+    expect(result.verified).toBe(false);
+    expect(result.errors[0]?.code).toBe("MALFORMED_PROOF");
+  });
+
   it("a failed attempt burns the challenge: no second try on the same nonce", async () => {
     const nonces = oneShotNonce(SESSION, NONCE_INCOME);
     const foreignAnchor = await rig.issue({

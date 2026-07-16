@@ -137,6 +137,13 @@ export interface TierAVerifyResult {
 
 const PUBLIC_INPUT_COUNT = 5;
 const TRUE_FIELD = 1n;
+/**
+ * A generous upper bound on a presented Tier A proof (the `evm`-flavour
+ * transcript is 8 384 B; the widest committed member stays well under this).
+ * Rejecting oversized untrusted payloads before allocation/verify is cheap
+ * defense-in-depth, not the security property itself.
+ */
+const MAX_PROOF_BYTES = 131_072;
 
 /**
  * Typed reader over the anchor VC's credentialSubject node. Pod RDF is
@@ -212,6 +219,26 @@ export async function verifyTierA(
 ): Promise<TierAVerifyResult> {
   let checks = { ...NO_CHECKS };
 
+  // Gate 0: caller-contract guards. `trustedIssuers` and `now` are typed as
+  // REQUIRED, but a caller that (mis)passes `undefined`/an invalid Date would
+  // otherwise fail OPEN downstream - an empty/omitted allowlist disables the
+  // issuer check in verifyCredential, and a NaN `now` makes both validity
+  // comparisons false. Enforce them here, fail-closed.
+  if (!Array.isArray(options.trustedIssuers) || options.trustedIssuers.length === 0) {
+    return reject(
+      "ANCHOR_INVALID",
+      "trustedIssuers must be a non-empty allowlist (an omitted allowlist would accept any issuer)",
+      checks,
+    );
+  }
+  if (!(options.now instanceof Date) || !Number.isFinite(options.now.getTime())) {
+    return reject(
+      "ANCHOR_INVALID",
+      "now must be a valid Date (a NaN instant would bypass the validity window)",
+      checks,
+    );
+  }
+
   // Gate 1: structural.
   try {
     assertZkVerifierTarget(presented.verifierTarget);
@@ -233,8 +260,12 @@ export async function verifyTierA(
       checks,
     );
   }
-  if (!(presented.proof instanceof Uint8Array) || presented.proof.length === 0) {
-    return reject("MALFORMED_PROOF", "proof bytes are empty", checks);
+  if (
+    !(presented.proof instanceof Uint8Array) ||
+    presented.proof.length === 0 ||
+    presented.proof.length > MAX_PROOF_BYTES
+  ) {
+    return reject("MALFORMED_PROOF", "proof bytes are empty or oversized", checks);
   }
   const budget = zkBudgetFor(options.statement.field);
   if (budget === undefined) {
