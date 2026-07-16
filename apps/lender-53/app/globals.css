@@ -1,15 +1,18 @@
 @import "tailwindcss";
+@source "../../../packages/ui/src";
 
 :root {
-  --background: oklch(0.984 0.003 247.858);
-  --foreground: oklch(0.208 0.042 265.755);
+  --background: oklch(0.985 0.004 250);
+  --foreground: oklch(0.21 0.03 250);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.929 0.013 255.508);
-  --muted-foreground: oklch(0.446 0.043 257.281);
-  --border: oklch(0.869 0.022 252.894);
-  --primary: oklch(0.279 0.041 260.031);
-  --primary-foreground: oklch(0.984 0.003 247.858);
+  --card-foreground: oklch(0.21 0.03 250);
+  --muted: oklch(0.93 0.012 250);
+  --muted-foreground: oklch(0.45 0.03 250);
+  --border: oklch(0.87 0.018 250);
+  --primary: oklch(0.33 0.08 250);
+  --primary-foreground: oklch(0.985 0.003 250);
+  --accent: oklch(0.55 0.12 150);
+  --accent-foreground: oklch(0.985 0.003 250);
   --radius: 0.625rem;
 }
 
@@ -23,19 +26,19 @@
   --color-border: var(--border);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
   --radius-lg: var(--radius);
 }
 
 * {
   box-sizing: border-box;
 }
-
-html {
-  background: var(--background);
-}
-
+html,
 body {
   background: var(--background);
+}
+body {
   color: var(--foreground);
   margin: 0;
   min-height: 100vh;

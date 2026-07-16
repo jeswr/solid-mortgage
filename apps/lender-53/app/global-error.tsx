@@ -21,7 +21,7 @@ export default function GlobalError({ reset }: { reset: () => void }) {
             Try again
           </button>
         </main>
-        <ConceptDemoBanner organization={site.organization} />
+        <ConceptDemoBanner organization={site.organization} orgRole={site.role} />
       </body>
     </html>
   );

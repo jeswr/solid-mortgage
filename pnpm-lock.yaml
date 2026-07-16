@@ -153,9 +153,21 @@ importers:
 
   apps/lender-53:
     dependencies:
+      '@jeswr/guarded-fetch':
+        specifier: github:jeswr/guarded-fetch#81926b4481310ff74a5c02c3c4eaa2a51ce2dee6
+        version: https://codeload.github.com/jeswr/guarded-fetch/tar.gz/81926b4481310ff74a5c02c3c4eaa2a51ce2dee6
+      '@mortgage/data-model':
+        specifier: workspace:*
+        version: link:../../packages/data-model
+      '@mortgage/solid-kit':
+        specifier: workspace:*
+        version: link:../../packages/solid-kit
       '@mortgage/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@mortgage/vc-kit':
+        specifier: workspace:*
+        version: link:../../packages/vc-kit
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
