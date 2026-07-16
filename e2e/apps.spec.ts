@@ -59,6 +59,7 @@ const apps: AppDefinition[] = [
   },
   {
     appName: "Mortgage Pre-qualification",
+    heading: "Get a competing rate quote without sharing your numbers",
     organization: "Fifth Third Bank",
     packageName: "@mortgage/app-lender-53",
     path: "/lender-53",
