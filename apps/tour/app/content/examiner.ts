@@ -28,22 +28,22 @@ export interface ExaminerCheck {
 export const examinerChecks: ExaminerCheck[] = [
   {
     chapterSlug: "one-click-application",
-    citation: "Regulation Z §1026.19(e) (TRID)",
+    citation: "Regulation Z §1026.19(e)(1)(iii) (TRID)",
     citationUrl: "https://www.consumerfinance.gov/rules-policy/regulations/1026/19/",
     id: "trid-loan-estimate",
     observe:
-      "The Loan Estimate is delivered into the borrower's pod with a receipted timestamp; delivery against the application date is enumerable from the consent-receipt ledger rather than reconstructed from mail logs.",
-    rule: "Loan Estimate delivered no later than 3 business days after receipt of the application.",
+      "The demo delivers the Loan Estimate straight into the borrower's pod with a receipted timestamp — a delivery mechanism that goes beyond the rule's delivered-or-mailed minimum — so timing against the application date is enumerable from the consent-receipt ledger rather than reconstructed from mail logs.",
+    rule: "Loan Estimate delivered or placed in the mail no later than the third business day after the creditor receives the application (12 CFR 1026.19(e)(1)(iii)).",
     scene: 3,
   },
   {
     chapterSlug: "close-and-stay-in-control",
-    citation: "Regulation Z §1026.19(f) (TRID)",
+    citation: "Regulation Z §1026.19(f)(1)(ii) (TRID)",
     citationUrl: "https://www.consumerfinance.gov/rules-policy/regulations/1026/19/",
     id: "trid-closing-disclosure",
     observe:
       "The Closing Disclosure lands in the pod three business days before consummation; the borrower-held copy and its receipt make the review window verifiable from the borrower's side.",
-    rule: "Closing Disclosure received by the consumer at least 3 business days before consummation.",
+    rule: "Consumer receives the Closing Disclosure no later than three business days before consummation (12 CFR 1026.19(f)(1)(ii)).",
     scene: 5,
   },
   {
@@ -69,12 +69,12 @@ export const examinerChecks: ExaminerCheck[] = [
   },
   {
     chapterSlug: "close-and-stay-in-control",
-    citation: "Regulation X §1024.33 (RESPA)",
+    citation: "Regulation X §1024.33(b) (RESPA)",
     citationUrl: "https://www.consumerfinance.gov/rules-policy/regulations/1024/33/",
     id: "respa-servicing-transfer",
     observe:
       "The servicing transfer is a borrower-approved access grant plus a revocation of the prior servicer — both receipted, so the transfer trail an examiner reviews already exists as structured data.",
-    rule: "Servicing-transfer notices to the borrower when loan servicing changes hands.",
+    rule: "Notice of servicing transfer: from the transferor servicer not less than 15 days before the effective date of transfer, and from the transferee servicer not more than 15 days after it (12 CFR 1024.33(b)(3)).",
     scene: 5,
   },
 ];

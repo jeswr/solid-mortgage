@@ -27,15 +27,20 @@ export function Launcher() {
           <ul className="flex flex-col">
             {launcherApps.map((app) => {
               const status = statuses[app.healthPath] ?? "checking";
+              const live = status === "live";
               return (
                 <li key={app.slug}>
+                  {/* Same accessible-disabled pattern as TryLiveButton: a zone that is
+                      not live renders as a placeholder link (no href, no handler,
+                      aria-disabled) so nothing navigates into a failing zone. */}
                   <a
+                    aria-disabled={live ? undefined : "true"}
                     className={cn(
-                      "flex items-center justify-between gap-3 rounded-lg px-2 py-2 hover:bg-muted",
-                      status !== "live" && "opacity-80",
+                      "flex items-center justify-between gap-3 rounded-lg px-2 py-2",
+                      live ? "hover:bg-muted" : "cursor-not-allowed opacity-80",
                     )}
                     data-launcher-app={app.slug}
-                    href={app.path}
+                    href={live ? app.path : undefined}
                   >
                     <span className="min-w-0">
                       <span className="block truncate font-medium text-card-foreground text-sm">

@@ -12,8 +12,9 @@ export interface TryLiveButtonProps {
 
 /**
  * "Try this live" deep link (showcase-patterns §1). When the target zone is not deployed
- * the control stays VISIBLE but disabled — focusable, aria-disabled, with an explanation —
- * so the story remains honest about what is wired in this environment.
+ * the control stays VISIBLE but disabled — a placeholder link (no href, no handler) with
+ * aria-disabled and an explanation — so the story remains honest about what is wired in
+ * this environment and nothing can navigate into a failing zone (middle-click included).
  */
 export function TryLiveButton({ app, label, className }: TryLiveButtonProps) {
   const target = demoApps[app];
@@ -38,13 +39,14 @@ export function TryLiveButton({ app, label, className }: TryLiveButtonProps) {
 
   return (
     <span className={cn("inline-flex flex-col gap-1", className)}>
+      {/* biome-ignore lint/a11y/useValidAnchor: an href-less anchor is the HTML-spec
+          placeholder-link form for a disabled link — keeping href + preventDefault would
+          still navigate on middle-click / open-in-new-tab. */}
       <a
         aria-disabled="true"
         className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg border border-border bg-muted px-4 py-2 font-medium text-muted-foreground text-sm"
         data-try-live={app}
         data-try-live-disabled=""
-        href={target.path}
-        onClick={(event) => event.preventDefault()}
       >
         {label}
       </a>

@@ -104,7 +104,8 @@ export const chapters: Chapter[] = [
     ],
   },
   {
-    anchor: "TRID: the Loan Estimate must be delivered within 3 business days of application.",
+    anchor:
+      "TRID: the Loan Estimate must be delivered or placed in the mail within 3 business days of application (12 CFR 1026.19(e)).",
     lead: "Alex picks a lender and grants scoped pod access. The application prefills from the pod, and the Loan Estimate lands back in it — inside the regulatory window, with a receipt.",
     scene: 3,
     slug: "one-click-application",
