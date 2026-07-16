@@ -118,6 +118,23 @@ export interface TitleIssueResult extends IssueResultBase {
   readonly searchedThrough: string;
 }
 
+/**
+ * The `credentialStatus` entry for a freshly-issued credential (revocation only,
+ * decision 0007).
+ *
+ * SCOPE LIMITATIONS (roborev sm-33 Medium; follow-up beads):
+ *  - This bead MINTS the entry (the reference the credential carries); it does
+ *    NOT create/host/verify the referenced Bitstring Status List document. The
+ *    list is a seed-layer resource on the issuer origin (same `.example`
+ *    posture as every persona VC) — fail-closed status verification only works
+ *    once that list is hosted (`StatusListClient`, sm-24).
+ *  - `index` comes from `deriveStatusIndex` seeded per (issuer, subject, brand):
+ *    stable per subject, but WITHOUT an occupancy predicate two distinct
+ *    subjects could birthday-collide on one index (revoking either would revoke
+ *    both). Negligible in the one-persona-per-pod demo; the correct fix is a
+ *    `StatusIndexAllocator` rehydrated from the authoritative hosted list —
+ *    which requires the hosting above, so both land together.
+ */
 function statusEntry(index: number, statusListCredential: string) {
   return {
     statusPurpose: "revocation" as const,
@@ -126,6 +143,18 @@ function statusEntry(index: number, statusListCredential: string) {
   };
 }
 
+/**
+ * Write the signed credential into the borrower's pod (conditional PUT).
+ *
+ * The write runs over the injectable `podFetch` seam (decision 0015 L4). The
+ * DEFAULT is anonymous, which a WAC-enabled pod refuses for a private container
+ * (fail-closed — the demo never silently depends on an open pod); it succeeds
+ * against the seeded fixed-owner demo/e2e pod. Because the authenticated caller
+ * here is the pod OWNER, the honest production path is either the borrower's own
+ * Solid session performing this store client-side, or an sm-28
+ * grant-authenticated fetch injected as `podFetch` — roborev sm-33 High,
+ * tracked as a follow-up bead; the seam is already the injection point.
+ */
 async function writeIssued(
   credentialIri: string,
   podBase: string,

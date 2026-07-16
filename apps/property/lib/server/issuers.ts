@@ -8,9 +8,18 @@
  * `config.enableRuntimeIssuance` is set (env `MORTGAGE_ENABLE_RUNTIME_ISSUANCE`
  * or the dev/e2e loopback flag). A production deploy therefore never holds an
  * accidental signing key — the issue rail answers 503 until an operator opts in
- * or injects a real org KMS key through the `IssuerRegistry` seam. When enabled
- * for the demo, the key is generated in-memory, deterministically per WebID, so
- * an app restart re-signs with the same verification method.
+ * or injects a real org KMS key through the `IssuerRegistry` seam.
+ *
+ * DEMO-KEY LIMITATION (roborev sm-33 High; follow-up bead): when runtime
+ * issuance is enabled without an injected registry, the key is generated
+ * IN-MEMORY and is EPHEMERAL per process — `generateKeyPairForSuite` is random,
+ * NOT deterministic from the verification-method IRI, so a restart re-keys the
+ * same IRI, and the public key is NOT published at that IRI. That is acceptable
+ * ONLY for the demo, where credentials are re-issued each session and this
+ * app's own tests verify with the in-process public key. A production issuer
+ * MUST inject a persistent KMS-backed `IssuerRegistry` whose public key is
+ * published at the verification method (rotating the IRI on rotation) — the
+ * cross-app verify path (sm-36) depends on that publication.
  *
  * The `credentialSubject` verification against the caller (decision 0015 L3)
  * and the pod-write authorization (WAC, L4) are enforced elsewhere; this module
