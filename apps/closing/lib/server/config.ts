@@ -8,6 +8,17 @@ export interface ClosingConfig extends LenderConfig {
   readonly lenderWebId: string | undefined;
   /** Truist-modelled servicing agent whose read grant is approved. */
   readonly servicerWebId: string | undefined;
+  /**
+   * The closing app's OWN service WebID (decision 0015 L4) — the agent the borrower's
+   * grant (sm-28) names, kept in every ACL this app writes so it retains Control.
+   */
+  readonly serviceWebId: string | undefined;
+  /** OIDC issuer of the service identity (client_credentials + DPoP). */
+  readonly podServiceIssuer: string | undefined;
+  /** Confidential client id for the service identity. */
+  readonly podServiceClientId: string | undefined;
+  /** Confidential client secret for the service identity (server env only). */
+  readonly podServiceClientSecret: string | undefined;
 }
 
 export function configFromEnv(env: NodeJS.ProcessEnv = process.env): ClosingConfig {
@@ -15,7 +26,19 @@ export function configFromEnv(env: NodeJS.ProcessEnv = process.env): ClosingConf
     ...lenderConfigFromEnv(env),
     lenderWebId: env.MORTGAGE_LENDER_SERVICE_WEBID,
     servicerWebId: env.MORTGAGE_SERVICER_SERVICE_WEBID,
+    serviceWebId: env.MORTGAGE_CLOSING_SERVICE_WEBID,
+    podServiceIssuer: env.MORTGAGE_CLOSING_POD_SERVICE_ISSUER,
+    podServiceClientId: env.MORTGAGE_CLOSING_POD_SERVICE_CLIENT_ID,
+    podServiceClientSecret: env.MORTGAGE_CLOSING_POD_SERVICE_CLIENT_SECRET,
   };
+}
+
+/** A required, non-empty config string — absent values fail closed as 503 upstream. */
+export function requiredConfig(value: string | undefined, label: string): string {
+  if (value === undefined || value.trim() === "") {
+    throw new Error(`${label} is unset`);
+  }
+  return value;
 }
 
 export function configuredAgent(

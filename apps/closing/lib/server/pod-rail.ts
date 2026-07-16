@@ -1,7 +1,14 @@
 /**
  * Scene-5 authenticated pod boundary. This deliberately reuses the lender's
- * decision-0015 owner resolver, pod IO, public URL reconstruction, and caller
- * contract. Identity and pod location are never accepted from request input.
+ * decision-0015 owner resolver, pod IO, and caller contract (the public-URL
+ * helper is app-local — the basePath differs per app). Identity and pod
+ * location are never accepted from request input.
+ *
+ * Pod IO runs over the app's OWN service identity (decision 0015 L4): a
+ * DPoP-bound client-credentials fetch whose WebID the borrower's grant names.
+ * There is NO anonymous fallback — scene 5 operates exclusively on private,
+ * WAC-protected resources, so an unconfigured service identity fails closed
+ * (503) instead of attempting IO the pod would refuse.
  */
 import {
   createApiVerifier,
@@ -10,29 +17,29 @@ import {
   TokenBucketRateLimiter,
   verifyApiRequest,
 } from "@mortgage/solid-kit/auth/api";
+import { createServicePodFetch } from "@mortgage/solid-kit/auth/service";
 import { notConfigured } from "../../../lender-boa/lib/server/config";
 import { type OwnerBindingSeams, resolveAuthorizedPod } from "../../../lender-boa/lib/server/owner";
-import {
-  anonymousPodFetch,
-  PodAccessError,
-  type PodIoFetch,
-} from "../../../lender-boa/lib/server/pod";
+import { PodAccessError, type PodIoFetch } from "../../../lender-boa/lib/server/pod";
 import type { AuthenticatedPodCaller } from "../../../lender-boa/lib/server/pod-rail";
-import { publicRequestUrl } from "../../../lender-boa/lib/server/url";
-import { type ClosingConfig, configuredAgent } from "./config";
+import { type ClosingConfig, configuredAgent, requiredConfig } from "./config";
 import {
   type ClosingSceneOptions,
   changeServicingAccess,
   executeClosing,
   readConsentLedger,
 } from "./scene";
+import { publicRequestUrl } from "./url";
 
 export interface ClosingServiceOptions {
   readonly config: ClosingConfig;
   readonly verifier?: DpopApiVerifier;
   readonly rateLimiter?: RateLimiter;
   readonly ownerSeams?: OwnerBindingSeams;
+  /** Injected in tests together with {@link serviceWebId} (an account authFetch). */
   readonly podFetch?: PodIoFetch;
+  /** The injected {@link podFetch}'s WebID (tests). Falls back to config. */
+  readonly serviceWebId?: string;
   readonly now?: () => Date;
   readonly randomId?: () => string;
 }
@@ -83,10 +90,44 @@ export function createClosingService(options: ClosingServiceOptions): ClosingSer
     });
     return verifier;
   };
-  const sceneOptions: ClosingSceneOptions = {
-    podFetch: options.podFetch ?? anonymousPodFetch,
-    ...(options.now === undefined ? {} : { now: options.now }),
-    ...(options.randomId === undefined ? {} : { randomId: options.randomId }),
+  // Built lazily and cached: the service fetch owns a token cache + DPoP key,
+  // and an unconfigured deployment must answer 503 (fail closed), not throw at
+  // module load. NO anonymous fallback exists (see the module header).
+  let scene: ClosingSceneOptions | undefined;
+  const sceneOptions = (): ClosingSceneOptions | Response => {
+    if (scene !== undefined) return scene;
+    try {
+      const serviceWebId =
+        options.serviceWebId ??
+        configuredAgent(
+          config.serviceWebId,
+          "MORTGAGE_CLOSING_SERVICE_WEBID",
+          config.allowInsecureLoopback,
+        );
+      const podFetch =
+        options.podFetch ??
+        createServicePodFetch({
+          issuer: requiredConfig(config.podServiceIssuer, "MORTGAGE_CLOSING_POD_SERVICE_ISSUER"),
+          clientId: requiredConfig(
+            config.podServiceClientId,
+            "MORTGAGE_CLOSING_POD_SERVICE_CLIENT_ID",
+          ),
+          clientSecret: requiredConfig(
+            config.podServiceClientSecret,
+            "MORTGAGE_CLOSING_POD_SERVICE_CLIENT_SECRET",
+          ),
+          allowInsecureLoopback: config.allowInsecureLoopback,
+        });
+      scene = {
+        podFetch,
+        serviceWebId,
+        ...(options.now === undefined ? {} : { now: options.now }),
+        ...(options.randomId === undefined ? {} : { randomId: options.randomId }),
+      };
+      return scene;
+    } catch (error) {
+      return errorResponse(error);
+    }
   };
 
   async function authenticate(request: Request): Promise<{ webid: string } | Response> {
@@ -153,6 +194,8 @@ export function createClosingService(options: ClosingServiceOptions): ClosingSer
     async close(request) {
       const authenticated = await caller(request, true);
       if (authenticated instanceof Response) return authenticated;
+      const scene = sceneOptions();
+      if (scene instanceof Response) return scene;
       try {
         const lender = configuredAgent(
           config.lenderWebId,
@@ -163,7 +206,7 @@ export function createClosingService(options: ClosingServiceOptions): ClosingSer
           authenticated.podBase,
           authenticated.webid,
           lender,
-          sceneOptions,
+          scene,
         );
         return Response.json({ simulated: true, ...result });
       } catch (error) {
@@ -174,6 +217,8 @@ export function createClosingService(options: ClosingServiceOptions): ClosingSer
     async grantServicer(request) {
       const authenticated = await caller(request, true);
       if (authenticated instanceof Response) return authenticated;
+      const scene = sceneOptions();
+      if (scene instanceof Response) return scene;
       try {
         const servicer = configuredAgent(
           config.servicerWebId,
@@ -185,7 +230,7 @@ export function createClosingService(options: ClosingServiceOptions): ClosingSer
           authenticated.webid,
           servicer,
           "grant",
-          sceneOptions,
+          scene,
         );
         return Response.json({ simulated: true, receipt });
       } catch (error) {
@@ -196,6 +241,8 @@ export function createClosingService(options: ClosingServiceOptions): ClosingSer
     async revokeLender(request) {
       const authenticated = await caller(request, true);
       if (authenticated instanceof Response) return authenticated;
+      const scene = sceneOptions();
+      if (scene instanceof Response) return scene;
       try {
         const lender = configuredAgent(
           config.lenderWebId,
@@ -207,7 +254,7 @@ export function createClosingService(options: ClosingServiceOptions): ClosingSer
           authenticated.webid,
           lender,
           "revoke",
-          sceneOptions,
+          scene,
         );
         return Response.json({ simulated: true, receipt });
       } catch (error) {
@@ -218,14 +265,12 @@ export function createClosingService(options: ClosingServiceOptions): ClosingSer
     async ledger(request) {
       const authenticated = await caller(request, false);
       if (authenticated instanceof Response) return authenticated;
+      const scene = sceneOptions();
+      if (scene instanceof Response) return scene;
       try {
         return Response.json({
           simulated: true,
-          receipts: await readConsentLedger(
-            authenticated.podBase,
-            authenticated.webid,
-            sceneOptions,
-          ),
+          receipts: await readConsentLedger(authenticated.podBase, authenticated.webid, scene),
         });
       } catch (error) {
         return errorResponse(error);

@@ -43,6 +43,7 @@ async function responseJson(response: Response): Promise<Record<string, unknown>
 export function ClosingExperience() {
   const [active, setActive] = useState<Operation | undefined>();
   const [error, setError] = useState<string | undefined>();
+  const [unauthenticated, setUnauthenticated] = useState(false);
   const [closing, setClosing] = useState<ClosingView | undefined>();
   const [granted, setGranted] = useState(false);
   const [revoked, setRevoked] = useState(false);
@@ -51,14 +52,20 @@ export function ClosingExperience() {
   async function run(operation: Operation, path: string, method: "GET" | "POST") {
     setActive(operation);
     setError(undefined);
+    setUnauthenticated(false);
     try {
-      const payload = await responseJson(
-        await fetch(`${API_BASE}/${path}`, {
-          method,
-          headers: method === "POST" ? { "content-type": "application/json" } : undefined,
-          body: method === "POST" ? "{}" : undefined,
-        }),
-      );
+      const response = await fetch(`${API_BASE}/${path}`, {
+        method,
+        headers: method === "POST" ? { "content-type": "application/json" } : undefined,
+        body: method === "POST" ? "{}" : undefined,
+      });
+      if (response.status === 401) {
+        // The only "no session" signal — the honest Mode-1 fallback (decision
+        // 0015): requests carry the borrower's DPoP-bound session or nothing.
+        setUnauthenticated(true);
+        return;
+      }
+      const payload = await responseJson(response);
       if (operation === "close") {
         setClosing(payload as unknown as ClosingView);
       } else if (operation === "grant") {
@@ -76,7 +83,7 @@ export function ClosingExperience() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-6 py-10" id="main-content" tabIndex={-1}>
+    <main className="mx-auto w-full max-w-5xl px-6 py-10">
       <section aria-labelledby="scene-title">
         <p className="font-semibold text-muted-foreground text-sm uppercase tracking-[0.18em]">
           Scene 5 · Close and stay in control
@@ -286,6 +293,18 @@ export function ClosingExperience() {
           )}
         </div>
       </section>
+
+      {unauthenticated && (
+        <p
+          className="mt-8 rounded-lg border border-border bg-card p-4 text-muted-foreground text-sm"
+          data-closing-unauthenticated=""
+          role="status"
+        >
+          No authenticated borrower session — the server rail is off in this mode. In the default
+          in-browser demo there is no real login, so the closing ceremony stays a preview; a
+          DPoP-bound Solid-OIDC session unlocks the real pod writes.
+        </p>
+      )}
 
       {error !== undefined && (
         <p className="mt-8 rounded-lg border border-border bg-card p-4 text-sm" role="alert">

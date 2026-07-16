@@ -1,4 +1,17 @@
+/**
+ * Scene-5 state model against a REAL WAC-enforcing pod (oidc harness): the app's
+ * service identity does every pod IO; grant/revoke are proven by ACTUAL reads as
+ * the lender/servicer identities, never by inspecting ACL bytes.
+ *
+ * Covers the roborev sm-34 findings:
+ *   - a repeat close is 409 and can never re-grant a revoked lender (High);
+ *   - revocation is immutable — re-grant refused (High);
+ *   - per-agent ACL rules: changing one agent never touches another (High);
+ *   - receipt/ACL divergence: grant rolls back on a failed receipt, revoke
+ *     stays off and repairs its missing receipt on retry (Medium).
+ */
 import {
+  containerGrantAcl,
   type SolidTestAccount,
   type SolidTestServer,
   startSolidServer,
@@ -7,6 +20,7 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import type { ClosingConfig } from "../lib/server/config";
 import { createClosingService } from "../lib/server/pod-rail";
 import {
+  type ClosingSceneOptions,
   changeServicingAccess,
   closingRecordIri,
   executeClosing,
@@ -17,83 +31,252 @@ function expectDenied(status: number): void {
   expect([401, 403]).toContain(status);
 }
 
-describe("scene 5 consent receipts and real WAC transfer", () => {
+async function expect409(run: () => Promise<unknown>): Promise<string> {
+  try {
+    await run();
+  } catch (error) {
+    expect(error).toMatchObject({ name: "PodAccessError", status: 409 });
+    return (error as Error).message;
+  }
+  throw new Error("expected a 409 PodAccessError");
+}
+
+/** Prepare one borrower pod: container + the sm-28-modelled grant for the service. */
+async function seedGrantedContainer(
+  owner: SolidTestAccount,
+  service: SolidTestAccount,
+  podBase: string,
+): Promise<void> {
+  const container = await owner.authFetch(`${podBase}mortgage/`, {
+    method: "PUT",
+    headers: { "content-type": "text/turtle" },
+    body: "",
+  });
+  expect(container.ok).toBe(true);
+  const acl = await owner.authFetch(`${podBase}mortgage/.acl`, {
+    method: "PUT",
+    headers: { "content-type": "text/turtle" },
+    body: containerGrantAcl({
+      containerPath: "/mortgage/",
+      ownerWebid: owner.webid,
+      agents: [{ webid: service.webid, control: true }],
+    }),
+  });
+  expect(acl.ok).toBe(true);
+}
+
+/** A service fetch whose receipt PUTs fail while every other request succeeds. */
+function receiptFailingFetch(base: typeof fetch): typeof fetch {
+  return (input, init) => {
+    const url = input instanceof Request ? input.url : String(input);
+    const method = (input instanceof Request ? input.method : init?.method) ?? "GET";
+    if (method === "PUT" && url.includes("/consent-receipt-")) {
+      return Promise.resolve(new Response(JSON.stringify({ simulated: true }), { status: 503 }));
+    }
+    return base(input, init);
+  };
+}
+
+describe("scene 5 lifecycle on a WAC-enforcing pod", () => {
   let pods: SolidTestServer;
   let owner: SolidTestAccount;
+  let service: SolidTestAccount;
   let lender: SolidTestAccount;
   let servicer: SolidTestAccount;
   let podBase: string;
+  let record: string;
+  let options: ClosingSceneOptions;
+  let minute = 0;
 
   beforeAll(async () => {
     pods = await startSolidServer({ oidc: true });
     const primary = pods.accounts[0];
     if (primary === undefined) throw new Error("OIDC harness did not provision an owner");
     owner = primary;
-    lender = await pods.provisionAccount();
-    servicer = await pods.provisionAccount();
+    [service, lender, servicer] = await Promise.all([
+      pods.provisionAccount(),
+      pods.provisionAccount(),
+      pods.provisionAccount(),
+    ]);
     podBase = `${pods.baseUrl}/`;
+    record = closingRecordIri(podBase);
+    await seedGrantedContainer(owner, service, podBase);
+    options = {
+      podFetch: service.authFetch,
+      serviceWebId: service.webid,
+      now: () => new Date(Date.UTC(2026, 6, 16, 14, 30 + minute++)),
+      randomId: () => `unit-${minute}`,
+    };
   }, 120_000);
 
   afterAll(async () => {
     await pods?.stop();
   });
 
-  test("grant and revoke each write a receipt; revoke removes the lender's actual WAC read", async () => {
-    const times = [
-      new Date("2026-07-16T14:30:00.000Z"),
-      new Date("2026-07-16T14:31:00.000Z"),
-      new Date("2026-07-16T14:32:00.000Z"),
-    ];
-    let timeIndex = 0;
-    let id = 0;
-    const options = {
-      podFetch: owner.authFetch,
-      now: () => times[timeIndex++] ?? (times[2] as Date),
-      randomId: () => `receipt-${++id}`,
-    };
-
+  test("close writes the record and the receipt-recorded lender grant", async () => {
     await executeClosing(podBase, owner.webid, lender.webid, options);
-    const record = closingRecordIri(podBase);
     expect((await lender.authFetch(record)).status).toBe(200);
     expectDenied((await servicer.authFetch(record)).status);
+    const ledger = await readConsentLedger(podBase, owner.webid, options);
+    expect(ledger.map(({ action, recipient }) => [action, recipient])).toEqual([
+      ["grant", lender.webid],
+    ]);
+  }, 60_000);
 
-    const grant = await changeServicingAccess(
+  test("a repeat close is 409 and touches nothing", async () => {
+    const message = await expect409(() =>
+      executeClosing(podBase, owner.webid, lender.webid, options),
+    );
+    expect(message).toContain("already signed");
+    expect((await lender.authFetch(record)).status).toBe(200);
+    expect((await readConsentLedger(podBase, owner.webid, options)).length).toBe(1);
+  }, 60_000);
+
+  test("granting the servicer never widens or narrows the lender's rule", async () => {
+    const receipt = await changeServicingAccess(
       podBase,
       owner.webid,
       servicer.webid,
       "grant",
       options,
     );
-    expect(grant.action).toBe("grant");
+    expect(receipt.action).toBe("grant");
     expect((await servicer.authFetch(record)).status).toBe(200);
+    expect((await lender.authFetch(record)).status).toBe(200);
+    // A repeat grant is refused, and no duplicate receipt appears.
+    await expect409(() =>
+      changeServicingAccess(podBase, owner.webid, servicer.webid, "grant", options),
+    );
+    expect((await readConsentLedger(podBase, owner.webid, options)).length).toBe(2);
+  }, 60_000);
 
-    const revoke = await changeServicingAccess(
+  test("revoking the lender removes the REAL WAC read and is idempotent", async () => {
+    const receipt = await changeServicingAccess(
       podBase,
       owner.webid,
       lender.webid,
       "revoke",
       options,
     );
-    expect(revoke.action).toBe("revoke");
+    expect(receipt.action).toBe("revoke");
     expectDenied((await lender.authFetch(record)).status);
+    // The servicer's dedicated rule is untouched.
+    expect((await servicer.authFetch(record)).status).toBe(200);
+    await expect409(() =>
+      changeServicingAccess(podBase, owner.webid, lender.webid, "revoke", options),
+    );
+  }, 60_000);
 
-    const [grantStored, revokeStored] = await Promise.all([
-      owner.authFetch(grant.iri, { headers: { accept: "text/turtle" } }),
-      owner.authFetch(revoke.iri, { headers: { accept: "text/turtle" } }),
-    ]);
-    expect(grantStored.status).toBe(200);
-    expect(revokeStored.status).toBe(200);
-    expect(await grantStored.text()).toContain("dpv:ConsentGiven");
-    expect(await revokeStored.text()).toContain("dpv:ConsentWithdrawn");
+  test("revocation is immutable: a re-grant of the revoked lender is refused", async () => {
+    const message = await expect409(() =>
+      changeServicingAccess(podBase, owner.webid, lender.webid, "grant", options),
+    );
+    expect(message).toContain("immutable");
+    expectDenied((await lender.authFetch(record)).status);
+  }, 60_000);
 
+  test("REGRESSION: a repeat close after revocation does NOT restore lender read", async () => {
+    await expect409(() => executeClosing(podBase, owner.webid, lender.webid, options));
+    // The load-bearing assertion: an actual read attempt as the lender identity.
+    expectDenied((await lender.authFetch(record)).status);
     const ledger = await readConsentLedger(podBase, owner.webid, options);
-    expect(ledger.map(({ action }) => action)).toEqual(["grant", "revoke"]);
-    expect(ledger.map(({ recipient }) => recipient)).toEqual([servicer.webid, lender.webid]);
-    expect(ledger.map(({ issuedAt }) => issuedAt)).toEqual([
-      "2026-07-16T14:31:00.000Z",
-      "2026-07-16T14:32:00.000Z",
+    expect(ledger.map(({ action, recipient }) => [action, recipient])).toEqual([
+      ["grant", lender.webid],
+      ["grant", servicer.webid],
+      ["revoke", lender.webid],
     ]);
+  }, 60_000);
+});
+
+describe("scene 5 receipt/ACL consistency under receipt-write failure", () => {
+  let pods: SolidTestServer;
+  let owner: SolidTestAccount;
+  let service: SolidTestAccount;
+  let servicer: SolidTestAccount;
+  let podBase: string;
+  let record: string;
+  let working: ClosingSceneOptions;
+  let failingReceipts: ClosingSceneOptions;
+  let minute = 0;
+
+  beforeAll(async () => {
+    pods = await startSolidServer({ oidc: true });
+    const primary = pods.accounts[0];
+    if (primary === undefined) throw new Error("OIDC harness did not provision an owner");
+    owner = primary;
+    [service, servicer] = await Promise.all([pods.provisionAccount(), pods.provisionAccount()]);
+    podBase = `${pods.baseUrl}/`;
+    record = closingRecordIri(podBase);
+    await seedGrantedContainer(owner, service, podBase);
+    const now = () => new Date(Date.UTC(2026, 6, 16, 15, 30 + minute++));
+    working = {
+      podFetch: service.authFetch,
+      serviceWebId: service.webid,
+      now,
+      randomId: () => `fail-${minute}`,
+    };
+    failingReceipts = { ...working, podFetch: receiptFailingFetch(service.authFetch) };
+    // Baseline record without any grant: close against the failing fetch, whose
+    // compensation removes the unrecorded lender grant again (asserted below).
+    await expect(
+      executeClosing(podBase, owner.webid, servicer.webid, failingReceipts),
+    ).rejects.toMatchObject({ name: "PodAccessError" });
   }, 120_000);
+
+  afterAll(async () => {
+    await pods?.stop();
+  });
+
+  test("a grant whose receipt write fails is ROLLED BACK — no unrecorded access", async () => {
+    // From the failed close in beforeAll: the record exists, but the agent's
+    // grant was compensated away and no receipt was written.
+    expectDenied((await servicer.authFetch(record)).status);
+    expect(await readConsentLedger(podBase, owner.webid, working)).toEqual([]);
+    // Same failure through the transfer path.
+    await expect(
+      changeServicingAccess(podBase, owner.webid, servicer.webid, "grant", failingReceipts),
+    ).rejects.toMatchObject({ name: "PodAccessError" });
+    expectDenied((await servicer.authFetch(record)).status);
+    expect(await readConsentLedger(podBase, owner.webid, working)).toEqual([]);
+    // A retry with a healthy pod connection fully lands.
+    const receipt = await changeServicingAccess(
+      podBase,
+      owner.webid,
+      servicer.webid,
+      "grant",
+      working,
+    );
+    expect(receipt.action).toBe("grant");
+    expect((await servicer.authFetch(record)).status).toBe(200);
+  }, 60_000);
+
+  test("a revoke whose receipt write fails keeps access OFF and repairs on retry", async () => {
+    await expect(
+      changeServicingAccess(podBase, owner.webid, servicer.webid, "revoke", failingReceipts),
+    ).rejects.toMatchObject({ name: "PodAccessError" });
+    // Fail-safe direction: the WAC read is already gone, only the record lags.
+    expectDenied((await servicer.authFetch(record)).status);
+    expect(
+      (await readConsentLedger(podBase, owner.webid, working)).map(({ action }) => action),
+    ).toEqual(["grant"]);
+    // Retry completes the MISSING receipt instead of erroring on "no grant".
+    const receipt = await changeServicingAccess(
+      podBase,
+      owner.webid,
+      servicer.webid,
+      "revoke",
+      working,
+    );
+    expect(receipt.action).toBe("revoke");
+    expectDenied((await servicer.authFetch(record)).status);
+    expect(
+      (await readConsentLedger(podBase, owner.webid, working)).map(({ action }) => action),
+    ).toEqual(["grant", "revoke"]);
+    // And the revocation is now immutable.
+    await expect(
+      changeServicingAccess(podBase, owner.webid, servicer.webid, "grant", working),
+    ).rejects.toMatchObject({ name: "PodAccessError", status: 409 });
+  }, 60_000);
 });
 
 describe("decision 0015 fail-closed authenticated pod rail", () => {
@@ -106,6 +289,10 @@ describe("decision 0015 fail-closed authenticated pod rail", () => {
     trustForwardedHeaders: false,
     lenderWebId: "https://lender.example/profile/card#service",
     servicerWebId: "https://servicer.example/profile/card#service",
+    serviceWebId: "https://closing.example/profile/card#service",
+    podServiceIssuer: "https://issuer.example",
+    podServiceClientId: "closing-service",
+    podServiceClientSecret: "secret",
   };
 
   test.each([

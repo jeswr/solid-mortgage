@@ -64,7 +64,11 @@ export function AppShell({
         placement="static"
         variant={variant}
       />
-      <div className="flex-1">{children}</div>
+      {/* The skip link's target lives HERE so every consumer gets a working
+          "Skip to main content" without declaring its own #main-content. */}
+      <div className="flex-1" id="main-content" tabIndex={-1}>
+        {children}
+      </div>
       <footer className="border-border border-t bg-card" data-demo-footer="">
         <p className="mx-auto w-full max-w-5xl px-6 py-4 text-muted-foreground text-xs">
           {footerLegalLine({ organization: theme.modelledOn, variant })}
