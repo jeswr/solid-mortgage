@@ -1,4 +1,7 @@
 {
-  "database": "beads.db",
-  "jsonl_export": "issues.jsonl"
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "solid_mortgage",
+  "project_id": "0a0dd9a6-19da-4ce4-ad42-bdd440819a77"
 }

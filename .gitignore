@@ -18,3 +18,9 @@ test-results/
 .beads/drain.log
 .beads/drain.lock/
 .claude/worktrees/
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key
+.beads/proxieddb/
