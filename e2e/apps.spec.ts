@@ -1,13 +1,7 @@
-import { expect, type Page, test } from "@playwright/test";
-import {
-  bannerFullText,
-  copyText,
-  type DisclaimerVariant,
-  INTERSTITIAL_CONTINUE_LABEL,
-  INTERSTITIAL_HEADING,
-  interstitialParagraphs,
-} from "../packages/ui/src/disclaimers";
+import { expect, test } from "@playwright/test";
+import { type DisclaimerVariant, INTERSTITIAL_HEADING } from "../packages/ui/src/disclaimers";
 import { AppRunner } from "./support/app-runner";
+import { acknowledgeInterstitial, expectBannerVisible } from "./support/banners";
 
 interface AppDefinition {
   appName: string;
@@ -111,30 +105,6 @@ async function startApp(app: AppDefinition, env: NodeJS.ProcessEnv = {}) {
     packageName: app.packageName,
     readyPath: app.path,
   });
-}
-
-async function expectBannerVisible(page: Page, app: AppDefinition) {
-  // `.first()`: pages may carry additional per-section banners (e.g. the
-  // closing app's servicer section); the shell banner always renders first.
-  const banner = page.locator("[data-concept-demo-banner]").first();
-  await expect(banner).toBeVisible();
-  await expect(banner).toContainText(
-    bannerFullText({ organization: app.organization, role: app.role, variant: app.variant }),
-  );
-  await expect(banner.getByRole("link", { name: "About this demo" })).toBeVisible();
-}
-
-async function acknowledgeInterstitial(
-  page: Page,
-  organization: string,
-  variant: DisclaimerVariant = "modelled",
-) {
-  const dialog = page.getByRole("dialog", { name: INTERSTITIAL_HEADING });
-  await expect(dialog).toBeVisible();
-  // Negation paragraph (regn-optics §4.2; own variant per sm-90e) must be present verbatim.
-  await expect(dialog).toContainText(copyText(interstitialParagraphs(organization, variant)[1]));
-  await dialog.getByRole("button", { name: INTERSTITIAL_CONTINUE_LABEL }).click();
-  await expect(dialog).toBeHidden();
 }
 
 test.describe("app concept-demo banners", () => {
