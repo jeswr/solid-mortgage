@@ -8,6 +8,7 @@
     },
     "build": {
       "dependsOn": ["^build"],
+      "env": ["MORTGAGE_*"],
       "outputs": ["dist/**", ".next/**", "!.next/cache/**", "out/**", "generated/**"]
     },
     "lint": {
