@@ -62,11 +62,23 @@ it — brief builders to update the app's e2e-table entry and run the full e2e l
 **No open PRs, no in_progress beads at handoff.** On resume: `gh pr list --state open` and
 `bd list --json | jq '.[]|select(.status=="in_progress")'` to reconcile anything new.
 
-**Remaining after the apps:** sm-65 (seeder integration), sm-37 (full 8-project Vercel deploy —
-env lessons in its notes: rootDirectory=apps/<app>, `MORTGAGE_TRUST_FORWARDED_HEADERS=1` on every
-pod-route app, clear outputDirectory/buildCommand overrides, SSO-gating decision), tour zone-URL
-wiring, sm-36 (cross-app journey e2e + axe), sm-41 (polish), then the framework build (sm-74+) and
-the EDMA sales pack remainder (sm-59 recorded demos, sm-60 FAQ+standards, sm-61 proposal template).
+**DONE since (this session, all merged):** sm-65 seeder integration (real vc-kit issuance +
+sm-26 anchors, owner-only ACLs, wired into dev-server/e2e-global-setup/Mode-1); sm-37 Vercel
+deploy — **all 9 zones live** at `solid-mortgage*.vercel.app` (env matrix, zone-URL rewrites,
+`MORTGAGE_TRUST_FORWARDED_HEADERS=1` on pod-route apps; runbook + git-author-block gotcha in
+`docs/deploy.md`); sm-36 cross-app 5-scene journey e2e + axe (54/54, real DPoP, non-mocked).
+**Vercel posture:** production `.vercel.app` domains are PUBLIC by Jesse's decision (Hobby can't
+gate production; noindex + robots-disallow + concept-demo disclaimers are the mitigation) — sm-1f0
+tracks re-gating if legal (sm-5q2) requires. Pod-route apps 503 until a live pod host + service
+identity env (sm-2eg, blocked on sm-52).
+
+**Remaining P1 (next phase — pick one; none started):** the **showcase framework build** upstream
+in jeswr/solid-sdk (epic sm-72 → sm-74 `@jeswr/solid-showcase` JSON-driven walkthrough, sm-75
+`@jeswr/solid-showcase-kit`) — now unblocked since apps landed; the **EDMA sales pack** (epic sm-55
+→ sm-59 recorded demos [journey now validates it], sm-60 FAQ+standards, sm-61 proposal template);
+upstream sparq (sm-69 createSolidPod, sm-49 solid-vc signPresentation). ~40 lower-severity follow-up
+beads filed across the merged work (Mode-2b login UIs, serviceWebId enforcement, e2e retry-isolation,
+findings-as-RDF, etc.) — `bd ready` for the frontier.
 
 ## needs:user (Jesse) — do not attempt
 sm-50 (npm bootstrap publish `@jeswr/solid-server`), sm-51 (vocab domain veto), sm-54 (CoP
