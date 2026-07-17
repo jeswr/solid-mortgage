@@ -21,13 +21,16 @@ import {
   capturedOperandBridge,
   DEMO_CREDIT_SCORE,
   DEMO_MONTHLY_INCOME_USD,
+  fixtureResourceSpec,
   generateMortgageInstances,
   MORT_SHAPE_IRIS,
   MORTGAGE_ANCHOR_POD_PATHS,
   MORTGAGE_CREDENTIAL_POD_PATHS,
   MORTGAGE_SEED_ISSUER_ROLES,
+  MORTGAGE_WITNESS_POD_PATHS,
   type MortgageCredentialIssuance,
   mortgageShapesDataset,
+  normalizedPodBase,
   type ScriptedCredentialSeed,
   type SeededMortgagePod,
   scriptedCredentialSeedsFor,
@@ -50,7 +53,18 @@ async function freshServer(): Promise<SolidTestServer> {
 
 /** A clearly-labelled plumbing fake (see the module header). */
 function fakeIssuance(
-  overrides: { operandEncFor?: (spec: ScriptedCredentialSeed) => string } = {},
+  overrides: {
+    operandEncFor?: (spec: ScriptedCredentialSeed) => string;
+    /**
+     * Also emit a plumbing-fake WITNESS resource at the anchor's witness
+     * path. The native dual-sign rail is env-gated (SPARQ_CHECKOUT — real
+     * witness coverage lives in the root integration suite's gated test), but
+     * the witness resource's ACCESS posture must be provable everywhere: this
+     * materialises a resource at the real witness pod path so the layout's
+     * owner-only ACL is exercised, faking no signature and no encoding.
+     */
+    withWitness?: boolean;
+  } = {},
 ): MortgageCredentialIssuance {
   return {
     issue(spec, context) {
@@ -69,6 +83,15 @@ function fakeIssuance(
                   contentType: "text/turtle",
                 },
               ],
+        ...(overrides.withWitness === true && spec.anchor !== undefined
+          ? {
+              witness: {
+                path: spec.anchor.witnessPath,
+                body: '{"type":"plumbing-fake-witness"}',
+                contentType: "application/json",
+              },
+            }
+          : {}),
       });
     },
     issuerResources() {
@@ -173,7 +196,7 @@ describe("mortgagePodLayout + seedMortgagePod (solid-seed write path)", () => {
     const outcomes = pod.manifest.pods[0];
     expect(outcomes).toBeDefined();
     const byPath = new Map(outcomes?.resources.map((entry) => [entry.path, entry.status]));
-    for (const path of [
+    const expectedPaths = [
       "/profile/card",
       "/mortgage/profile",
       "/mortgage/application",
@@ -186,8 +209,17 @@ describe("mortgagePodLayout + seedMortgagePod (solid-seed write path)", () => {
         role.docPath,
         role.statusPath,
       ]),
-    ]) {
+    ];
+    for (const path of expectedPaths) {
       expect(byPath.get(path), path).toBe("created");
+    }
+    // Every seeded resource carries an AFFIRMATIVE least-privilege ACL — the
+    // access posture must never be inherited from the serving host's default.
+    // Fixed-owner mode can only prove the `.acl` documents were written;
+    // allow/deny semantics are proven in the OIDC describe below.
+    for (const path of expectedPaths) {
+      const aclResponse = await fetch(`${server.baseUrl}${path}.acl`);
+      expect(aclResponse.status, `${path}.acl`).toBe(200);
     }
     // Six expander groups: five credentials + the issuer fixtures.
     expect(outcomes?.groups).toHaveLength(6);
@@ -240,6 +272,147 @@ describe("mortgagePodLayout + seedMortgagePod (solid-seed write path)", () => {
     expect(failure).toBeInstanceOf(Error);
     expect(String((failure as Error).cause)).toMatch(/operand encoding drift/);
   }, 60_000);
+});
+
+describe("seeded access control (affirmative least-privilege ACLs)", () => {
+  test("fixtureResourceSpec never drops the publicRead flag", () => {
+    const body = "<#it> a <https://schema.org/Thing> .\n";
+    // Absent and explicit-false both map to an affirmatively private ACL.
+    expect(fixtureResourceSpec({ path: "/x", body }).access).toEqual({ publicRead: false });
+    expect(fixtureResourceSpec({ path: "/x", body, publicRead: false }).access).toEqual({
+      publicRead: false,
+    });
+    expect(
+      fixtureResourceSpec({ path: "/x", body, publicRead: true, contentType: "text/turtle" }),
+    ).toEqual({
+      path: "/x",
+      source: { body },
+      contentType: "text/turtle",
+      access: { publicRead: true },
+    });
+  });
+
+  test("OIDC + real WAC: a SECOND verified identity and anonymous readers are DENIED every borrower-private resource (ZK witnesses, credentials, anchors, persona documents) while issuer docs + status lists stay public and the owner reads everything", {
+    timeout: 120_000,
+  }, async () => {
+    const server = await startSolidServer({ oidc: true });
+    servers.push(server);
+    const owner = server.accounts[0];
+    if (owner === undefined) throw new Error("no primary account");
+    // The witness resources are materialised at the REAL witness pod paths
+    // via the plumbing-fake issuance (`withWitness` — see its doc comment);
+    // DPoP verification and WAC evaluation below are fully real.
+    await seedMortgagePod({
+      target: { webid: owner.webid, baseUrl: owner.baseUrl, authFetch: owner.authFetch },
+      issuance: fakeIssuance({ withWitness: true }),
+      now: NOW,
+      mode: "create",
+    });
+    const stranger = await server.provisionAccount();
+    expect(stranger.webid).not.toBe(owner.webid);
+
+    const borrowerPrivate = [
+      MORTGAGE_WITNESS_POD_PATHS.income,
+      MORTGAGE_WITNESS_POD_PATHS.score,
+      ...Object.values(MORTGAGE_CREDENTIAL_POD_PATHS),
+      MORTGAGE_ANCHOR_POD_PATHS.income,
+      MORTGAGE_ANCHOR_POD_PATHS.score,
+      "/mortgage/profile",
+      "/mortgage/application",
+      "/mortgage/decision",
+      "/mortgage/closing",
+    ];
+    for (const path of borrowerPrivate) {
+      const url = `${owner.baseUrl}${path}`;
+      const strangerRead = await stranger.authFetch(url);
+      expect([401, 403], `stranger read ${path}: HTTP ${strangerRead.status}`).toContain(
+        strangerRead.status,
+      );
+      const anonymousRead = await fetch(url);
+      expect([401, 403], `anonymous read ${path}: HTTP ${anonymousRead.status}`).toContain(
+        anonymousRead.status,
+      );
+      const ownerRead = await owner.authFetch(url);
+      expect(ownerRead.status, `owner read ${path}`).toBe(200);
+    }
+
+    // External verifiers must dereference these without credentials.
+    const publicResources = Object.values(MORTGAGE_SEED_ISSUER_ROLES).flatMap((role) => [
+      role.docPath,
+      role.statusPath,
+    ]);
+    for (const path of publicResources) {
+      const url = `${owner.baseUrl}${path}`;
+      const anonymousRead = await fetch(url);
+      expect(anonymousRead.status, `anonymous read ${path}`).toBe(200);
+      const strangerRead = await stranger.authFetch(url);
+      expect(strangerRead.status, `stranger read ${path}`).toBe(200);
+      const ownerRead = await owner.authFetch(url);
+      expect(ownerRead.status, `owner read ${path}`).toBe(200);
+    }
+  });
+});
+
+describe("non-root pod bases (storage-root path preserved)", () => {
+  test("normalizedPodBase keeps the path and ensures exactly one trailing slash", () => {
+    expect(normalizedPodBase("https://host.example/alex")).toBe("https://host.example/alex/");
+    expect(normalizedPodBase("https://host.example/alex/")).toBe("https://host.example/alex/");
+    expect(normalizedPodBase("https://host.example/alex//")).toBe("https://host.example/alex/");
+    expect(normalizedPodBase("https://host.example")).toBe("https://host.example/");
+    expect(() => normalizedPodBase("https://host.example/alex/?x=1")).toThrow(/query/);
+    expect(() => normalizedPodBase("https://host.example/alex/#frag")).toThrow(/fragment/);
+  });
+
+  test("seeding a pod based at /alex/ writes under /alex/ with base-rooted IRIs", {
+    timeout: 60_000,
+  }, async () => {
+    const server = await freshServer();
+    const account = server.accounts[0];
+    if (account === undefined) throw new Error("no primary account");
+    const origin = new URL(account.baseUrl).origin;
+    const pod = await seedMortgagePod({
+      // No trailing slash on purpose: normalization is part of the contract.
+      target: { webid: account.webid, baseUrl: `${origin}/alex`, authFetch: account.authFetch },
+      issuance: fakeIssuance(),
+      now: NOW,
+      mode: "create",
+    });
+
+    // Manifest URLs resolve under the BASE, not the bare origin.
+    const outcomes = pod.manifest.pods[0];
+    const income = outcomes?.resources.find(
+      (entry) => entry.path === `/alex${MORTGAGE_CREDENTIAL_POD_PATHS.income}`,
+    );
+    expect(income?.status).toBe("created");
+    expect(income?.url).toBe(`${origin}/alex${MORTGAGE_CREDENTIAL_POD_PATHS.income}`);
+
+    // The issuance context resolved the credential id against the base.
+    const incomeRead = await fetch(income?.url as string);
+    expect(incomeRead.status).toBe(200);
+    expect(await incomeRead.text()).toContain(
+      `${origin}/alex${MORTGAGE_CREDENTIAL_POD_PATHS.income}`,
+    );
+
+    // The persona documents live under the base and carry base-rooted IRIs.
+    const applicationUrl = `${origin}/alex/mortgage/application`;
+    const application = await fetch(applicationUrl);
+    expect(application.status).toBe(200);
+    const dataset = new Store(
+      new Parser({ format: "text/turtle", baseIRI: applicationUrl }).parse(
+        await application.text(),
+      ),
+    );
+    const report = await validate(dataset, {
+      expect: "loan-application",
+      focusNode: applicationUrl,
+    });
+    expect(report.conforms, JSON.stringify(report.violations)).toBe(true);
+
+    // The profile card advertises the pod BASE as pim:storage.
+    const card = await fetch(`${origin}/profile/card`);
+    expect(card.status).toBe(200);
+    expect(await card.text()).toContain(`<${origin}/alex/>`);
+  });
 });
 
 describe("mort SHACL inputs (sm-65 §5.1)", () => {

@@ -22,11 +22,15 @@ export {
   type MortgageGenerationTarget,
 } from "./generate.js";
 export {
+  fixtureResourceSpec,
   MORTGAGE_DOCUMENT_KINDS,
+  MORTGAGE_OWNER_ONLY_ACCESS,
+  MORTGAGE_PUBLIC_READ_ACCESS,
   type MortgageCredentialIssuance,
   type MortgageIssuanceContext,
   type MortgagePodLayoutOptions,
   mortgagePodLayout,
+  normalizedPodBase,
   type SeededAnchorResource,
   type SeededCredentialGroup,
   type SeedResourceBody,

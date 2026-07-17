@@ -29,6 +29,7 @@ import {
   MORTGAGE_SEED_ISSUER_ROLES,
   MORTGAGE_WITNESS_POD_PATHS,
   type SeededMortgagePod,
+  scriptedCredentialSeedsFor,
   seedMortgagePod,
 } from "@mortgage/solid-kit/mortgage-seed";
 import { type SolidTestServer, startSolidServer } from "@mortgage/solid-kit/testing";
@@ -146,6 +147,85 @@ describe("the seeded harness pod (REAL issuance, REAL verifiers)", () => {
   });
 });
 
+describe("seeded access control under OIDC (REAL DPoP + REAL WAC + REAL issuance)", () => {
+  test("a SECOND verified identity and anonymous readers are DENIED the borrower's credentials and anchors, while verification still passes with ANONYMOUS issuer-doc/status-list fetches", {
+    timeout: 180_000,
+  }, async () => {
+    const server = await startSolidServer({ oidc: true });
+    try {
+      const owner = server.accounts[0];
+      if (owner === undefined) throw new Error("no primary account");
+      const oidcSeeded = await seedMortgagePod({
+        target: { webid: owner.webid, baseUrl: owner.baseUrl, authFetch: owner.authFetch },
+        issuance: createMortgageIssuance({ podOrigin: owner.baseUrl, now: NOW }),
+        now: NOW,
+        mode: "create",
+      });
+      const stranger = await server.provisionAccount();
+      expect(stranger.webid).not.toBe(owner.webid);
+      const origin = new URL(owner.baseUrl).origin;
+
+      for (const path of [
+        ...Object.values(MORTGAGE_CREDENTIAL_POD_PATHS),
+        MORTGAGE_ANCHOR_POD_PATHS.income,
+        MORTGAGE_ANCHOR_POD_PATHS.score,
+      ]) {
+        const url = `${origin}${path}`;
+        const strangerRead = await stranger.authFetch(url);
+        expect([401, 403], `stranger read ${path}: HTTP ${strangerRead.status}`).toContain(
+          strangerRead.status,
+        );
+        const anonymousRead = await fetch(url);
+        expect([401, 403], `anonymous read ${path}: HTTP ${anonymousRead.status}`).toContain(
+          anonymousRead.status,
+        );
+      }
+
+      // The owner reads its own credential, and the FULL fail-closed
+      // verification chain passes with plain ANONYMOUS fetches for the
+      // issuer documents and status lists — the public-read ACLs are
+      // exactly what keeps external verification working.
+      const ownerRead = await owner.authFetch(`${origin}${MORTGAGE_CREDENTIAL_POD_PATHS.credit}`);
+      expect(ownerRead.status).toBe(200);
+      const result = await verifyCredential(await ownerRead.text(), {
+        expectShape: "credit-score-credential",
+        now: NOW,
+        trustedIssuers: Object.values(MORTGAGE_SEED_ISSUER_ROLES).map(
+          (role) => `${origin}${role.docPath}`,
+        ),
+        webIdFetch: fetch,
+        statusFetch: fetch,
+      });
+      expect(result.verified, JSON.stringify(result.errors)).toBe(true);
+      expect(result.credential?.subject).toBe(oidcSeeded.webid);
+    } finally {
+      await server.stop();
+    }
+  });
+});
+
+describe("path-based pod bases (issuer IRIs never collapse to the origin)", () => {
+  test("createMortgageIssuance preserves a storage-root path in issuer + credential IRIs", async () => {
+    // Never dereferenced: the captured-rail issuance is entirely in-memory.
+    const base = "http://127.0.0.1:39999/alex";
+    const resolve = (path: string): string => `${base}${path}`;
+    const context = { webid: resolve("/profile/card#me"), resolve };
+    const issuance = createMortgageIssuance({ podOrigin: base, now: NOW });
+    const spec = scriptedCredentialSeedsFor("alex-rivera", NOW).find(
+      (entry) => entry.id === "credit",
+    );
+    if (spec === undefined) throw new Error("scripted seeds are missing the credit credential");
+    const issued = await issuance.issue(spec, context);
+    expect(issued.vc.body).toContain(`${base}${MORTGAGE_SEED_ISSUER_ROLES.bureau.docPath}`);
+    expect(issued.vc.body).toContain(`${base}${MORTGAGE_CREDENTIAL_POD_PATHS.credit}`);
+    // Pod-hosted issuer resources stay pod-BASE-relative for the layout to place.
+    const issuerDocs = await issuance.issuerResources(context);
+    expect(issuerDocs.map((resource) => resource.path)).toContain(
+      MORTGAGE_SEED_ISSUER_ROLES.bureau.docPath,
+    );
+  }, 60_000);
+});
+
 // ── native dual-sign rail (gated, same convention as vc-kit's native suite) ──
 
 function cargoAvailable(): boolean {
@@ -164,9 +244,11 @@ const NATIVE_TIMEOUT = 20 * 60 * 1000;
 
 describe.skipIf(!nativeEnabled)("native dual-sign rail (gated on SPARQ_CHECKOUT)", () => {
   test(
-    "seeds REAL Schnorr-BJJ witnesses beside the anchored credentials",
+    "seeds REAL Schnorr-BJJ witnesses beside the anchored credentials — and they are OWNER-ONLY under real WAC",
     async () => {
-      const nativeServer = await startSolidServer({});
+      // OIDC mode: the witness denial below is evaluated by real WAC, not
+      // vacuously satisfied by fixed-owner serving.
+      const nativeServer = await startSolidServer({ oidc: true });
       try {
         const account = nativeServer.accounts[0];
         if (account === undefined) throw new Error("no primary account");
@@ -182,9 +264,16 @@ describe.skipIf(!nativeEnabled)("native dual-sign rail (gated on SPARQ_CHECKOUT)
           now: NOW,
           mode: "create",
         });
+        const stranger = await nativeServer.provisionAccount();
         const origin = new URL(account.baseUrl).origin;
         for (const [id, path] of Object.entries(MORTGAGE_WITNESS_POD_PATHS)) {
-          const response = await fetch(`${origin}${path}`);
+          // The REAL witness is borrower-only: anonymous and cross-identity
+          // reads are denied before the owner's read is trusted.
+          const anonymousRead = await fetch(`${origin}${path}`);
+          expect([401, 403], `anonymous read ${path}`).toContain(anonymousRead.status);
+          const strangerRead = await stranger.authFetch(`${origin}${path}`);
+          expect([401, 403], `stranger read ${path}`).toContain(strangerRead.status);
+          const response = await account.authFetch(`${origin}${path}`);
           expect(response.status, path).toBe(200);
           const witness = (await response.json()) as {
             type: string;

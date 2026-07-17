@@ -34,6 +34,7 @@ import {
   MORTGAGE_SCHNORR_ISSUER_SEEDS,
   MORTGAGE_SEED_ISSUER_ROLES,
   type MortgageSeedIssuerRole,
+  normalizedPodBase,
 } from "@mortgage/solid-kit/mortgage-seed";
 import {
   type CredentialClaims,
@@ -109,7 +110,11 @@ interface SeedIssuer {
 }
 
 export interface CreateMortgageIssuanceOptions {
-  /** Pod origin hosting the issuer documents + status lists. */
+  /**
+   * Pod BASE URL hosting the issuer documents + status lists — a bare origin
+   * or an origin + storage-root path (`https://host/alex/`); any path is
+   * PRESERVED in the issuer IRIs.
+   */
   readonly podOrigin: string;
   /** The demo reference instant (drives status-list windows). */
   readonly now: Date;
@@ -141,18 +146,20 @@ export function nativeBridgeFromEnv():
 export function createMortgageIssuance(
   options: CreateMortgageIssuanceOptions,
 ): MortgageCredentialIssuance {
-  const podOrigin = new URL(options.podOrigin).origin;
+  // Storage-root path preserved; trailing slash dropped so `${podRoot}${"/x"}`
+  // joins cleanly with the pod-base-relative issuer paths.
+  const podRoot = normalizedPodBase(options.podOrigin).slice(0, -1);
   const native = options.native ?? capturedOperandBridge();
   const dualSign = options.nativeDualSign === true;
   const issuers = new Map<MortgageSeedIssuerRole, Promise<SeedIssuer>>();
 
   async function provisionIssuer(role: MortgageSeedIssuerRole): Promise<SeedIssuer> {
     const definition = MORTGAGE_SEED_ISSUER_ROLES[role];
-    const iri = `${podOrigin}${definition.docPath}`;
+    const iri = `${podRoot}${definition.docPath}`;
     const key = await generateKeyPairForSuite(`${iri}#key-1`, "Ed25519");
     const published = await publishVerificationMethod({ controller: iri, key });
     const store = memoryResourceStore();
-    const statusUrl = `${podOrigin}${definition.statusPath}`;
+    const statusUrl = `${podRoot}${definition.statusPath}`;
     const status = new StatusListClient({ url: statusUrl, issuer: iri, key, fetch: store.fetch });
     await status.create({
       now: options.now,

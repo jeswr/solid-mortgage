@@ -18,34 +18,45 @@ import { createMortgageIssuance, nativeBridgeFromEnv } from "../e2e/support/mort
 
 async function main(): Promise<void> {
   const server = await startSolidServer({});
-  const account = server.accounts[0];
-  if (account === undefined) throw new Error("solid server booted with no primary account");
-  const now = new Date();
-  const native = nativeBridgeFromEnv();
-  const issuance = createMortgageIssuance({
-    podOrigin: account.baseUrl,
-    now,
-    ...(native ?? {}),
-  });
-  const seeded = await seedMortgagePod({
-    target: { webid: account.webid, baseUrl: account.baseUrl, authFetch: account.authFetch },
-    issuance,
-    now,
-    mode: "create",
-  });
+  // The live server keeps the event loop alive: any post-startup failure must
+  // stop it, or a failed `dev:pod` hangs instead of exiting.
+  try {
+    const account = server.accounts[0];
+    if (account === undefined) throw new Error("solid server booted with no primary account");
+    const now = new Date();
+    const native = nativeBridgeFromEnv();
+    const issuance = createMortgageIssuance({
+      podOrigin: account.baseUrl,
+      now,
+      ...(native ?? {}),
+    });
+    const seeded = await seedMortgagePod({
+      target: { webid: account.webid, baseUrl: account.baseUrl, authFetch: account.authFetch },
+      issuance,
+      now,
+      mode: "create",
+    });
 
-  console.log(`Seeded dev pod (persona ${seeded.persona.id})`);
-  console.log(`  origin : ${new URL(seeded.baseUrl).origin}`);
-  console.log(`  webid  : ${seeded.webid}`);
-  console.log(
-    `  zk rail: ${native === undefined ? "captured operand encodings (no witnesses)" : "native dual-sign (SPARQ_CHECKOUT)"}`,
-  );
-  for (const pod of seeded.manifest.pods) {
-    for (const resource of pod.resources) {
-      console.log(`  ${resource.status.padEnd(8)} ${resource.url}`);
+    console.log(`Seeded dev pod (persona ${seeded.persona.id})`);
+    console.log(`  origin : ${new URL(seeded.baseUrl).origin}`);
+    console.log(`  webid  : ${seeded.webid}`);
+    console.log(
+      `  zk rail: ${native === undefined ? "captured operand encodings (no witnesses)" : "native dual-sign (SPARQ_CHECKOUT)"}`,
+    );
+    for (const pod of seeded.manifest.pods) {
+      for (const resource of pod.resources) {
+        console.log(`  ${resource.status.padEnd(8)} ${resource.url}`);
+      }
     }
+    console.log("Ctrl-C to stop (pod is in-memory; every boot reseeds).");
+  } catch (error) {
+    try {
+      await server.stop();
+    } catch (stopError) {
+      console.error(stopError);
+    }
+    throw error;
   }
-  console.log("Ctrl-C to stop (pod is in-memory; every boot reseeds).");
 
   const stop = async () => {
     await server.stop();

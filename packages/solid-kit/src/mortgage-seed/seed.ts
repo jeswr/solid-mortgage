@@ -28,6 +28,7 @@ import {
   type MortgageCredentialIssuance,
   type MortgagePodLayoutOptions,
   mortgagePodLayout,
+  normalizedPodBase,
 } from "./layout.js";
 import { type ScriptedCredentialSeed, scriptedCredentialSeeds } from "./overrides.js";
 
@@ -62,7 +63,9 @@ export interface SeededMortgagePod {
 /** Build the persona for a pod origin and seed the full mortgage layout. */
 export async function seedMortgagePod(options: SeedMortgagePodOptions): Promise<SeededMortgagePod> {
   const personaId = options.personaId ?? "alex-rivera";
-  const podBase = `${new URL(options.target.baseUrl).origin}/`;
+  // PRESERVE any storage-root path: a pod hosted at `https://host/alex/` must
+  // yield persona IRIs under `/alex/`, never under the bare origin.
+  const podBase = normalizedPodBase(options.target.baseUrl);
   const built = await personas({
     now: options.now,
     ...(options.seed === undefined ? {} : { seed: options.seed }),
