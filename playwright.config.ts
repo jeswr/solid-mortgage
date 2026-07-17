@@ -2,6 +2,9 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./e2e",
+  // One pre-seeded borrower pod per run (sm-65); suites needing write
+  // isolation still boot their own per-suite pods.
+  globalSetup: "./e2e/support/global-setup",
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,

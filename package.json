@@ -12,6 +12,10 @@
   },
   "packageManager": "pnpm@10.4.1",
   "pnpm": {
+    "overrides": {
+      "@jeswr/rdf-serialize": "github:jeswr/rdf-serialize#9c3a34dd93f318fd00d9e6f22081123e502a0578",
+      "@jeswr/synthetic-rdf": "file:packages/solid-kit/vendor/jeswr-synthetic-rdf-0.1.0.tgz"
+    },
     "patchedDependencies": {
       "@jeswr/solid-server": "packages/solid-kit/vendor/patches/@jeswr__solid-server.patch"
     }
@@ -21,6 +25,7 @@
   },
   "scripts": {
     "dev": "node scripts/dev-apps.mjs",
+    "dev:pod": "node scripts/dev-pod.ts",
     "lint": "pnpm run lint:root && pnpm run check:packages && turbo run lint --concurrency=4",
     "lint:root": "biome check package.json turbo.json biome.json vitest.config.ts playwright.config.ts scripts guardrails test e2e",
     "lint:fix": "biome check --write .",
@@ -43,6 +48,7 @@
     "@mortgage/solid-kit": "workspace:*",
     "@mortgage/vc-kit": "workspace:*",
     "@playwright/test": "^1.59.1",
+    "@types/n3": "^1.26.1",
     "@types/node": "^25.9.2",
     "jsdom": "^29.1.1",
     "n3": "^2.1.1",
