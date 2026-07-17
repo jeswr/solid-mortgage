@@ -20,6 +20,25 @@ data model (FIBO/MISMO-grounded), and the sparq-backed infrastructure once resea
 - `apps/` — one Next.js app per stakeholder, deployed to Vercel
 - `packages/` — shared data-model / solid-kit / vc-kit / ui workspaces
 
+## Live deployments (Vercel, SSO-gated)
+
+One Vercel project per app (scope: jeswr / "Jesse Wright's projects"), project names kept
+neutral per the R2/R4 optics rules. **All deployments sit behind Vercel Authentication** —
+anonymous requests get the SSO 401 gate — until legal review (sm-5q2) and partner consent
+(sm-6sw) close. Full runbook incl. env matrix and deploy commands: [`docs/deploy.md`](docs/deploy.md).
+
+| app | project | production URL |
+|---|---|---|
+| tour shell | `solid-mortgage` | https://solid-mortgage.vercel.app |
+| wallet | `solid-mortgage-wallet` | https://solid-mortgage-wallet.vercel.app |
+| verifications | `solid-mortgage-verifications` | https://solid-mortgage-verifications.vercel.app |
+| lender-boa | `solid-mortgage-lender-a` | https://solid-mortgage-lender-a.vercel.app |
+| lender-53 | `solid-mortgage-lender-b` | https://solid-mortgage-lender-b.vercel.app |
+| gse | `solid-mortgage-underwriting` | https://solid-mortgage-underwriting.vercel.app |
+| property | `solid-mortgage-property` | https://solid-mortgage-property.vercel.app |
+| closing | `solid-mortgage-closing` | https://solid-mortgage-closing.vercel.app |
+| vocab | `solid-mortgage-vocab` | https://solid-mortgage-vocab.vercel.app |
+
 ## ZK proving — COOP/COEP (apps must wire these headers)
 
 `packages/vc-kit`'s Tier A prover (sm-25) runs sparq's `filter_int` circuits in-browser with
