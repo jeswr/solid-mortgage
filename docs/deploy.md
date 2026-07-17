@@ -123,7 +123,14 @@ does NOT cover the production domain**. Verified against the live deployments:
 So while legal review (sm-5q2) and Freddie consent (sm-6sw) stay open, the production
 surfaces are protected only by `noindex` robots metadata, `robots.txt Disallow`, the
 "concept demonstration" disclaimers, and obscurity — **not** by an auth wall.
-**Closing the gap needs a lead/account-level action** (either works):
+**DECISION (Jesse, 2026-07-17): accept the public exposure for now.** The lead reviewed the
+verified posture above and chose to keep the production surfaces public, relying on the
+`noindex` + `robots.txt Disallow` + concept-demonstration disclaimers already in place (all
+confirmed live on every branded surface). This is a deliberate choice, not an unresolved gap.
+Revisit — and apply one of the two options below — **if the sm-5q2 legal review or sm-6sw
+partner consent concludes that an auth wall is required**. Tracked as **sm-1f0**.
+
+Gating options, kept here for when/if that decision changes (either works):
 
 1. Remove the `<project>.vercel.app` production domain from each project
    (`DELETE /v9/projects/<name>/domains/<name>.vercel.app`) so the only reachable
