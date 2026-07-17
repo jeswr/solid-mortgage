@@ -107,31 +107,55 @@ Pod-route apps fail **closed** (503 on their pod routes) until their service ide
 against a live pod host. That wiring is a separate bead — the deploys above are healthy
 with the rails unconfigured.
 
-## Deployment protection — everything stays gated
+## Deployment protection — CORRECTED posture (verified live 2026-07-17)
 
 **Vercel Authentication (SSO) protection stays ON for all 9 projects**
-(`deploymentType: all_except_custom_domains`). Legal review (sm-5q2) and Freddie consent
-(sm-6sw) are open, so no surface goes public: anonymous requests get the Vercel SSO 401
-gate; team members reach the apps after SSO. Do **not** disable protection or add a custom
-domain (custom domains bypass this protection mode) without lead sign-off.
+(`deploymentType: all_except_custom_domains`) — but on the current **Hobby plan that mode
+does NOT cover the production domain**. Verified against the live deployments:
 
-Every app additionally ships `noindex` robots metadata and the "concept demonstration"
-disclaimer per the workspace conventions — the SSO gate is defence in depth on top, not a
-substitute.
+- **Gated (302 → `vercel.com/sso-api`)**: every deployment URL and the team-scoped
+  production aliases (`<project>-jesse-wrights-projects-776f60ef.vercel.app`).
+- **PUBLIC (anonymous 200)**: the auto-assigned production domains
+  `<project>.vercel.app` — i.e. every URL in the tables above. Vercel Authentication for
+  production deployments requires a paid plan; the API rejects
+  `deploymentType: "all"` with `invalid_sso_protection` on this account.
+
+So while legal review (sm-5q2) and Freddie consent (sm-6sw) stay open, the production
+surfaces are protected only by `noindex` robots metadata, `robots.txt Disallow`, the
+"concept demonstration" disclaimers, and obscurity — **not** by an auth wall.
+**Closing the gap needs a lead/account-level action** (either works):
+
+1. Remove the `<project>.vercel.app` production domain from each project
+   (`DELETE /v9/projects/<name>/domains/<name>.vercel.app`) so the only reachable
+   production URLs are the SSO-gated team-scoped aliases — reversible, one call per
+   project when legal clears; or
+2. Upgrade the account so Vercel Authentication can cover production
+   (`deploymentType: "all"`).
+
+Exception: **`solid-mortgage-vocab` must stay publicly dereferenceable** — it hosts the
+`mort` vocabulary namespace (`https://solid-mortgage-vocab.vercel.app/mort`) that
+`pnpm run lint:iris` HEAD-checks; the sm-18 `TEMPORARILY_UNDEPLOYED_HOSTS` exemption in
+`scripts/lint-iris.mjs` can be lifted now that it is live.
+
+Do **not** disable Vercel Authentication on any project, and treat any domain change as
+lead-sign-off territory.
 
 ## Verifying a deploy
 
 1. `GET https://api.vercel.com/v13/deployments/<id>` → `readyState: READY`.
-2. `curl -sI https://<prod-url>/` → expect a **302 to `vercel.com/sso-api`** (with a
-   `_vercel_sso_nonce` cookie): that is the SSO gate working, not a fault. Anonymous 200s
-   would mean protection is off — investigate.
-3. App-level checks behind the gate use a **protection-bypass-for-automation** secret
-   (available on this plan): `PATCH /v1/projects/<name>/protection-bypass` with
-   `{"generate":{}}` → send it as `x-vercel-protection-bypass: <secret>`, then **revoke it**
-   (`{"revoke":{"secret":"<secret>"}}`) when done — don't leave standing bypass credentials
-   on gated demo surfaces. With the header: each zone app answers 200 under its basePath
-   (`/<zone-prefix>`), `GET /<prefix>/api/health` returns `{"ok":true,...}`, `x-robots-tag:
-   noindex` is present everywhere, and wallet/lender-a/lender-b send COOP/COEP.
+2. `curl -sI https://<project>-jesse-wrights-projects-776f60ef.vercel.app/` → expect a
+   **302 to `vercel.com/sso-api`** (with a `_vercel_sso_nonce` cookie): the SSO gate on
+   deployment URLs/team aliases. The `<project>.vercel.app` production domain answers
+   **anonymously** on this plan (see the protection section above) — a 200 there is the
+   current expected state, not proof the gate is off.
+3. App-level checks: each zone app answers 200 under its basePath (`/<zone-prefix>`),
+   `GET /<prefix>/api/health` returns `{"ok":true,...}`, the `noindex` robots meta +
+   `robots.txt Disallow` are present, and wallet/lender-a/lender-b send COOP/COEP.
+   For checks against a *gated* URL, use a **protection-bypass-for-automation** secret:
+   `PATCH /v1/projects/<name>/protection-bypass` with `{"generate":{}}` → send it as
+   `x-vercel-protection-bypass: <secret>`, then **revoke it**
+   (`{"revoke":{"secret":"<secret>"}}`) when done — don't leave standing bypass
+   credentials on demo surfaces.
 4. Tour zone wiring: after SSO, `https://<tour-url>/wallet` (etc.) must render the zone app,
    not a 404 — each prefix proxies `MORTGAGE_*_ZONE_URL`.
 
