@@ -20,12 +20,17 @@ data model (FIBO/MISMO-grounded), and the sparq-backed infrastructure once resea
 - `apps/` — one Next.js app per stakeholder, deployed to Vercel
 - `packages/` — shared data-model / solid-kit / vc-kit / ui workspaces
 
-## Live deployments (Vercel, SSO-gated)
+## Live deployments (Vercel)
 
 One Vercel project per app (scope: jeswr / "Jesse Wright's projects"), project names kept
-neutral per the R2/R4 optics rules. **All deployments sit behind Vercel Authentication** —
-anonymous requests get the SSO 401 gate — until legal review (sm-5q2) and partner consent
-(sm-6sw) close. Full runbook incl. env matrix and deploy commands: [`docs/deploy.md`](docs/deploy.md).
+neutral per the R2/R4 optics rules. Vercel Authentication gates every deployment URL and
+team-scoped alias, but on the current plan it **cannot cover the `<project>.vercel.app`
+production domains below — they are publicly reachable** (noindex + robots-disallowed +
+disclaimered) until a lead-level action closes the gap; see the "Deployment protection"
+section of [`docs/deploy.md`](docs/deploy.md) for the verified posture and the two fix
+options (legal review sm-5q2 and partner consent sm-6sw remain open). `solid-mortgage-vocab`
+intentionally stays public — it hosts the `mort` vocabulary namespace that `lint:iris`
+dereferences.
 
 | app | project | production URL |
 |---|---|---|
