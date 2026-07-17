@@ -38,6 +38,7 @@ import {
 } from "@mortgage/solid-kit/mortgage-seed";
 import {
   type CredentialClaims,
+  exportPrivateJwk,
   generateKeyPairForSuite,
   type IssuedCredential,
   issueCredential,
@@ -139,13 +140,38 @@ export function nativeBridgeFromEnv():
 }
 
 /**
+ * One provisioned seed issuer's identity material, exported so the sm-36
+ * journey can hand the SAME issuer identity to the verifications app: the
+ * scene-4 one-click re-issue re-signs the SEEDED credential, which only the
+ * key that signed it can do. Keys are per-run ephemeral (never committed);
+ * the export exists only inside the test-run process environment.
+ */
+export interface SeedIssuerExport {
+  readonly role: MortgageSeedIssuerRole;
+  /** The issuer identity IRI (the pod-hosted issuer document). */
+  readonly iri: string;
+  /** The verification-method IRI the issuer document publishes. */
+  readonly verificationMethod: string;
+  /** The pod-hosted Bitstring status list URL this issuer signs. */
+  readonly statusListUrl: string;
+  /** The private signing JWK, JSON-serialised (vc-kit `importKeyPair` input). */
+  readonly privateJwkJson: string;
+}
+
+/** {@link createMortgageIssuance}'s full surface: issuance + issuer export. */
+export type MortgageSeedIssuance = MortgageCredentialIssuance & {
+  /** Export every issuer provisioned so far (call AFTER seeding). */
+  exportSeedIssuers(): Promise<readonly SeedIssuerExport[]>;
+};
+
+/**
  * Build the vc-kit-backed issuance for one pod. Issuer keys are freshly
  * generated per seed run (honest for per-suite/per-boot demo pods — no
  * cross-run issuer identity exists, and no private key is ever committed).
  */
 export function createMortgageIssuance(
   options: CreateMortgageIssuanceOptions,
-): MortgageCredentialIssuance {
+): MortgageSeedIssuance {
   // Storage-root path preserved; trailing slash dropped so `${podRoot}${"/x"}`
   // joins cleanly with the pod-base-relative issuer paths.
   const podRoot = normalizedPodBase(options.podOrigin).slice(0, -1);
@@ -308,6 +334,20 @@ export function createMortgageIssuance(
         { path: issuer.docPath, body: issuer.docBody, contentType: "text/turtle" },
         issuer.finishStatusFixture(),
       ]);
+    },
+    async exportSeedIssuers() {
+      return Promise.all(
+        [...issuers.entries()].map(async ([role, pending]) => {
+          const issuer = await pending;
+          return {
+            role,
+            iri: issuer.iri,
+            verificationMethod: issuer.key.verificationMethod,
+            statusListUrl: `${podRoot}${issuer.statusPath}`,
+            privateJwkJson: JSON.stringify(await exportPrivateJwk(issuer.key)),
+          };
+        }),
+      );
     },
   };
 }

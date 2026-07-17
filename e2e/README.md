@@ -15,8 +15,15 @@ beat), both operand anchors carrying the CAPTURED genuine sparq encodings, and t
 pod-hosted issuer documents + status lists the verifiers need. Suites read its coordinates
 from `MORTGAGE_E2E_POD_ORIGIN` / `MORTGAGE_E2E_POD_WEBID` / `MORTGAGE_E2E_SEEDED_AT`.
 
-Treat it as READ-ONLY journey fixture data (the 5-scene sm-36 suite's pod): suites that
-write still boot their own per-suite pods. Setting `SPARQ_CHECKOUT` additionally seeds the
-borrower-only ZK witnesses through the REAL native dual-sign rail. The same layout backs
-`pnpm run dev:pod` and the wallet's Mode-1 in-browser seed
+The pod is the sm-36 journey's borrower vault — `journey.spec.ts` is its ONE writer suite
+(it drives the five SPEC §2 scenes over it); every other suite treats it as read-only, and
+suites that write still boot their own per-suite pods. Setting `SPARQ_CHECKOUT` additionally
+seeds the borrower-only ZK witnesses through the REAL native dual-sign rail. The same layout
+backs `pnpm run dev:pod` and the wallet's Mode-1 in-browser seed
 (`@mortgage/solid-kit/mortgage-seed`).
+
+For sm-36 the setup also exports (run-scoped, never committed): the run-long borrower
+dev-OIDC issuer + `client_credentials` (`MORTGAGE_E2E_BORROWER_*`) so workers mint REAL
+DPoP-bound sessions, and the seed-issuer identities/keys (`MORTGAGE_E2E_SEED_ISSUERS`) so
+the journey can run the verifications app AS the seeded issuers (the scene-4 one-click
+re-issue re-signs the seeded employment VC and revokes its status index for real).
