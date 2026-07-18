@@ -23,6 +23,7 @@ import {
 } from "@mortgage/solid-kit/testing";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import type { LenderConfig } from "../lib/server/config";
+import { assertAllowedPodBase, PodAccessError } from "../lib/server/pod";
 import { createPodRailService, type PodRailService } from "../lib/server/pod-rail";
 import type { UrlaPrefill } from "../lib/server/prefill";
 import { type AnchorRig, anchorRig } from "./support";
@@ -196,6 +197,68 @@ describe("param overrides are rejected loudly (decision 0015 L2.4)", () => {
     const body = (await response.json()) as { error: string };
     expect(body.error).toBe("param_rejected");
   });
+});
+
+describe("pod bases must be query/fragment-free (sm-h2p)", () => {
+  /** The PodAccessError status `fn` throws, or undefined if it does not throw. */
+  function thrownStatus(fn: () => unknown): number | undefined {
+    try {
+      fn();
+      return undefined;
+    } catch (error) {
+      return error instanceof PodAccessError ? error.status : undefined;
+    }
+  }
+
+  test.each([
+    ["a query", "?x"],
+    ["a bare trailing ?", "?"],
+    ["a fragment", "#x"],
+    ["a bare trailing #", "#"],
+    ["a profile-card fragment confusion", "#y/profile/card"],
+  ])("an allowlisted-origin pod carrying %s is rejected 400", (_label, suffix) => {
+    // A bare `?`/`#` has EMPTY url.search/url.hash yet survives in href — the
+    // guard must catch it all the same.
+    expect(thrownStatus(() => assertAllowedPodBase(`${podBase}${suffix}`, config))).toBe(400);
+  });
+
+  test("a valid pod base composes the profile-card URL exactly", () => {
+    const base = assertAllowedPodBase(pods.baseUrl, config);
+    expect(base).toBe(podBase);
+    // The decision-0015 backward-acknowledgment target (owner.ts composition):
+    // for a validated base this MUST be the owner-only-writable card itself.
+    expect(`${base}profile/card`).toBe(`${podBase}profile/card`);
+    expect(new URL(`${base}profile/card`).href).toBe(`${podBase}profile/card`);
+  });
+
+  test("a forward pim:storage claim carrying a fragment on an allowlisted origin can never bind", async () => {
+    // The sm-h2p bypass shape: the claim `<pod-origin>/x#y` survives origin
+    // allowlisting, and the composed card URL `<...>/x#y/profile/card` is
+    // fragment-STRIPPED on the wire to `<...>/x` — an attacker-writable
+    // resource we seed with exactly the acknowledgment the backward check
+    // looks for. The binding must STILL be refused.
+    const evilClaim = `${pods.baseUrl}/x#y`;
+    const evil = await startDevOidcIssuer({ storage: evilClaim });
+    try {
+      await seedPod(pods.baseUrl, [
+        { path: "/x", body: `<${evil.webid}> <${PIM_STORAGE}> <${evilClaim}> .\n` },
+      ]);
+      // Non-vacuous: the fragment-stripped target exists and "acknowledges".
+      const stripped = await fetch(`${pods.baseUrl}/x`, { headers: { accept: "text/turtle" } });
+      expect(stripped.ok).toBe(true);
+      expect(await stripped.text()).toContain(evil.webid);
+
+      const scoped = createPodRailService({
+        config: configWith({ issuers: [evil.issuer] }),
+      });
+      const response = await scoped.freshness(await authedRequest(evil, "GET", "/freshness"));
+      expect(response.status).toBe(403);
+      const body = (await response.json()) as { detail: string };
+      expect(body.detail).toContain("allowlist");
+    } finally {
+      await evil.stop();
+    }
+  }, 60_000);
 });
 
 describe("cross-pod substitution is rejected (decision 0015 L2)", () => {

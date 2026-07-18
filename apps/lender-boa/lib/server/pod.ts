@@ -53,6 +53,15 @@ export function assertAllowedPodBase(pod: string, config: LenderConfig): string 
   if (url.username !== "" || url.password !== "") {
     throw new PodAccessError(400, "pod URL must not carry userinfo");
   }
+  // sm-h2p: a query/fragment survives into `url.href` (the return value), but
+  // fetch STRIPS the fragment on the wire — so `<pod>profile/card` composed
+  // from `https://host/x#y` actually reads `https://host/x`, NOT the
+  // owner-only-writable profile card, defeating the decision-0015 backward
+  // acknowledgment. Check `href` (not `url.search`/`url.hash`): a bare
+  // trailing `?`/`#` has EMPTY search/hash yet is preserved in href.
+  if (url.href.includes("?") || url.href.includes("#")) {
+    throw new PodAccessError(400, "pod URL must not carry a query or fragment");
+  }
   const httpsOk = url.protocol === "https:";
   const loopbackOk = url.protocol === "http:" && config.allowInsecureLoopback && isLoopback(url);
   if (!httpsOk && !loopbackOk) {
