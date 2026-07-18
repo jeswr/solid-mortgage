@@ -1,5 +1,8 @@
 # Verizon — the pod-host seat ("Data Vault")
 
+> **DRAFT — internal to EDMA's engagement team.** Pending legal review (sm-5q2);
+> not cleared for external circulation.
+
 *Concept demonstration — all data simulated; every app is framed role-first ("modelled on X",
 never "by X"); no affiliation or endorsement implied; nothing here or in the demo is an offer
 or solicitation of credit (decision 0002, R1).*
@@ -16,7 +19,7 @@ Operator (role-map sheet).
 
 ## Your seat in the demo
 
-`apps/wallet` — the "Data Vault", modelled on Verizon: the borrower's profile, credential
+`apps/wallet` (live: <https://solid-mortgage-wallet.vercel.app>) — the "Data Vault", modelled on Verizon: the borrower's profile, credential
 wallet, access grants, consent-receipt ledger, and revocation controls (decisions 0002/0003).
 It is the only app on screen in **every** scene, and the demo's closing payoff is its ledger
 view: every grant and every revocation, receipted (scene 5). Honesty note the presenter owns:

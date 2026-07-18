@@ -1,5 +1,8 @@
 # Master pitch narrative — the Solid Mortgage Showcase
 
+> **DRAFT — internal to EDMA's engagement team.** Pending legal review (sm-5q2);
+> not cleared for external circulation.
+
 For EDMA's engagement/sales team. This is the story you tell, the demo you walk through, and
 the ask you make. Every number is cited to `docs/research/` (bracketed numbers = the source
 list in `mortgage-process.md`); the companion one-page of figures is
@@ -89,7 +92,8 @@ first verification to a closed, transferred loan. Each scene names the real regu
 dramatizes, because the compliance clock is the part of the story every member already lives
 with. Scene design source: `mortgage-process.md` §5 and `SPEC.md` §2.
 
-> **Before you start:** the tour app is the front door — it has the ecosystem map, the scene
+> **Before you start:** the tour app is the front door
+> (<https://solid-mortgage.vercel.app>) — it has the ecosystem map, the scene
 > launcher, and a copy-ready demo identity. Every app carries a "concept demonstration"
 > banner; leave it visible, it is part of the honesty story (§6 below).
 

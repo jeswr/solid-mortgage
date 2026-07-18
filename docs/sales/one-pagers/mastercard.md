@@ -1,5 +1,8 @@
 # Mastercard (Open Banking / Finicity) — the asset-verification seat
 
+> **DRAFT — internal to EDMA's engagement team.** Pending legal review (sm-5q2);
+> not cleared for external circulation.
+
 > **Verify before use.** Mastercard's EDMA membership comes from the internal role-map sheet
 > (4 Jun 2026); a public edmcouncil.org search could not independently confirm it
 > (research-gaps C4). Re-verify with EDMA before this page goes out or any member-based claim
@@ -20,7 +23,7 @@ dual-GSE acceptance (org-map role 5).
 
 ## Your seat in the demo
 
-`apps/verifications` — the Finicity-modelled flow is one of three distinctly branded issuer
+`apps/verifications` (live: <https://solid-mortgage-verifications.vercel.app>) — the Finicity-modelled flow is one of three distinctly branded issuer
 flows in scene 1: it issues the **asset credential** into the borrower's pod, alongside the
 employment/income and credit-score issuers. Bank-sourced open banking and employer-sourced
 payroll verification are deliberately distinct issuers in the demo (org-map role 4).

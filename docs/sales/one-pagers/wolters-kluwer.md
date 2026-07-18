@@ -1,5 +1,8 @@
 # Wolters Kluwer (eOriginal) — the eClosing seat
 
+> **DRAFT — internal to EDMA's engagement team.** Pending legal review (sm-5q2);
+> not cleared for external circulation.
+
 *Concept demonstration — all data simulated; every app is framed role-first ("modelled on X",
 never "by X"); no affiliation or endorsement implied; nothing here or in the demo is an offer
 or solicitation of credit (decision 0002, R1).*
@@ -15,7 +18,7 @@ eNotes are 12.86% of MERS registrations (Oct 2025, 3M+ total) and eNote loans fu
 
 ## Your seat in the demo
 
-`apps/closing` — the eClose flow modelled on eOriginal, scene 5: the Closing Disclosure
+`apps/closing` (live: <https://solid-mortgage-closing.vercel.app>) — the eClose flow modelled on eOriginal, scene 5: the Closing Disclosure
 arrives in the borrower's pod at least 3 business days before closing (TRID [5][25]), the
 borrower eSigns, and the eNote beat references "the eNote registry" generically (the demo
 carries no registry-operator branding — org-map, gaps). The notarisation session itself is a

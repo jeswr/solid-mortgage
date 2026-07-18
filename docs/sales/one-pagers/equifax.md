@@ -1,5 +1,8 @@
 # Equifax — the credit-bureau + income-verification seats (two seats, one approach)
 
+> **DRAFT — internal to EDMA's engagement team.** Pending legal review (sm-5q2);
+> not cleared for external circulation.
+
 *Concept demonstration — all data simulated; every app is framed role-first ("modelled on X",
 never "by X"); no affiliation or endorsement implied; nothing here or in the demo is an offer
 or solicitation of credit (decision 0002, R1). Equifax is not an EDMA member — this is an
@@ -17,7 +20,7 @@ employment verifications are fulfilled through it (org-map).
 
 ## Your seat in the demo
 
-`apps/verifications` — two of its three distinctly branded issuer flows are yours (decision
+`apps/verifications` (live: <https://solid-mortgage-verifications.vercel.app>) — two of its three distinctly branded issuer flows are yours (decision
 0002): the flow modelled on The Work Number issues the **employment+income credential**, and
 the Equifax-modelled flow issues the **credit-score credential**, both into the borrower's pod
 (scene 1). Scene 4's freshness beat is also yours: the employment credential lapses against

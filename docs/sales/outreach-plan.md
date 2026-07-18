@@ -1,5 +1,8 @@
 # Contact & outreach plan
 
+> **DRAFT — internal to EDMA's engagement team.** Pending legal review (sm-5q2);
+> not cleared for external circulation.
+
 Sales PLAN item 4 (`docs/sales/PLAN.md`): who EDMA's engagement team approaches, in what
 order, through which channel, with which materials, saying what. Companion documents: the
 master narrative (`master-narrative.md`), the numbers (`benefits-one-sheet.md`), and the

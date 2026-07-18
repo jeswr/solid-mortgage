@@ -1,5 +1,8 @@
 # First American — the title + settlement seat
 
+> **DRAFT — internal to EDMA's engagement team.** Pending legal review (sm-5q2);
+> not cleared for external circulation.
+
 *Concept demonstration — all data simulated; every app is framed role-first ("modelled on X",
 never "by X"); no affiliation or endorsement implied; nothing here or in the demo is an offer
 or solicitation of credit (decision 0002, R1). First American is not an EDMA member — this is
@@ -16,7 +19,7 @@ Endpoint digital-closing business (org-map role 7). Title work produces the ALTA
 
 ## Your seat in the demo
 
-`apps/property` — the First American-modelled flow issues the **title-clear credential** into
+`apps/property` (live: <https://solid-mortgage-property.vercel.app>) — the First American-modelled flow issues the **title-clear credential** into
 the loan file (decision 0002). Honestly scoped: ALTA commitment internals are a product-phase
 extension, not one of the five scripted scenes — in the 10-minute cut the title-clear
 credential is a checklist beat in the journey rather than a played scene (SPEC §2). Your

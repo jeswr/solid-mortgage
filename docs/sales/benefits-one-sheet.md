@@ -1,5 +1,8 @@
 # The numbers — quantified-benefits one-sheet
 
+> **DRAFT — internal to EDMA's engagement team.** Pending legal review (sm-5q2);
+> not cleared for external circulation.
+
 One page for EDMA engagement conversations. Every figure is cited to `docs/research/`
 (bracketed numbers = the source list in `docs/research/mortgage-process.md`; `org-map` =
 `docs/research/org-map.md`). No figure appears here that is not in the research.

@@ -1,5 +1,8 @@
 # Freddie Mac — the automated-underwriting seat
 
+> **DRAFT — internal to EDMA's engagement team.** Pending legal review (sm-5q2);
+> not cleared for external circulation.
+
 *Concept demonstration — all data simulated; every app is framed role-first ("modelled on X",
 never "by X"); no affiliation or endorsement implied; nothing here or in the demo is an offer
 or solicitation of credit (decision 0002, R1). The demo uses no GSE product identifiers (R3) —
@@ -17,7 +20,7 @@ cycle time [34].
 
 ## Your seat in the demo
 
-`apps/gse` — presented as "automated underwriting service (AUS) — the Freddie Mac role".
+`apps/gse` (live: <https://solid-mortgage-underwriting.vercel.app>) — presented as "automated underwriting service (AUS) — the Freddie Mac role".
 Scene 3: instant findings over a loan file the borrower granted, prefilled from pod-held
 credentials. Scene 4: the pre-close freshness check finds the employment credential lapsed
 (verbal VOE ≤ 10 business days before note, B3-3.1-04 [10]); one click re-issues it through

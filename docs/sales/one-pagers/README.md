@@ -1,5 +1,8 @@
 # Per-organisation one-pagers
 
+> **DRAFT — internal to EDMA's engagement team.** Pending legal review (sm-5q2);
+> not cleared for external circulation.
+
 Sales PLAN item 3 (`docs/sales/PLAN.md`): one page per target organisation for EDMA's
 engagement team — the org's ecosystem role, its seat in the demo, the tailored proposition,
 what building it for real entails, the CDMC hook, and the ask. Voice and claims baseline:
