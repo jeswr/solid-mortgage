@@ -72,13 +72,21 @@ gate production; noindex + robots-disallow + concept-demo disclaimers are the mi
 tracks re-gating if legal (sm-5q2) requires. Pod-route apps 503 until a live pod host + service
 identity env (sm-2eg, blocked on sm-52).
 
-**Remaining P1 (next phase — pick one; none started):** the **showcase framework build** upstream
-in jeswr/solid-sdk (epic sm-72 → sm-74 `@jeswr/solid-showcase` JSON-driven walkthrough, sm-75
-`@jeswr/solid-showcase-kit`) — now unblocked since apps landed; the **EDMA sales pack** (epic sm-55
-→ sm-59 recorded demos [journey now validates it], sm-60 FAQ+standards, sm-61 proposal template);
-upstream sparq (sm-69 createSolidPod, sm-49 solid-vc signPresentation). ~40 lower-severity follow-up
-beads filed across the merged work (Mode-2b login UIs, serviceWebId enforcement, e2e retry-isolation,
-findings-as-RDF, etc.) — `bd ready` for the frontier.
+**Showcase framework — COMPLETE + PUBLISHED (jeswr/solid-sdk, this session).** Epic sm-72's build
+children all merged: sm-74 `@jeswr/solid-showcase` (JSON-driven walkthrough), sm-75
+`@jeswr/solid-showcase-kit` + `@jeswr/solid-pod-guard`, sm-76 `create-solid-demo`. All **domain-generic**
+(lead directive: "in no way finance-specific" — kit ships NO insignia roster; consumers supply
+`bannedMarks`; use-case content enters only via the walkthrough document) and scrubbed of private-origin
+naming. pod-guard is securityCritical (adversarial-reviewed). The extraction surfaced + FIXED an inherited
+security HIGH in the live apps (sm-h2p `assertAllowedPodBase` query/fragment bypass — merged) + beaded
+sm-c7i (loopback SSRF). **Only sm-77 (refactor solid-mortgage to CONSUME the framework) remains — it is
+`needs:user`/P2**: it re-plumbs the merged private apps and is effectively gated on the framework npm
+publish (sm-50, also needs:user) — without it, adoption means vendored `file:` tarballs (a workaround to
+re-do post-publish). Decide approach before starting.
+
+**Other remaining P1:** the **EDMA sales pack** (epic sm-55 → sm-59 recorded demos [journey validates it],
+sm-60 FAQ+standards, sm-61 proposal template); upstream sparq (sm-69 createSolidPod, sm-49 solid-vc
+signPresentation). ~60 lower-severity follow-up beads filed across the merged work — `bd ready` for the frontier.
 
 ## needs:user (Jesse) — do not attempt
 sm-50 (npm bootstrap publish `@jeswr/solid-server`), sm-51 (vocab domain veto), sm-54 (CoP
