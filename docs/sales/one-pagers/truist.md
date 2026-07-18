@@ -1,5 +1,8 @@
 # Truist — the servicer seat
 
+> **DRAFT — internal to EDMA's engagement team.** Pending legal review (sm-5q2);
+> not cleared for external circulation.
+
 *Concept demonstration — all data simulated; every app is framed role-first ("modelled on X",
 never "by X"); no affiliation or endorsement implied; nothing here or in the demo is an offer
 or solicitation of credit (decision 0002, R1).*
@@ -15,7 +18,7 @@ handoff — goodbye letter ≥ 15 days before the effective date, hello letter �
 
 ## Your seat in the demo
 
-`apps/closing` — the servicing-transfer beat of scene 5: the loan is sold, the Truist-modelled
+`apps/closing` (live: <https://solid-mortgage-closing.vercel.app>) — the servicing-transfer beat of scene 5: the loan is sold, the Truist-modelled
 servicer **requests** access to the loan file, the borrower approves the grant, revokes the
 original lender, and reads the consent-receipt ledger — every grant and revocation, receipted.
 It is the payoff screen of the entire demo: the borrower enumerates exactly who has been

@@ -1,5 +1,8 @@
 # Bank of America — the originating-lender seat
 
+> **DRAFT — internal to EDMA's engagement team.** Pending legal review (sm-5q2);
+> not cleared for external circulation.
+
 *Concept demonstration — all data simulated; every app is framed role-first ("modelled on X",
 never "by X"); no affiliation or endorsement implied; nothing here or in the demo is an offer
 or solicitation of credit; all rates shown in the demo are illustrative figures (decision
@@ -15,7 +18,7 @@ gap the pod closes.
 
 ## Your seat in the demo
 
-`apps/lender-boa` — the full origination portal (decision 0002). Scene 2: verify a
+`apps/lender-boa` (live: <https://solid-mortgage-lender-a.vercel.app>) — the full origination portal (decision 0002). Scene 2: verify a
 zero-knowledge pre-qual proof (income ≥ $7,000/month AND score ≥ 620) without seeing the
 values. Scene 3: the borrower grants scoped pod access; the URLA (Form 1003) prefills from
 pod-held credentials and the Loan Estimate lands back in the borrower's pod inside TRID's

@@ -1,5 +1,8 @@
 # Cotality — the appraisal / valuation seat
 
+> **DRAFT — internal to EDMA's engagement team.** Pending legal review (sm-5q2);
+> not cleared for external circulation.
+
 *Concept demonstration — all data simulated; every app is framed role-first ("modelled on X",
 never "by X"); no affiliation or endorsement implied; nothing here or in the demo is an offer
 or solicitation of credit (decision 0002, R1). Cotality is not an EDMA member — this is an
@@ -16,7 +19,7 @@ requires the borrower's copy promptly on completion or 3 business days before co
 
 ## Your seat in the demo
 
-`apps/property` — the Cotality-modelled flow issues the **appraisal-value credential** that
+`apps/property` (live: <https://solid-mortgage-property.vercel.app>) — the Cotality-modelled flow issues the **appraisal-value credential** that
 feeds the underwriting file (decision 0002). Honestly scoped: appraisal internals are a
 product-phase extension, not one of the five scripted scenes — in the 10-minute cut your
 credential is referenced from the loan file rather than played on stage (SPEC §2). The seat

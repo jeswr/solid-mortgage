@@ -1,5 +1,8 @@
 # USAA — the homeowners-insurance seat
 
+> **DRAFT — internal to EDMA's engagement team.** Pending legal review (sm-5q2);
+> not cleared for external circulation.
+
 *Concept demonstration — all data simulated; every app is framed role-first ("modelled on X",
 never "by X"); no affiliation or endorsement implied; nothing here or in the demo is an offer
 or solicitation of credit (decision 0002, R1).*
@@ -13,6 +16,9 @@ one EDMA member that lives the lender's checklist and the carrier's binder reque
 before closing [23][24] — one more document chased by phone and PDF today.
 
 ## Your seat in the demo
+
+*(Live demo front door: <https://solid-mortgage.vercel.app> — every deployed app links from the
+tour shell.)*
 
 Honestly stated: the insurance-binder credential is a named partner-phase extension, not one
 of the eight demo apps (SPEC §2, product-phase extensions; decision 0002). What the demo

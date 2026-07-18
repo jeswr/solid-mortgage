@@ -1,5 +1,8 @@
 # GLEIF — the organisational-identity seat
 
+> **DRAFT — internal to EDMA's engagement team.** Pending legal review (sm-5q2);
+> not cleared for external circulation.
+
 *Concept demonstration — all data simulated; every app is framed role-first ("modelled on X",
 never "by X"); no affiliation or endorsement implied; nothing here or in the demo is an offer
 or solicitation of credit (decision 0002, R1).*
@@ -14,6 +17,9 @@ non-commercial and neutral, and the role-map already lists you as the identifier
 (role-map sheet, R5).
 
 ## Your seat in the demo
+
+*(Live demo front door: <https://solid-mortgage.vercel.app> — every deployed app links from the
+tour shell.)*
 
 Not an app — the layer under all of them. Every stakeholder organisation in the demo is
 referenced by its GLEIF LEI in the RDF data model (SPEC §3). Honestly scoped: the demo uses

@@ -1,5 +1,8 @@
 # Fifth Third Bank — the competing-lender seat
 
+> **DRAFT — internal to EDMA's engagement team.** Pending legal review (sm-5q2);
+> not cleared for external circulation.
+
 *Concept demonstration — all data simulated; every app is framed role-first ("modelled on X",
 never "by X"); no affiliation or endorsement implied; nothing here or in the demo is an offer
 or solicitation of credit; all quoted rates in the demo are illustrative figures (decision
@@ -15,7 +18,7 @@ removes.
 
 ## Your seat in the demo
 
-`apps/lender-53` — the thin competing pre-qualification surface in scene 2. The borrower
+`apps/lender-53` (live: <https://solid-mortgage-lender-b.vercel.app>) — the thin competing pre-qualification surface in scene 2. The borrower
 proves **income ≥ $7,000/month AND credit score ≥ 620** with a zero-knowledge proof; the app
 modelled on Fifth Third verifies the proof and returns an illustrative rate quote without ever
 seeing the underlying numbers. No credit pull; if the borrower walks away, there is no income
