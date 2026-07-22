@@ -1,5 +1,34 @@
 # HANDOFF — solid-mortgage session continuity
 
+## MULTI-DEMO SUITE STATE (updated 2026-07-22)
+
+Three showcase demos now exist, each in its own repo, all Jesse-owned:
+
+- **Demo 1 — Mortgage** (`solid-mortgage`, this repo): COMPLETE. 9 apps deployed (Vercel, public
+  by decision), cross-app journey e2e green, framework published, use-case doc merged
+  (`docs/use-case.md`, sm-gbjq).
+- **Demo 2 — Small-dollar lending** (`jeswr/solid-lending`): 6 apps built+merged (real ZK/auth/
+  verify, per-app pod-backed tests), use-case doc merged (`docs/use-case.md`, sm-vcoz). Cross-app
+  journey e2e (PR #11, DRAFT): found+fixed 4 real bugs (incl. a vacuous revoke test), BLOCKED on
+  the shared solid-pod-guard loopback bug. Deploy pending Vercel token. Vocab on `urn:example:lend#`
+  (lend-vocab-publish follow-up).
+- **Demo 3 — GLEIF-anchored business KYB** (`jeswr/solid-kyb`): scientifically SELECTED
+  (`docs/research/demo3-poc-selection.md`, winner 4.65/5) → DESIGNED
+  (`docs/research/kyb-demo-design.md`) → BUILT: packages data-model/vc-kit(sound ZK)/seeds/test-kit
+  + 5 apps (tour/vault/issuers/bank-onboarding/bank-credit), all merged, per-app pod-backed tests,
+  bank-onboarding ZK-decline verified non-vacuous. Use-case doc merged (`docs/use-case.md`, sm-qrfu).
+  REMAINING: cross-app journey e2e (will hit the same pod-guard blocker), deploy (Vercel token),
+  vocab deploy (sm-6wcw). Tier-A per-owner ZK anchors need SPARQ_CHECKOUT (Tier-B completeness is real).
+
+**Cross-cutting gated items (beads filed):** (1) securityCritical `@jeswr/solid-pod-guard`
+`loopbackMappedFetch` https→http downgrade — blocks BOTH Demo 2 & 3 cross-app e2e; fixing once
+unblocks both (flagged for lead go-ahead). (2) Vercel token → Demo 2 & 3 deploys. (3) GitHub Actions
+billing failed on the jeswr account → CI down (merges gated locally instead). (4) lend/kyb vocab
+Vercel deploys. Everything is pushed to GitHub — resilient to scratchpad wipes.
+
+---
+
+
 You are continuing the **Solid Mortgage Showcase** build. This doc lets a fresh Claude Code
 session (e.g. on the `mortgage-dev` EC2 box) resume with full context. Read `AGENTS.md`,
 `SPEC.md`, and `decisions/*.md` for the full picture; this is the operational summary.
