@@ -5,3 +5,4 @@
 {"id":"int-1c7a9c3110d91e40f0c08c0ca584925d","kind":"field_change","created_at":"2026-07-18T07:17:52.218169647Z","actor":"ubuntu","issue_id":"sm-qz3j.8","extra":{"field":"status","new_value":"in_progress","old_value":"open"}}
 {"id":"int-b350f971ad40003abc0a9040d8f0672a","kind":"field_change","created_at":"2026-07-22T00:43:54.542795523Z","actor":"ubuntu","issue_id":"sm-gbjq","extra":{"field":"status","new_value":"closed","old_value":"open","reason":"Closed"}}
 {"id":"int-b10ca53383dbd99073e13dba594d0df5","kind":"field_change","created_at":"2026-07-22T00:45:41.546970626Z","actor":"ubuntu","issue_id":"sm-vcoz","extra":{"field":"status","new_value":"closed","old_value":"open","reason":"Closed"}}
+{"id":"int-dfd539ebfdddb4e198691335e81f9ea7","kind":"field_change","created_at":"2026-07-22T19:06:07.091158267Z","actor":"jeswr","issue_id":"sm-qrfu","extra":{"field":"status","new_value":"closed","old_value":"open","reason":"Closed"}}
