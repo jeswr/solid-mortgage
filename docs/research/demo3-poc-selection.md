@@ -46,7 +46,9 @@ epic sm-4f1z):
 
 ## 2. Candidate generation
 
-Nine distinct candidates spanning sectors beyond mortgage/lending. One-line description + which
+Ten distinct candidates spanning sectors beyond mortgage/lending (candidate J is included for
+completeness against the epic's explicit "healthcare-adjacent" example even though it scores
+weakest — see §5, §8). One-line description + which
 EDMA member(s) own the pivotal role. (Membership per `org-map.md`; "—" = no member owns the
 pivotal role, which is itself a scoring signal.)
 
@@ -61,6 +63,7 @@ pivotal role, which is itself a scoring signal.)
 | **G** | **Telco-anchored reusable digital identity** (Verizon as *issuer*) | A carrier issues a SIM-swap-resistant phone-possession identity VC into a pod, reused across financial services | **Verizon** — but as an issuer it does not occupy today; already cast as the *vault* in Demos 1–2 |
 | **H** | **ESG / data-provenance VCs for financial disclosures** (FIBO-grounded) | Corporates/issuers emit provenance-tracked emissions/sustainability data as VCs for lending / green-bond eligibility, grounded in FIBO | **GLEIF, Freddie Mac / Fannie Mae** (Green MBS), Wolters Kluwer, MISMO |
 | **I** | **Cross-institution consent-receipt / data-lineage** (clean-room alternative) | A horizontal pod product recording purpose-scoped, revocable consent receipts + data-access provenance across any use case | Snowflake / Microsoft / Google (infra members) |
+| **J** | **Healthcare-adjacent: portable benefits-eligibility credential via payroll** | A worker's pod holds an ADP-modelled benefits-eligibility/HSA-balance VC, reused across job changes for COBRA/marketplace/new-employer enrollment instead of re-proving eligibility each time | **ADP** (payroll issuer) — no EDMA member on the health-plan, EHR, PBM, or HSA-custodian side |
 
 ---
 
@@ -105,13 +108,14 @@ Scores 1–5; justification per cell. Weighted total and rank in the last two co
 | G | **2** — speculative: no public Verizon identity-issuer initiative; telcos monetise real-time APIs and won't cede to holder-held VCs; brand-role confusion (vault vs. issuer) | **3** — reusable telco identity is a real theme, but not clearly Solid-shaped |
 | H | **3** — buildable and FIBO-grounded, but US/EU disclosure mandates are *receding* (§5), removing the compliance-urgency hook | **3** — new sector but softening tailwind; Fannie closed its ESG dept (a live headwind) |
 | I | **2** — least demo-able: no single persona journey; collapses back into a vertical to be legible | **2** — infrastructure-only; hard to make a 4–6 scene story land |
+| J | **2** — HIPAA/ERISA both attach the moment health-plan data is touched; no HIPAA-grounded shape/compliance-lens work exists anywhere in the repo today; quantified pain is unverifiable (§5) | **2** — a real sector, but the repo's health-adjacent grounding is thinnest of all ten — likely reads as under-researched on stage |
 
 ### 4.2 Supporting criteria — EDMA-fit, Data-sensitivity, Pain, Reusability
 
 | ID | EDMA-fit (0.20) | Data-sensitivity (0.15) | Pain (0.10) | Reuse (0.05) |
 |----|------------------|--------------------------|-------------|--------------|
 | A | **3** — banks are relying parties, but *no member issues consumer identity*; weak differentiation | **5** — identity PII; pod + ZK selective disclosure is a textbook fit | **5** — eKYC market $1.32B (2026) → $7.18B (2035); 68% abandon onboarding | **2** — identity VC already exists in the framework; little *new* reusable vocab |
-| **B** | **5** — **GLEIF** (a member; the neutral, non-commercial vLEI root of trust) anchors it, every bank member is a relying party, Mastercard for open finance, FinCEN as the compliance lens | **5** — beneficial-ownership / cap-table PII is highly sensitive; "prove no undisclosed ≥25% owner" is a clean ZK/selective-disclosure predicate | **4** — 70% of banks lose clients to slow onboarding; AML fines $19.3B (2024) | **5** — FIBO Business Entities ↔ GLEIF LEI ↔ FinCEN CDD binding table — squarely EDMA/OMG's own domain |
+| **B** | **5** — **GLEIF** (a member; the neutral, non-commercial vLEI root of trust) anchors it, every bank member is a relying party, Mastercard for open finance, FinCEN as the compliance lens | **5** — beneficial-ownership / cap-table PII is highly sensitive; "prove no undisclosed ≥25% owner" is a clean ZK/selective-disclosure predicate | **4** — 70% of banks lose clients to slow onboarding; AML/KYC/sanctions penalties $1.23B in H1 2025 (+417% YoY) | **5** — FIBO Business Entities ↔ GLEIF LEI ↔ FinCEN CDD binding table — squarely EDMA/OMG's own domain |
 | C | **3** — FDIC/Fed/Treasury/SEC are members, but as supervisors, not sponsors | **4** — supervisory data; pod-mediated pull is real, but access model is institutional not personal | **5** — $155.3B financial-crime compliance spend; BSA/AML > $60B/yr | **4** — reg-reporting vocab (FIBO-FND) is reusable |
 | D | **2** — reuses Demo 1–2's cast; no *new* member activated | **3** — transaction data, but aggregators already permission it | **5** — FDX at 114M connections; 73% considered switching | **2** — nothing new over Demos 1–2 |
 | E | **4** — activates **ADP** as a genuinely new seat; Mastercard (Argyle tie-in), GSEs | **4** — income data; reusable income VC is a good pod fit | **4** — 70–83M US gig workers; ~$674B sector | **3** — income VC largely exists already |
@@ -119,6 +123,7 @@ Scores 1–5; justification per cell. Weighted total and rank in the last two co
 | G | **3** — Verizon is a member but the issuer role is speculative/confusing | **4** — phone-possession identity is sensitive and anti-fraud-relevant | **4** — telecom identity market $8.17B (2026); ~$23B ATO losses (2023) | **2** — little reusable vocab; KERI-adjacent |
 | H | **4** — GLEIF + Freddie/Fannie Green MBS + Wolters Kluwer + MISMO; FIBO is EDMA's own asset | **3** — ESG data is disclosed, not private; pod advantage is provenance not confidentiality | **3** — greenwashing fines (DWS €25M); disclosure cost ~$675K/yr per issuer | **4** — FIBO-grounded provenance vocab is reusable |
 | I | **3** — Snowflake/Microsoft/Google are members and real clean-room vendors | **3** — meta-layer over data; advantage is real but abstract | **4** — data clean-room market $1.52B → $7.73B | **3** — DPV consent-receipt patterns (note: **DPV is W3C, not EDMA** — §8) |
+| J | **2** — only **ADP** is a plausible member, issuer-side only; the health-plan/EHR/PBM/HSA-custodian roles have no member at all — breaks the "every member sees their seat" thesis worse than any other candidate | **4** — health-adjacent eligibility data is genuinely sensitive; the *theoretical* pod+consent fit is strong even though buildability (left column) is weak | **2** — no primary-sourced COBRA/benefits-portability pain figure found; DOL's COBRA pages describe the mechanism with no usage statistics (§5) | **2** — no FIBO health domain to ground vocab in; would need a new, unreviewed vocab area |
 
 ### 4.3 Weighted totals and ranking
 
@@ -133,6 +138,7 @@ Scores 1–5; justification per cell. Weighted total and rank in the last two co
 | 7 | G | Telco-anchored identity (Verizon issuer) | 2 | 3 | 3 | 4 | 4 | 2 | **2.95** |
 | 8 | D | Open-banking data portability | 3 | 2 | 2 | 3 | 5 | 2 | **2.70** |
 | 9 | I | Consent-receipt / clean-room alternative | 2 | 2 | 3 | 3 | 4 | 3 | **2.60** |
+| 10 | J | Healthcare-adjacent benefits-eligibility portability | 2 | 2 | 2 | 4 | 2 | 2 | **2.30** |
 
 Worked example (winner B): 4(.25)+5(.25)+5(.20)+5(.15)+4(.10)+5(.05) = 1.00+1.25+1.00+0.75+0.40+0.25 = **4.65**.
 Candidates E and A tie at 3.70; the red-team (§6) and the complementarity constraint (§1) break the
@@ -159,11 +165,21 @@ into every member state by end-2026 (`prior-art.md` §7).
 
 **B — SMB / business KYB (winner).** **70% of banks lose clients** to slow onboarding
 ([Fintech Global](https://fintech.global/2025/10/08/70-of-banks-lose-clients-due-to-slow-onboarding/),
-[GBG](https://www.gbg.com/en-us/blog/ubo-verification/)); global AML fines reached
-**$19.3B in 2024**, much tied to inadequate corporate-client verification, with AML penalties
-**>$1B in H1 2025** ([Sumsub KYB guide](https://sumsub.com/blog/kyb-guide/),
-[Shufti Pro](https://shuftipro.com/blog/kyb-in-banking/)); modernised KYB cut one bank's onboarding
-from **5 days to <24 hours** (Sumsub). The reusable-org-credential thesis is *live and member-led*:
+[GBG](https://www.gbg.com/en-us/blog/ubo-verification/)). **Correction from the original draft**
+(verified 2026-07-22 — the two figures below were re-sourced after the cited pages did not
+actually contain them): **$19.3B in global *regulatory* fines were recorded in 2024**, the
+highest on record — but this is skewed by the unrelated **$12.7B FTX fraud penalty**, not
+KYB-specific, so treat it as market-tone evidence, not an AML/KYB-attributable number
+([Fintech.Global](https://fintech.global/2025/02/19/global-regulatory-fines-soar-to-record-breaking-19-3bn-in-2024/),
+[Shufti Pro](https://shuftipro.com/blog/kyb-in-banking/)). The AML-specific, KYB-relevant figure is
+sharper: **139 AML/KYC/sanctions penalties totalling $1.23B in H1 2025**, a **417% YoY increase**
+on H1 2024's $238.6M, with North America alone up 565%
+([Fenergo](https://resources.fenergo.com/newsroom/regulatory-penalties-for-global-financial-institutions-skyrocket-417-in-h1-2025)).
+A regional-bank KYB automation case study documents onboarding cut **from 5 days to under 24 hours**
+([iComply](https://icomplyis.com/smarter-kyb-for-u-s-community-banks-uncovering-risk-in-smb-accounts/)) —
+consistent with, though a different vendor than, Sumsub's own **24-hours-to-17-seconds** and
+**50%-reduction** case studies for the same KYB-friction story
+([Sumsub KYB guide](https://sumsub.com/blog/kyb-guide/)). The reusable-org-credential thesis is *live and member-led*:
 GLEIF's **vLEI** is an organisation-based Verifiable Credential now in open pilot registration, and
 the **GLEIF Partners Programme** (2026) convenes banks, corporates and vendors on exactly this
 ([GLEIF](https://www.gleif.org/en/organizational-identity/introducing-the-verifiable-lei-vlei),
@@ -181,7 +197,17 @@ the CTA remains on the books
 [Holland & Knight](https://www.hklaw.com/en/insights/publications/2026/06/what-happened-to-fincens-corporate-transparency-act)).
 Critically, the demo's pain is the **bank CDD Rule** (verify the entity + each ≥25% beneficial owner
 at account opening), which is a *bank* obligation independent of the CTA reporting requirement — so
-the KYB pain survives the CTA turmoil.
+the KYB pain survives the CTA turmoil. **One further currency update the original draft missed**
+(added 2026-07-22): on **13 Feb 2026 FinCEN issued exceptive relief** letting banks skip
+*re-verifying* beneficial owners **every time an existing customer opens another account at the
+same institution** — verification is now required at initial onboarding, on risk triggers, or
+per the bank's own risk-based programme
+([Mintz](https://www.mintz.com/insights-center/viewpoints/54751/2026-02-18-fincen-eases-beneficial-ownership-verification),
+[Mayer Brown](https://www.mayerbrown.com/en/insights/publications/2026/02/more-is-not-always-better-fincen-grants-risk-based-relief-from-repeat-beneficial-ownership-verification-requirements)).
+This narrows *same-bank repeat-account* pain but leaves the demo's actual pain untouched: the
+25%-threshold verification obligation still applies in full at **every new relying party** — exactly
+the *cross-institution* reuse story scene 2 dramatizes (Northwind onboards at a *second*, different
+bank). Demo copy should say "each new bank" pain, never "each new account," to stay accurate post-relief.
 
 **C — Regulatory reporting / SupTech.** Financial institutions spent **$155.3B** on financial-crime
 compliance operations plus **$34.7B** on related technology; AML compliance alone runs **>$60B/yr**;
@@ -259,6 +285,23 @@ The consent-receipt space already has a standard — **Kantara's Consent Receipt
 FDX recognises for financial data sharing
 ([Kantara](https://kantarainitiative.org/download/consent-receipt-specification/),
 [FDX](https://www.financialdataexchange.org/FDX/FDX/News/Media-Mentions/FDX-and-Kantara.aspx)).
+
+**J — Healthcare-adjacent benefits portability.** This candidate's pain is the **weakest-evidenced
+of all ten**: DOL's own COBRA guidance describes the 18–36-month continuation mechanism and
+premium-plus-2%-admin-fee structure but publishes **no usage or friction statistics**
+([DOL EBSA](https://www.dol.gov/agencies/ebsa/about-ebsa/our-activities/resource-center/faqs/cobra-continuation-health-coverage-workers))
+— flagged here as an **unverified pain claim**, not asserted. The competing infrastructure is
+federally-scaled and unrelated in data domain: **TEFCA** exchanged **~1 billion health records**
+by early 2026 (up from ~10M in Jan 2025) across 9,000+ connected organisations, and the Social
+Security Administration itself joined TEFCA in spring 2026 for benefits-determination exchange
+([HHS/ONC](https://www.hhs.gov/press-room/onc-strengthens-tefca-one-billion-health-records-exchanged.html),
+[Becker's](https://www.beckershospitalreview.com/healthcare-information-technology/ehrs/whats-new-with-tefca-in-2026-3-updates/))
+— TEFCA moves *clinical* records, not payroll-issued benefits-eligibility, so it is adjacent prior
+art rather than a direct competitor, but it shows the scale of infrastructure already dominating
+health data exchange. HIPAA and ERISA both attach the instant health-plan data is touched, a
+materially heavier compliance lift than this repo's FIBO/MISMO-grounded finance work, with **zero
+HIPAA-aligned shapes or compliance-lens content anywhere in the codebase today** — the weakest
+buildability of the ten candidates.
 
 ---
 
@@ -434,15 +477,34 @@ Flagged explicitly so they do not leak into build/sales copy:
   DPV work") was factually wrong and is corrected here; EDMA's real standards asset is **FIBO**. Demos
   1–2 already use DPV correctly as a *W3C* vocabulary (decision 0006) — no change needed there, but never
   attribute DPV to EDMA.
-- **vLEI is for legal entities, not consumers.** Candidate A cannot borrow vLEI for a *personal* identity
-  story — GLEIF's credential is organisational. This is one reason A scores low on EDMA-fit and is a
-  reason B (which *is* organisational) fits GLEIF naturally.
+- **vLEI is not purely "organisational" — it is entity-anchored but role/person-carrying.**
+  Verified directly against GLEIF's own page (2026-07-22): the vLEI "enables counterparties to
+  computationally verify the identity, authority, and **role of people acting on behalf of** any
+  legal entity," combining the LEI (entity), an individual's identity, and their organisational
+  role — governed by **ISO 17442-3** (2024)
+  ([GLEIF](https://www.gleif.org/en/organizational-identity/introducing-the-verifiable-lei-vlei)).
+  It still cannot be borrowed for a *personal, non-role* identity story (candidate A), which is why
+  A scores low on EDMA-fit — but candidate B's design already gets this right by splitting an
+  **Organisational-Identity VC** (entity, LEI-anchored) from an **Officer-Authorization VC** (the
+  OOR/ECR role-credential analogue) rather than treating vLEI as one undifferentiated org credential
+  (§7(d)).
 - **Insurance "$13B underwriting inefficiency"** is secondarily sourced only — do not make it load-bearing.
 - **Project Aperta reports no hard metric** — cite it as directional evidence of momentum, not a number.
 - **ESG disclosure mandates are receding** (SEC rescission proposal May 2026; EU CSRD narrowed Feb 2026;
   Fannie closed its ESG dept) — any future ESG demo must not lean on a compliance-urgency hook.
 - **Membership re-verification** — Mastercard and Verizon membership are internal-sheet-only (org-map C4);
   re-verify against edmcouncil.org before any outreach that names them.
+- **Two figures in the original draft did not check out against their cited sources and were
+  re-sourced 2026-07-22** (verification pass, this section): the winner's headline "$19.3B AML
+  fines (2024)" was actually **global regulatory fines** (FTX-skewed, not AML-specific — replaced
+  with the AML-specific **$1.23B H1-2025, +417% YoY** Fenergo figure), and the "5 days → under 24
+  hours" KYB case study was misattributed to Sumsub (it is real, but sourced to iComply) — see §5.
+  Neither figure was fabricated; both were mis-cited. Treat this as a reminder that every number in
+  this doc should be re-spot-checked before it lands in sales copy, not only trusted because a URL
+  is present.
+- **A tenth candidate (J, healthcare-adjacent) was added after the initial draft** to cover the
+  epic's explicit "healthcare-adjacent" example; it scores lowest of all ten (2.30) on thin,
+  largely unverifiable pain evidence and the weakest EDMA-member fit in the set (§2, §4, §5).
 
 ---
 
@@ -467,6 +529,11 @@ All URLs accessed 2026-07. Repo grounding: `docs/research/org-map.md`,
 - Morgan Lewis, US CTA insights — https://www.morganlewis.com/topics/us-corporate-transparency-act
 - FIBO Business Entities — LegalPersons — https://spec.edmcouncil.org/fibo/ontology/BE/LegalEntities/LegalPersons/
 - FIBO Business Entities — Ownership & Control — https://spec.edmcouncil.org/fibo/ontology/BE/OwnershipAndControl/OwnershipParties/
+- Fintech.Global, global regulatory fines $19.3bn in 2024 (FTX-skewed, not AML-specific) — https://fintech.global/2025/02/19/global-regulatory-fines-soar-to-record-breaking-19-3bn-in-2024/
+- Fenergo, regulatory penalties for global FIs up 417% in H1 2025 ($1.23B) — https://resources.fenergo.com/newsroom/regulatory-penalties-for-global-financial-institutions-skyrocket-417-in-h1-2025
+- iComply, KYB for US community banks (5-day → under-24-hour case study) — https://icomplyis.com/smarter-kyb-for-u-s-community-banks-uncovering-risk-in-smb-accounts/
+- Mintz, FinCEN eases beneficial-ownership re-verification (Feb 2026 exceptive relief) — https://www.mintz.com/insights-center/viewpoints/54751/2026-02-18-fincen-eases-beneficial-ownership-verification
+- Mayer Brown, FinCEN risk-based relief from repeat beneficial-ownership verification (Feb 2026) — https://www.mayerbrown.com/en/insights/publications/2026/02/more-is-not-always-better-fincen-grants-risk-based-relief-from-repeat-beneficial-ownership-verification-requirements
 
 **Consumer KYC / identity:**
 - VMR, e-KYC market — https://www.vmr.biz/blog/e-kyc-market-15920
@@ -518,3 +585,8 @@ All URLs accessed 2026-07. Repo grounding: `docs/research/org-map.md`,
 - Kantara, Consent Receipt Specification — https://kantarainitiative.org/download/consent-receipt-specification/
 - FDX + Kantara — https://www.financialdataexchange.org/FDX/FDX/News/Media-Mentions/FDX-and-Kantara.aspx
 - W3C Data Privacy Vocabulary (DPV) — https://w3id.org/dpv/
+
+**Healthcare-adjacent (candidate J):**
+- DOL EBSA, COBRA continuation coverage FAQs (no usage statistics published) — https://www.dol.gov/agencies/ebsa/about-ebsa/our-activities/resource-center/faqs/cobra-continuation-health-coverage-workers
+- HHS/ONC, TEFCA strengthens — one billion health records exchanged — https://www.hhs.gov/press-room/onc-strengthens-tefca-one-billion-health-records-exchanged.html
+- Becker's Hospital Review, what's new with TEFCA in 2026 — https://www.beckershospitalreview.com/healthcare-information-technology/ehrs/whats-new-with-tefca-in-2026-3-updates/
