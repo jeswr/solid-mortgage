@@ -1,30 +1,36 @@
 # HANDOFF — solid-mortgage session continuity
 
-## MULTI-DEMO SUITE STATE (updated 2026-07-22)
+## MULTI-DEMO SUITE STATE (updated 2026-07-23)
 
-Three showcase demos now exist, each in its own repo, all Jesse-owned:
+Three showcase demos, each in its own Jesse-owned repo. **All three are engineering-complete;
+the ONLY remaining blocker is the Vercel token for deploys.**
 
-- **Demo 1 — Mortgage** (`solid-mortgage`, this repo): COMPLETE. 9 apps deployed (Vercel, public
-  by decision), cross-app journey e2e green, framework published, use-case doc merged
-  (`docs/use-case.md`, sm-gbjq).
-- **Demo 2 — Small-dollar lending** (`jeswr/solid-lending`): 6 apps built+merged (real ZK/auth/
-  verify, per-app pod-backed tests), use-case doc merged (`docs/use-case.md`, sm-vcoz). Cross-app
-  journey e2e (PR #11, DRAFT): found+fixed 4 real bugs (incl. a vacuous revoke test), BLOCKED on
-  the shared solid-pod-guard loopback bug. Deploy pending Vercel token. Vocab on `urn:example:lend#`
-  (lend-vocab-publish follow-up).
-- **Demo 3 — GLEIF-anchored business KYB** (`jeswr/solid-kyb`): scientifically SELECTED
-  (`docs/research/demo3-poc-selection.md`, winner 4.65/5) → DESIGNED
-  (`docs/research/kyb-demo-design.md`) → BUILT: packages data-model/vc-kit(sound ZK)/seeds/test-kit
-  + 5 apps (tour/vault/issuers/bank-onboarding/bank-credit), all merged, per-app pod-backed tests,
-  bank-onboarding ZK-decline verified non-vacuous. Use-case doc merged (`docs/use-case.md`, sm-qrfu).
-  REMAINING: cross-app journey e2e (will hit the same pod-guard blocker), deploy (Vercel token),
-  vocab deploy (sm-6wcw). Tier-A per-owner ZK anchors need SPARQ_CHECKOUT (Tier-B completeness is real).
+- **Demo 1 — Mortgage** (`solid-mortgage`): COMPLETE + DEPLOYED. 9 apps live (Vercel, public by
+  decision), journey e2e green, framework published, use-case doc (sm-gbjq).
+- **Demo 2 — Small-dollar lending** (`jeswr/solid-lending`, now PUBLIC): COMPLETE. Epic sm-qz3j
+  closed 8/8 — 6 apps, real ZK, seeder, use-case doc (sm-vcoz), **cross-app journey e2e GREEN**
+  (PR #11, 5 scenes, CI passing). NOT yet deployed (Vercel token). Vocab still `urn:example:lend#`
+  → migrate to a published vocab + FIBO-direct typing (beaded).
+- **Demo 3 — GLEIF business KYB** (`jeswr/solid-kyb`, now PUBLIC): COMPLETE. Scientifically
+  selected (winner 4.65/5) → designed → built: data-model (**FIBO-BE-direct**, PR #9) +
+  vc-kit (real Tier-A AND Tier-B ZK) + 5 apps + seeder + use-case doc (sm-qrfu) + **cross-app
+  journey e2e GREEN** (PR #10, 5 scenes incl. a real ZK hidden-owner DECLINE, FIBO-typed
+  credentials verified end-to-end) + CI passing. NOT yet deployed (Vercel token). Vocab hosting
+  pending (sm-6wcw). 2 vault app gaps beaded (basePath fetch; Node-only shapesDir browser-crash).
 
-**Cross-cutting gated items (beads filed):** (1) securityCritical `@jeswr/solid-pod-guard`
-`loopbackMappedFetch` https→http downgrade — blocks BOTH Demo 2 & 3 cross-app e2e; fixing once
-unblocks both (flagged for lead go-ahead). (2) Vercel token → Demo 2 & 3 deploys. (3) GitHub Actions
-billing failed on the jeswr account → CI down (merges gated locally instead). (4) lend/kyb vocab
-Vercel deploys. Everything is pushed to GitHub — resilient to scratchpad wipes.
+**FIBO evaluation (2026-07-23):** `docs/research/fibo-applicability-and-gaps.md` (PR #39) — direct-
+FIBO evaluation of all three use cases, live-verified IRIs, coverage %, gaps + upstream-contribution
+targets. KYB refactored to type with FIBO-BE DIRECTLY (PR #9). A reusable `fibo-ontologist` agent
+lives in `.claude/agents/`. Lending FIBO-direct refactor + upstream FIBO contributions beaded.
+
+**RESOLVED this session:** the securityCritical `@jeswr/solid-pod-guard` `loopbackMappedFetch`
+https→http bug (FIXED, solid-sdk PR #14, roborev-clean → unblocked BOTH e2es); Tier-A ZK anchors
+made real (PR #8, sparq toolchain); demo repos made PUBLIC → free CI (accumulated CI hygiene debt
+fixed: RFC-2606 hosts, insignia scoped to rendered surfaces, wrong FIBO IRIs corrected).
+
+**REMAINING (all beaded):** (1) **Vercel token** → deploy Demo 2, Demo 3, + lend/kyb vocab
+projects — the ONE hard blocker. (2) lending `urn:example:` → FIBO-direct migration. (3) 2 vault
+app gaps. (4) upstream FIBO contributions (needs:user). Everything is pushed to GitHub.
 
 ---
 
