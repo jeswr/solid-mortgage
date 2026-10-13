@@ -8,8 +8,23 @@
  * session object itself is only constructible under the acknowledgement).
  */
 import type { BrowserPodConnection } from "@mortgage/solid-kit/browser-pod";
+import { connectRemoteDemoPod, SIMULATED_LOGIN_DISCLOSURE } from "@mortgage/solid-kit/browser-pod";
 import { createContext, type ReactNode, useContext, useEffect, useState } from "react";
+import { discoverSharedDemoPod, setActivePodBase } from "./active-pod";
 import { openWalletPod } from "./connect";
+
+/** The local demo server's shared pod when there is one, else the in-browser pod. */
+async function openVaultPod(): Promise<BrowserPodConnection> {
+  const shared = await discoverSharedDemoPod();
+  if (shared === undefined) return openWalletPod();
+  setActivePodBase(shared.podBase);
+  return connectRemoteDemoPod({
+    podBaseUrl: shared.podBase,
+    webId: shared.webid,
+    displayName: shared.name,
+    acknowledgeSimulated: SIMULATED_LOGIN_DISCLOSURE,
+  });
+}
 
 /**
  * ONE pod connection per page load, opened lazily and SHARED across effect
@@ -23,7 +38,7 @@ import { openWalletPod } from "./connect";
  */
 let sharedPod: Promise<BrowserPodConnection> | undefined;
 function connectSharedPod(): Promise<BrowserPodConnection> {
-  sharedPod ??= openWalletPod().catch((error: unknown) => {
+  sharedPod ??= openVaultPod().catch((error: unknown) => {
     // A failed open must not poison the singleton — a later mount may retry.
     sharedPod = undefined;
     throw error;
@@ -64,11 +79,22 @@ function SimulatedLoginStrip({ state }: { state: VaultState }) {
             <span data-vault-display-name="">
               {state.connection.displayName ?? state.connection.webId}
             </span>
-            . This pod runs entirely inside your browser
-            {state.connection.kind === "shared"
-              ? " (one pod, shared across your tabs)"
-              : " (per-tab fallback pod)"}
-            ; no real login or real personal data is involved.
+            .{" "}
+            {state.connection.kind === "remote" ? (
+              <>
+                This is the persona&apos;s pod on your local demo server, shared with every other
+                app in the demo; you were signed in automatically and no real personal data is
+                involved.
+              </>
+            ) : (
+              <>
+                This pod runs entirely inside your browser
+                {state.connection.kind === "shared"
+                  ? " (one pod, shared across your tabs)"
+                  : " (per-tab fallback pod)"}
+                ; no real login or real personal data is involved.
+              </>
+            )}
           </>
         ) : state.status === "booting" ? (
           <>The demo persona&apos;s in-browser pod is starting. No real login is involved.</>

@@ -57,8 +57,10 @@ export function VaultHome() {
           Borrower profile
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Read live from <code className="break-all">{vault.connection.podBaseUrl}</code> — a pod
-          running entirely in this browser.
+          Read live from <code className="break-all">{vault.connection.podBaseUrl}</code> —{" "}
+          {vault.connection.kind === "remote"
+            ? "the shared pod on your local demo server."
+            : "a pod running entirely in this browser."}
         </p>
         {profile === undefined ? (
           <p className="mt-3 text-sm text-muted-foreground">

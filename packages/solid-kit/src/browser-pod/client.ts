@@ -259,8 +259,12 @@ export interface BrowserPodConnection {
   session: DemoSession;
   /** The exact disclosure acknowledgement this connection was constructed under. */
   disclosure: SimulatedLoginDisclosure;
-  /** Which transport won: SharedWorker (per-visitor) or dedicated worker (per-tab). */
-  kind: "shared" | "dedicated" | "port";
+  /**
+   * Which transport won: SharedWorker (per-visitor), dedicated worker (per-tab), a
+   * caller-supplied port, or `remote` — the local demo server's shared pod
+   * ({@link connectRemoteDemoPod}).
+   */
+  kind: "shared" | "dedicated" | "port" | "remote";
   podBaseUrl: string;
   webId: string;
   displayName?: string;
@@ -373,4 +377,47 @@ export function browserPodFetch(transport: PodEndpoint | PodMessagePortLike): Br
   const fetchFn = ((input: Parameters<typeof fetch>[0], init?: Parameters<typeof fetch>[1]) =>
     client.podFetch(input, init)) as BrowserPodFetch;
   return Object.assign(fetchFn, { ready: client.ready, close: client.close });
+}
+
+/** Options for {@link connectRemoteDemoPod}. */
+export interface ConnectRemoteDemoPodOptions {
+  /** The demo persona's pod base (loopback http on the local demo server). */
+  podBaseUrl: string;
+  webId: string;
+  displayName?: string;
+  /** MUST be {@link SIMULATED_LOGIN_DISCLOSURE}: the session is still a simulated login. */
+  acknowledgeSimulated: SimulatedLoginDisclosure;
+  /** Defaults to the global fetch (the local demo pod acts for its owner). */
+  fetch?: typeof fetch;
+}
+
+/**
+ * Bind the demo persona to the LOCAL DEMO SERVER's shared pod (`pnpm demo`) instead of an
+ * in-browser one, so the browser apps and the server-side apps work on the same data.
+ * The session is still simulated (no login happens in the browser: the local fixed-owner
+ * pod answers as its owner), so the decision-0011 acknowledgement is required as for
+ * {@link connectBrowserPod}. Loopback http only.
+ */
+export function connectRemoteDemoPod(options: ConnectRemoteDemoPodOptions): BrowserPodConnection {
+  const podFetch = options.fetch ?? fetch.bind(globalThis);
+  const session = demoLogin({
+    webId: options.webId,
+    podBaseUrl: options.podBaseUrl,
+    fetch: podFetch,
+    guard: false,
+    allowInsecureLoopback: true,
+    acknowledgeSimulated: options.acknowledgeSimulated,
+  });
+  return {
+    session,
+    disclosure: SIMULATED_LOGIN_DISCLOSURE,
+    kind: "remote",
+    podBaseUrl: session.podBaseUrl,
+    webId: options.webId,
+    ...(options.displayName !== undefined ? { displayName: options.displayName } : {}),
+    podFetch,
+    close(): void {
+      // Nothing to tear down: plain HTTP to the demo server.
+    },
+  };
 }

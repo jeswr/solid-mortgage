@@ -24,7 +24,8 @@ import type { CredentialStatus } from "@mortgage/ui";
 import { type VcKitVerificationError, verifyCredential } from "@mortgage/vc-kit";
 import type { DatasetCore } from "@rdfjs/types";
 import { DataFactory } from "n3";
-import { ANCHOR_POD_PATHS, CREDENTIAL_POD_PATHS, podIssuerIris, WALLET_POD_BASE } from "./seed";
+import { activePodBase } from "./active-pod";
+import { ANCHOR_POD_PATHS, CREDENTIAL_POD_PATHS, podIssuerIris } from "./seed";
 
 export interface WalletCredentialView {
   readonly id: keyof typeof CREDENTIAL_POD_PATHS;
@@ -78,7 +79,7 @@ const CREDENTIAL_DEFINITIONS: Record<
 };
 
 function iriOf(path: string): string {
-  return `${WALLET_POD_BASE.slice(0, -1)}${path}`;
+  return `${activePodBase().slice(0, -1)}${path}`;
 }
 
 async function readDataset(iri: string, podFetch: typeof fetch): Promise<DatasetCore | undefined> {
@@ -146,7 +147,7 @@ export async function listWalletCredentials(
       const result = await verifyCredential(dataset, {
         expectShape: definition.kind,
         now,
-        trustedIssuers: podIssuerIris(),
+        trustedIssuers: podIssuerIris(activePodBase()),
         webIdFetch: options.podFetch,
         statusFetch: options.podFetch,
       });

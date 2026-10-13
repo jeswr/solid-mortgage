@@ -1,6 +1,7 @@
 import { StatCard } from "@mortgage/ui";
 import { DemoIdentityCard } from "./components/demo-identity-card";
 import { EcosystemMap } from "./components/ecosystem-map";
+import { GuidedDemoCta } from "./components/guided-demo-cta";
 import { anchors } from "./content/anchors";
 import { chapters } from "./content/chapters";
 import { site } from "./site";
@@ -32,12 +33,20 @@ export default function Home() {
           on screen.
         </p>
         <div className="mt-7 flex flex-wrap items-center gap-4">
+          <GuidedDemoCta />
           <a
             className="rounded-lg bg-primary px-5 py-3 font-semibold text-primary-foreground text-sm transition-opacity hover:opacity-90"
             data-cta-start-tour=""
             href={`/chapters/${chapters[0].slug}`}
           >
             Start the tour
+          </a>
+          <a
+            className="rounded-lg border border-border px-5 py-3 font-semibold text-foreground text-sm hover:bg-muted"
+            data-cta-apps=""
+            href="/apps"
+          >
+            Open the apps
           </a>
           <a
             className="rounded-lg border border-border px-5 py-3 font-semibold text-foreground text-sm hover:bg-muted"
