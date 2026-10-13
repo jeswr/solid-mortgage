@@ -1,6 +1,10 @@
 /**
- * The demo GATEWAY: one local origin in front of every app.
+ * The demo GATEWAY: one local ORIGIN PER APP (its own port), as each app would have its
+ * own subdomain when deployed.
  *
+ * - Each app's pages are served only on that app's origin; opening another app's page
+ *   redirects to that app's origin. API calls across apps (the vault presenting proofs
+ *   to the lenders, the tour probing health) are proxied wherever they arrive.
  * - `/<zone>/...` goes to that app's server, everything else to the tour shell.
  * - Automatic demo login: app API calls get the demo borrower's REAL DPoP-bound
  *   Solid-OIDC credentials (a fresh single-use proof per request, minted by the local
@@ -22,11 +26,15 @@ const here = dirname(fileURLToPath(import.meta.url));
 export interface GatewayZone {
   /** Path prefix, e.g. `/lender-boa` (the app's Next.js basePath). */
   readonly prefix: string;
+  /** The app server's own (upstream) port. */
   readonly port: number;
+  /** The public port this app is served on (its origin). */
+  readonly publicPort: number;
   readonly appName: string;
 }
 
 export interface GatewayOptions {
+  /** Public port of the tour (the overview). */
   readonly port: number;
   readonly tourPort: number;
   readonly zones: readonly GatewayZone[];
@@ -39,7 +47,9 @@ export interface GatewayOptions {
 }
 
 export interface Gateway {
-  readonly server: Server;
+  readonly servers: readonly Server[];
+  /** Public origin per app key (`tour` or a zone prefix). */
+  readonly origins: Readonly<Record<string, string>>;
   /** The app with an API request in flight, when exactly one is (pod-log attribution). */
   inflightApp(): string | undefined;
 }
@@ -100,10 +110,23 @@ export async function startGateway(options: GatewayOptions): Promise<Gateway> {
   const zoneFor = (path: string) =>
     options.zones.find((zone) => path === zone.prefix || path.startsWith(`${zone.prefix}/`));
 
+  const originOf = (port: number) => `http://127.0.0.1:${port}`;
+  const origins: Record<string, string> = { tour: originOf(options.port) };
+  for (const zone of options.zones) origins[zone.prefix] = originOf(zone.publicPort);
+
   const overlayConfig = () =>
     JSON.stringify({
       persona: options.persona,
-      apps: options.zones.map((zone) => ({ prefix: zone.prefix, name: zone.appName })),
+      overview: origins.tour,
+      apps: [
+        { key: "tour", prefix: "", name: "Overview", origin: origins.tour },
+        ...options.zones.map((zone) => ({
+          key: zone.prefix,
+          prefix: zone.prefix,
+          name: zone.appName,
+          origin: origins[zone.prefix],
+        })),
+      ],
       steps: GUIDED_STEPS,
     });
 
@@ -154,100 +177,128 @@ export async function startGateway(options: GatewayOptions): Promise<Gateway> {
     }
   }
 
-  const server = createServer(async (request, response) => {
-    const host = request.headers.host ?? `localhost:${options.port}`;
-    const url = new URL(request.url ?? "/", `http://${host}`);
-    if (url.pathname.startsWith("/__demo/")) {
-      try {
-        await handleDemoRoute(request, response, url.pathname);
-      } catch (error) {
-        response.writeHead(500, { "content-type": "text/plain" });
-        response.end(String(error));
-      }
-      return;
-    }
-
-    const zone = zoneFor(url.pathname);
-    const port = zone?.port ?? options.tourPort;
-    const appName = zone?.appName ?? "Tour";
-    const method = request.method ?? "GET";
-    const isApi = zone !== undefined && url.pathname.startsWith(`${zone.prefix}/api/`);
-    const isHealth = url.pathname.endsWith("/api/health");
-    // Only the demo's own pages get the automatic login: another site open in the same
-    // browser must not be able to act as the demo borrower through this gateway.
-    const crossSite = request.headers["sec-fetch-site"] === "cross-site";
-    const autoLogin = !crossSite && cookieValue(request, AUTOLOGIN_COOKIE) !== "off";
-
-    const headers: Record<string, string | string[] | undefined> = {
-      ...request.headers,
-      "x-forwarded-host": host,
-      "x-forwarded-proto": "http",
-    };
-    const wantsHtml = method === "GET" && (request.headers.accept ?? "").includes("text/html");
-    if (wantsHtml) headers["accept-encoding"] = "identity";
-
-    if (isApi && !isHealth && autoLogin && !headers.authorization) {
-      Object.assign(headers, await options.borrowerHeaders(method, `${url.origin}${url.pathname}`));
-      if (!signedInApps.has(appName)) {
-        signedInApps.add(appName);
-        log.record({
-          kind: "auth",
-          actor: options.persona.name,
-          app: appName,
-          summary: `Signed in to ${appName} as ${options.persona.name} (demo account, done for you): a DPoP-bound Solid-OIDC token from the local identity provider`,
-        });
-      }
-    }
-
-    const body = method === "GET" || method === "HEAD" ? undefined : await readBody(request);
-    if (isApi) inflight.set(appName, (inflight.get(appName) ?? 0) + 1);
-    const done = () => {
-      if (!isApi) return;
-      const left = (inflight.get(appName) ?? 1) - 1;
-      if (left <= 0) inflight.delete(appName);
-      else inflight.set(appName, left);
-    };
-
-    const upstream = httpRequest(
-      { host: "127.0.0.1", port, method, path: `${url.pathname}${url.search}`, headers },
-      (appResponse) => {
-        const type = String(appResponse.headers["content-type"] ?? "");
-        if (wantsHtml && type.includes("text/html")) {
-          const chunks: Buffer[] = [];
-          appResponse.on("data", (chunk: Buffer) => chunks.push(chunk));
-          appResponse.on("end", () => {
-            const html = injectOverlay(Buffer.concat(chunks).toString("utf8"));
-            const outHeaders = { ...appResponse.headers };
-            delete outHeaders["content-length"];
-            delete outHeaders["content-encoding"];
-            response.writeHead(appResponse.statusCode ?? 502, outHeaders);
-            response.end(html);
-            done();
-          });
-          return;
+  const handle =
+    (ownKey: string, ownPort: number) =>
+    async (request: IncomingMessage, response: import("node:http").ServerResponse) => {
+      const host = request.headers.host ?? `127.0.0.1:${ownPort}`;
+      const url = new URL(request.url ?? "/", `http://${host}`);
+      if (url.pathname.startsWith("/__demo/")) {
+        try {
+          await handleDemoRoute(request, response, url.pathname);
+        } catch (error) {
+          response.writeHead(500, { "content-type": "text/plain" });
+          response.end(String(error));
         }
-        response.writeHead(appResponse.statusCode ?? 502, appResponse.headers);
-        appResponse.pipe(response);
-        appResponse.on("end", done);
-      },
-    );
-    upstream.on("error", (error) => {
-      done();
-      if (!response.headersSent) {
-        response.writeHead(502, { "content-type": "text/plain" });
+        return;
       }
-      response.end(`${appName} is not running: ${error.message}`);
-    });
-    upstream.end(body);
-  });
 
-  await new Promise<void>((resolve, reject) => {
-    server.once("error", reject);
-    server.listen(options.port, "127.0.0.1", resolve);
-  });
+      const zone = zoneFor(url.pathname);
+      const port = zone?.port ?? options.tourPort;
+      const appName = zone?.appName ?? "Tour";
+      const method = request.method ?? "GET";
+      const targetKey = zone?.prefix ?? "tour";
+      const navigation =
+        method === "GET" &&
+        (request.headers["sec-fetch-dest"] === "document" ||
+          (request.headers["sec-fetch-dest"] === undefined &&
+            (request.headers.accept ?? "").includes("text/html")));
+      if (targetKey !== ownKey && navigation) {
+        // Another app's page: send the browser to that app's own origin.
+        response.writeHead(302, { location: `${origins[targetKey]}${url.pathname}${url.search}` });
+        response.end();
+        return;
+      }
+      const isApi = zone !== undefined && url.pathname.startsWith(`${zone.prefix}/api/`);
+      const isHealth = url.pathname.endsWith("/api/health");
+      // Only the demo's own pages get the automatic login: another site open in the same
+      // browser must not be able to act as the demo borrower through this gateway.
+      const crossSite = request.headers["sec-fetch-site"] === "cross-site";
+      const autoLogin = !crossSite && cookieValue(request, AUTOLOGIN_COOKIE) !== "off";
+
+      const headers: Record<string, string | string[] | undefined> = {
+        ...request.headers,
+        "x-forwarded-host": host,
+        "x-forwarded-proto": "http",
+      };
+      const wantsHtml = method === "GET" && (request.headers.accept ?? "").includes("text/html");
+      if (wantsHtml) headers["accept-encoding"] = "identity";
+
+      if (isApi && !isHealth && autoLogin && !headers.authorization) {
+        Object.assign(
+          headers,
+          await options.borrowerHeaders(method, `${url.origin}${url.pathname}`),
+        );
+        if (!signedInApps.has(appName)) {
+          signedInApps.add(appName);
+          log.record({
+            kind: "auth",
+            actor: options.persona.name,
+            app: appName,
+            summary: `Signed in to ${appName} as ${options.persona.name} (demo account, done for you): a DPoP-bound Solid-OIDC token from the local identity provider`,
+          });
+        }
+      }
+
+      const body = method === "GET" || method === "HEAD" ? undefined : await readBody(request);
+      if (isApi) inflight.set(appName, (inflight.get(appName) ?? 0) + 1);
+      const done = () => {
+        if (!isApi) return;
+        const left = (inflight.get(appName) ?? 1) - 1;
+        if (left <= 0) inflight.delete(appName);
+        else inflight.set(appName, left);
+      };
+
+      const upstream = httpRequest(
+        { host: "127.0.0.1", port, method, path: `${url.pathname}${url.search}`, headers },
+        (appResponse) => {
+          const type = String(appResponse.headers["content-type"] ?? "");
+          if (wantsHtml && type.includes("text/html")) {
+            const chunks: Buffer[] = [];
+            appResponse.on("data", (chunk: Buffer) => chunks.push(chunk));
+            appResponse.on("end", () => {
+              const html = injectOverlay(Buffer.concat(chunks).toString("utf8"));
+              const outHeaders = { ...appResponse.headers };
+              delete outHeaders["content-length"];
+              delete outHeaders["content-encoding"];
+              response.writeHead(appResponse.statusCode ?? 502, outHeaders);
+              response.end(html);
+              done();
+            });
+            return;
+          }
+          response.writeHead(appResponse.statusCode ?? 502, appResponse.headers);
+          appResponse.pipe(response);
+          appResponse.on("end", done);
+        },
+      );
+      upstream.on("error", (error) => {
+        done();
+        if (!response.headersSent) {
+          response.writeHead(502, { "content-type": "text/plain" });
+        }
+        response.end(`${appName} is not running: ${error.message}`);
+      });
+      upstream.end(body);
+    };
+
+  const listeners: [string, number][] = [
+    ["tour", options.port],
+    ...options.zones.map((zone): [string, number] => [zone.prefix, zone.publicPort]),
+  ];
+  const servers = await Promise.all(
+    listeners.map(async ([key, port]) => {
+      const server = createServer(handle(key, port));
+      await new Promise<void>((resolve, reject) => {
+        server.once("error", reject);
+        server.listen(port, "127.0.0.1", resolve);
+      });
+      return server;
+    }),
+  );
 
   return {
-    server,
+    servers,
+    origins,
     inflightApp() {
       if (inflight.size !== 1) return undefined;
       return inflight.keys().next().value;

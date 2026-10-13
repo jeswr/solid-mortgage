@@ -1,7 +1,16 @@
-import { ConceptDemoBanner, ConsentInterstitial, demoMetadata } from "@mortgage/ui";
+import {
+  BrandHeader,
+  brandCssProperties,
+  ConceptDemoBanner,
+  ConsentInterstitial,
+  DEMO_BORROWER_ACCOUNT,
+  demoMetadata,
+  headerNavLinkClass,
+  orgThemes,
+} from "@mortgage/ui";
 import type { Metadata } from "next";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import "./globals.css";
 import { site } from "./site";
 
@@ -17,35 +26,40 @@ const NAV = [
   { href: "/credit", label: "Credit score" },
 ] as const;
 
+/** Suite-level frame: the shared Proofline brand on the neutral credit-flow palette. */
+const SUITE_THEME = orgThemes["verifications-credit"];
+
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="en">
       <body>
-        <header className="border-border border-b bg-card">
-          <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-4 px-6 py-4">
-            <div>
-              <p className="font-semibold text-foreground text-lg">{site.appName}</p>
-              <p className="text-muted-foreground text-sm">
-                GSE-accepted verification suppliers — issuer flows, modelled roles only
-              </p>
-            </div>
-            <nav aria-label="Verification flows">
-              <ul className="flex list-none flex-wrap gap-4 p-0 text-sm">
-                {NAV.map((item) => (
-                  <li key={item.href}>
-                    <Link
-                      className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-                      href={item.href}
-                    >
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          </div>
-        </header>
-        {children}
+        <div
+          className="min-h-dvh bg-background text-foreground [&_:is(h1,h2,h3)]:[font-family:var(--font-heading)]"
+          style={
+            { ...brandCssProperties(SUITE_THEME), fontFamily: "var(--font-brand)" } as CSSProperties
+          }
+        >
+          <BrandHeader
+            account={DEMO_BORROWER_ACCOUNT}
+            appName={site.appName}
+            framing="GSE-accepted verification suppliers — issuer flows, modelled roles only"
+            headerActions={
+              <nav aria-label="Verification flows">
+                <ul className="flex list-none flex-wrap gap-x-4 gap-y-2 p-0 text-sm">
+                  {NAV.map((item) => (
+                    <li key={item.href}>
+                      <Link className={headerNavLinkClass} href={item.href}>
+                        {item.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            }
+            theme={SUITE_THEME}
+          />
+          {children}
+        </div>
         {/* Fixed placement covers EVERY route of this multi-brand zone (R1). */}
         <ConceptDemoBanner organization={site.organization} />
         <ConsentInterstitial appId="verifications" organization={site.organization} />

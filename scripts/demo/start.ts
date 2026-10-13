@@ -34,6 +34,7 @@ import { startGateway } from "./gateway.ts";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const host = "127.0.0.1";
+/** The overview's port; each app gets the next one (4401, 4402, …), like its own subdomain. */
 const gatewayPort = Number(process.env.DEMO_PORT ?? 4400);
 
 /**
@@ -188,13 +189,15 @@ async function main(): Promise<void> {
   ]);
 
   let gatewayRef: Awaited<ReturnType<typeof startGateway>> | undefined;
+  // Filled in once the app origins are known (before any browser can reach the pod).
+  const browserOrigins = new Map<string, string>();
   const recorder = await startPodRecorder({
     listenPort: recorderPort,
     podPort,
     log,
     directory,
     attributeServerCall: () => gatewayRef?.inflightApp(),
-    browserOrigin: `http://${host}:${gatewayPort}`,
+    browserOrigins,
     isMuted: () => muted,
   });
 
@@ -323,6 +326,8 @@ async function main(): Promise<void> {
         ...shared,
         MORTGAGE_TRUSTED_ANCHOR_ISSUERS: [employment.iri, bureau.iri].join(","),
         MORTGAGE_TRUSTED_CREDENTIAL_ISSUERS: trustedCredentialIssuers,
+        // The loan-officer queue (no staff login exists in the demo; local only).
+        MORTGAGE_DEMO_STAFF_VIEW: "1",
       },
     },
     {
@@ -357,13 +362,16 @@ async function main(): Promise<void> {
   ];
 
   const zones = await Promise.all(
-    zoneSpecs.map(async (spec) => ({
+    zoneSpecs.map(async (spec, index) => ({
       prefix: spec.prefix,
       appName: spec.appName,
+      publicPort: gatewayPort + index + 1,
       port: await startApp(spec.appName, spec.dir, `${spec.prefix}/api/health`, spec.env),
     })),
   );
   const gatewayOrigin = `http://${host}:${gatewayPort}`;
+  browserOrigins.set(gatewayOrigin, "Overview");
+  for (const zone of zones) browserOrigins.set(`http://${host}:${zone.publicPort}`, zone.appName);
   const zoneEnv: Record<string, string> = {
     MORTGAGE_WALLET_ZONE_URL: gatewayOrigin,
     MORTGAGE_VERIFICATIONS_ZONE_URL: gatewayOrigin,
@@ -387,15 +395,20 @@ async function main(): Promise<void> {
 
   console.log("");
   console.log("  Solid Mortgage Showcase is running.");
-  console.log(`  Open ${gatewayOrigin}/  (guided demo: ${gatewayOrigin}/?guided=1)`);
-  console.log(`  Launch apps individually: ${gatewayOrigin}/apps`);
-  console.log(`  Pod activity log (pop-out): ${gatewayOrigin}/__demo/activity`);
+  console.log(`  Overview:     ${gatewayOrigin}/  (guided demo: ${gatewayOrigin}/?guided=1)`);
+  console.log(`  All apps:     ${gatewayOrigin}/apps`);
+  for (const zone of zones) {
+    console.log(
+      `  ${`${zone.appName}:`.padEnd(29)} http://${host}:${zone.publicPort}${zone.prefix}`,
+    );
+  }
+  console.log(`  Pod activity: ${gatewayOrigin}/__demo/activity`);
   console.log(`  Borrower pod: ${podBase}`);
   console.log("  Ctrl-C to stop. Everything is in memory and resets on restart.");
 
   const stop = async () => {
     stopChildren();
-    gatewayRef?.server.close();
+    for (const server of gatewayRef?.servers ?? []) server.close();
     recorder.close();
     await pod.closeAsync().catch(() => undefined);
     for (const identity of [borrowerIssuer, ...Object.values(services)]) {

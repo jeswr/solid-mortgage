@@ -19,9 +19,10 @@ pnpm install && pnpm build
 pnpm demo
 ```
 
-Open http://127.0.0.1:4400/ for a guided click-through across every app (signed in for you
-with a demo account), an app launcher at `/apps`, and a pop-out log of every pod read, write
-and access-rule change. See [`docs/demo.md`](docs/demo.md).
+Open http://127.0.0.1:4400/ for a guided click-through across every app (each runs on its own
+port, and the demo signs you in automatically), an app launcher at `/apps`, two
+assistant-led flows, and a pop-out log of every pod read, write and access-rule change. See
+[`docs/demo.md`](docs/demo.md).
 
 ## Layout (planned)
 

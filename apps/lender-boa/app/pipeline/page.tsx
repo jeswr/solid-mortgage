@@ -1,5 +1,6 @@
 import { PERSONA_VALUES } from "@mortgage/data-model";
 import { IllustrativeFigure } from "@mortgage/ui";
+import { LivePipeline } from "../../components/live-pipeline";
 import { formatUsd } from "../../lib/format";
 import { site } from "../site";
 
@@ -30,7 +31,14 @@ export default function PipelinePage() {
         Each file's evidence is the borrower's own verified credentials, read under a revocable
         grant — no document chasing, no stale verifications, full audit trail.
       </p>
-      <div className="mt-8 overflow-x-auto">
+      <section aria-labelledby="queue-heading" className="mt-8">
+        <h2 className="font-semibold text-foreground text-xl" id="queue-heading">
+          Your queue
+        </h2>
+        <LivePipeline apiBase="/lender-boa/api" />
+      </section>
+      <h2 className="mt-12 font-semibold text-foreground text-xl">Sample files (illustrative)</h2>
+      <div className="mt-4 overflow-x-auto">
         <table className="w-full border-collapse text-sm">
           <caption className="sr-only">
             Demo pipeline of loan applications (all data simulated)

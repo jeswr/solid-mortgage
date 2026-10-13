@@ -1,6 +1,29 @@
 export const uiPackage = "@mortgage/ui";
 
-export { AppShell, type AppShellProps } from "./app-shell";
+export {
+  AgentConversation,
+  type AgentConversationProps,
+  type AgentMessage,
+  type AgentReply,
+  type AgentSpeaker,
+  type AgentStep,
+  type AgentStepState,
+  AgentSteps,
+  ConsentRequest,
+  type ConsentRequestProps,
+  type ConsentSource,
+} from "./agent-chat";
+export {
+  AppShell,
+  type AppShellProps,
+  BrandHeader,
+  type BrandHeaderProps,
+  BrandMark,
+  DEMO_BORROWER_ACCOUNT,
+  framingLine,
+  headerNavLinkClass,
+  type ShellAccount,
+} from "./app-shell";
 export { ConceptDemoBanner, type ConceptDemoBannerProps } from "./concept-demo-banner";
 export { ConsentInterstitial, type ConsentInterstitialProps } from "./consent-interstitial";
 export {

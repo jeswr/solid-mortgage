@@ -25,6 +25,12 @@ export const appGuides: Partial<Record<DemoAppSlug, AppGuide>> = {
     pages: [
       { path: "/wallet", label: "Vault home", tryThis: "See the profile read live from the pod." },
       {
+        path: "/wallet/assistant",
+        label: "Assistant",
+        tryThis:
+          "Ask your assistant to shop for a rate; it asks for consent before it reads anything.",
+      },
+      {
         path: "/wallet/credentials",
         label: "Credentials",
         tryThis: "Each signed credential is re-verified every time you open it.",
@@ -79,9 +85,19 @@ export const appGuides: Partial<Record<DemoAppSlug, AppGuide>> = {
         tryThis: "How the lender verifies a zero-knowledge proof.",
       },
       {
+        path: "/lender-boa/assistant",
+        label: "Apply with your assistant",
+        tryThis: "Let an assistant fill in and submit the application, with per-source consent.",
+      },
+      {
         path: "/lender-boa/application",
-        label: "Application",
-        tryThis: "Submit a pod-prefilled application and get a Loan Estimate.",
+        label: "Application form",
+        tryThis: "Or submit the pod-prefilled form yourself and get a Loan Estimate.",
+      },
+      {
+        path: "/lender-boa/pipeline",
+        label: "Loan officer pipeline",
+        tryThis: "The lender's side: review files read live from the pod and clear them to close.",
       },
       {
         path: "/lender-boa/freshness",

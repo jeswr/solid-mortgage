@@ -2,7 +2,7 @@
 
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, expect, test } from "vitest";
-import { AppShell } from "../src/app-shell.js";
+import { AppShell, BrandHeader, DEMO_BORROWER_ACCOUNT } from "../src/app-shell.js";
 import { CredentialCard } from "../src/credential-card.js";
 import { DemoLockedField } from "../src/demo-locked-field.js";
 import { bannerFullText, DEMO_FIELD_HINT, footerLegalLine } from "../src/disclaimers.js";
@@ -65,6 +65,76 @@ test("AppShell frames the app with role-first header, adjacent banner, footer, a
   );
   const shell = container.querySelector<HTMLElement>("[data-app-shell]");
   expect(shell?.style.getPropertyValue("--primary")).toBe(theme.tokens.primary);
+});
+
+test("AppShell renders the original product brand, framing, nav, and demo account chip", () => {
+  const theme = orgThemes["lender-boa"];
+  const { container } = render(
+    <AppShell
+      account={DEMO_BORROWER_ACCOUNT}
+      appName="Mortgage Origination"
+      headerActions={<nav aria-label="Sections">nav</nav>}
+      theme={theme}
+    >
+      <main>content</main>
+    </AppShell>,
+  );
+  expect(container.querySelector("[data-product-name]")?.textContent).toBe(
+    theme.brand?.productName,
+  );
+  expect(screen.getByText("primary mortgage lender · modelled on Bank of America")).toBeDefined();
+  expect(container.querySelector("[data-brand-mark]")?.getAttribute("aria-hidden")).toBe("true");
+  expect(container.querySelector("[data-account-chip]")?.textContent).toBe(
+    "ARAlex Riverademo account",
+  );
+  expect(screen.getByRole("navigation", { name: "Sections" })).toBeDefined();
+  // The banner stays directly below the brand header.
+  expect(
+    container.querySelector("header")?.nextElementSibling?.hasAttribute("data-concept-demo-banner"),
+  ).toBe(true);
+  const shell = container.querySelector<HTMLElement>("[data-app-shell]");
+  expect(shell?.style.getPropertyValue("--radius")).toBe(theme.brand?.radius);
+  expect(shell?.style.getPropertyValue("--font-heading")).toBe(theme.brand?.headingFontStack);
+});
+
+test("BrandHeader renders every header style, with the chip in the split utility strip", () => {
+  const styles = ["solid", "gradient", "underline", "topbar", "split", "pill", "minimal"] as const;
+  const shapes = ["circle", "rounded-square", "hexagon", "diamond", "notch"] as const;
+  styles.forEach((header, index) => {
+    const base = orgThemes.gse;
+    const brand = base.brand;
+    if (brand === undefined) throw new Error("gse brand missing");
+    const theme = {
+      ...base,
+      brand: { ...brand, header, markShape: shapes[index % shapes.length], markText: "Ab" },
+    };
+    const { container } = render(
+      <BrandHeader
+        account={{ label: "persona", name: "Sam" }}
+        appName="App"
+        framing="framing"
+        theme={theme}
+      />,
+    );
+    expect(container.querySelector("[data-brand-header]")?.getAttribute("data-brand-header")).toBe(
+      header,
+    );
+    expect(container.querySelector("[data-account-chip]")?.textContent).toBe("SSampersona");
+    cleanup();
+  });
+  const split = orgThemes["lender-53"];
+  render(<BrandHeader appName="App" framing="framing" theme={split} />);
+  expect(screen.getByText(split.brand?.tagline ?? "")).toBeDefined();
+});
+
+test("BrandHeader falls back to the plain header for an unbranded theme", () => {
+  const { brand: _brand, ...unbranded } = orgThemes.wallet;
+  const { container } = render(
+    <BrandHeader account={DEMO_BORROWER_ACCOUNT} appName="Plain" framing="f" theme={unbranded} />,
+  );
+  expect(container.querySelector("[data-brand-header]")).toBeNull();
+  expect(screen.getByText("Plain")).toBeDefined();
+  expect(container.querySelector("[data-account-chip]")).not.toBeNull();
 });
 
 test("AppShell own-branded variant (tour) frames without source-negation", () => {

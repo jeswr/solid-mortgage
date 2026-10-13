@@ -95,7 +95,7 @@ describe("demo pod activity", () => {
         log,
         directory,
         attributeServerCall: () => "Digital Closing",
-        browserOrigin: "http://127.0.0.1:4400",
+        browserOrigins: new Map([["http://127.0.0.1:4401", "Data Vault"]]),
         isMuted: () => muted,
       });
       const base = `http://127.0.0.1:${listenPort}`;
@@ -111,7 +111,7 @@ describe("demo pod activity", () => {
       muted = false;
       await put("/mortgage/closing-record", "<#it> a <#Record>.");
       await fetch(`${base}/mortgage/closing-record`, {
-        headers: { origin: "http://127.0.0.1:4400" },
+        headers: { origin: "http://127.0.0.1:4401" },
       });
       await put("/mortgage/closing-record.acl", acl([SERVICER]));
 

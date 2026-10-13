@@ -31,9 +31,23 @@
   };
 
   const standalone = location.pathname === "/__demo/activity";
+  // Hand-off between apps: each app is its own origin (own storage), so the guided step
+  // and the panel state travel in the URL and are stripped again on arrival.
   const params = new URLSearchParams(location.search);
-  if (params.get("guided") === "1") {
-    write("guided", { active: true, index: 0 });
+  if (params.get("guided") === "1") write("guided", { active: true, index: 0 });
+  const handedStep = Number.parseInt(params.get("demo-step") ?? "", 10);
+  if (Number.isInteger(handedStep) && handedStep >= 0) {
+    write("guided", { active: true, index: handedStep });
+  }
+  if (params.has("demo-panel")) write("sidebar", params.get("demo-panel") === "1");
+  if (params.has("guided") || params.has("demo-step") || params.has("demo-panel")) {
+    for (const key of ["guided", "demo-step", "demo-panel"]) params.delete(key);
+    const rest = params.toString();
+    history.replaceState(
+      history.state,
+      "",
+      `${location.pathname}${rest ? `?${rest}` : ""}${location.hash}`,
+    );
   }
 
   const el = (tag, attrs = {}, ...children) => {
@@ -73,7 +87,7 @@
     [hidden] { display: none !important; }
     button { font: inherit; cursor: pointer; }
     .dock { position: fixed; left: 16px; bottom: 72px; z-index: 2147483000; display: flex; gap: 8px; flex-wrap: wrap; }
-    .pill { display: inline-flex; align-items: center; gap: 8px; border: 1px solid #1e293b; background: #0f172a; color: #f8fafc;
+    .pill { text-decoration: none; display: inline-flex; align-items: center; gap: 8px; border: 1px solid #1e293b; background: #0f172a; color: #f8fafc;
       border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600; box-shadow: 0 6px 20px rgb(15 23 42 / .25); }
     .pill.light { background: #fff; color: #0f172a; border-color: #cbd5e1; }
     .pill:focus-visible, .btn:focus-visible, .chip:focus-visible { outline: 3px solid #f59e0b; outline-offset: 2px; }
@@ -407,7 +421,22 @@
   }
 
   const normalise = (path) => path.replace(/\/+$/, "") || "/";
-  const samePage = (path) => normalise(location.pathname) === normalise(path);
+  /** The app (and so the origin) a gateway path belongs to: the longest matching prefix. */
+  const appFor = (path) =>
+    [...config.apps]
+      .sort((a, b) => b.prefix.length - a.prefix.length)
+      .find((app) => app.prefix === "" || path === app.prefix || path.startsWith(`${app.prefix}/`));
+  const originFor = (path) => appFor(path)?.origin ?? location.origin;
+  const samePage = (path) =>
+    originFor(path) === location.origin && normalise(location.pathname) === normalise(path);
+  /** Open a step's page, on its own app's origin, carrying the tour state along. */
+  const openStep = (index) => {
+    const step = config.steps[index];
+    const target = new URL(step.path, originFor(step.path));
+    target.searchParams.set("demo-step", String(index));
+    target.searchParams.set("demo-panel", sidebarOpen ? "1" : "0");
+    location.assign(target.href);
+  };
 
   function findButton(step) {
     if (!step.action) return undefined;
@@ -439,7 +468,7 @@
     guided = { active: true, index: next };
     write("guided", guided);
     const step = steps[next];
-    if (!samePage(step.path)) location.assign(step.path);
+    if (!samePage(step.path)) openStep(next);
     else renderGuide();
   }
 
@@ -499,7 +528,7 @@
           el("strong", {}, "Press Next"),
           " to go there.",
         );
-        nextButton.onclick = () => location.assign(step.path);
+        nextButton.onclick = () => openStep(index);
         doIt.hidden = true;
         return;
       }
@@ -643,7 +672,19 @@
     if (standalone) {
       frame.append(sidebar);
     } else {
-      frame.append(el("div", { class: "dock" }, toggle, tourButton), sidebar, guide);
+      const overview =
+        config.overview && config.overview !== location.origin
+          ? el(
+              "a",
+              {
+                class: "pill light",
+                href: `${config.overview}/`,
+                title: "Leave this app and go back to the demo overview",
+              },
+              "← Overview",
+            )
+          : null;
+      frame.append(el("div", { class: "dock" }, overview, toggle, tourButton), sidebar, guide);
       setSidebar(sidebarOpen);
       renderGuide();
     }

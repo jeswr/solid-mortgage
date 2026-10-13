@@ -1,15 +1,18 @@
 "use client";
 
 import {
+  BrandMark,
+  brandCssProperties,
   ConceptDemoBanner,
   HonestyPanel,
   IllustrativeFigure,
   orgThemes,
   ReceiptCard,
-  themeCssProperties,
 } from "@mortgage/ui";
 import { useState } from "react";
 import { site } from "./site";
+
+const SERVICER_THEME = orgThemes["closing-servicing"];
 
 interface ReceiptView {
   iri: string;
@@ -200,9 +203,15 @@ export function ClosingExperience() {
       <section
         aria-labelledby="transfer-title"
         className="mt-12 overflow-hidden rounded-xl border border-border"
-        style={themeCssProperties(orgThemes["closing-servicing"])}
+        style={{ ...brandCssProperties(SERVICER_THEME), fontFamily: "var(--font-brand)" }}
       >
-        <header className="bg-card p-6">
+        <header className="border-primary border-b-4 bg-card p-6">
+          {SERVICER_THEME.brand !== undefined && (
+            <p className="mb-3 flex items-center gap-3 font-bold text-lg">
+              <BrandMark brand={SERVICER_THEME.brand} />
+              {SERVICER_THEME.brand.productName}
+            </p>
+          )}
           <p className="text-muted-foreground text-sm">
             Mortgage servicer · modelled on {site.servicerOrganization}
           </p>

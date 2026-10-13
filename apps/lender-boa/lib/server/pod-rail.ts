@@ -29,6 +29,7 @@ import {
 } from "@mortgage/solid-kit/auth/api";
 import { type LenderConfig, notConfigured } from "./config";
 import { checkEmploymentFreshness, type FreshnessSeams } from "./freshness";
+import { parseHousing, recordIntake, staffViewEnabled } from "./intake";
 import { submitApplication } from "./loan";
 import { type OwnerBindingSeams, resolveAuthorizedPod } from "./owner";
 import { PodAccessError } from "./pod";
@@ -191,9 +192,23 @@ export function createPodRailService(options: PodRailServiceOptions): PodRailSer
       const caller = await bindPod(identity.webid);
       if (caller instanceof Response) return caller;
       try {
-        return Response.json(
-          await submitApplication(caller.podBase, caller.webid, config, { now }),
-        );
+        const result = await submitApplication(caller.podBase, caller.webid, config, { now });
+        if (staffViewEnabled()) {
+          // The demo loan-officer view's intake record: pod + WebID come from the
+          // verified caller (L1–L3); the body only says which channel was used.
+          const housing = parseHousing(body.housing);
+          recordIntake({
+            webid: caller.webid,
+            podBase: caller.podBase,
+            borrowerName: result.prefill.borrower.name,
+            applicationIri: result.applicationIri,
+            decisionIri: result.decisionIri,
+            submittedAt: now().toISOString(),
+            channel: body.channel === "assistant" ? "assistant" : "form",
+            ...(housing !== undefined ? { housing } : {}),
+          });
+        }
+        return Response.json(result);
       } catch (error) {
         return podErrorResponse(error);
       }

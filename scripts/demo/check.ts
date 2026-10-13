@@ -97,6 +97,17 @@ async function main(): Promise<void> {
       "a revocation was logged",
       events.some((e) => e.kind === "access" && e.summary.includes("removed")),
     ],
+    [
+      "application written via the assistant",
+      events.some((e) => e.kind === "write" && e.path === "/mortgage/application"),
+    ],
+    [
+      "loan officer wrote the final decision",
+      events.filter(
+        (e) =>
+          e.kind === "write" && e.path === "/mortgage/decision" && e.app === "Mortgage Origination",
+      ).length >= 2,
+    ],
   ];
   for (const [label, ok] of expectations) {
     console.log(`  ${ok ? "✓" : "✗"} ${label}`);

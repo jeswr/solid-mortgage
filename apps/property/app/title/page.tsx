@@ -1,5 +1,6 @@
-import { AppShell, HonestyPanel, orgThemes } from "@mortgage/ui";
+import { AppShell, HonestyPanel, headerNavLinkClass, orgThemes } from "@mortgage/ui";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { IssueFlow } from "../../components/issue-flow";
 import { titleDemoPreview } from "../../lib/server/issue";
 import { titleBrand } from "../site";
@@ -15,7 +16,17 @@ export const metadata: Metadata = {
  */
 export default function TitlePage() {
   return (
-    <AppShell appName={titleBrand.appName} theme={orgThemes["property-title"]}>
+    <AppShell
+      appName={titleBrand.appName}
+      headerActions={
+        <nav aria-label="Property services">
+          <Link className={headerNavLinkClass} href="/">
+            All property services
+          </Link>
+        </nav>
+      }
+      theme={orgThemes["property-title"]}
+    >
       <main className="mx-auto w-full max-w-3xl px-6 py-12">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Property services · title

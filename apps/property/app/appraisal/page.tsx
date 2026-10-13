@@ -1,5 +1,6 @@
-import { AppShell, HonestyPanel, orgThemes } from "@mortgage/ui";
+import { AppShell, HonestyPanel, headerNavLinkClass, orgThemes } from "@mortgage/ui";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { IssueFlow } from "../../components/issue-flow";
 import { appraisalDemoPreview } from "../../lib/server/issue";
 import { appraisalBrand } from "../site";
@@ -16,7 +17,17 @@ export const metadata: Metadata = {
  */
 export default function AppraisalPage() {
   return (
-    <AppShell appName={appraisalBrand.appName} theme={orgThemes["property-appraisal"]}>
+    <AppShell
+      appName={appraisalBrand.appName}
+      headerActions={
+        <nav aria-label="Property services">
+          <Link className={headerNavLinkClass} href="/">
+            All property services
+          </Link>
+        </nav>
+      }
+      theme={orgThemes["property-appraisal"]}
+    >
       <main className="mx-auto w-full max-w-3xl px-6 py-12">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Property services · appraisal

@@ -1,9 +1,10 @@
-import { ConceptDemoBanner } from "@mortgage/ui";
+import { BrandMark, ConceptDemoBanner, orgThemes, themeCssProperties } from "@mortgage/ui";
 import Link from "next/link";
 import { appraisalBrand, site, titleBrand } from "./site";
 
 const flows = [
   {
+    themeId: "property-appraisal",
     href: "/appraisal",
     title: "Property appraisal",
     org: appraisalBrand.organization,
@@ -11,6 +12,7 @@ const flows = [
     body: "Issue an appraisal credential with the appraised value as a disclosed, signed claim — never a zero-knowledge proof — into the borrower's pod.",
   },
   {
+    themeId: "property-title",
     href: "/title",
     title: "Title clearance",
     org: titleBrand.organization,
@@ -22,6 +24,33 @@ const flows = [
 export default function Home() {
   return (
     <>
+      <header className="border-border border-b bg-card">
+        <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center gap-x-8 gap-y-3 px-6 py-4">
+          {flows.map((flow) => {
+            const theme = orgThemes[flow.themeId];
+            return (
+              theme.brand !== undefined && (
+                <Link
+                  className="flex items-center gap-3 no-underline hover:underline"
+                  href={flow.href}
+                  key={flow.href}
+                  style={themeCssProperties(theme)}
+                >
+                  <BrandMark brand={theme.brand} />
+                  <span>
+                    <span className="block font-semibold text-foreground">
+                      {theme.brand.productName}
+                    </span>
+                    <span className="block text-muted-foreground text-xs">
+                      {flow.role} · modelled on {flow.org}
+                    </span>
+                  </span>
+                </Link>
+              )
+            );
+          })}
+        </div>
+      </header>
       <ConceptDemoBanner organization={site.organization} placement="fixed" />
       <main className="mx-auto w-full max-w-5xl px-6 py-12 pb-24">
         <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">

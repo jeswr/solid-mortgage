@@ -198,8 +198,8 @@ export interface PodRecorderOptions {
   readonly directory: AgentDirectory;
   /** Which demo app has an API request in flight right now (for anonymous server calls). */
   readonly attributeServerCall: () => string | undefined;
-  /** Origins whose browser requests come from the demo gateway (the wallet's direct pod IO). */
-  readonly browserOrigin: string;
+  /** The demo apps' browser origins → app name (browser-side pod IO, e.g. the vault's). */
+  readonly browserOrigins: ReadonlyMap<string, string>;
   /** Called with `true` while seeding/reset, so the log stays readable. */
   readonly isMuted: () => boolean;
 }
@@ -261,8 +261,9 @@ export async function startPodRecorder(options: PodRecorderOptions): Promise<Ser
   function actorOf(request: IncomingMessage): { actor: string; app?: string } {
     const webid = tokenWebId(request.headers.authorization);
     const origin = request.headers.origin;
-    if (origin === options.browserOrigin) {
-      return { actor: "Alex Rivera (in the browser)", app: "Data Vault" };
+    const browserApp = origin === undefined ? undefined : options.browserOrigins.get(origin);
+    if (browserApp !== undefined) {
+      return { actor: "Alex Rivera (in the browser)", app: browserApp };
     }
     const app = options.attributeServerCall();
     if (webid !== undefined) {
