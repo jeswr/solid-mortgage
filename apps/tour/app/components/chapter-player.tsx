@@ -7,7 +7,7 @@ import { TryLiveButton } from "./try-live";
 
 /**
  * Chapter player: a linear, keyboard-navigable stepper over one chapter's steps, with the
- * step's try-this-live deep link and the chapter's "what just happened underneath" panel.
+ * step's try-this-live deep link and the chapter's "How it works" panel.
  */
 export function ChapterPlayer({ chapter }: { chapter: Chapter }) {
   const [stepIndex, setStepIndex] = useState(0);
@@ -42,7 +42,11 @@ export function ChapterPlayer({ chapter }: { chapter: Chapter }) {
         </h2>
         <p className="mt-3 text-card-foreground leading-relaxed">{step.body}</p>
         <div className="mt-5">
-          <TryLiveButton app={step.tryLive.app} label={step.tryLive.label} />
+          <TryLiveButton
+            app={step.tryLive.app}
+            label={step.tryLive.label}
+            path={step.tryLive.path}
+          />
         </div>
       </div>
 
@@ -68,7 +72,7 @@ export function ChapterPlayer({ chapter }: { chapter: Chapter }) {
       {chapter.underneath !== undefined && (
         <details className="mt-6 rounded-xl border border-border bg-card" data-underneath-panel="">
           <summary className="cursor-pointer px-5 py-3 font-medium text-card-foreground text-sm">
-            What just happened underneath
+            How it works
           </summary>
           <ul className="flex list-disc flex-col gap-2 border-border border-t px-5 py-4 pl-9 text-muted-foreground text-sm">
             {chapter.underneath.map((point) => (

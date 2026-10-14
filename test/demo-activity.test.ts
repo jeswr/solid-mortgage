@@ -50,7 +50,7 @@ describe("demo pod activity", () => {
   });
 
   it("names pod paths in plain language", () => {
-    expect(describePath("/mortgage/credentials/income")).toBe("employment & income credential");
+    expect(describePath("/mortgage/credentials/income")).toBe("employment and income credential");
     expect(describePath("/mortgage/closing-record.acl")).toBe("closing record");
     expect(describePath("/mortgage/")).toBe("folder /mortgage/");
   });
@@ -117,11 +117,18 @@ describe("demo pod activity", () => {
 
       const events = log.all();
       expect(events.map((event) => event.kind)).toEqual(["write", "read", "access"]);
-      expect(events[0]).toMatchObject({ app: "Digital Closing", summary: "Wrote closing record" });
-      expect(events[1]).toMatchObject({ actor: "Alex Rivera (in the browser)", app: "Data Vault" });
+      expect(events[0]).toMatchObject({
+        app: "Digital Closing",
+        summary: "Digital Closing saved Alex's closing record",
+      });
+      expect(events[1]).toMatchObject({
+        actor: "Alex Rivera (in the browser)",
+        app: "Data Vault",
+        summary: "Alex read the closing record",
+      });
       const change = events[2];
       expect(change?.summary).toBe(
-        "Access rules changed on closing record: granted Loan servicer Read; removed Primary lender's Read",
+        "Digital Closing changed permissions on Alex's closing record: granted Loan servicer read access; removed Primary lender's read access",
       );
       expect(change?.access?.granted.map((rule) => rule.agent)).toEqual([SERVICER]);
       expect(change?.access?.revoked.map((rule) => rule.agent)).toEqual([LENDER]);

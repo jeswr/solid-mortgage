@@ -19,11 +19,11 @@ export const metadata: Metadata = demoMetadata({
 });
 
 const NAV = [
-  { href: "/", label: "Vault" },
+  { href: "/", label: "Home" },
   { href: "/credentials", label: "Credentials" },
-  { href: "/prequal", label: "ZK pre-qual" },
-  { href: "/grants", label: "Access grants" },
-  { href: "/ledger", label: "Receipt ledger" },
+  { href: "/prequal", label: "Prequalify" },
+  { href: "/grants", label: "Access permissions" },
+  { href: "/ledger", label: "Consent receipts" },
   { href: "/assistant", label: "Assistant" },
 ] as const;
 

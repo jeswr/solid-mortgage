@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 /**
- * The Cotality-modelled appraisal flow. The appraised value is a DISCLOSED,
+ * The appraisal flow (modelled on Cotality). The appraised value is a DISCLOSED,
  * signed claim (decision 0005) — it is shown in the clear and written into the
  * pod as a plain `schema:value`, never wrapped in a zero-knowledge operand
  * anchor. The only gate is a plain arithmetic consistency check.
@@ -30,14 +30,13 @@ export default function AppraisalPage() {
     >
       <main className="mx-auto w-full max-w-3xl px-6 py-12">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Property services · appraisal
+          Appraisal
         </p>
         <h1 className="mt-1 text-3xl font-semibold tracking-tight text-foreground">
-          Appraise the property and issue the credential
+          Review the appraisal
         </h1>
         <p className="mt-4 text-muted-foreground">
-          The appraised value is disclosed in the credential and never proved in zero-knowledge —
-          you never prove a property of a value the credential reveals anyway (decision 0005).
+          The appraised value is shown in the credential, so it is never proved in zero-knowledge.
         </p>
         <div className="mt-6">
           <IssueFlow
@@ -52,28 +51,22 @@ export default function AppraisalPage() {
             real={
               <ul className="list-disc pl-5">
                 <li>
-                  The AppraisalCredential is signed with <code>eddsa-rdfc-2022</code> and validated
-                  against its SHACL shape before signing.
+                  The credential is checked against its data shape, then signed with{" "}
+                  <code>eddsa-rdfc-2022</code>.
                 </li>
+                <li>The status list entry, used only to revoke the credential.</li>
                 <li>
-                  The appraised value is a disclosed, signed claim (<code>schema:value</code>) —
-                  written to your pod in the clear, never a zero-knowledge proof.
-                </li>
-                <li>The Bitstring status-list entry (revocation only) is real.</li>
-                <li>
-                  The write is authorised by your own Solid session (WAC) — the pod is derived from
-                  your token, never from the request (decision 0015).
+                  The write to the borrower&apos;s own pod, authorised by their Solid sign-in.
                 </li>
               </ul>
             }
             simulated={
               <ul className="list-disc pl-5">
-                <li>The persona figures, the appraiser identity, and the property.</li>
-                <li>Org involvement — this is not {appraisalBrand.organization}.</li>
+                <li>The appraiser, the property and all figures.</li>
                 <li>
-                  In the default in-browser demo there is no real login, so the server issuer rail
-                  is off and the figures above are a preview.
+                  The organisation&apos;s involvement: this is not {appraisalBrand.organization}.
                 </li>
+                <li>Sign-in is simulated here, so the record above is a preview.</li>
               </ul>
             }
           />

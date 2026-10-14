@@ -54,12 +54,12 @@ const CREDENTIAL_DEFINITIONS: Record<
   income: {
     title: "Employment and income",
     kind: "employment-income-credential",
-    issuerLabel: "employment and income verifier",
+    issuerLabel: "employment verification provider",
   },
   assets: {
     title: "Assets",
     kind: "asset-credential",
-    issuerLabel: "depository institution",
+    issuerLabel: "asset verification provider",
   },
   credit: {
     title: "Credit score",
@@ -67,12 +67,12 @@ const CREDENTIAL_DEFINITIONS: Record<
     issuerLabel: "credit bureau",
   },
   appraisal: {
-    title: "Appraisal value",
+    title: "Appraisal",
     kind: "appraisal-credential",
     issuerLabel: "appraisal management company",
   },
   title: {
-    title: "Title clear",
+    title: "Title search result",
     kind: "title-clear-credential",
     issuerLabel: "title company",
   },
@@ -244,7 +244,7 @@ async function readAnchor(path: string, podFetch: typeof fetch): Promise<AnchorM
   const iri = iriOf(path);
   const [dataset, response] = await Promise.all([readDataset(iri, podFetch), podFetch(iri)]);
   if (dataset === undefined || !response.ok) {
-    throw new Error(`operand anchor is missing from the pod: ${iri}`);
+    throw new Error(`an issuer-signed value encoding is missing from the pod: ${iri}`);
   }
   const anchor = new ZkOperandAnchor(iri, dataset, DataFactory);
   const subject = anchor.credentialSubject;

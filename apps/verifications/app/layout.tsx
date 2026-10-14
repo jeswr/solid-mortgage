@@ -21,7 +21,7 @@ export const metadata: Metadata = demoMetadata({
 
 const NAV = [
   { href: "/", label: "Overview" },
-  { href: "/employment", label: "Employment + income" },
+  { href: "/employment", label: "Employment and income" },
   { href: "/assets", label: "Assets" },
   { href: "/credit", label: "Credit score" },
 ] as const;
@@ -42,7 +42,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
           <BrandHeader
             account={DEMO_BORROWER_ACCOUNT}
             appName={site.appName}
-            framing="GSE-accepted verification suppliers — issuer flows, modelled roles only"
+            framing="Verification providers — simulated data"
             headerActions={
               <nav aria-label="Verification flows">
                 <ul className="flex list-none flex-wrap gap-x-4 gap-y-2 p-0 text-sm">
@@ -58,10 +58,10 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
             }
             theme={SUITE_THEME}
           />
+          {/* In flow directly below the brand header, on EVERY route of this zone (R1). */}
+          <ConceptDemoBanner organization={site.organization} placement="static" />
           {children}
         </div>
-        {/* Fixed placement covers EVERY route of this multi-brand zone (R1). */}
-        <ConceptDemoBanner organization={site.organization} />
         <ConsentInterstitial appId="verifications" organization={site.organization} />
       </body>
     </html>

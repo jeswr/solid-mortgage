@@ -5,14 +5,33 @@ import { useCallback, useEffect, useState } from "react";
 import { formatUsd } from "../lib/format";
 import type { PipelineFile } from "../lib/server/pipeline";
 
-const STATUS_LABEL: Record<string, string> = {
-  Approved: "Approved, clear to close",
+/** The underwriter's credit decision. */
+const DECISION_LABEL: Record<string, string> = {
+  Approved: "Approved",
   ApprovedWithConditions: "Approved with conditions",
   Denied: "Denied",
 };
 
+/** The AUS recommendation, in the Accept / Caution terms of the modelled AUS. */
+const AUS_LABEL: Record<string, string> = {
+  Approve: "Accept",
+  Eligible: "Accept",
+  Refer: "Caution",
+  Ineligible: "Ineligible",
+  Deny: "Ineligible",
+  UnableToDetermine: "Unable to validate",
+};
+
+/** The file's status: separate from the decision, which can carry open conditions. */
+function statusOf(file: PipelineFile): string {
+  if (file.decisionStatus === "Approved") return "Clear to close";
+  if (file.decisionStatus === "ApprovedWithConditions") return "Conditions open";
+  if (file.decisionStatus === "Denied") return "Denied";
+  return "In review";
+}
+
 /**
- * Live files in the loan officer's queue: what the borrower (or their assistant)
+ * Live files in the lender's queue: what the borrower (or their assistant)
  * submitted, read straight from the borrower's pod on every refresh.
  */
 export function LivePipeline({ apiBase }: { apiBase: string }) {
@@ -50,7 +69,7 @@ export function LivePipeline({ apiBase }: { apiBase: string }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ id: file.id }),
       });
-      if (!response.ok) setError(`Could not clear the file (${response.status}).`);
+      if (!response.ok) setError(`Could not mark clear to close (${response.status}).`);
       await load();
     } finally {
       setBusy(undefined);
@@ -60,8 +79,8 @@ export function LivePipeline({ apiBase }: { apiBase: string }) {
   if (unavailable) {
     return (
       <p className="mt-6 text-muted-foreground text-sm" data-live-pipeline="off">
-        The live queue is only available when the demo runs locally (`pnpm demo`); the sample files
-        below show what it looks like.
+        The live queue runs only in the local demo (`pnpm demo`). The sample files below show the
+        layout.
       </p>
     );
   }
@@ -74,8 +93,7 @@ export function LivePipeline({ apiBase }: { apiBase: string }) {
         className="mt-6 rounded-lg border border-border border-dashed p-5 text-muted-foreground text-sm"
         data-live-pipeline="empty"
       >
-        No applications yet. Submit one from the application page or with the assistant, and it
-        appears here.
+        No applications yet. Submit one on the application or assistant page.
       </p>
     );
   }
@@ -98,17 +116,37 @@ export function LivePipeline({ apiBase }: { apiBase: string }) {
                   {file.channel === "assistant" ? "by the borrower's assistant" : "online form"}
                 </p>
               </div>
-              <span className="rounded-full bg-muted px-3 py-1 font-medium text-sm">
-                <IllustrativeFigure>
-                  {STATUS_LABEL[file.decisionStatus ?? ""] ?? "No decision yet"}
-                </IllustrativeFigure>
+              <span
+                className="rounded-full bg-muted px-3 py-1 font-medium text-sm"
+                data-pipeline-status=""
+              >
+                {statusOf(file)}
               </span>
             </div>
             <dl className="mt-4 grid gap-2 text-sm sm:grid-cols-[12rem_1fr]">
-              <dt className="text-muted-foreground">Evidence</dt>
+              <dt className="text-muted-foreground">AUS recommendation</dt>
               <dd className="m-0">
-                Verified credentials in the borrower's pod, read under their grant — nothing
-                uploaded, nothing to chase.
+                {file.ausRecommendation === undefined ? (
+                  "Not recorded"
+                ) : (
+                  <IllustrativeFigure>
+                    {AUS_LABEL[file.ausRecommendation] ?? file.ausRecommendation}
+                  </IllustrativeFigure>
+                )}
+              </dd>
+              <dt className="text-muted-foreground">Underwriter decision</dt>
+              <dd className="m-0">
+                {file.decisionStatus === undefined ? (
+                  "No decision yet"
+                ) : (
+                  <IllustrativeFigure>
+                    {DECISION_LABEL[file.decisionStatus] ?? file.decisionStatus}
+                  </IllustrativeFigure>
+                )}
+              </dd>
+              <dt className="text-muted-foreground">Loan file</dt>
+              <dd className="m-0">
+                Credentials in the borrower's pod, read with the borrower's permission.
               </dd>
               <dt className="text-muted-foreground">Application</dt>
               <dd className="m-0 break-all">
@@ -125,7 +163,7 @@ export function LivePipeline({ apiBase }: { apiBase: string }) {
                     </IllustrativeFigure>{" "}
                     a month (
                     {file.housing.source === "email"
-                      ? "found in the borrower's email by their assistant"
+                      ? "from rent receipts the assistant found"
                       : "entered by the borrower"}
                     )
                   </dd>
@@ -144,14 +182,10 @@ export function LivePipeline({ apiBase }: { apiBase: string }) {
                 onClick={() => void clear(file)}
                 type="button"
               >
-                {cleared
-                  ? "Cleared to close"
-                  : busy === file.id
-                    ? "Writing to the pod…"
-                    : "Clear to close"}
+                {cleared ? "Clear to close" : busy === file.id ? "Saving…" : "Mark clear to close"}
               </button>
               <span className="text-muted-foreground text-xs">
-                Writes the final decision into the borrower's pod.
+                The underwriter confirms the conditions are met. The demo does not check them.
               </span>
             </div>
             {error !== undefined && (

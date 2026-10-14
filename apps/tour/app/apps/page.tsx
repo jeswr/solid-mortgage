@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { AppDirectory } from "../components/app-directory";
 
 export const metadata: Metadata = {
-  description: "Open any app in the Solid Mortgage Showcase on its own.",
+  description: "Choose a role and open its app in the Solid Mortgage Showcase.",
   title: "All apps — Concept Demo",
 };
 
@@ -16,10 +16,9 @@ export default function AppsPage() {
         All apps
       </h1>
       <p className="mt-4 max-w-3xl text-muted-foreground">
-        Each app plays one organisation's seat in the mortgage. They all work against the same
-        borrower pod, so what you do in one shows up in the others. When the demo runs locally you
-        are signed in automatically as Alex Rivera, and the pod activity panel shows every read,
-        write and access change.
+        Choose a role to explore the demo. All apps share Alex's pod, so a change in one shows in
+        the others. In the local demo, requests run as Alex, so organisation-level access
+        enforcement is not shown.
       </p>
       <AppDirectory />
     </main>

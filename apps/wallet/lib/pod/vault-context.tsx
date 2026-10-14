@@ -75,31 +75,30 @@ function SimulatedLoginStrip({ state }: { state: VaultState }) {
         <strong>Simulated login.</strong>{" "}
         {state.status === "ready" ? (
           <>
-            You are browsing as the demo persona{" "}
+            You are browsing as{" "}
             <span data-vault-display-name="">
               {state.connection.displayName ?? state.connection.webId}
             </span>
             .{" "}
             {state.connection.kind === "remote" ? (
               <>
-                This is the persona&apos;s pod on your local demo server, shared with every other
-                app in the demo; you were signed in automatically and no real personal data is
-                involved.
+                This pod is on the local demo server and shared by every demo app. No real login or
+                personal data is involved.
               </>
             ) : (
               <>
-                This pod runs entirely inside your browser
+                This pod runs in your browser
                 {state.connection.kind === "shared"
                   ? " (one pod, shared across your tabs)"
-                  : " (per-tab fallback pod)"}
-                ; no real login or real personal data is involved.
+                  : " (one pod for this tab)"}
+                . No real login or personal data is involved.
               </>
             )}
           </>
         ) : state.status === "booting" ? (
-          <>The demo persona&apos;s in-browser pod is starting. No real login is involved.</>
+          <>The demo pod is starting. No real login is involved.</>
         ) : (
-          <>The in-browser demo pod failed to start: {state.message}. No real login is involved.</>
+          <>The demo pod failed to start: {state.message}. No real login is involved.</>
         )}
       </p>
     </aside>

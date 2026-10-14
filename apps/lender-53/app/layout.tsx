@@ -18,8 +18,8 @@ export const metadata: Metadata = demoMetadata({
 
 /** In-page sections of the single-page rate-quote flow. */
 const NAV = [
-  { href: "#criteria-heading", label: "Quote criteria" },
-  { href: "#quote-heading", label: "Your rate quote" },
+  { href: "#criteria-heading", label: "Criteria" },
+  { href: "#quote-heading", label: "Rate quote" },
   { href: "#zk-honesty-heading", label: "How the proof works" },
 ] as const;
 

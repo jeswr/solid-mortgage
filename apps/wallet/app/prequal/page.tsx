@@ -4,76 +4,77 @@ import { PrequalClient } from "@/components/prequal-client";
 import { site } from "../site";
 
 export const metadata = {
-  title: `Zero-knowledge pre-qualification — Concept Demo (not ${site.organization})`,
+  title: `Prequalification — Concept Demo (not ${site.organization})`,
 };
 
 /**
- * Scene 2, HOLDER side (decision 0012 rail 1): the vault produces the Tier A
- * proofs in this browser and VP-POSTs them to both competing lenders. The
- * hidden values never leave the device; the lenders learn only that both
- * statements hold.
+ * Scene 2, holder side: the Data Vault builds the threshold proofs in this
+ * browser and presents them to both lenders. Mechanics and the mandatory
+ * decision-0005 limitation items sit in the "Technical details" disclosure;
+ * the material privacy limitation stays visible (review H2, M4).
  */
 export default function PrequalPage() {
   return (
     <main className="mx-auto w-full max-w-3xl px-6 py-12">
       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        Scene 2 · shop without undressing
+        Scene 2 · Prequalify without disclosing income or credit score
       </p>
       <h1 className="mt-1 text-3xl font-semibold tracking-tight text-foreground">
-        Prove you qualify — to two lenders at once
+        Check prequalification criteria
       </h1>
       <p className="mt-4 text-muted-foreground">
-        Your vault proves <IllustrativeFigure>income ≥ $7,000 / month</IllustrativeFigure> and{" "}
-        <IllustrativeFigure>credit score ≥ 620</IllustrativeFigure> with zero-knowledge proofs
-        produced right here in your browser, from the credentials and issuer-signed operand anchors
-        in your pod. The exact figures are never <em>disclosed</em>, and the proof cannot be forged.
-        No credit pull. No document leaves your pod. (Honesty caveat below: this research-grade
-        encoding is deterministic, so for a small-range field a determined verifier could still
-        narrow the value by enumeration — &ldquo;not disclosed and not forgeable&rdquo;, never
-        &ldquo;unknowable&rdquo;.)
+        Check two lenders&apos; prequalification criteria without sending Alex&apos;s exact income
+        or credit score. The demo checks two criteria using proofs generated in this browser:
       </p>
+      <ul className="mt-2 list-disc pl-5 text-muted-foreground">
+        <li>
+          <IllustrativeFigure>Income of $7,000 a month or more</IllustrativeFigure>
+        </li>
+        <li>
+          <IllustrativeFigure>Credit score of 620 or higher</IllustrativeFigure>
+        </li>
+      </ul>
 
       <PrequalClient />
 
-      <section aria-labelledby="zk-honesty-heading" className="mt-10">
-        <h2 className="text-xl font-semibold text-foreground" id="zk-honesty-heading">
-          Zero-knowledge honesty panel
-        </h2>
-        <p className="mt-2 text-sm text-muted-foreground">{ZK_HONESTY.headline}</p>
-        <dl className="mt-4 space-y-4">
+      <p className="mt-6 rounded-lg border border-border bg-card p-4 text-sm" data-zk-limitation="">
+        <strong>Limitation:</strong> research-grade cryptography, not independently audited. Encoded
+        values may let a lender guess the underlying figures.
+      </p>
+
+      <details className="mt-6 rounded-lg border border-border bg-card" data-zk-technical="">
+        <summary className="cursor-pointer px-4 py-3 font-medium text-card-foreground text-sm">
+          Technical details: how the proof works
+        </summary>
+        <dl className="space-y-4 border-border border-t px-4 py-3">
           {ZK_HONESTY.items.map((item) => (
-            <div className="rounded-lg border border-border bg-card p-4" key={item.id}>
+            <div key={item.id}>
               <dt className="text-sm font-semibold text-card-foreground">{item.title}</dt>
               <dd className="mt-1 text-sm text-muted-foreground">{item.body}</dd>
             </div>
           ))}
         </dl>
-      </section>
+      </details>
 
-      <section aria-labelledby="honesty-heading" className="mt-10">
+      <section aria-labelledby="honesty-heading" className="mt-6">
         <h2 className="sr-only" id="honesty-heading">
           What is real and what is simulated
         </h2>
         <HonestyPanel
           real={
             <ul className="list-disc pl-5">
-              <li>
-                The UltraHonk proofs — produced in this browser, hidden values as private witness.
-              </li>
-              <li>
-                The issuer-signed operand anchors read from your pod (a bare proof is forgeable).
-              </li>
-              <li>The single-use challenge nonces minted by each lender&apos;s rail.</li>
+              <li>Zero-knowledge proofs generated in this browser.</li>
+              <li>Issuer-signed value encodings read from Alex&apos;s pod.</li>
+              <li>A single-use challenge from each lender.</li>
             </ul>
           }
           simulated={
             <ul className="list-disc pl-5">
-              <li>The lenders, their branding, and every rate or figure shown.</li>
+              <li>The lenders, their branding, and every rate shown.</li>
               <li>
-                The login: this in-browser session cannot mint DPoP proofs — the live lender rail
-                says so with a 401, honestly surfaced below.
+                Sign-in. Without a real sign-in, a lender&apos;s service may refuse the proofs.
               </li>
-              <li>Any suggestion of an offer of credit — there is none.</li>
+              <li>Any offer of credit. There is none.</li>
             </ul>
           }
         />

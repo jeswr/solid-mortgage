@@ -77,7 +77,7 @@ test.describe("tour app — landing, map, chapters, Examiner View", () => {
       `/chapters/${chapters[0].slug}`,
     );
     // Quantified anchors carry citations.
-    await expect(page.locator("[data-anchor-sources] a")).toHaveCount(4);
+    await expect(page.locator("[data-anchor-sources] a")).toHaveCount(3);
 
     // Consent is cookie-persisted.
     await page.reload();

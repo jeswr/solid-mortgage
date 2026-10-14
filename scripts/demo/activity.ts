@@ -163,21 +163,24 @@ function tokenWebId(authorization: string | undefined): string | undefined {
 const READABLE_PATHS: readonly [RegExp, string][] = [
   [/\/profile\/card$/, "WebID profile"],
   [/\/status\//, "credential status list"],
-  [/\/issuers?\//, "issuer identity document"],
-  [/\/credentials?\/.*(employment|income)/, "employment & income credential"],
-  [/\/credentials?\/.*asset/, "bank assets credential"],
-  [/\/credentials?\/.*credit/, "credit score credential"],
+  [/\/issuers?\//, "issuer profile"],
+  [/\/credentials?\/.*(employment|income)/, "employment and income credential"],
+  [/\/credentials?\/.*asset/, "asset verification credential"],
+  [/\/credentials?\/.*credit/, "credit-score credential"],
   [/\/credentials?\/.*apprais/, "appraisal credential"],
-  [/\/credentials?\/.*title/, "title credential"],
-  [/anchor/, "zero-knowledge operand anchor"],
-  [/receipt|ledger|consent/, "consent receipt ledger"],
+  [/\/credentials?\/.*title/, "title search credential"],
+  [/anchor/, "issuer-signed commitment (for zero-knowledge proofs)"],
+  [/receipt|ledger|consent/, "consent records"],
   [/closing/, "closing record"],
   [/estimate/, "Loan Estimate"],
   [/application/, "loan application"],
-  [/decision/, "loan decision record (Loan Estimate and underwriting result)"],
-  [/underwriting|aus/, "underwriting decision"],
+  [/decision/, "underwriting decision record"],
+  [/underwriting|aus/, "AUS findings"],
   [/borrower|profile/, "borrower profile"],
 ];
+
+/** Labels for documents that describe an issuer, not Alex: no possessive in sentences. */
+const NOT_ALEXS = new Set(["credential status list", "issuer profile"]);
 
 /** A plain-English name for a pod path (falls back to the file name). */
 export function describePath(path: string): string {
@@ -188,6 +191,24 @@ export function describePath(path: string): string {
   if (clean.endsWith("/")) return `folder ${clean}`;
   return localName(clean) || clean;
 }
+
+/** The object of a log sentence: "Alex's loan application", "the issuer profile". */
+function objectPhrase(path: string, subject: string): string {
+  const label = describePath(path);
+  const owned = subject !== "Alex" && !NOT_ALEXS.has(label) && !label.startsWith("folder ");
+  return owned ? `Alex's ${label}` : `the ${label}`;
+}
+
+/** The subject of a log sentence: who made the request, as a short name. */
+function subjectOf(who: { actor: string; app?: string }): string {
+  if (who.actor.startsWith("Alex Rivera")) return "Alex";
+  if (who.app !== undefined && who.actor === `${who.app} server`) return who.app;
+  if (who.actor === "Demo server") return "The demo server";
+  return who.actor;
+}
+
+const modeText = (modes: readonly string[]) =>
+  `${modes.map((mode) => mode.toLowerCase()).join(" and ")} access`;
 
 export interface PodRecorderOptions {
   /** Port the pod proxy listens on (the pod's public `baseUrl` origin). */
@@ -308,18 +329,20 @@ export async function startPodRecorder(options: PodRecorderOptions): Promise<Ser
       const { granted, revoked } = diffRules(before, rules);
       const resource = pathname.replace(/\.acl$/, "");
       const parts: string[] = [];
-      for (const rule of granted) parts.push(`granted ${rule.who} ${rule.modes.join(" + ")}`);
-      for (const rule of revoked) parts.push(`removed ${rule.who}'s ${rule.modes.join(" + ")}`);
-      const change = parts.length > 0 ? parts.join("; ") : "rules rewritten (no net change)";
+      for (const rule of granted) parts.push(`granted ${rule.who} ${modeText(rule.modes)}`);
+      for (const rule of revoked) parts.push(`removed ${rule.who}'s ${modeText(rule.modes)}`);
+      const change = parts.length > 0 ? parts.join("; ") : "no net change";
+      const who = actorOf(request);
+      const subject = subjectOf(who);
       log.record({
         kind: "access",
         method,
         path: pathname,
         status,
-        ...actorOf(request),
+        ...who,
         summary: created
-          ? `New access rules on ${describePath(resource)} (until now it inherited its folder's): ${change}`
-          : `Access rules changed on ${describePath(resource)}: ${change}`,
+          ? `${subject} set permissions on ${objectPhrase(resource, subject)}: ${change}`
+          : `${subject} changed permissions on ${objectPhrase(resource, subject)}: ${change}`,
         access: { resource, granted, revoked, rules },
       });
       return;
@@ -329,24 +352,28 @@ export async function startPodRecorder(options: PodRecorderOptions): Promise<Ser
       knownAcls.delete(pathname);
       if (options.isMuted()) return;
       const resource = pathname.replace(/\.acl$/, "");
+      const who = actorOf(request);
+      const subject = subjectOf(who);
       log.record({
         kind: "access",
         method,
         path: pathname,
         status,
-        ...actorOf(request),
-        summary: `Access rules removed from ${describePath(resource)} (it now inherits its folder's rules)`,
+        ...who,
+        summary: `${subject} removed the separate permissions on ${objectPhrase(resource, subject)}: it now follows its folder's permissions`,
         access: { resource, granted: [], revoked: before, rules: [] },
       });
       return;
     }
     if (options.isMuted()) return;
 
-    const what = describePath(pathname);
+    const who = actorOf(request);
+    const subject = subjectOf(who);
+    const what = objectPhrase(pathname, subject);
     const outcome = ok
       ? ""
       : status === 404
-        ? " (not there yet)"
+        ? " (not found)"
         : status === 401 || status === 403
           ? ` (refused, ${status})`
           : ` (failed, ${status})`;
@@ -356,8 +383,10 @@ export async function startPodRecorder(options: PodRecorderOptions): Promise<Ser
         method,
         path: pathname,
         status,
-        ...actorOf(request),
-        summary: `${isAcl ? "Checked access rules of" : "Read"} ${what}${outcome}`,
+        ...who,
+        summary: isAcl
+          ? `${subject} checked who can access ${what}${outcome}`
+          : `${subject} read ${what}${outcome}`,
       });
     } else if (method === "DELETE") {
       log.record({
@@ -365,18 +394,18 @@ export async function startPodRecorder(options: PodRecorderOptions): Promise<Ser
         method,
         path: pathname,
         status,
-        ...actorOf(request),
-        summary: `Deleted ${what}${outcome}`,
+        ...who,
+        summary: `${subject} deleted ${what}${outcome}`,
       });
     } else {
-      const verb = method === "PATCH" ? "Updated" : method === "POST" ? "Added to" : "Wrote";
+      const verb = method === "PATCH" ? "updated" : method === "POST" ? "added to" : "saved";
       log.record({
         kind: "write",
         method,
         path: pathname,
         status,
-        ...actorOf(request),
-        summary: `${verb} ${what}${outcome}`,
+        ...who,
+        summary: `${subject} ${verb} ${what}${outcome}`,
       });
     }
   }

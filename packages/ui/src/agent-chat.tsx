@@ -81,8 +81,8 @@ export function AgentConversation({
           <p className="font-semibold text-card-foreground">{agentName}</p>
           <p className="text-muted-foreground text-xs">
             {engine === undefined
-              ? "Scripted demo assistant: it acts with your own sign-in, and only after you say yes."
-              : `Answered by ${engine}. It acts with your own sign-in, and only after you say yes.`}
+              ? "Scripted demo assistant. It acts only after you say yes."
+              : `Answered by ${engine}. It acts only after you say yes.`}
           </p>
         </div>
       </header>
@@ -135,11 +135,8 @@ export function AgentConversation({
               disabled={busy}
               id="agent-input"
               onChange={(event) => setDraft(event.target.value)}
-              placeholder={
-                engine === undefined
-                  ? "Type a reply (demo: do not enter real information)"
-                  : "Ask or tell your assistant anything (demo: do not enter real information)"
-              }
+              aria-describedby="agent-input-hint"
+              placeholder={engine === undefined ? "Type a reply" : "Ask your assistant"}
               value={draft}
             />
             <button
@@ -150,6 +147,9 @@ export function AgentConversation({
               Send
             </button>
           </form>
+          <p className="mt-2 text-muted-foreground text-xs" id="agent-input-hint">
+            Use demo information only.
+          </p>
         </div>
       )}
     </section>
@@ -164,6 +164,8 @@ export interface ConsentSource {
   readonly reads: string;
   /** Shown as a tag, e.g. "simulated" for the demo inbox. */
   readonly note?: string;
+  /** Optional sources start unselected; the visitor opts in (astra-review-1 M10). */
+  readonly optional?: boolean;
 }
 
 export interface ConsentRequestProps {
@@ -183,7 +185,9 @@ export function ConsentRequest({
   manualLabel = "No thanks, I'll do it myself",
   disabled = false,
 }: ConsentRequestProps) {
-  const [allowed, setAllowed] = useState<readonly string[]>(sources.map((source) => source.id));
+  const [allowed, setAllowed] = useState<readonly string[]>(
+    sources.filter((source) => source.optional !== true).map((source) => source.id),
+  );
   const toggle = (id: string) =>
     setAllowed((current) =>
       current.includes(id) ? current.filter((entry) => entry !== id) : [...current, id],
@@ -193,7 +197,7 @@ export function ConsentRequest({
       className="mt-2 rounded-xl border border-border bg-card p-4 text-card-foreground"
       data-consent-request=""
     >
-      <p className="font-semibold text-sm">Allow access?</p>
+      <p className="font-semibold text-sm">Choose data sources</p>
       <ul className="mt-2 flex flex-col gap-2">
         {sources.map((source) => (
           <li key={source.id}>
@@ -208,6 +212,9 @@ export function ConsentRequest({
               />
               <span>
                 <span className="font-medium">{source.name}</span>
+                {source.optional === true && (
+                  <span className="ml-2 text-muted-foreground text-xs">optional</span>
+                )}
                 {source.note !== undefined && (
                   <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-muted-foreground text-xs">
                     {source.note}
@@ -227,9 +234,7 @@ export function ConsentRequest({
           onClick={() => onAllow(allowed)}
           type="button"
         >
-          {allowed.length === sources.length
-            ? "Allow"
-            : `Allow ${allowed.length} of ${sources.length}`}
+          {allowed.length === 0 ? "Allow none" : "Allow selected sources"}
         </button>
         <button
           className="rounded-lg border border-border px-4 py-2 font-semibold text-sm disabled:opacity-50"

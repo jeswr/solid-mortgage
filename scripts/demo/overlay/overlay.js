@@ -69,7 +69,7 @@
     read: "Read",
     write: "Write",
     delete: "Delete",
-    access: "Access change",
+    access: "Permission change",
     auth: "Sign-in",
     info: "Setup",
   };
@@ -77,7 +77,7 @@
     ["all", "All"],
     ["read", "Reads"],
     ["write", "Writes"],
-    ["access", "Access"],
+    ["access", "Permissions"],
     ["auth", "Sign-ins"],
   ];
 
@@ -121,6 +121,10 @@
     li.auth { border-left-color: #7c3aed; }
     li.info { border-left-color: #64748b; }
     .meta { display: flex; gap: 6px; flex-wrap: wrap; font-size: 11px; color: #475569; margin-top: 4px; }
+    .times { font-weight: 600; color: #334155; }
+    details.tech { margin-top: 4px; font-size: 11px; color: #475569; }
+    details.tech summary { cursor: pointer; }
+    details.tech[open] summary { margin-bottom: 2px; }
     .kind { font-weight: 700; text-transform: uppercase; letter-spacing: .03em; font-size: 10px; }
     code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; color: #334155; word-break: break-all; }
     ul.rules { margin: 6px 0 0; padding-left: 18px; font-size: 12px; }
@@ -132,24 +136,33 @@
     footer.side { border-top: 1px solid #e2e8f0; padding: 10px 16px 14px; font-size: 12px; color: #475569; line-height: 1.4; }
     footer.side label { display: flex; gap: 8px; align-items: center; font-weight: 600; color: #0f172a; }
 
-    .guide { position: fixed; right: 16px; bottom: 128px; z-index: 2147483000; width: min(380px, calc(100vw - 32px)); background: #0f172a;
-      color: #f8fafc; border-radius: 14px; padding: 14px 16px; box-shadow: 0 12px 32px rgb(15 23 42 / .35); font-size: 14px; line-height: 1.45;
-      max-height: calc(100vh - 160px); overflow-y: auto; }
-    .guide.shifted { right: min(436px, calc(100vw - 396px)); }
-    .guide .scene { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: #fbbf24; font-weight: 700; }
-    .guide h3 { margin: 4px 0 6px; font-size: 16px; }
-    .guide p { margin: 0 0 8px; color: #e2e8f0; }
-    .guide .todo { background: #1e293b; border-radius: 8px; padding: 8px 10px; margin: 8px 0; font-size: 13px; }
+    .guide { position: fixed; right: 16px; bottom: 16px; z-index: 2147483000; width: min(360px, calc(100vw - 32px)); background: #0f172a;
+      color: #f8fafc; border-radius: 12px; padding: 12px 14px; box-shadow: 0 12px 32px rgb(15 23 42 / .35); font-size: 13px; line-height: 1.45;
+      max-height: calc(100vh - 140px); overflow-y: auto; }
+    .guide.shifted { right: min(436px, calc(100vw - 376px)); }
+    .guide .scene { font-size: 11px; color: #fbbf24; font-weight: 700; }
+    .guide .count { font-size: 11px; color: #cbd5e1; white-space: nowrap; }
+    .guide h3 { margin: 2px 0 4px; font-size: 15px; }
+    .guide p { margin: 0 0 6px; color: #e2e8f0; }
+    .guide .todo { background: #1e293b; border-radius: 8px; padding: 6px 10px; margin: 6px 0; }
     .guide .todo strong { color: #fbbf24; }
     .guide .done { color: #86efac; font-weight: 700; }
-    .guide .watch { font-size: 12px; color: #cbd5e1; border-left: 3px solid #f59e0b; padding-left: 8px; margin: 6px 0 10px; }
-    .guide .progress { height: 4px; background: #334155; border-radius: 4px; margin: 10px 0; overflow: hidden; }
+    .guide .watch { font-size: 12px; color: #cbd5e1; border-left: 3px solid #f59e0b; padding-left: 8px; margin: 4px 0 6px; }
+    .guide .progress { height: 3px; background: #334155; border-radius: 3px; margin: 8px 0; overflow: hidden; }
     .guide .progress span { display: block; height: 100%; background: #f59e0b; }
     .guide .btn { background: #1e293b; color: #f8fafc; border-color: #475569; }
     .guide .btn.primary { background: #f59e0b; color: #0f172a; border-color: #f59e0b; }
-    .guide .count { font-size: 12px; color: #cbd5e1; }
-    .guide .link { background: none; border: 0; color: #fbbf24; text-decoration: underline; font-size: 12px; padding: 0 0 0 6px; }
-    @media (max-width: 900px) { .guide.shifted { right: 16px; } }
+    .guide .link { background: none; border: 0; color: #fbbf24; text-decoration: underline; font-size: 12px; padding: 0; }
+    @media (max-width: 1199px) {
+      .guiding .guide { bottom: 120px; }
+      .guide.shifted { right: 16px; }
+    }
+    /* Wide screens: the page is given a right-hand column (see pageStyle), and the guide and the
+       dock sit in it instead of over the page's content. */
+    @media (min-width: 1200px) {
+      .guiding .dock { left: auto; right: 16px; bottom: 16px; width: 360px; justify-content: flex-end; }
+      .guiding .guide { bottom: 64px; }
+    }
   `;
 
   // Page-level style for the highlighted button (it lives outside the shadow root).
@@ -159,6 +172,9 @@
       animation: solid-demo-pulse 1.6s ease-in-out infinite; }
     @keyframes solid-demo-pulse { 50% { outline-color: rgb(245 158 11 / .35); } }
     @media (prefers-reduced-motion: reduce) { [data-solid-demo-target] { animation: none; } }
+    @media (min-width: 1200px) {
+      html[data-solid-demo-guiding] body { padding-right: 392px !important; }
+    }
   `;
 
   let config = { steps: [], apps: [], persona: { name: "the demo persona" } };
@@ -226,54 +242,66 @@
 
   const ruleText = (rule) => `${rule.who}: ${rule.modes.join(", ")} on ${rule.scope}`;
 
-  function eventItem(event, fresh) {
+  /**
+   * One log entry. The business action leads; the request (method, path, status) and the
+   * unchanged permission rules sit under "Technical details". `times` > 1 marks a run of
+   * identical reads shown as one entry.
+   */
+  function eventItem(event, fresh, times = 1) {
     const item = el(
       "li",
       { class: `event ${event.kind}${fresh ? " fresh" : ""}`, "data-kind": event.kind },
-      el("div", {}, event.summary),
+      el(
+        "div",
+        {},
+        event.summary,
+        times > 1 ? el("span", { class: "times" }, ` · ${times} times`) : null,
+      ),
       el(
         "div",
         { class: "meta" },
-        el("span", { class: "kind" }, KIND_LABEL[event.kind] ?? event.kind),
         el("span", {}, time(event.at)),
-        el(
-          "span",
-          {},
-          event.app && !event.actor.includes(event.app)
-            ? `${event.actor} · ${event.app}`
-            : event.actor,
-        ),
+        event.app && !event.actor.includes(event.app) ? el("span", {}, `in ${event.app}`) : null,
       ),
     );
-    if (event.path) {
-      item.append(
-        el(
-          "div",
-          { class: "meta" },
-          el("code", {}, `${event.method ?? ""} ${safeDecode(event.path)}`),
-          event.status ? el("span", {}, String(event.status)) : null,
-        ),
-      );
-    }
+    const technical = [];
     if (event.access) {
       const { granted, revoked, rules } = event.access;
       const changed = new Set(granted.map((rule) => JSON.stringify(rule)));
       const lines = [
         ...granted.map((rule) => el("li", { class: "granted" }, ruleText(rule))),
         ...revoked.map((rule) => el("li", { class: "revoked" }, ruleText(rule))),
-        ...rules
-          .filter((rule) => !changed.has(JSON.stringify(rule)))
-          .map((rule) => el("li", { class: "kept" }, ruleText(rule))),
       ];
       if (lines.length > 0) {
         item.append(
-          el(
-            "ul",
-            { class: "rules", "aria-label": "Access rules: added, removed, unchanged" },
-            lines,
-          ),
+          el("ul", { class: "rules", "aria-label": "Permissions added and removed" }, lines),
         );
       }
+      const kept = rules
+        .filter((rule) => !changed.has(JSON.stringify(rule)))
+        .map((rule) => el("li", { class: "kept" }, ruleText(rule)));
+      if (kept.length > 0) {
+        technical.push(
+          el("ul", { class: "rules", "aria-label": "Unchanged access control list rules" }, kept),
+        );
+      }
+    }
+    if (event.path) {
+      technical.unshift(
+        el(
+          "div",
+          { class: "meta" },
+          el("span", { class: "kind" }, KIND_LABEL[event.kind] ?? event.kind),
+          el("code", {}, `${event.method ?? ""} ${safeDecode(event.path)}`),
+          event.status ? el("span", {}, String(event.status)) : null,
+          el("span", {}, event.actor),
+        ),
+      );
+    }
+    if (technical.length > 0) {
+      item.append(
+        el("details", { class: "tech" }, el("summary", {}, "Technical details"), technical),
+      );
     }
     return item;
   }
@@ -281,19 +309,47 @@
   const matches = (event) =>
     filter === "all" || event.kind === filter || (filter === "write" && event.kind === "delete");
 
+  /** Consecutive identical reads (an app refreshing a page) collapse into one entry. */
+  const sameRead = (a, b) =>
+    a !== undefined &&
+    b !== undefined &&
+    a.kind === "read" &&
+    b.kind === "read" &&
+    a.summary === b.summary &&
+    a.actor === b.actor;
+
+  /** Shown entries, newest first: [latest event of the run, run length]. */
+  function groupEvents(shown) {
+    const groups = [];
+    for (const event of shown) {
+      const last = groups[groups.length - 1];
+      if (last && sameRead(last[0], event)) {
+        last[0] = event;
+        last[1] += 1;
+      } else {
+        groups.push([event, 1]);
+      }
+    }
+    return groups.reverse();
+  }
+
+  let topGroup;
   function renderEvents() {
-    const shown = events.filter(matches).slice().reverse();
-    if (shown.length === 0) {
+    const groups = groupEvents(events.filter(matches));
+    topGroup = groups[0] ? { event: groups[0][0], times: groups[0][1] } : undefined;
+    if (groups.length === 0) {
       list.replaceChildren(
         el(
           "li",
           { class: "empty" },
-          "Nothing yet. Use any app and its pod reads and writes appear here.",
+          "Nothing yet. Reads and changes appear here as you use the apps.",
         ),
       );
       return;
     }
-    list.replaceChildren(...shown.slice(0, 400).map((event) => eventItem(event, false)));
+    list.replaceChildren(
+      ...groups.slice(0, 400).map(([event, times]) => eventItem(event, false, times)),
+    );
   }
 
   function addEvent(event) {
@@ -305,6 +361,12 @@
     }
     if (!matches(event)) return;
     list.querySelector(".empty")?.remove();
+    if (topGroup && sameRead(topGroup.event, event) && list.firstElementChild) {
+      topGroup = { event, times: topGroup.times + 1 };
+      list.firstElementChild.replaceWith(eventItem(event, true, topGroup.times));
+      return;
+    }
+    topGroup = { event, times: 1 };
     list.prepend(eventItem(event, true));
   }
 
@@ -317,7 +379,7 @@
       el(
         "div",
         { class: "row spread" },
-        el("h2", {}, "What's happening in the pod"),
+        el("h2", {}, "Pod activity"),
         el(
           "div",
           { class: "row" },
@@ -353,7 +415,7 @@
       el(
         "p",
         {},
-        "Every request that reaches Alex's Solid pod, newest first, with who made it. Access changes list the rules added (+), removed (−) and unchanged.",
+        "Who read or changed Alex's pod, newest first. Permission changes show who was added (+) or removed (−).",
       ),
     ),
     filterBar,
@@ -365,7 +427,7 @@
       el(
         "p",
         { style: "margin:6px 0 0" },
-        "Turn this off to see the apps refuse anonymous requests. This local pod runs in development mode: access rules are written and shown here, but every request is answered as the pod owner.",
+        "Turn this off to see the apps refuse anonymous requests. Local demo: permission changes are saved, but the pod answers every request as Alex. It does not enforce each organisation's access.",
       ),
       el(
         "div",
@@ -483,93 +545,127 @@
     }
   }
 
+  /** Show or hide the guide, and reserve the page's right-hand column while it shows. */
+  function setGuideVisible(visible) {
+    guide.hidden = !visible;
+    tourButton.hidden = visible;
+    frame.classList.toggle("guiding", visible);
+    document.documentElement.toggleAttribute("data-solid-demo-guiding", visible);
+  }
+
   function stopGuided() {
     guided = { active: false, index: guided.index };
     write("guided", guided);
     clearTargets();
     clearInterval(refreshTimer);
-    guide.hidden = true;
-    tourButton.hidden = false;
+    setGuideVisible(false);
   }
+
+  /** The visible name of a page button, for the action line (falls back to the step's). */
+  const buttonName = (button, fallback) => {
+    const text = button?.textContent?.trim().replace(/\s+/g, " ");
+    return text && text.length <= 60 ? text : fallback;
+  };
 
   function renderGuide() {
     clearInterval(refreshTimer);
     clearTargets();
     if (!guided.active || config.steps.length === 0) {
-      guide.hidden = true;
-      tourButton.hidden = false;
+      setGuideVisible(false);
       return;
     }
     const steps = config.steps;
     const index = Math.min(guided.index, steps.length - 1);
     const step = steps[index];
-    guide.hidden = false;
-    tourButton.hidden = true;
+    // Keep keyboard focus on the same control when the card is rebuilt.
+    const focusedRole = root.activeElement?.getAttribute?.("data-guide-role") ?? undefined;
+    setGuideVisible(true);
     const last = index === steps.length - 1;
-    const status = el("div", { class: "todo", "data-guide-status": "" });
+    const status = el("div", { class: "todo", "data-guide-status": "", "aria-live": "polite" });
+    let statusKey = "";
+    /** Replace the action line only when it changes, so screen readers hear it once. */
+    const setStatus = (key, ...nodes) => {
+      if (key === statusKey) return;
+      statusKey = key;
+      if (key.startsWith("done")) status.setAttribute("data-done", "");
+      else status.removeAttribute("data-done");
+      status.replaceChildren(...nodes);
+    };
     const doIt = el(
       "button",
-      { class: "btn", type: "button", "data-guide-do": "" },
+      { class: "btn", type: "button", "data-guide-do": "", "data-guide-role": "do" },
       "Do it for me",
     );
     const nextButton = el(
       "button",
-      { class: "btn primary", type: "button", "data-guide-next": "" },
+      { class: "btn primary", type: "button", "data-guide-next": "", "data-guide-role": "next" },
       last ? "Finish" : "Next",
     );
     const advance = () => (last ? stopGuided() : go(index + 1));
     nextButton.onclick = advance;
+    const setNextLabel = (label) => {
+      if (nextButton.textContent !== label) nextButton.textContent = label;
+    };
     let pressed = false;
 
     function refresh() {
       if (!samePage(step.path)) {
-        status.replaceChildren(
-          "This step is on another page. ",
-          el("strong", {}, "Press Next"),
-          " to go there.",
+        setStatus(
+          "elsewhere",
+          "This step is on another page. Press ",
+          el("strong", {}, "Next"),
+          ".",
         );
         nextButton.onclick = () => openStep(index);
+        setNextLabel("Next");
         doIt.hidden = true;
         return;
       }
       nextButton.onclick = advance;
+      const finalLabel = last ? "Finish" : "Next";
       const notice = noticeButton();
       if (notice) {
         clearTargets(notice);
         notice.setAttribute("data-solid-demo-target", "");
-        status.replaceChildren(
-          "First read the concept-demo notice for this app, then press ",
+        setStatus(
+          "notice",
+          "Read this app's concept-demo notice, then press ",
           el("strong", {}, "I understand — enter the demo"),
           ".",
         );
+        setNextLabel(step.action ? "Skip step" : finalLabel);
         doIt.hidden = true;
         return;
       }
       if (step.action && isDone(step)) {
         clearTargets();
-        status.setAttribute("data-done", "");
-        status.replaceChildren(
+        setStatus(
+          "done",
           el("span", { class: "done" }, "✓ Done. "),
           last ? "" : "Press Next to continue.",
         );
+        setNextLabel(finalLabel);
         doIt.hidden = true;
         return;
       }
       if (step.action) {
+        setNextLabel("Skip step");
         const button = findButton(step);
         if (!button) {
           clearTargets();
-          status.replaceChildren("Waiting for the page to load…");
+          setStatus("loading", "Waiting for the page to load…");
           doIt.hidden = true;
           return;
         }
         clearTargets(button);
         button.setAttribute("data-solid-demo-target", "");
         const busy = button.disabled === true || button.getAttribute("aria-disabled") === "true";
-        status.replaceChildren(
-          pressed || busy ? "Working… " : "Press ",
-          el("strong", {}, step.action.label),
-          pressed || busy ? "" : " (highlighted on the page).",
+        const name = pressed || busy ? step.action.label : buttonName(button, step.action.label);
+        setStatus(
+          `${pressed || busy ? "busy" : "press"}:${name}`,
+          ...(pressed || busy
+            ? ["Working…"]
+            : ["Press ", el("strong", {}, name), " (highlighted), or Do it for me."]),
         );
         doIt.hidden = false;
         doIt.disabled = busy || pressed;
@@ -582,46 +678,71 @@
         return;
       }
       clearTargets();
-      status.replaceChildren(
-        "Have a look around this page, then press ",
-        el("strong", {}, last ? "Finish" : "Next"),
-        ".",
-      );
+      setNextLabel(finalLabel);
+      if (step.doneSelector && !isDone(step)) {
+        setStatus("loading", "Waiting for the page to load…");
+      } else {
+        setStatus("look", "Have a look, then press ", el("strong", {}, finalLabel), ".");
+      }
       doIt.hidden = true;
     }
 
-    const collapsed = read("guide-collapsed", false);
+    // Details (what to watch in Pod activity) start collapsed to keep the card small.
+    const open = read("guide-details", false);
     const details = el(
       "div",
-      { hidden: collapsed },
-      el("p", {}, step.body),
-      status,
+      { hidden: !open, id: "solid-demo-guide-details" },
       step.watch ? el("div", { class: "watch" }, step.watch) : "",
+      el(
+        "button",
+        {
+          class: "link",
+          type: "button",
+          onclick: () => setSidebar(true),
+        },
+        "Open Pod activity",
+      ),
     );
-    const collapse = el(
+    const toggleDetails = el(
       "button",
       {
         class: "link",
         type: "button",
-        "aria-expanded": String(!collapsed),
+        "aria-expanded": String(open),
+        "aria-controls": "solid-demo-guide-details",
+        "data-guide-role": "details",
         onclick: () => {
-          const hide = !details.hidden;
-          details.hidden = hide;
-          collapse.setAttribute("aria-expanded", String(!hide));
-          collapse.textContent = hide ? "Show" : "Hide";
-          write("guide-collapsed", hide);
+          const show = details.hidden;
+          details.hidden = !show;
+          toggleDetails.setAttribute("aria-expanded", String(show));
+          toggleDetails.textContent = show ? "Hide details" : "Details";
+          write("guide-details", show);
         },
       },
-      collapsed ? "Show" : "Hide",
+      open ? "Hide details" : "Details",
+    );
+    const back = el(
+      "button",
+      {
+        class: "btn",
+        type: "button",
+        disabled: index === 0,
+        "data-guide-role": "back",
+        onclick: () => go(index - 1),
+      },
+      "Back",
     );
     guide.replaceChildren(
       el(
         "div",
         { class: "row spread" },
-        el("span", { class: "scene" }, step.scene),
-        el("span", { class: "count" }, `Step ${index + 1} of ${steps.length} `, collapse),
+        el("span", { class: "count" }, `Step ${index + 1} of ${steps.length}`),
+        toggleDetails,
       ),
+      el("div", { class: "scene" }, step.scene),
       el("h3", {}, step.title),
+      el("p", {}, step.body),
+      status,
       details,
       el(
         "div",
@@ -634,18 +755,22 @@
         el(
           "div",
           { class: "row" },
+          back,
           el(
             "button",
-            { class: "btn", type: "button", disabled: index === 0, onclick: () => go(index - 1) },
-            "Back",
+            { class: "btn", type: "button", "data-guide-role": "exit", onclick: stopGuided },
+            "Exit tour",
           ),
-          el("button", { class: "btn", type: "button", onclick: stopGuided }, "Exit tour"),
         ),
         el("div", { class: "row" }, doIt, nextButton),
       ),
     );
     guide.setAttribute("data-guide-step", step.id);
     refresh();
+    if (focusedRole) {
+      const target = guide.querySelector(`[data-guide-role="${focusedRole}"]`);
+      (target && !target.disabled && !target.hidden ? target : nextButton).focus();
+    }
     refreshTimer = setInterval(refresh, 600);
   }
 

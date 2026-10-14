@@ -47,7 +47,7 @@ export const GRANT_PARTIES: Readonly<Record<GrantPartyId, GrantPartyDefinition>>
   },
   "lender-53": {
     id: "lender-53",
-    label: "Competing pre-qual lender — modelled on Fifth Third Bank",
+    label: "Second lender — modelled on Fifth Third Bank",
     write: false,
     control: false,
     envVar: "MORTGAGE_LENDER53_SERVICE_WEBID",
@@ -61,7 +61,7 @@ export const GRANT_PARTIES: Readonly<Record<GrantPartyId, GrantPartyDefinition>>
   },
   closing: {
     id: "closing",
-    label: "Digital closing platform — modelled on Wolters Kluwer (eOriginal)",
+    label: "eClosing platform — modelled on Wolters Kluwer (eOriginal)",
     write: true,
     control: true,
     envVar: "MORTGAGE_CLOSING_SERVICE_WEBID",

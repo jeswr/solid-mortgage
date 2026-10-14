@@ -250,9 +250,8 @@ export function createPodRailService(options: PodRailServiceOptions): PodRailSer
         simulated: true,
         dispatched: false,
         nextStep:
-          "Simulated request — nothing was sent. In production this notifies the employment " +
-          "verifier, which re-issues through the existing grant (one click for the borrower). " +
-          "Re-run the freshness check to pick up the replacement credential.",
+          "Simulated: nothing was sent. A live lender would ask the employment verification " +
+          "provider to re-issue the credential. Re-issue it in Verification Services, then check again.",
       });
     },
   };

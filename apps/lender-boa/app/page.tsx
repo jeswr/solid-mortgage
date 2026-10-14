@@ -4,27 +4,27 @@ import { site } from "./site";
 const scenes = [
   {
     href: "/prequal",
-    title: "Pre-qualify without sharing your numbers",
+    title: "Prequalify without disclosing income or credit score",
     scene: "Scene 2",
-    body: "Prove income and credit-score thresholds with zero-knowledge proofs — no values revealed, no credit pull, no PII left behind.",
+    body: "Alex sends threshold proofs, not the exact figures.",
   },
   {
     href: "/application",
-    title: "One-click application",
+    title: "Apply with data from the pod",
     scene: "Scene 3",
-    body: "Grant scoped pod access; the URLA subset prefills from your pod and the Loan Estimate lands back in it.",
+    body: "The application prefills from data Alex lets the lender read.",
   },
   {
     href: "/freshness",
-    title: "Nothing goes stale",
+    title: "Re-verify employment before closing",
     scene: "Scene 4",
-    body: "Pre-close freshness re-check of the employment credential, with a one-click re-issue through the existing grant.",
+    body: "The lender checks that the employment credential is still valid.",
   },
   {
     href: "/pipeline",
-    title: "Loan-officer pipeline",
+    title: "Loan pipeline",
     scene: "Lender view",
-    body: "The originator's side of the same journey — applications, evidence status, and decisions.",
+    body: "Applications, conditions and status.",
   },
 ] as const;
 
@@ -38,9 +38,8 @@ export default function Home() {
         {site.appName}
       </h1>
       <p className="mt-5 max-w-2xl text-lg text-muted-foreground">
-        The {site.role} seat in the journey, modelled on {site.organization}: pre-qualification
-        without disclosure, application from granted pod data, and a freshness re-check before
-        closing.
+        Lender, modelled on {site.organization}. Alex prequalifies, applies, and is re-verified
+        before closing.
       </p>
       <ul className="mt-10 grid list-none gap-4 p-0 sm:grid-cols-2">
         {scenes.map((item) => (

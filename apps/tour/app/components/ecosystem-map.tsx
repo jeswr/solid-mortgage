@@ -24,9 +24,9 @@ function serviceStatus(
 }
 
 /**
- * Interactive ecosystem map: the borrower's vault at the centre, the twelve value-chain
- * roles (org-map) around it. Click or focus a node to read its seat; roles with a demo app
- * expose a try-this-live launch with a live-status dot; mapped-but-unbuilt seats say so.
+ * Interactive ecosystem map: the borrower's pod at the centre, the twelve value-chain
+ * roles (org-map) around it. Click or focus a node to read its role; roles with a demo app
+ * expose a try-this-live launch with a status dot; roles with no app say so.
  * Driven entirely by the single service registry.
  */
 export function EcosystemMap() {
@@ -57,7 +57,7 @@ export function EcosystemMap() {
         >
           <p className="font-semibold text-card-foreground">
             {centerService.role}{" "}
-            <span className="font-normal text-muted-foreground">— the centre of the ecosystem</span>
+            <span className="font-normal text-muted-foreground">— at the centre</span>
           </p>
           <p className="mt-0.5 text-muted-foreground text-sm">
             modelled on {centerService.modelledOn}
@@ -90,7 +90,7 @@ export function EcosystemMap() {
               <p className="mt-0.5 truncate text-muted-foreground text-sm">{service.modelledOn}</p>
               {status === undefined ? (
                 <span className="mt-2 inline-block text-muted-foreground text-xs">
-                  Mapped seat — no app in this demo
+                  No app in this demo
                 </span>
               ) : (
                 <StatusDot className="mt-2" status={status} />
@@ -124,13 +124,11 @@ export function EcosystemMap() {
           </div>
         ) : (
           <p className="mt-4 text-muted-foreground text-sm" data-map-no-app="">
-            This seat is mapped for the partner phase; it has no application in this demo.
+            This role has no app in this demo.
           </p>
         )}
         {selectedStatus === "not-deployed" && (
-          <p className="mt-2 text-muted-foreground text-xs">
-            Not deployed in this environment — the seat and its story remain part of the map.
-          </p>
+          <p className="mt-2 text-muted-foreground text-xs">This app is not running here.</p>
         )}
       </div>
     </div>

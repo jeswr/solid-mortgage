@@ -20,138 +20,131 @@ export interface AppGuide {
 export const appGuides: Partial<Record<DemoAppSlug, AppGuide>> = {
   wallet: {
     youAre: "Alex Rivera, the borrower",
-    purpose:
-      "Alex's Data Vault: everything in the pod, every credential verified on view, and the controls for who else can read it.",
+    purpose: "See Alex's pod and control who can read it.",
     pages: [
-      { path: "/wallet", label: "Vault home", tryThis: "See the profile read live from the pod." },
-      {
-        path: "/wallet/assistant",
-        label: "Assistant",
-        tryThis:
-          "Ask your assistant to shop for a rate; it asks for consent before it reads anything.",
-      },
+      { path: "/wallet", label: "Home", tryThis: "See Alex's profile, read from the pod." },
       {
         path: "/wallet/credentials",
         label: "Credentials",
-        tryThis: "Each signed credential is re-verified every time you open it.",
+        tryThis: "Check each credential's issuer, signature and dates.",
       },
       {
         path: "/wallet/prequal",
-        label: "Zero-knowledge pre-qualification",
-        tryThis: "Prove income and credit thresholds to two lenders without revealing the numbers.",
+        label: "Prequalify",
+        tryThis: "Send threshold proofs to two lenders.",
       },
       {
         path: "/wallet/grants",
-        label: "Access grants",
-        tryThis: "Grant or revoke a party's access and watch the access rules change.",
+        label: "Access permissions",
+        tryThis: "Grant or revoke an organisation's access.",
       },
       {
         path: "/wallet/ledger",
         label: "Consent receipts",
-        tryThis: "Every grant and revocation, receipted.",
+        tryThis: "Review each access change.",
+      },
+      {
+        path: "/wallet/assistant",
+        label: "Assistant",
+        tryThis: "Compare two illustrative rate quotes.",
       },
     ],
   },
   verifications: {
-    youAre: "an employment, bank-data or credit verifier",
-    purpose:
-      "Issuers that sign verification results as credentials and deliver them straight into the borrower's pod.",
+    youAre: "a verification provider",
+    purpose: "Issue simulated employment, asset and credit-score credentials into Alex's pod.",
     pages: [
       {
         path: "/verifications/employment",
         label: "Employment and income",
-        tryThis: "Re-issue the employment credential when it is about to go stale.",
+        tryThis: "Issue a replacement credential.",
       },
       {
         path: "/verifications/assets",
         label: "Assets",
-        tryThis: "Issue the bank assets credential into the pod.",
+        tryThis: "Save the asset credential.",
       },
       {
         path: "/verifications/credit",
         label: "Credit score",
-        tryThis: "See the credit credential's status.",
+        tryThis: "Check the credit-score credential's status.",
       },
     ],
   },
   "lender-boa": {
-    youAre: "the primary mortgage lender",
-    purpose:
-      "A full origination portal that prefills the application from the borrower's pod and writes its Loan Estimate back.",
+    youAre: "the lender",
+    purpose: "Prefill Alex's application from the pod and track the loan to closing.",
     pages: [
       {
         path: "/lender-boa/prequal",
-        label: "Pre-qualification",
-        tryThis: "How the lender verifies a zero-knowledge proof.",
+        label: "Prequalification",
+        tryThis: "Check a zero-knowledge proof.",
       },
       {
         path: "/lender-boa/assistant",
-        label: "Apply with your assistant",
-        tryThis: "Let an assistant fill in and submit the application, with per-source consent.",
+        label: "Apply with an assistant",
+        tryThis: "Prepare the application from selected sources.",
       },
       {
         path: "/lender-boa/application",
-        label: "Application form",
-        tryThis: "Or submit the pod-prefilled form yourself and get a Loan Estimate.",
+        label: "Apply",
+        tryThis: "Review and submit the prefilled application.",
       },
       {
         path: "/lender-boa/pipeline",
-        label: "Loan officer pipeline",
-        tryThis: "The lender's side: review files read live from the pod and clear them to close.",
+        label: "Loan pipeline",
+        tryThis: "Review conditions and mark clear to close.",
       },
       {
         path: "/lender-boa/freshness",
-        label: "Freshness check",
-        tryThis: "Check whether the employment verification is still within its window.",
+        label: "Re-verification",
+        tryThis: "Check the employment credential's validity.",
       },
     ],
   },
   "lender-53": {
-    youAre: "a competing lender",
-    purpose:
-      "Gives a rate quote from a zero-knowledge proof, without seeing income or credit score.",
+    youAre: "the second lender",
+    purpose: "Check prequalification proofs without seeing income or credit score.",
     pages: [
       {
         path: "/lender-53",
-        label: "Rate quote",
-        tryThis: "See what a proof-only lender receives.",
+        label: "Prequalification criteria",
+        tryThis: "See what the lender receives.",
       },
     ],
   },
   gse: {
     youAre: "the automated underwriting service",
-    purpose:
-      "Underwrites from the loan file and credentials the borrower granted, checking every signature.",
+    purpose: "Check the loan file and return findings. The lender's underwriter decides.",
     pages: [
       {
         path: "/gse/underwriting",
-        label: "Underwriting",
-        tryThis: "Run automated underwriting and read each finding.",
+        label: "Run AUS",
+        tryThis: "Run the AUS and read each finding.",
       },
     ],
   },
   property: {
     youAre: "the appraisal and title providers",
-    purpose: "Appraisal and title results delivered as reusable credentials in the borrower's pod.",
+    purpose: "Issue the appraisal and title search records for the property.",
     pages: [
-      { path: "/property", label: "Overview", tryThis: "The property file at a glance." },
+      { path: "/property", label: "Overview", tryThis: "See both records." },
       {
         path: "/property/appraisal",
         label: "Appraisal",
-        tryThis: "The appraised value credential.",
+        tryThis: "Review the appraisal.",
       },
-      { path: "/property/title", label: "Title", tryThis: "The title-clear credential." },
+      { path: "/property/title", label: "Title", tryThis: "Review the title search result." },
     ],
   },
   closing: {
-    youAre: "the digital closing platform and the incoming servicer",
-    purpose:
-      "eSigns the closing package into the pod, then moves access from the lender to the servicer, with receipts.",
+    youAre: "the eClosing platform and the new servicer",
+    purpose: "Sign the closing documents, then change who can read the closing record.",
     pages: [
       {
         path: "/closing",
         label: "Closing",
-        tryThis: "eSign, approve the servicer, revoke the lender, then read the receipt ledger.",
+        tryThis: "eSign, grant servicer access, then revoke the lender's access.",
       },
     ],
   },

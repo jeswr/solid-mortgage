@@ -97,6 +97,6 @@ export function useServiceStatuses(healthPaths: string[]): Record<string, Servic
 
 export const STATUS_LABELS: Record<ServiceStatus, string> = {
   checking: "Checking…",
-  live: "Live",
+  live: "Demo available",
   "not-deployed": "Not deployed",
 };

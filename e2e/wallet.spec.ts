@@ -315,13 +315,13 @@ test.describe("wallet — Data Vault (sm-28) + real-SharedWorker pod (sm-foo)", 
     // navigation is CLIENT-SIDE (the header nav link), as a user's would be:
     // a hard navigation drops the tab's SharedWorker connection and — with no
     // other tab open — the per-visitor pod honestly resets with it.
-    await page.getByRole("link", { name: "Receipt ledger" }).click();
+    await page.getByRole("link", { name: "Consent receipts" }).click();
     const cards = page.locator("[data-receipt-card]");
     await expect(cards).toHaveCount(2, { timeout: 60_000 });
     await expect(cards.nth(0)).toHaveAttribute("data-receipt-action", "grant");
     await expect(cards.nth(1)).toHaveAttribute("data-receipt-action", "revoke");
     await expect(
-      page.getByText("WAC and the Solid protocol do not provide this audit ledger"),
+      page.getByText("Records of permission changes, not a log of every data read."),
     ).toBeVisible();
     await expectAxeClean(page);
 

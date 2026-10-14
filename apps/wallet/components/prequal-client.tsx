@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { readProofMaterial } from "@/lib/pod/credentials";
 import { useVault } from "@/lib/pod/vault-context";
 import {
+  describeOutcome,
   LENDER_TARGETS,
   type LenderTarget,
   type PresentOutcome,
@@ -18,61 +19,39 @@ type LenderState =
   | { readonly phase: "failed"; readonly detail: string };
 
 function OutcomeView({ outcome }: { outcome: PresentOutcome }) {
-  if (outcome.kind === "qualified") {
-    const rate = outcome.rateQuote as
-      | { product?: string; interestRatePercent?: number; aprPercent?: number }
-      | undefined;
-    return (
-      <div data-prequal-outcome="qualified">
-        <p className="font-semibold text-card-foreground text-sm">Qualified — values undisclosed</p>
-        {outcome.proofs.map((proof) => (
-          <p className="mt-1 text-muted-foreground text-xs" key={proof.statementId}>
-            {proof.statementId}: {proof.member} proof in {Math.round(proof.proveMs)} ms (
-            {proof.threads} {proof.threads === 1 ? "thread" : "threads"})
-          </p>
-        ))}
-        {rate?.interestRatePercent !== undefined && (
-          <p className="mt-2 text-sm">
-            <IllustrativeFigure>
-              {rate.product ?? "rate quote"}: {rate.interestRatePercent}%
-              {rate.aprPercent !== undefined ? ` (${rate.aprPercent}% APR)` : ""}
-            </IllustrativeFigure>
-          </p>
-        )}
-      </div>
-    );
-  }
-  if (outcome.kind === "unauthenticated") {
-    return (
-      <div data-prequal-outcome="unauthenticated">
-        <p className="font-semibold text-card-foreground text-sm">
-          Live lender rail requires a real login
-        </p>
-        <p className="mt-1 text-muted-foreground text-xs">{outcome.detail}</p>
-      </div>
-    );
-  }
-  if (outcome.kind === "rejected") {
-    return (
-      <div data-prequal-outcome="rejected">
-        <p className="font-semibold text-card-foreground text-sm">Not qualified</p>
-        <p className="mt-1 text-muted-foreground text-xs">{outcome.detail}</p>
-      </div>
-    );
-  }
+  const { title, detail } = describeOutcome(outcome);
+  const rate =
+    outcome.kind === "qualified"
+      ? (outcome.rateQuote as
+          | { product?: string; interestRatePercent?: number; aprPercent?: number }
+          | undefined)
+      : undefined;
   return (
-    <div data-prequal-outcome="unavailable">
-      <p className="font-semibold text-card-foreground text-sm">Lender unavailable</p>
-      <p className="mt-1 text-muted-foreground text-xs">{outcome.detail}</p>
+    <div data-prequal-outcome={outcome.kind}>
+      <p className="font-semibold text-card-foreground text-sm">{title}</p>
+      {detail !== undefined && <p className="mt-1 text-muted-foreground text-xs">{detail}</p>}
+      {outcome.kind === "qualified" && (
+        <p className="mt-1 text-muted-foreground text-xs">
+          {outcome.proofs.length} proofs sent. No figures disclosed.
+        </p>
+      )}
+      {rate?.interestRatePercent !== undefined && (
+        <p className="mt-2 text-sm">
+          <IllustrativeFigure>
+            {rate.product ?? "Rate quote"}: {rate.interestRatePercent}%
+            {rate.aprPercent !== undefined ? ` (${rate.aprPercent}% APR)` : ""}
+          </IllustrativeFigure>
+        </p>
+      )}
     </div>
   );
 }
 
 const STAGE_LABELS: Record<string, string> = {
-  challenge: "requesting single-use challenge nonces…",
-  "prove:income": "proving income threshold in your browser…",
-  "prove:score": "proving credit-score threshold in your browser…",
-  verify: "presenting proofs (VP-POST)…",
+  challenge: "Getting a challenge from the lender…",
+  "prove:income": "Building the income proof in this browser…",
+  "prove:score": "Building the credit-score proof in this browser…",
+  verify: "Sending the proofs…",
 };
 
 export function PrequalClient() {
@@ -124,10 +103,16 @@ export function PrequalClient() {
     }
   }
 
+  const done = Object.values(states).filter((state) => state.phase === "done");
+  const anyDone = done.length > 0;
+  const anyQuote = done.some(
+    (state) => state.phase === "done" && state.outcome.kind === "qualified",
+  );
+
   return (
     <section aria-labelledby="present-heading" className="mt-8">
       <h2 className="text-xl font-semibold text-foreground" id="present-heading">
-        Present to both lenders
+        Send proofs to both lenders
       </h2>
       <button
         className="mt-3 rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground text-sm disabled:opacity-50"
@@ -138,10 +123,16 @@ export function PrequalClient() {
       >
         {vault.status === "ready"
           ? busy
-            ? "Proving…"
-            : "Prove income ≥ threshold and score ≥ 620"
-          : "Waiting for the in-browser pod…"}
+            ? "Building proofs…"
+            : "Send proofs"
+          : "Starting the demo pod…"}
       </button>
+      {anyQuote && (
+        <p className="mt-4 text-muted-foreground text-sm" data-prequal-quote-notice="">
+          Your actual rate, payment, and costs could be higher. Get an official Loan Estimate before
+          choosing a loan.
+        </p>
+      )}
       <ul className="mt-4 grid list-none gap-3 p-0 sm:grid-cols-2">
         {LENDER_TARGETS.map((lender) => {
           const state = states[lender.id] ?? { phase: "idle" as const };
@@ -154,7 +145,7 @@ export function PrequalClient() {
               <p className="text-muted-foreground text-sm">{lender.label}</p>
               <div className="mt-2" data-prequal-phase={state.phase}>
                 {state.phase === "idle" && (
-                  <p className="text-muted-foreground text-sm">Not yet presented.</p>
+                  <p className="text-muted-foreground text-sm">No proofs sent yet.</p>
                 )}
                 {state.phase === "running" && (
                   <p aria-live="polite" className="text-muted-foreground text-sm">
@@ -164,7 +155,7 @@ export function PrequalClient() {
                 {state.phase === "done" && <OutcomeView outcome={state.outcome} />}
                 {state.phase === "failed" && (
                   <p className="text-muted-foreground text-sm" role="alert">
-                    Presentation failed: {state.detail}
+                    We could not send the proofs: {state.detail}
                   </p>
                 )}
               </div>
@@ -172,6 +163,11 @@ export function PrequalClient() {
           );
         })}
       </ul>
+      {anyDone && (
+        <p className="mt-3 text-muted-foreground text-xs">
+          Prequalification is not credit approval or a commitment to lend.
+        </p>
+      )}
     </section>
   );
 }

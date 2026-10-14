@@ -330,10 +330,13 @@ test.describe("lender-boa (sm-30)", () => {
     expect(response?.headers()["cross-origin-embedder-policy"]).toBe("require-corp");
     await expect(
       page.getByRole("heading", {
-        name: "Prove you qualify — without sharing your income or credit score",
+        name: "Prequalification criteria",
+        exact: true,
       }),
     ).toBeVisible();
     // The decision-0005/0012 honesty items render verbatim on the ZK surface.
+    // The limitation items sit in the collapsed "Technical details" disclosure.
+    await page.locator("summary", { hasText: "Technical details" }).click();
     await expect(
       page.getByText("Live proofs are bound to an issuer-signed operand anchor"),
     ).toBeVisible();
@@ -521,7 +524,7 @@ test.describe("lender-boa (sm-30)", () => {
   }) => {
     const response = await page.goto(`${appOrigin}/lender-boa/application`);
     expect(response?.status()).toBe(200);
-    await expect(page.getByText("Showing the demo persona", { exact: false })).toBeVisible();
+    await expect(page.getByText("Showing demo data for Alex", { exact: false })).toBeVisible();
     await expect(page.locator("[data-prefill-source]")).toHaveAttribute(
       "data-prefill-source",
       "demo",
@@ -545,7 +548,9 @@ test.describe("lender-boa (sm-30)", () => {
       "demo",
     );
     await expect(page.getByText("did not complete", { exact: false })).toBeVisible();
-    await expect(page.getByText("no real login", { exact: false })).toHaveCount(0);
+    await expect(
+      page.getByText("which this in-browser demo does not have", { exact: false }),
+    ).toHaveCount(0);
   });
 
   test("application page prefills the URLA subset FROM the token-bound pod", async ({ page }) => {
@@ -553,7 +558,7 @@ test.describe("lender-boa (sm-30)", () => {
     const response = await page.goto(`${appOrigin}/lender-boa/application`);
     expect(response?.status()).toBe(200);
     await expect(
-      page.getByText("read live from your granted pod data", { exact: false }),
+      page.getByText("The lender read these values from Alex's pod", { exact: false }),
     ).toBeVisible();
     // Pod-sourced values (persona fixtures), rendered in demo-locked fields.
     await expect(page.getByLabel("Name")).toHaveValue("Alex Rivera");
@@ -566,7 +571,7 @@ test.describe("lender-boa (sm-30)", () => {
   }) => {
     await authenticatePage(page);
     await page.goto(`${appOrigin}/lender-boa/application`);
-    await page.getByRole("button", { name: "Submit application (demo)" }).click();
+    await page.getByRole("button", { name: "Submit application" }).click();
     const estimate = page.locator("[data-loan-estimate]");
     await expect(estimate).toBeVisible();
     await expect(estimate).toContainText("delivered or placed in the mail within 3 business days");
@@ -582,7 +587,7 @@ test.describe("lender-boa (sm-30)", () => {
     page,
   }) => {
     await page.goto(`${appOrigin}/lender-boa/freshness`);
-    await page.getByRole("button", { name: "Run freshness check" }).click();
+    await page.getByRole("button", { name: "Check credential validity" }).click();
     await expect(page.locator("[data-freshness-auth-required]")).toBeVisible();
     await expect(page.locator("[data-freshness-result]")).toHaveCount(0);
   });
@@ -592,14 +597,14 @@ test.describe("lender-boa (sm-30)", () => {
   }) => {
     await authenticatePage(page);
     await page.goto(`${appOrigin}/lender-boa/freshness`);
-    await page.getByRole("button", { name: "Run freshness check" }).click();
+    await page.getByRole("button", { name: "Check credential validity" }).click();
     const result = page.locator("[data-freshness-result]");
     await expect(result).toBeVisible();
     // The seeded persona VC is window-fresh (validUntil +14d) but its status
     // list lives on an unreachable fixture origin — fail-closed, never green.
-    await expect(page.getByText("fresh", { exact: true })).toBeVisible();
+    await expect(page.getByText("within validity period", { exact: true })).toBeVisible();
     await expect(result).toHaveAttribute("data-freshness-result", "blocked");
-    await page.getByRole("button", { name: "Request re-verification (one click)" }).click();
+    await page.getByRole("button", { name: "Request re-verification" }).click();
     await expect(page.locator("[data-reissue-requested]")).toBeVisible();
   });
 });

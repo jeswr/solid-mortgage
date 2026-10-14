@@ -30,6 +30,8 @@ export interface PipelineFile {
   readonly decisionIri: string;
   /** The decision status read from the pod (local name, e.g. `ApprovedWithConditions`). */
   readonly decisionStatus?: string;
+  /** The AUS recommendation recorded on the decision (local name, e.g. `Approve`). */
+  readonly ausRecommendation?: string;
   readonly conditions: readonly string[];
 }
 
@@ -41,12 +43,15 @@ async function view(file: IntakeFile, config: LenderConfig): Promise<PipelineFil
   const application = await readPodResource(file.applicationIri, base);
   const decision = await readPodResource(file.decisionIri, base);
   let decisionStatus: string | undefined;
+  let ausRecommendation: string | undefined;
   let conditions: string[] = [];
   if (decision !== undefined) {
     try {
       const wrapped = new UnderwritingDecision(file.decisionIri, decision.dataset, DataFactory);
       decisionStatus = localName(wrapped.decisionStatus);
       conditions = [...wrapped.conditions];
+      const recommendation = wrapped.ausRecommendation;
+      ausRecommendation = recommendation === undefined ? undefined : localName(recommendation);
     } catch {
       decisionStatus = undefined;
     }
@@ -63,6 +68,7 @@ async function view(file: IntakeFile, config: LenderConfig): Promise<PipelineFil
     applicationInPod: application !== undefined,
     decisionIri: file.decisionIri,
     ...(decisionStatus !== undefined ? { decisionStatus } : {}),
+    ...(ausRecommendation !== undefined ? { ausRecommendation } : {}),
     conditions,
   };
 }

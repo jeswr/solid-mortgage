@@ -57,7 +57,7 @@ const apps: AppDefinition[] = [
   {
     appName: "Mortgage Pre-qualification",
     hasInterstitial: true,
-    heading: "Get a competing rate quote without sharing your numbers",
+    heading: "Second lender's prequalification criteria",
     organization: "Fifth Third Bank",
     packageName: "@mortgage/app-lender-53",
     path: "/lender-53",
@@ -84,7 +84,7 @@ const apps: AppDefinition[] = [
     // The scene page leads with its headline; the shell banner is the eClose
     // brand and the servicer section carries its own banner (sm-34).
     hasInterstitial: true,
-    heading: "Sign once. See every consent change.",
+    heading: "Close the loan and transfer servicing",
     interstitialOrganization: "Wolters Kluwer (eOriginal) or Truist",
     organization: "Wolters Kluwer (eOriginal)",
     packageName: "@mortgage/app-closing",

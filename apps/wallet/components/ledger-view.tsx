@@ -36,29 +36,28 @@ export function LedgerView() {
   if (vault.status === "error") {
     return (
       <p className="mt-6 text-sm text-muted-foreground" role="alert">
-        The in-browser pod is unavailable: {vault.message}
+        The demo pod is unavailable: {vault.message}
       </p>
     );
   }
   if (error !== undefined) {
     return (
       <p className="mt-6 text-sm text-muted-foreground" role="alert">
-        Could not read the ledger: {error}
+        Could not read the consent receipts: {error}
       </p>
     );
   }
   if (vault.status === "booting" || receipts === undefined) {
     return (
       <p className="mt-6 text-sm text-muted-foreground" data-ledger-loading="">
-        Reading the receipt ledger from the pod…
+        Reading consent receipts…
       </p>
     );
   }
   if (receipts.length === 0) {
     return (
       <p className="mt-6 rounded-lg border border-border bg-card p-4 text-sm" data-ledger-empty="">
-        No receipts yet. Grant an organisation access on the Access grants page — the receipt
-        appears here immediately.
+        No consent receipts yet. Grant access on the Access permissions page to create one.
       </p>
     );
   }
@@ -75,7 +74,7 @@ export function LedgerView() {
           />
           {receipt.provenance === "external" && (
             <p className="mt-1 text-amber-700 text-xs" data-receipt-external="">
-              Third-party record — written by another application, not verified by the wallet.
+              Written by another app. Data Vault has not verified it.
             </p>
           )}
         </div>

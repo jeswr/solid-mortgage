@@ -50,24 +50,24 @@ export function DemoIdentityCard() {
   const dtiBound = Math.floor(zkThresholds.dtiRatioMax * income);
   return (
     <div className="rounded-xl border border-border bg-card p-5" data-demo-identity-card="">
-      <h3 className="font-semibold text-card-foreground">Demo identity — {demoPersona.name}</h3>
+      <h3 className="font-semibold text-card-foreground">Demo data — {demoPersona.name}</h3>
       <p className="mt-1 text-muted-foreground text-sm">{demoPersona.descriptor}</p>
       <div className="mt-3">
         <CopyRow label="Name" value={demoPersona.name} />
         <CopyRow
           label="Monthly gross income"
-          note={`Proves income ≥ $${zkThresholds.monthlyIncomeMinUsd.toLocaleString("en-US")}/mo in scene 2`}
-          value={`$${income.toLocaleString("en-US")}/mo`}
+          note={`Scene 2 proves it is at least $${zkThresholds.monthlyIncomeMinUsd.toLocaleString("en-US")} a month`}
+          value={`$${income.toLocaleString("en-US")} a month`}
         />
         <CopyRow
           label="Credit score"
-          note={`Proves score ≥ ${zkThresholds.creditScoreMin} in scene 2`}
+          note={`Scene 2 proves it is ${zkThresholds.creditScoreMin} or higher`}
           value={String(demoPersona.creditScore)}
         />
         <CopyRow
           label="Monthly debts"
-          note={`Within the DTI bound (≤ $${dtiBound.toLocaleString("en-US")}/mo)`}
-          value={`$${demoPersona.monthlyDebtsUsd.toLocaleString("en-US")}/mo`}
+          note={`Under the demo's debt-to-income limit of $${dtiBound.toLocaleString("en-US")} a month`}
+          value={`$${demoPersona.monthlyDebtsUsd.toLocaleString("en-US")} a month`}
         />
         <CopyRow
           label="Verified assets"
@@ -76,8 +76,8 @@ export function DemoIdentityCard() {
         <CopyRow label="Employer" value={demoPersona.employer} />
       </div>
       <p className="mt-3 text-muted-foreground text-xs">
-        Fictional persona; every value is simulated. In the default visitor mode, pods run in your
-        own browser and sign-in is simulated — the on-screen honesty panels say so.
+        Alex is fictional and every value is simulated. In the default mode, pods run in your
+        browser and sign-in is simulated.
       </p>
     </div>
   );

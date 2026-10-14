@@ -22,13 +22,13 @@ test("every check cites a public, dereferenceable rule and a real chapter", () =
 
 test("timing beats state each regulation's formulation, never an overstatement", () => {
   // Reg Z §1026.19(e)(1)(iii): delivered OR placed in the mail by the third business
-  // day — not "received by" then. The demo's direct-to-pod delivery is described as
-  // the demo's mechanism, distinct from (and stronger than) the legal minimum.
+  // day — not "received by" then. Saving a copy in the pod is NOT compliant delivery,
+  // and the card must say so (astra-review-1 H5).
   const le = examinerChecks.find((check) => check.id === "trid-loan-estimate");
   expect(le?.rule).toContain("delivered or placed in the mail");
   expect(le?.rule).toContain("third business day");
   expect(le?.citation).toContain("1026.19(e)(1)(iii)");
-  expect(le?.observe).toContain("beyond the rule's delivered-or-mailed minimum");
+  expect(le?.notShown).toContain("Compliant delivery");
 
   // Reg Z §1026.19(f)(1)(ii): the consumer must RECEIVE the CD three business days
   // before consummation — "receives" is the correct verb here.
@@ -41,6 +41,17 @@ test("timing beats state each regulation's formulation, never an overstatement",
   const transfer = examinerChecks.find((check) => check.id === "respa-servicing-transfer");
   expect(transfer?.rule).toContain("not less than 15 days before");
   expect(transfer?.rule).toContain("not more than 15 days after");
+});
+
+test("every card says what the demo shows and what it does not demonstrate (H5)", () => {
+  for (const check of examinerChecks) {
+    expect(check.shows.length, check.id).toBeGreaterThan(10);
+    expect(check.notShown.length, check.id).toBeGreaterThan(10);
+    // Never claim the demo exceeds or satisfies a rule.
+    expect(`${check.shows} ${check.notShown}`, check.id).not.toMatch(
+      /\bbeyond\b|\bcomplies\b|\bcompliant with\b/iu,
+    );
+  }
 });
 
 test("the TRID and RESPA beats from SPEC §2 are all present", () => {

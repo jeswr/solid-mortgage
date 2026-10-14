@@ -16,11 +16,16 @@ import {
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { readProofMaterial } from "@/lib/pod/credentials";
 import { useVault } from "@/lib/pod/vault-context";
-import { LENDER_TARGETS, type PresentOutcome, presentToLender } from "@/lib/prequal/present";
+import {
+  describeOutcome,
+  LENDER_TARGETS,
+  type PresentOutcome,
+  presentToLender,
+} from "@/lib/prequal/present";
 
 /**
  * The agentic pre-qualification: the borrower asks their assistant to shop for
- * a rate. After consent it reads the two operand anchors from the pod, proves
+ * a rate. After consent it reads the two value encodings from the pod, proves
  * both thresholds IN THIS BROWSER for each lender (the same real proofs and
  * VP-POST as the manual page), and compares the quotes. Hidden values never
  * leave the device — and are never shown to the language model either.
@@ -31,6 +36,15 @@ import { LENDER_TARGETS, type PresentOutcome, presentToLender } from "@/lib/preq
  */
 
 const STEPS_ID = "agent-steps";
+
+const GREETING =
+  "Hi Alex. I can get illustrative rate quotes from two lenders. They get proofs, not your income or credit score.";
+const QUOTE_STATEMENT =
+  "Your actual rate, payment, and costs could be higher. Get an official Loan Estimate before choosing a loan.";
+const NOT_APPROVAL = "Prequalification is not credit approval or a commitment to lend.";
+// Review M11: say plainly why the demo continues with the primary lender.
+const HANDOFF =
+  "Only the primary lender has an application in this demo, so we continue there. Continue?";
 
 interface Quote {
   readonly lender: string;
@@ -47,12 +61,12 @@ const ACTIONS: Partial<Record<Phase, readonly AssistantAction[]>> = {
     {
       id: "allow",
       description:
-        "Alex agrees: read the two anchors from the pod and send zero-knowledge proofs to both lenders.",
+        "Alex agrees: read the income and credit-score credentials and send proofs to both lenders.",
     },
     { id: "decline_manual", description: "Alex declines, or wants to send the proofs manually." },
   ],
   choose: [
-    { id: "apply", description: "Alex wants to start an application with the primary lender." },
+    { id: "apply", description: "Alex wants to continue to the primary lender's application." },
     { id: "not_now", description: "Alex does not want to apply yet." },
   ],
 };
@@ -60,7 +74,9 @@ const ACTIONS: Partial<Record<Phase, readonly AssistantAction[]>> = {
 function scriptedAction(phase: Phase, text: string): string {
   const lower = text.toLowerCase();
   const no = /\b(no|nope|not|don't|do not|later|manual|myself)\b/.test(lower);
-  const yes = /\b(yes|yeah|sure|ok|okay|allow|go|go ahead|please|apply|start)\b/.test(lower);
+  const yes = /\b(yes|yeah|sure|ok|okay|allow|go|go ahead|please|apply|start|continue)\b/.test(
+    lower,
+  );
   if (phase === "consent") return no ? "decline_manual" : yes ? "allow" : "answer_only";
   if (phase === "choose") return no ? "not_now" : yes ? "apply" : "answer_only";
   return "answer_only";
@@ -68,8 +84,8 @@ function scriptedAction(phase: Phase, text: string): string {
 
 const SCRIPTED_HELP: Partial<Record<Phase, string>> = {
   consent:
-    "I'd read two signed anchors from your pod and send each lender a proof only. Shall I go ahead, or would you rather do it yourself?",
-  choose: "I can start an application with your primary lender now, or we can wait.",
+    "I'd read your income and credit-score credentials and send each lender proofs only. Shall I go ahead?",
+  choose: "I can take you to the primary lender's application now, or we can wait.",
 };
 
 export function ShoppingAssistant({
@@ -90,7 +106,7 @@ export function ShoppingAssistant({
   const history = useRef<AssistantTurn[]>([
     {
       from: "agent",
-      text: "Hi Alex. Want me to shop for a mortgage pre-qualification? I can show two lenders you meet their income and credit-score thresholds without telling them your numbers.",
+      text: GREETING,
     },
   ]);
   const nextId = useRef(0);
@@ -115,14 +131,16 @@ export function ShoppingAssistant({
 
   function facts(): string[] {
     const lines = [
-      "The proofs reveal only that income ≥ $7,000/month and credit score ≥ 620; you do not know the actual figures.",
-      `The manual pre-qualification page is ${manualHref}.`,
+      "The proofs show only that income is at least $7,000 a month and the credit score is at least 620. You do not know the actual figures.",
+      `The manual prequalification page is ${manualHref}.`,
     ];
     if (quotes.current.length > 0) {
       lines.push(
         `Quotes received (illustrative, not offers): ${quotes.current
           .map((quote) => `${quote.label}: ${quote.rate}% (${quote.apr}% APR)`)
-          .join("; ")}. Only the primary lender offers a full application in this demo.`,
+          .join(
+            "; ",
+          )}. Only the primary lender has an application in this demo, so the demo continues there.`,
       );
     }
     return lines;
@@ -150,7 +168,7 @@ export function ShoppingAssistant({
 
   async function run() {
     if (vault.status !== "ready") {
-      say("agent", "Your vault is still starting. Try again in a moment.");
+      say("agent", "Your pod is still starting. Try again in a moment.");
       return;
     }
     setPhase("working");
@@ -158,12 +176,12 @@ export function ShoppingAssistant({
     setSteps([
       {
         id: "anchors",
-        label: "Read your income and credit-score anchors from your pod",
+        label: "Read your income and credit-score credentials",
         state: "running",
       },
       ...LENDER_TARGETS.map((lender) => ({
         id: lender.id,
-        label: `Prove the thresholds to: ${lender.label}`,
+        label: `Send proofs: ${lender.label}`,
         state: "pending" as const,
       })),
       { id: "compare", label: "Compare the quotes", state: "pending" },
@@ -179,21 +197,20 @@ export function ShoppingAssistant({
       material = await readProofMaterial(session.authFetch);
       setStep("anchors", {
         state: "done",
-        detail:
-          "Issuer-signed anchors read from your pod. Your actual figures stay in this browser.",
+        detail: "Read from your pod. Your figures stay in this browser.",
       });
     } catch (error) {
       setStep("anchors", {
         state: "failed",
         detail: error instanceof Error ? error.message : String(error),
       });
-      manual("I couldn't read the anchors from your pod.");
+      manual("I couldn't read your credentials from your pod.");
       return;
     }
 
     quotes.current = [];
     for (const lender of LENDER_TARGETS) {
-      setStep(lender.id, { state: "running", detail: "Requesting a single-use challenge…" });
+      setStep(lender.id, { state: "running", detail: "Getting a challenge from the lender…" });
       let outcome: PresentOutcome;
       try {
         outcome = await presentToLender({
@@ -205,7 +222,7 @@ export function ShoppingAssistant({
             setStep(lender.id, {
               state: "running",
               detail: stage.startsWith("prove")
-                ? "Building a zero-knowledge proof in your browser…"
+                ? "Building a proof in your browser…"
                 : "Sending the proofs…",
             }),
         });
@@ -229,12 +246,12 @@ export function ShoppingAssistant({
         });
         setStep(lender.id, {
           state: "done",
-          detail: `Qualified. ${outcome.proofs.length} proofs sent; no figures disclosed.`,
+          detail: `Meets the demo criteria. ${outcome.proofs.length} proofs sent, no figures.`,
         });
       } else {
         setStep(lender.id, {
           state: "failed",
-          detail: "detail" in outcome ? outcome.detail : "not qualified",
+          detail: describeOutcome(outcome).title,
         });
       }
     }
@@ -246,14 +263,16 @@ export function ShoppingAssistant({
       return;
     }
     const sorted = [...quotes.current].sort((a, b) => (a.apr ?? 99) - (b.apr ?? 99));
+    const met =
+      quotes.current.length === LENDER_TARGETS.length
+        ? "You meet both lenders' demo prequalification criteria."
+        : `You meet ${quotes.current.length} lender's demo prequalification criteria.`;
     setPhase("choose");
     say(
       "agent",
       <div data-agent-quotes="">
-        <p>
-          You qualify with {quotes.current.length} lender
-          {quotes.current.length === 1 ? "" : "s"}, and neither learned your income or credit score:
-        </p>
+        <p>{met}</p>
+        <p className="mt-2 text-xs">{QUOTE_STATEMENT}</p>
         <ul className="mt-2 list-disc pl-5">
           {sorted.map((quote) => (
             <li key={quote.lender}>
@@ -264,9 +283,10 @@ export function ShoppingAssistant({
             </li>
           ))}
         </ul>
-        <p className="mt-2">Shall I start an application with your primary lender?</p>
+        <p className="mt-2 text-xs">{NOT_APPROVAL}</p>
+        <p className="mt-2">{HANDOFF}</p>
       </div>,
-      `You qualify with ${quotes.current.length} lenders. ${facts()[2] ?? ""} Shall I start an application with the primary lender?`,
+      `${met} ${facts()[2] ?? ""} Continue with the primary lender?`,
     );
   }
 
@@ -283,7 +303,7 @@ export function ShoppingAssistant({
           "agent",
           <div data-agent-done="">
             <p>
-              {quiet ? "" : "Great. "}Your primary lender has its own assistant that can fill in the
+              {quiet ? "" : "Great. "}The primary lender&apos;s assistant can prefill the
               application from your pod.{" "}
               <a className="font-semibold underline" data-agent-handoff="" href={applyHref}>
                 Continue to the application
@@ -297,7 +317,7 @@ export function ShoppingAssistant({
       }
       if (action === "not_now") {
         setPhase("done");
-        if (!quiet) say("agent", "No problem. Your quotes stay here; apply whenever you're ready.");
+        if (!quiet) say("agent", "No problem. The quotes stay here until you're ready.");
       }
     }
   }
@@ -338,13 +358,13 @@ export function ShoppingAssistant({
   const replies: AgentReply[] =
     phase === "choose"
       ? [
-          { label: "Yes, start the application", value: "apply" },
+          { label: "Continue with primary lender", value: "apply" },
           { label: "Not yet", value: "later" },
         ]
       : [];
 
   function reply(value: string) {
-    if (value === "apply") return choose("Yes, start the application.", "apply");
+    if (value === "apply") return choose("Continue with the primary lender.", "apply");
     if (value === "later") return choose("Not yet.", "not_now");
     void converse(value);
   }
@@ -374,11 +394,7 @@ export function ShoppingAssistant({
           from: "agent",
           content: (
             <div>
-              <p>
-                Hi Alex. Want me to shop for a mortgage pre-qualification? I can show two lenders
-                that you meet their income and credit-score thresholds without telling them your
-                actual numbers. For that I need:
-              </p>
+              <p>{GREETING} For that I need:</p>
               {phase === "consent" && (
                 <ConsentRequest
                   disabled={vault.status !== "ready"}
@@ -392,18 +408,22 @@ export function ShoppingAssistant({
                   sources={[
                     {
                       id: "pod",
-                      name: "Your Solid pod (Data Vault)",
+                      name: "Your pod (Data Vault)",
                       reads:
-                        "Your income and credit-score credentials and their signed anchors, to build the proofs in this browser.",
+                        "Income and credit-score credentials, to build proofs in this browser.",
                     },
                     {
                       id: "lenders",
-                      name: "Contact two lenders for you",
-                      reads:
-                        "Send each one a proof only. No figures, no documents, no credit pull.",
+                      name: "Two lenders",
+                      reads: "Proofs only. No figures, documents or credit inquiry.",
                     },
                   ]}
                 />
+              )}
+              {phase === "consent" && engine !== undefined && (
+                <p className="mt-2 text-xs" data-agent-ai-notice="">
+                  AI replies are on: your messages and the quotes go to the assistant service.
+                </p>
               )}
             </div>
           ),

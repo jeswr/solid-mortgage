@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 /**
- * The First American-modelled title flow: issue a TitleClearCredential
+ * The title flow (modelled on First American): issue a TitleClearCredential
  * recording the clear/clouded outcome of a public-records search into the
  * borrower's pod.
  */
@@ -28,15 +28,13 @@ export default function TitlePage() {
       theme={orgThemes["property-title"]}
     >
       <main className="mx-auto w-full max-w-3xl px-6 py-12">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Property services · title
-        </p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Title</p>
         <h1 className="mt-1 text-3xl font-semibold tracking-tight text-foreground">
-          Search the title and issue the clearance credential
+          Review the title search result
         </h1>
         <p className="mt-4 text-muted-foreground">
-          The title-clear credential records whether public records show the title as clear or
-          clouded, with the effective date through which records were searched.
+          This simulated record shows the title search outcome. It is not a title commitment or
+          insurance policy.
         </p>
         <div className="mt-6">
           <IssueFlow
@@ -51,28 +49,20 @@ export default function TitlePage() {
             real={
               <ul className="list-disc pl-5">
                 <li>
-                  The TitleClearCredential is signed with <code>eddsa-rdfc-2022</code> and validated
-                  against its SHACL shape before signing.
+                  The credential is checked against its data shape, then signed with{" "}
+                  <code>eddsa-rdfc-2022</code>.
                 </li>
+                <li>The status list entry, used only to revoke the credential.</li>
                 <li>
-                  The <code>mort:titleStatus</code> outcome and searched-through date are signed
-                  claims written to your pod.
-                </li>
-                <li>The Bitstring status-list entry (revocation only) is real.</li>
-                <li>
-                  The write is authorised by your own Solid session (WAC) — the pod is derived from
-                  your token, never from the request (decision 0015).
+                  The write to the borrower&apos;s own pod, authorised by their Solid sign-in.
                 </li>
               </ul>
             }
             simulated={
               <ul className="list-disc pl-5">
-                <li>The persona property and the clear outcome.</li>
-                <li>Org involvement — this is not {titleBrand.organization}.</li>
-                <li>
-                  In the default in-browser demo there is no real login, so the server issuer rail
-                  is off and the figures above are a preview.
-                </li>
+                <li>The property and the search outcome.</li>
+                <li>The organisation&apos;s involvement: this is not {titleBrand.organization}.</li>
+                <li>Sign-in is simulated here, so the record above is a preview.</li>
               </ul>
             }
           />

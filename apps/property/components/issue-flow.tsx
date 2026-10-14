@@ -59,8 +59,8 @@ export type IssueFlowProps = AppraisalFlowProps | TitleFlowProps;
  * with the BROWSER SESSION'S credentials — the API derives both the borrower
  * and the pod from the DPoP-bound caller (decision 0015), so no pod/webid ever
  * appears in a request. Without an authenticated Solid session (the default
- * in-browser demo, decision 0011) the API answers 401 and the honest fallback
- * copy says exactly that.
+ * in-browser demo, decision 0011) the API answers 401 and the fallback copy
+ * says no credential was issued.
  */
 export function IssueFlow(props: IssueFlowProps) {
   const [issued, setIssued] = useState<AppraisalIssued | TitleIssued | null>(null);
@@ -75,7 +75,7 @@ export function IssueFlow(props: IssueFlowProps) {
     try {
       const response = await fetch(`${props.apiBase}/${props.brand}/issue`, { method: "POST" });
       if (response.status === 401) {
-        // The only "no session" signal — the honest Mode-1 fallback.
+        // The only "no session" signal — the Mode-1 preview fallback.
         setUnauthenticated(true);
         return;
       }
@@ -88,7 +88,7 @@ export function IssueFlow(props: IssueFlowProps) {
       }
       setIssued(body);
     } catch {
-      setError("issuance failed — is the pod reachable?");
+      setError("Issuing failed. Check that the pod is reachable.");
     } finally {
       setBusy(false);
     }
@@ -97,9 +97,9 @@ export function IssueFlow(props: IssueFlowProps) {
   return (
     <div>
       {props.brand === "appraisal" ? (
-        <AppraisalPreview preview={props.preview} orgLabel={props.orgLabel} />
+        <AppraisalPreview preview={props.preview} />
       ) : (
-        <TitlePreview preview={props.preview} orgLabel={props.orgLabel} />
+        <TitlePreview preview={props.preview} />
       )}
 
       <div className="mt-6">
@@ -109,12 +109,10 @@ export function IssueFlow(props: IssueFlowProps) {
           onClick={issue}
           type="button"
         >
-          {busy ? "Issuing…" : "Issue into my pod (demo)"}
+          {busy ? "Issuing…" : "Issue credential"}
         </button>
         <p className="mt-2 text-sm text-muted-foreground">
-          Issuing signs the credential with the {props.orgLabel} key and writes it into YOUR pod
-          over your authenticated session. In the default in-browser demo there is no real login, so
-          the server rail honestly answers 401 and this stays a preview.
+          The demo signs the credential and saves it in the signed-in borrower&apos;s pod.
         </p>
         {unauthenticated && (
           <p
@@ -122,8 +120,8 @@ export function IssueFlow(props: IssueFlowProps) {
             data-issue-unauthenticated=""
             role="status"
           >
-            No authenticated borrower session — the server issuer rail is off in this mode. The
-            figures above are the simulated demo preview.
+            This is a simulated {props.brand === "appraisal" ? "appraisal" : "title"} preview.
+            Sign-in is simulated here, so no credential was issued.
           </p>
         )}
         {error !== null && (
@@ -141,18 +139,18 @@ export function IssueFlow(props: IssueFlowProps) {
           data-credential-iri={issued.credentialIri}
         >
           <h2 id="issued-heading" className="text-xl font-semibold text-card-foreground">
-            Credential issued into your pod
+            Credential saved in the pod
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Signed and written to <code className="break-all">{issued.credentialIri}</code>. Status
-            list entry #{issued.statusListIndex} was minted for revocation (decision 0007).
+            Saved at <code className="break-all">{issued.credentialIri}</code>. Status list entry{" "}
+            {issued.statusListIndex} lets the provider revoke it.
           </p>
           <div className="mt-4">
             {issued.brand === "appraisal" ? (
               <CredentialCard
-                issuer={`${props.orgLabel} (property appraisal provider)`}
+                issuer="Demo appraisal provider"
                 status="valid"
-                title="Property appraisal"
+                title="Appraisal"
                 validFrom={issued.validFrom.slice(0, 10)}
                 validUntil={issued.validUntil.slice(0, 10)}
               >
@@ -163,15 +161,13 @@ export function IssueFlow(props: IssueFlowProps) {
               </CredentialCard>
             ) : (
               <CredentialCard
-                issuer={`${props.orgLabel} (title insurance provider)`}
+                issuer="Demo title provider"
                 status="valid"
-                title="Title status"
+                title="Title search result"
                 validFrom={issued.validFrom.slice(0, 10)}
                 validUntil={issued.validUntil.slice(0, 10)}
               >
-                <p data-title-status={issued.titleStatus}>
-                  Title status: <strong>{issued.titleStatus}</strong>
-                </p>
+                <p data-title-status={issued.titleStatus}>{titleStatusCopy(issued.titleStatus)}</p>
               </CredentialCard>
             )}
           </div>
@@ -181,27 +177,23 @@ export function IssueFlow(props: IssueFlowProps) {
   );
 }
 
-function AppraisalPreview({
-  preview,
-  orgLabel,
-}: {
-  preview: AppraisalDemoPreview;
-  orgLabel: string;
-}) {
+function titleStatusCopy(status: "clear" | "clouded"): string {
+  return status === "clear"
+    ? "No title defects reported in this simulated search."
+    : "A title defect was reported in this simulated search.";
+}
+
+function AppraisalPreview({ preview }: { preview: AppraisalDemoPreview }) {
   return (
     <div>
-      <CredentialCard
-        issuer={`${orgLabel} (property appraisal provider)`}
-        status="pending"
-        title="Property appraisal (preview)"
-      >
+      <CredentialCard issuer="Demo appraisal provider" status="pending" title="Appraisal (preview)">
         <dl className="grid gap-3 sm:grid-cols-2">
           <div>
             <dt className="text-muted-foreground text-xs">Subject property</dt>
             <dd>{preview.propertyAddress}</dd>
           </div>
           <div>
-            <dt className="text-muted-foreground text-xs">Appraised value (disclosed)</dt>
+            <dt className="text-muted-foreground text-xs">Appraised value</dt>
             <dd className="font-semibold" data-appraised-value={preview.appraisedValueUsd}>
               <IllustrativeFigure>{formatUsd(preview.appraisedValueUsd)}</IllustrativeFigure>
             </dd>
@@ -214,9 +206,7 @@ function AppraisalPreview({
           </div>
           <div>
             <dt className="text-muted-foreground text-xs">Appraiser</dt>
-            <dd>
-              {preview.appraiserName} · licence {preview.appraiserLicenseId}
-            </dd>
+            <dd>{preview.appraiserName} — fictional appraiser</dd>
           </div>
         </dl>
       </CredentialCard>
@@ -225,19 +215,19 @@ function AppraisalPreview({
         data-consistency-check=""
       >
         {preview.appraisalCoversLoan
-          ? "Consistency check: the appraised value covers the requested loan amount (requested loan ≤ appraised value)."
-          : "Consistency check FAILED: the requested loan exceeds the appraised value — the credential would be refused."}
+          ? "Consistency check: the appraised value covers the requested loan amount. This is not a loan-to-value decision."
+          : "Consistency check failed: the requested loan is more than the appraised value. The credential would be refused."}
       </p>
     </div>
   );
 }
 
-function TitlePreview({ preview, orgLabel }: { preview: TitleDemoPreview; orgLabel: string }) {
+function TitlePreview({ preview }: { preview: TitleDemoPreview }) {
   return (
     <CredentialCard
-      issuer={`${orgLabel} (title insurance provider)`}
+      issuer="Demo title provider"
       status="pending"
-      title="Title status (preview)"
+      title="Title search result (preview)"
     >
       <dl className="grid gap-3 sm:grid-cols-2">
         <div>
@@ -245,9 +235,9 @@ function TitlePreview({ preview, orgLabel }: { preview: TitleDemoPreview; orgLab
           <dd>{preview.propertyAddress}</dd>
         </div>
         <div>
-          <dt className="text-muted-foreground text-xs">Title status</dt>
+          <dt className="text-muted-foreground text-xs">Search outcome</dt>
           <dd className="font-semibold" data-title-status={preview.titleStatus}>
-            {preview.titleStatus}
+            {titleStatusCopy(preview.titleStatus)}
           </dd>
         </div>
       </dl>

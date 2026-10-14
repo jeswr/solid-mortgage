@@ -1,245 +1,250 @@
 /**
  * The guided click-through: one entry per page the visitor lands on, in journey order
- * (the five SPEC §2 scenes, the same order `e2e/journey.spec.ts` drives). The overlay
+ * (the five SPEC §2 stages, named as in `docs/glossary.md` §3). The overlay
  * (`overlay/overlay.js`) renders the current step, highlights its button, and can press
- * it for the visitor ("Do it for me"). Every step is a real click in a real app — the
+ * it for the visitor ("Do it for me"). Every step is a real click in a real app: the
  * overlay never fakes an outcome.
+ *
+ * Copy rules: `docs/glossary.md` §1. Titles under eight words; bodies one or two short
+ * sentences that describe the action, not an outcome the page has not shown yet.
  */
 export interface GuidedStep {
   readonly id: string;
-  /** Scene heading shown above the step title. */
+  /** Stage heading shown above the step title. */
   readonly scene: string;
   readonly title: string;
-  /** What is happening and why it matters (plain language, 1–3 sentences). */
+  /** What happens on this page (plain language, one or two short sentences). */
   readonly body: string;
   /** The page this step happens on (gateway path). */
   readonly path: string;
-  /** The button the visitor should press, by its visible name. */
+  /**
+   * The button the visitor should press. `selector` is tried first; `label` (its visible
+   * name) is the fallback match.
+   */
   readonly action?: { readonly label: string; readonly selector?: string };
   /** The step is complete once this selector matches… */
   readonly doneSelector?: string;
   /** …or this text appears on the page. */
   readonly doneText?: string;
-  /** What to look for in the pod activity panel afterwards. */
+  /** What to look for in the pod activity panel afterwards (shown under "Details"). */
   readonly watch?: string;
 }
+
+const VERIFY = "1 · Verify income, assets and credit";
+const PREQUALIFY = "2 · Prequalify without disclosing income or credit score";
+const APPLY = "3 · Apply with data from the pod";
+const REVERIFY = "4 · Re-verify employment before closing";
+const CLOSE = "5 · Close the loan and transfer servicing";
 
 export const GUIDED_STEPS: readonly GuidedStep[] = [
   {
     id: "welcome",
     scene: "Welcome",
     title: "Alex is buying a home",
-    body: "You are Alex Rivera. Your mortgage data lives in your own Solid pod, and each organisation's app reads or writes it only as you allow. This tour moves through five scenes across seven separate apps, each on its own address, and signs you in to each one automatically with a demo account. Press Next to move on; the Overview button takes you back here at any time.",
+    body: "Alex's mortgage data is in a Solid pod: a personal data store Alex controls. Organisations read from it only with Alex's permission.",
     path: "/",
     watch:
-      "Open the pod activity panel (bottom left) to see every read, write and access-rule change as it happens.",
+      "The tour signs in to seven demo apps for you. Open Pod activity to see each read, write and permission change.",
   },
   {
     id: "vault",
-    scene: "Scene 1 · Fill the vault",
-    title: "Your Data Vault",
-    body: "The vault is your view of your pod. The profile below is read live from it, not from a database the vault owns.",
+    scene: VERIFY,
+    title: "Alex's Data Vault",
+    body: "Data Vault is Alex's app for the pod. It reads Alex's profile from the pod, not from its own database.",
     path: "/wallet",
     doneSelector: "[data-vault-ready]",
-    watch: "The activity panel shows the vault reading your profile from the pod.",
+    watch: "Data Vault reads Alex's profile from the pod.",
   },
   {
     id: "vault-credentials",
-    scene: "Scene 1 · Fill the vault",
-    title: "Verified once, reused everywhere",
-    body: "Each card is a signed verifiable credential stored in your pod, re-verified every time it is opened. Four are already there; the assets verification is still missing.",
+    scene: VERIFY,
+    title: "Alex's verification records",
+    body: "Each record is a verifiable credential: a signed verification report that any party can check. Alex has no asset verification yet.",
     path: "/wallet/credentials",
-    watch: "Each credential read is followed by reads of its issuer document and status list.",
+    doneSelector: "[data-credential-list]",
+    watch: "Each credential read is followed by reads of its issuer profile and status list.",
   },
   {
     id: "issue-assets",
-    scene: "Scene 1 · Fill the vault",
-    title: "Get your assets verified",
-    body: "The account-data aggregator checks your bank balance and signs a credential straight into your pod. Any lender can reuse it later, so you never upload a bank statement again.",
+    scene: VERIFY,
+    title: "Verify Alex's assets",
+    body: "The asset verification provider checks Alex's simulated bank balances. It saves a signed asset credential in Alex's pod.",
     path: "/verifications/assets",
     action: { label: "Issue credential" },
     doneSelector: '[data-panel-outcome="ok"]',
-    watch: "Look for the write of the bank assets credential, made by Verification Services.",
+    watch: "Verification Services saves the asset verification credential.",
   },
   {
     id: "vault-assets",
-    scene: "Scene 1 · Fill the vault",
-    title: "The new credential is in your vault",
-    body: "Assets now shows as valid. The aggregator wrote it into your pod; the vault simply reads it.",
+    scene: VERIFY,
+    title: "Check the new credential",
+    body: "Data Vault now reads the asset credential that the provider saved. Data Vault did not create it.",
     path: "/wallet/credentials",
+    doneSelector: "[data-credential-list]",
   },
   {
     id: "assistant-shop",
-    scene: "Scene 2 · Shop without undressing",
-    title: "Ask your assistant to find you a rate",
-    body: "Instead of filling in forms, Alex asks an assistant. It asks for consent per source first. Allow it, and it builds zero-knowledge proofs in your browser that your income is at least $7,000 a month and your score at least 620, then sends only the proofs to two lenders.",
+    scene: PREQUALIFY,
+    title: "Ask the assistant for rate quotes",
+    body: "Allow access, and the assistant proves that income is at least $7,000 a month and the credit score is 620 or higher. Lenders get the proofs, not the figures.",
     path: "/wallet/assistant",
-    action: { label: "Allow", selector: "[data-consent-allow]" },
+    action: { label: "Allow selected sources", selector: "[data-consent-allow]" },
     doneSelector: "[data-agent-quotes]",
-    watch:
-      "Only the two signed anchors are read from your pod; the lenders receive proofs, never the figures.",
+    watch: "The assistant reads only Alex's income and credit-score credentials from the pod.",
   },
   {
     id: "assistant-shop-apply",
-    scene: "Scene 2 · Shop without undressing",
-    title: "Two quotes, no numbers shared",
-    body: "Both lenders qualified Alex without learning the income or the score. Tell the assistant to start an application with the primary lender. (The manual route is still there: the vault's pre-qualification page does the same thing button by button.)",
+    scene: PREQUALIFY,
+    title: "Compare two illustrative quotes",
+    body: "Each lender says whether Alex meets its prequalification criteria. A quote is not an offer or a Loan Estimate. Ask the assistant to apply with the primary lender.",
     path: "/wallet/assistant",
-    action: { label: "Yes, start the application", selector: '[data-agent-reply="apply"]' },
+    action: { label: "Continue with primary lender", selector: '[data-agent-reply="apply"]' },
     doneSelector: "[data-agent-done]",
   },
   {
     id: "lender-53",
-    scene: "Scene 2 · Shop without undressing",
-    title: "The competing lender's side",
-    body: "This is the second lender's own app. It received a proof and returned a rate quote, without ever seeing your income or score.",
+    scene: PREQUALIFY,
+    title: "The second lender's view",
+    body: "The second lender publishes its prequalification criteria and checks proofs. It never receives Alex's income or credit score.",
     path: "/lender-53",
   },
   {
     id: "assistant-apply",
-    scene: "Scene 3 · One-click application",
-    title: "The lender's assistant fills in the application",
-    body: "On the lender's site, the assistant asks again, per source: your pod for profile and credentials, and your (simulated) inbox for rent receipts. Untick a source to see it ask you instead, or decline and use the form.",
+    scene: APPLY,
+    title: "Prefill the application",
+    body: "The lender's assistant asks which sources it may read. Allow it, and it prefills the application from Alex's pod and simulated inbox.",
     path: "/lender-boa/assistant",
-    action: { label: "Allow", selector: "[data-consent-allow]" },
+    action: { label: "Allow selected sources", selector: "[data-consent-allow]" },
     doneSelector: "[data-agent-review]",
-    watch: "The lender's prefill reads your profile and each credential from your pod.",
+    watch: "The lender reads Alex's profile and each credential from the pod.",
   },
   {
     id: "assistant-submit",
-    scene: "Scene 3 · One-click application",
-    title: "Check it, then let it submit",
-    body: "The assistant shows exactly what it will send. On your yes, the lender writes the application and its Loan Estimate into your pod.",
+    scene: APPLY,
+    title: "Review and submit",
+    body: "Check what the assistant will send, then approve it. The lender saves the application in Alex's pod and issues a Loan Estimate.",
     path: "/lender-boa/assistant",
-    action: { label: "Yes, submit it", selector: '[data-agent-reply="submit"]' },
+    action: { label: "Submit application", selector: '[data-agent-reply="submit"]' },
     doneSelector: "[data-agent-done]",
-    watch: "Writes of the loan application and the loan decision record.",
+    watch: "The lender saves the loan application and an underwriting decision record.",
   },
   {
     id: "pipeline-review",
-    scene: "Scene 3 · One-click application",
-    title: "The loan officer's side",
-    body: "Now you are the loan officer. Alex's file arrived from the assistant, and its evidence is read live from Alex's pod under the grant: no uploads, nothing to chase.",
+    scene: APPLY,
+    title: "The loan officer's view",
+    body: "The lender's pipeline reads Alex's loan file from the pod, with Alex's permission. Nobody uploads documents.",
     path: "/lender-boa/pipeline",
     doneSelector: "[data-pipeline-file]",
-    watch: "The lender reads the application and decision from Alex's pod to show this queue.",
+    watch: "The lender reads the application from Alex's pod to build this list.",
+  },
+  {
+    id: "vault-grants",
+    scene: APPLY,
+    title: "Give the AUS access",
+    body: "Before underwriting, Alex gives the automated underwriting system (AUS) read access to the loan file. Data Vault saves the permission and a consent receipt.",
+    path: "/wallet/grants",
+    action: { label: "Grant access", selector: '[data-grant-action="grant-gse"]' },
+    doneSelector: '[data-grant-party="gse"][data-grant-state="granted"]',
+    watch: "Alex changes the permission list on the mortgage folder from the browser.",
   },
   {
     id: "underwriting",
-    scene: "Scene 3 · One-click application",
-    title: "Automated underwriting decides from your data",
-    body: "The underwriting service reads the loan file and credentials you granted, checks every signature, and records its decision in your pod.",
+    scene: APPLY,
+    title: "Run automated underwriting",
+    body: "The AUS checks each credential and the loan file, then returns a recommendation. The lender's underwriter makes the credit decision.",
     path: "/gse/underwriting",
-    action: { label: "Run automated underwriting" },
+    action: { label: "Run AUS", selector: "[data-aus-console] > button" },
     doneSelector: "[data-aus-result]",
-    watch: "The underwriting service's own identity reads the loan file and writes the decision.",
+    watch: "The AUS reads the loan file with its own identity and saves its findings.",
   },
   {
     id: "appraisal",
-    scene: "Scene 3 · One-click application",
-    title: "Property services: the appraisal",
-    body: "The appraisal arrives as a signed credential in your pod, so the lender and underwriter verify it instead of re-ordering it.",
+    scene: APPLY,
+    title: "Appraisal preview",
+    body: "An appraisal can be saved as a signed credential in Alex's pod. In this local demo, the page shows a simulated preview and issues no credential.",
     path: "/property/appraisal",
     doneSelector: "[data-appraised-value]",
   },
   {
     id: "title",
-    scene: "Scene 3 · One-click application",
-    title: "Property services: title",
-    body: "The title search result is another reusable credential in your pod.",
+    scene: APPLY,
+    title: "Title search preview",
+    body: "The title search result works the same way. The page shows a simulated preview. It is not a title commitment.",
     path: "/property/title",
     doneSelector: "[data-title-status]",
   },
   {
     id: "freshness",
-    scene: "Scene 4 · Nothing goes stale",
-    title: "Is the employment check still fresh?",
-    body: "Lenders must re-verify employment shortly before closing. The lender checks the credential's validity window in your pod and finds it is about to expire.",
+    scene: REVERIFY,
+    title: "Check employment before closing",
+    body: "The lender must re-verify employment shortly before closing. It checks the dates on Alex's employment credential in the pod.",
     path: "/lender-boa/freshness",
-    action: { label: "Run freshness check" },
+    action: { label: "Check credential validity", selector: "[data-freshness-panel] > button" },
     doneSelector: "[data-freshness-result]",
   },
   {
     id: "reissue",
-    scene: "Scene 4 · Nothing goes stale",
-    title: "One-click re-issue instead of a phone call",
-    body: "The employment verifier re-issues the credential through the access you already granted, and revokes the old one on its status list.",
+    scene: REVERIFY,
+    title: "Re-issue the employment credential",
+    body: "The employment verification provider issues a new credential with the same simulated data and a new validity period. It revokes the old credential on its status list.",
     path: "/verifications/employment",
-    action: { label: "Re-issue (freshness)" },
+    action: { label: "Re-issue credential" },
     doneSelector: '[data-panel-outcome="ok"]',
-    watch: "A new employment credential is written and the old one's status list entry is updated.",
+    watch: "Verification Services saves a new employment credential and updates the status list.",
   },
   {
     id: "clear-to-close",
-    scene: "Scene 4 · Nothing goes stale",
-    title: "The loan officer clears the file to close",
-    body: "Back in the loan officer's queue: the employment condition is satisfied by the fresh credential, so the officer clears the file. The final decision is written into Alex's pod.",
+    scene: REVERIFY,
+    title: "Mark the loan clear to close",
+    body: "The underwriter confirms the employment condition is satisfied. The lender marks the loan clear to close and saves the status in Alex's pod.",
     path: "/lender-boa/pipeline",
-    action: { label: "Clear to close", selector: '[data-pipeline-action="clear-to-close"]' },
+    action: { label: "Mark clear to close", selector: '[data-pipeline-action="clear-to-close"]' },
     doneSelector: '[data-pipeline-stage="clear-to-close"]',
-    watch: "A write of the loan decision record by the lender.",
+    watch: "The lender saves the updated underwriting decision record.",
   },
   {
     id: "esign",
-    scene: "Scene 5 · Close and stay in control",
-    title: "Sign the closing package",
-    body: "The digital closing platform writes the closing record into your pod, so you hold the authoritative copy of your loan.",
+    scene: CLOSE,
+    title: "eSign the closing documents",
+    body: "The eClosing platform saves a closing record and an eNote reference in Alex's pod. Signing and eNote custody are simulated.",
     path: "/closing",
-    action: { label: "eSign closing package" },
-    doneText: "ClosingRecord written to Alex's pod",
-    watch: "A write of the closing record and new access rules on it.",
+    action: { label: "eSign closing documents" },
+    doneText: "Closing record saved in Alex's pod",
+    watch: "The closing platform saves the closing record and sets its permissions.",
   },
   {
     id: "grant-servicer",
-    scene: "Scene 5 · Close and stay in control",
-    title: "Give the new servicer access",
-    body: "Your loan is being serviced by a new company. Approving it adds the servicer to the access rules on your closing record and writes a consent receipt.",
+    scene: CLOSE,
+    title: "Grant the servicer access",
+    body: "Servicing-transfer notices are simulated. Separately, Alex gives the new servicer read access to the closing record, with a consent receipt.",
     path: "/closing",
-    action: { label: "Approve servicer access" },
+    action: { label: "Grant servicer access" },
     doneText: "Servicer read access granted",
-    watch: "An access-rule change granting the loan servicer Read.",
+    watch: "The permission list on the closing record adds the servicer.",
   },
   {
     id: "revoke-lender",
-    scene: "Scene 5 · Close and stay in control",
-    title: "Take the lender's access away",
-    body: "The origination lender no longer needs your data. Revoking removes it from the access rules, and the change is receipted.",
+    scene: CLOSE,
+    title: "Revoke the lender's access",
+    body: "Alex removes the lender's permission to read the closing record. Copies the lender already holds are not affected.",
     path: "/closing",
     action: { label: "Revoke lender access" },
     doneText: "Lender read access revoked",
-    watch: "An access-rule change removing the primary lender.",
-  },
-  {
-    id: "receipts",
-    scene: "Scene 5 · Close and stay in control",
-    title: "Every change is receipted",
-    body: "The consent-receipt ledger in your pod records each grant and revocation, so you can always see who had access and when.",
-    path: "/closing",
-    action: { label: "Read consent-receipt ledger" },
-    doneSelector: "[data-receipt-card]",
-  },
-  {
-    id: "vault-grants",
-    scene: "Scene 5 · Close and stay in control",
-    title: "Manage access from your vault",
-    body: "The vault lists every organisation that could reach your mortgage folder. Grant the underwriting service read access: the vault writes a new access rule into your pod and a consent receipt. You could revoke it here just as easily.",
-    path: "/wallet/grants",
-    action: { label: "Grant access", selector: '[data-grant-action="grant-gse"]' },
-    doneSelector: '[data-grant-party="gse"][data-grant-state="granted"]',
-    watch: "An access-rule change on the mortgage folder, made by you in the browser.",
+    watch: "The permission list on the closing record removes the primary lender.",
   },
   {
     id: "vault-ledger",
-    scene: "Scene 5 · Close and stay in control",
-    title: "Your own record of who had access",
-    body: "The vault's ledger reads every consent receipt from your pod: the vault's grant you just made, as well as the closing platform's grant and revocation.",
+    scene: CLOSE,
+    title: "Alex's access history",
+    body: "Data Vault reads each consent receipt from the pod: the AUS access, the servicer grant and the lender revocation.",
     path: "/wallet/ledger",
+    doneSelector: "[data-ledger-list]",
   },
   {
     id: "done",
-    scene: "That's the journey",
-    title: "Now explore on your own",
-    body: "Every app keeps working outside the tour. Open the app launcher to try any of them directly, or restart the tour from the demo controls.",
+    scene: "End of the tour",
+    title: "Explore on your own",
+    body: "Each app works outside the tour. Open one from the app launcher, or restart the tour from the overview.",
     path: "/apps",
   },
 ];

@@ -153,7 +153,7 @@ test.describe("property (sm-33)", () => {
   }) => {
     await authenticatePage(page);
     await page.goto(`${appOrigin}/property/appraisal`);
-    await page.getByRole("button", { name: "Issue into my pod (demo)" }).click();
+    await page.getByRole("button", { name: "Issue credential", exact: true }).click();
     const issued = page.locator("[data-issued-credential]");
     await expect(issued).toBeVisible();
     await expect(issued).toHaveAttribute(
@@ -173,7 +173,7 @@ test.describe("property (sm-33)", () => {
   }) => {
     await authenticatePage(page);
     await page.goto(`${appOrigin}/property/title`);
-    await page.getByRole("button", { name: "Issue into my pod (demo)" }).click();
+    await page.getByRole("button", { name: "Issue credential", exact: true }).click();
     const issued = page.locator("[data-issued-credential]");
     await expect(issued).toBeVisible();
     await expect(issued).toHaveAttribute(

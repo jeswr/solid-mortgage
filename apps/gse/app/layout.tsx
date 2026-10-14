@@ -12,7 +12,7 @@ export const metadata: Metadata = demoMetadata({
 
 const NAV = [
   { href: "/", label: "Overview" },
-  { href: "/underwriting", label: "Underwriting console" },
+  { href: "/underwriting", label: "Run AUS" },
 ] as const;
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {

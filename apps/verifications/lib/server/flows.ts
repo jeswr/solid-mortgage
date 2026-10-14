@@ -155,7 +155,7 @@ export const ISSUER_FLOWS: Readonly<Record<IssuerFlowId, IssuerFlowDefinition>> 
     credentialPath: RESOURCE_POD_PATHS["employment-income-credential"],
     id: "employment",
     kind: "employment-income-credential",
-    label: "Employment + income verification — modelled on The Work Number (Equifax)",
+    label: "Employment and income verification — modelled on The Work Number (Equifax)",
     modelledOn: "The Work Number (Equifax)",
     reissueDays: 14,
     role: "employment and income verifier",

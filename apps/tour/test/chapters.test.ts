@@ -4,14 +4,17 @@ import {
   chapters,
   countWords,
   MAX_LEAD_WORDS,
+  MAX_SENTENCE_WORDS,
   MAX_STEP_WORDS,
+  sentences,
   UNDERNEATH_REQUIRED_SCENES,
 } from "../app/content/chapters";
 import { demoApps } from "../app/content/services";
 
 /**
  * Machine-enforced editorial limits (showcase-patterns §1): the chapter data cannot ship
- * bloated steps, a missing "underneath" panel on a VC/ZK scene, or a dead try-live link.
+ * bloated steps or sentences, a missing "How it works" panel on a VC/ZK scene, a dead
+ * try-live link, or a term docs/glossary.md bans from visitor copy.
  */
 
 test("exactly five scene chapters, scenes 1..5 in order, slugs unique", () => {
@@ -40,10 +43,32 @@ describe.each(chapters)("chapter $slug (scene $scene)", (chapter) => {
       expect(step.tryLive.label.length).toBeGreaterThan(0);
       // The deep link must target a registered demo app — the single service registry.
       expect(demoApps[step.tryLive.app]).toBeDefined();
+      // An explicit route inside that app (M12), never a bare trailing slash.
+      if (step.tryLive.path !== undefined) expect(step.tryLive.path).toMatch(/^\/[a-z-]+$/u);
     }
   });
 
-  test("scenes 1/2/4 carry the required 'what just happened underneath' panel", () => {
+  test(`no sentence runs past ${MAX_SENTENCE_WORDS} words`, () => {
+    const copy = [chapter.lead, ...chapter.steps.map((step) => step.body)];
+    for (const sentence of copy.flatMap(sentences)) {
+      expect(countWords(sentence), sentence).toBeLessThanOrEqual(MAX_SENTENCE_WORDS);
+    }
+  });
+
+  test("uses no term the glossary bans from visitor copy", () => {
+    const copy = [
+      chapter.title,
+      chapter.lead,
+      chapter.anchor,
+      ...chapter.steps.flatMap((step) => [step.title, step.body, step.tryLive.label]),
+      ...(chapter.underneath ?? []),
+    ].join(" ");
+    expect(copy).not.toMatch(
+      /\b(?:rail|seat|surface|fail-closed|freshness|receipted|ledger|honestly|into the vault|stale|undressing|one-click|qualified|competing offers|operand anchor)\b/iu,
+    );
+  });
+
+  test("scenes 1/2/4 carry the required 'How it works' panel", () => {
     if (UNDERNEATH_REQUIRED_SCENES.includes(chapter.scene)) {
       expect(chapter.underneath, `scene ${chapter.scene}`).toBeDefined();
       expect(chapter.underneath?.length).toBeGreaterThan(0);
@@ -52,6 +77,10 @@ describe.each(chapters)("chapter $slug (scene $scene)", (chapter) => {
       }
     }
   });
+});
+
+test("sentences splits on terminal punctuation", () => {
+  expect(sentences("One. Two? Three!  ")).toEqual(["One.", "Two?", "Three!"]);
 });
 
 test("chapterBySlug round-trips every chapter and rejects unknown slugs", () => {

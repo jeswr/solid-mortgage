@@ -15,12 +15,12 @@ export const site = {
 export const appraisalBrand = {
   appName: "Appraisal Services",
   organization: "Cotality",
-  role: "property appraisal provider",
+  role: "Appraisal provider",
 } as const;
 
 /** The First American-modelled title flow. */
 export const titleBrand = {
   appName: "Title Services",
   organization: "First American",
-  role: "title insurance provider",
+  role: "Title company",
 } as const;

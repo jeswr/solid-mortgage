@@ -20,11 +20,11 @@ export interface FreshnessPanelProps {
 }
 
 const DECISION_COPY: Record<FreshnessResponse["decision"], string> = {
-  stands: "Decision stands — the credential fully verifies and is within its validity window.",
+  stands: "Credential valid. It verifies and is within its validity period.",
   "blocked-stale":
-    "Decision blocked — the employment credential's validity window has lapsed. Request a re-verification.",
+    "Condition open: employment re-verification required. The credential has expired.",
   "blocked-invalid":
-    "Decision blocked — the credential did not fully verify (signature, trusted issuer, or revocation status).",
+    "Condition open: the credential did not verify (signature, trusted issuer or status).",
 };
 
 /**
@@ -58,12 +58,12 @@ export function FreshnessPanel({ apiBase }: FreshnessPanelProps) {
       }
       const body = (await response.json()) as FreshnessResponse;
       if (!response.ok) {
-        setError(body.detail ?? `freshness check failed (${response.status})`);
+        setError(body.detail ?? `Check failed (${response.status}).`);
         return;
       }
       setReport(body);
     } catch {
-      setError("freshness check failed — is the pod reachable?");
+      setError("Check failed. Is the pod reachable?");
     } finally {
       setBusy(false);
     }
@@ -76,14 +76,14 @@ export function FreshnessPanel({ apiBase }: FreshnessPanelProps) {
       const response = await fetch(`${apiBase}/freshness/reissue-request`, { method: "POST" });
       const body = (await response.json()) as { dispatched?: boolean; nextStep?: string };
       if (!response.ok) {
-        setError(`re-verification request failed (${response.status})`);
+        setError(`Request failed (${response.status}).`);
         return;
       }
       // The endpoint is a simulated no-op (dispatched:false); reflect exactly
       // what happened rather than implying a request was sent.
       setReissue({ dispatched: body.dispatched === true, nextStep: body.nextStep ?? "" });
     } catch {
-      setError("re-verification request failed");
+      setError("Request failed.");
     } finally {
       setBusy(false);
     }
@@ -96,7 +96,7 @@ export function FreshnessPanel({ apiBase }: FreshnessPanelProps) {
       data-freshness-panel=""
     >
       <h2 id="freshness-check-heading" className="text-xl font-semibold text-card-foreground">
-        Pre-close freshness re-check
+        Check the employment credential
       </h2>
       <button
         className="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
@@ -104,13 +104,12 @@ export function FreshnessPanel({ apiBase }: FreshnessPanelProps) {
         onClick={check}
         type="button"
       >
-        {busy ? "Checking…" : report === null ? "Run freshness check" : "Re-run check"}
+        {busy ? "Checking…" : report === null ? "Check credential validity" : "Check again"}
       </button>
       {authRequired && (
         <p className="mt-3 text-sm text-muted-foreground" data-freshness-auth-required="">
-          This re-check runs against YOUR granted pod, so it requires an authenticated borrower
-          session (hosted mode). The default in-browser demo has no real login — the rail honestly
-          stays off rather than simulating a security property it does not have.
+          This check reads Alex's pod, so it needs a signed-in borrower. This in-browser demo has no
+          sign-in, so the check does not run.
         </p>
       )}
       {error !== null && (
@@ -122,24 +121,26 @@ export function FreshnessPanel({ apiBase }: FreshnessPanelProps) {
         <div className="mt-4" data-freshness-result={report.greenTick ? "green" : "blocked"}>
           <dl className="grid gap-3 sm:grid-cols-2">
             <div>
-              <dt className="text-sm text-muted-foreground">Validity window</dt>
+              <dt className="text-sm text-muted-foreground">Validity period</dt>
               <dd className="text-sm">
                 {report.window.validFrom?.slice(0, 10) ?? "—"} →{" "}
                 {report.window.validUntil?.slice(0, 10) ?? "—"}
               </dd>
             </div>
             <div>
-              <dt className="text-sm text-muted-foreground">Window check</dt>
-              <dd className="text-sm font-semibold">{report.fresh ? "fresh" : "stale"}</dd>
+              <dt className="text-sm text-muted-foreground">Dates</dt>
+              <dd className="text-sm font-semibold">
+                {report.fresh ? "within validity period" : "expired"}
+              </dd>
             </div>
             <div>
-              <dt className="text-sm text-muted-foreground">Credential verification</dt>
+              <dt className="text-sm text-muted-foreground">Signature, issuer and status</dt>
               <dd className="text-sm font-semibold">
                 {report.verified ? "verified" : "not verified"}
               </dd>
             </div>
             <div>
-              <dt className="text-sm text-muted-foreground">Green tick</dt>
+              <dt className="text-sm text-muted-foreground">Lender check passed</dt>
               <dd className="text-sm font-semibold">{report.greenTick ? "yes" : "no"}</dd>
             </div>
           </dl>
@@ -158,8 +159,8 @@ export function FreshnessPanel({ apiBase }: FreshnessPanelProps) {
                 {reissue !== null
                   ? reissue.dispatched
                     ? "Re-verification requested"
-                    : "Re-verification (simulated)"
-                  : "Request re-verification (one click)"}
+                    : "Request simulated"
+                  : "Request re-verification"}
               </button>
               {reissue !== null && (
                 <p className="mt-2 text-sm text-muted-foreground" data-reissue-requested="">

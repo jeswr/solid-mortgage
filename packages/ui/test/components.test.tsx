@@ -2,6 +2,7 @@
 
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, expect, test } from "vitest";
+import { ConsentRequest } from "../src/agent-chat.js";
 import { AppShell, BrandHeader, DEMO_BORROWER_ACCOUNT } from "../src/app-shell.js";
 import { CredentialCard } from "../src/credential-card.js";
 import { DemoLockedField } from "../src/demo-locked-field.js";
@@ -212,4 +213,24 @@ test("ReceiptCard renders the app-level who, what, and when trail", () => {
     "2026-07-16T14:30:00.000Z",
   );
   expect(screen.getByText(/written by this application/)).toBeDefined();
+});
+
+test("ConsentRequest starts optional sources unselected and allows only the selected ones", () => {
+  const allowed: (readonly string[])[] = [];
+  render(
+    <ConsentRequest
+      onAllow={(ids) => allowed.push(ids)}
+      onManual={() => undefined}
+      sources={[
+        { id: "pod", name: "Alex's pod", reads: "Profile and credentials" },
+        { id: "inbox", name: "Demo rent receipts", optional: true, reads: "Rent receipts" },
+      ]}
+    />,
+  );
+  expect(screen.getByText("Choose data sources")).toBeDefined();
+  expect(screen.getByText("optional")).toBeDefined();
+  const inbox = document.querySelector<HTMLInputElement>('[data-consent-source="inbox"]');
+  expect(inbox?.checked).toBe(false);
+  screen.getByRole("button", { name: "Allow selected sources" }).click();
+  expect(allowed).toEqual([["pod"]]);
 });

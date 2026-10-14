@@ -55,12 +55,12 @@ const ACTIONS: Partial<Record<Phase, readonly AssistantAction[]>> = {
   consent: [
     {
       id: "allow_all",
-      description: "Alex allows both sources: the Solid pod and the email inbox.",
+      description: "Alex allows both sources: the pod and the simulated rent receipts.",
     },
     {
       id: "allow_pod_only",
       description:
-        "Alex allows the Solid pod but not the email inbox (the assistant will ask for the rent).",
+        "Alex allows the pod but not the rent receipts (the assistant will ask for the rent).",
     },
     {
       id: "decline_manual",
@@ -117,9 +117,9 @@ function scriptedAction(phase: Phase, text: string): { action: string; rent?: nu
 }
 
 const SCRIPTED_HELP: Partial<Record<Phase, string>> = {
-  consent: "You can allow your pod and inbox, your pod only, or fill in the form yourself.",
-  "ask-rent": "I just need your monthly rent, like 2150.",
-  review: "I can submit it now, change the rent, or you can review the full form yourself.",
+  consent: "Allow your pod and rent receipts, your pod only, or use the form.",
+  "ask-rent": "What is your monthly rent? For example, 2150.",
+  review: "I can submit now or change the rent. You can also check the full application.",
 };
 
 export function AgentApplication({ apiBase, formHref }: { apiBase: string; formHref: string }) {
@@ -132,7 +132,7 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
   const history = useRef<AssistantTurn[]>([
     {
       from: "agent",
-      text: "Hi Alex. I can complete this mortgage application for you. May I read your Solid pod (profile and credentials) and your email inbox (rent receipts only)?",
+      text: "Hi Alex. I can prepare your mortgage application. Choose the data sources I may read: your pod, and optionally your simulated rent receipts.",
     },
   ]);
   const prefill = useRef<UrlaPrefill | undefined>(undefined);
@@ -169,7 +169,7 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
     const lines: string[] = [];
     if (data !== undefined) {
       lines.push(
-        `Application draft: ${data.borrower.name}, ${data.borrower.address}; ${data.employment.jobTitle} at ${data.employment.employerName}, ${formatUsd(data.employment.monthlyGrossIncomeUsd)} a month (verified credential); ${data.assets.accounts.length} verified bank account(s); credit score from a verified credential.`,
+        `Application draft: ${data.borrower.name}, ${data.borrower.address}; ${data.employment.jobTitle} at ${data.employment.employerName}, ${formatUsd(data.employment.monthlyGrossIncomeUsd)} a month; ${data.assets.accounts.length} bank account(s); credit score. All from Alex's pod; credential signatures are not checked in this step.`,
       );
     }
     if (housing.current !== undefined) {
@@ -189,7 +189,8 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
       "agent",
       <div data-agent-review="">
         <p>
-          Here is what I will submit to the lender. Every value came from your pod or your inbox:
+          Review the application summary. {formLink("Open the full application")} to check all
+          fields before submitting.
         </p>
         <ul className="mt-2 list-disc pl-5">
           <li>
@@ -200,12 +201,11 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
             <IllustrativeFigure>
               {formatUsd(data.employment.monthlyGrossIncomeUsd)}
             </IllustrativeFigure>{" "}
-            a month (verified credential)
+            a month
           </li>
           <li>
             {data.assets.accounts.length} bank account
-            {data.assets.accounts.length === 1 ? "" : "s"} (verified credential), credit score from
-            your credit credential
+            {data.assets.accounts.length === 1 ? "" : "s"} and your credit score
           </li>
           {housing.current !== undefined && (
             <li>
@@ -216,9 +216,9 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
             </li>
           )}
         </ul>
-        <p className="mt-2">Shall I submit it?</p>
+        <p className="mt-2">Credential signatures are not checked in this step. Submit it?</p>
       </div>,
-      `Here is the draft I will submit: ${facts().join(" ")} Shall I submit it?`,
+      `Application summary: ${facts().join(" ")} Submit it?`,
     );
   }
 
@@ -227,10 +227,10 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
     say(
       "agent",
       quiet ? (
-        <>{formLink("Open the application form")} (prefilled from your pod).</>
+        <>{formLink("Open the application form")}.</>
       ) : (
         <>
-          {text} {formLink("Open the application form")}; it is prefilled from your pod too.
+          {text} {formLink("Open the application form")}.
         </>
       ),
       text,
@@ -244,15 +244,17 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
     setSteps([
       {
         id: "pod",
-        label: "Read your profile and verified credentials from your pod",
+        label: "Read your profile and verification records from your pod",
         state: "running",
       },
       {
         id: "email",
-        label: email ? "Search your inbox for rent receipts" : "Inbox: not allowed, I'll ask you",
+        label: email
+          ? "Find rent receipts in the simulated inbox"
+          : "Rent receipts: not allowed. I'll ask you.",
         state: email ? "pending" : "skipped",
       },
-      { id: "fill", label: "Fill in the loan application", state: "pending" },
+      { id: "fill", label: "Fill in the application", state: "pending" },
     ]);
     // One live action log, moved to the end on a retry.
     setMessages((current) => [
@@ -272,32 +274,32 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
         say(
           "agent",
           <>
-            Your pod doesn't have all the verifications a lender needs yet (usually the assets
-            credential). Get it from{" "}
+            Your pod is missing a verification the lender needs, usually the asset credential. Get
+            it from{" "}
             <a className="font-semibold underline" href="/verifications/assets">
               Verification Services
             </a>
             , then come back and allow me again, or {formLink("fill in the form")}.
           </>,
-          "Alex's pod is missing a verification (usually the assets credential from Verification Services). Alex can get it and then allow the assistant again, or use the form.",
+          "Alex's pod is missing a verification (usually the asset credential from Verification Services). Alex can get it and allow the assistant again, or use the form.",
         );
         return;
       }
-      if (!response.ok) throw new Error(`the lender refused the pod read (${response.status})`);
+      if (!response.ok) throw new Error(`The lender could not read your pod (${response.status})`);
       const data = (await response.json()) as UrlaPrefill;
-      if (data.source !== "pod") throw new Error("the lender could not reach your pod");
+      if (data.source !== "pod") throw new Error("The lender could not reach your pod");
       prefill.current = data;
       setStep("pod", {
         state: "done",
         detail:
-          "Profile, employment and income, assets, and credit score: read through the lender's prefill, with your sign-in.",
+          "Profile, employment and income, assets and credit score, read by the lender's prefill with your sign-in.",
       });
     } catch (error) {
       setStep("pod", {
         state: "failed",
         detail: error instanceof Error ? error.message : String(error),
       });
-      manual("I couldn't read your pod, so the form is the way to go this time.");
+      manual("I couldn't read your pod. Please use the form.");
       return;
     }
 
@@ -308,7 +310,7 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
       housing.current = { monthlyRentUsd: rent, source: "email" };
       setStep("email", {
         state: "done",
-        detail: `Found ${DEMO_RENT_RECEIPTS.length} rent receipts from ${DEMO_RENT_RECEIPTS[0].from} (fictional) in your simulated inbox.`,
+        detail: `Found ${DEMO_RENT_RECEIPTS.length} rent receipts from ${DEMO_RENT_RECEIPTS[0].from} (fictional).`,
       });
     }
     setStep("fill", { state: "running" });
@@ -321,7 +323,7 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
 
     if (!email) {
       setPhase("ask-rent");
-      say("agent", "What do you pay in rent each month? (Demo: any figure will do.)");
+      say("agent", "What is your monthly rent? Any demo figure will do.");
       return;
     }
     review();
@@ -341,10 +343,7 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
       say(
         "agent",
         <div data-agent-done="">
-          <p>
-            Submitted. The lender wrote your application and its Loan Estimate into your pod, so you
-            keep the copies:
-          </p>
+          <p>Application saved. Review the illustrative loan terms below.</p>
           <ul className="mt-2 list-disc pl-5">
             <li>
               Loan amount{" "}
@@ -363,9 +362,12 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
               </IllustrativeFigure>
             </li>
           </ul>
-          <p className="mt-2">A loan officer will review your file next.</p>
+          <p className="mt-2">
+            This summary is not a Loan Estimate or credit approval. The lender reviews your file
+            next.
+          </p>
         </div>,
-        `Submitted. The application and Loan Estimate (${formatUsd(body.loanEstimate.loanAmountUsd)} at ${formatPercent(body.loanEstimate.interestRatePercent)}, illustrative) are in Alex's pod. A loan officer reviews it next.`,
+        `Application saved in Alex's pod. Illustrative loan terms: ${formatUsd(body.loanEstimate.loanAmountUsd)} at ${formatPercent(body.loanEstimate.interestRatePercent)}. This is not a Loan Estimate or credit approval. The lender reviews the file next.`,
       );
     } catch (error) {
       setPhase("review");
@@ -437,16 +439,16 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
   const replies: AgentReply[] =
     phase === "review"
       ? [
-          { label: "Yes, submit it", value: "submit" },
-          { label: "I'll review the form myself", value: "form" },
+          { label: "Submit application", value: "submit" },
+          { label: "Open the full application", value: "form" },
         ]
       : phase === "ask-rent"
         ? [{ label: "$2,150", value: "2150" }]
         : [];
 
   function reply(value: string) {
-    if (value === "submit") return choose("Yes, submit it.", "submit");
-    if (value === "form") return choose("I'll review the full form myself.", "open_form");
+    if (value === "submit") return choose("Submit the application.", "submit");
+    if (value === "form") return choose("I'll check the full application myself.", "open_form");
     if (value === "2150" && phaseRef.current === "ask-rent") {
       return choose("$2,150 a month.", "provide_rent", 2150);
     }
@@ -460,7 +462,7 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
           ...message,
           content: (
             <div>
-              <p>On it. Here is what I'm doing:</p>
+              <p>Working on it:</p>
               <AgentSteps steps={steps} />
             </div>
           ),
@@ -471,7 +473,7 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
   return (
     <div className="flex flex-col gap-4">
       <AgentConversation
-        agentName="Your home-buying assistant"
+        agentName="Your assistant"
         busy={phase === "working" || phase === "submitting" || thinking}
         {...(engine !== undefined ? { engine } : {})}
         messages={[
@@ -481,8 +483,8 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
             content: (
               <div>
                 <p>
-                  Hi Alex. I can complete this mortgage application for you instead of you typing it
-                  in. To do that I'd like to read:
+                  Hi Alex. I can prepare your mortgage application. Choose the data sources I may
+                  read.
                 </p>
                 {phase === "consent" && (
                   <ConsentRequest
@@ -493,7 +495,7 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
                       }
                       choose(
                         allowed.includes("email")
-                          ? "Allow my pod and my email."
+                          ? "Allow my pod and rent receipts."
                           : "Allow my pod only.",
                         allowed.includes("email") ? "allow_all" : "allow_pod_only",
                       );
@@ -502,15 +504,15 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
                     sources={[
                       {
                         id: "pod",
-                        name: "Your Solid pod (Data Vault)",
+                        name: "Your pod (Data Vault)",
                         reads:
-                          "Your profile and your employment, assets and credit credentials. Read by the lender's prefill with your sign-in; nothing is copied anywhere else.",
+                          "Reads your profile and verification records to prepare the application. When AI replies are enabled, application details are sent to the assistant service.",
                       },
                       {
                         id: "email",
-                        name: "Your email inbox",
+                        name: "Demo rent receipts — optional",
                         note: "simulated",
-                        reads: "Only rent receipts, to fill in your current housing costs.",
+                        reads: "Rent receipts in a simulated inbox, for your current housing cost.",
                       },
                     ]}
                   />

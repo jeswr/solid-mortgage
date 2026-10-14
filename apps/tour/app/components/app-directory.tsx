@@ -31,7 +31,7 @@ export function AppDirectory() {
               <StatusDot className="shrink-0" status={status} />
             </div>
             <p className="mt-3 text-card-foreground text-sm">{guide.purpose}</p>
-            <p className="mt-1 text-muted-foreground text-sm">You are {guide.youAre}.</p>
+            <p className="mt-1 text-muted-foreground text-sm">Viewing as {guide.youAre}.</p>
             <ul className="mt-4 flex flex-col gap-2 text-sm">
               {guide.pages.map((page) => (
                 <li key={page.path}>

@@ -54,11 +54,11 @@ export function GrantsDashboard() {
     setBusy(party.id);
     setNotice(undefined);
     try {
-      const receipt = await changeDemoGrant(party.id, action, grantOptions);
+      await changeDemoGrant(party.id, action, grantOptions);
       setNotice(
         action === "grant"
-          ? `Access granted to ${party.label}. Receipt written: ${receipt.iri}`
-          : `Access revoked from ${party.label}. Receipt written: ${receipt.iri}`,
+          ? `Access granted to the ${party.label}. Receipt written to Consent receipts.`
+          : `Access revoked from the ${party.label}. Receipt written to Consent receipts.`,
       );
     } catch (error) {
       // 409s are the engine SPEAKING (immutability, repeats) — show verbatim.
@@ -74,12 +74,12 @@ export function GrantsDashboard() {
   }
 
   if (vault.status === "booting") {
-    return <p className="mt-6 text-sm text-muted-foreground">Waiting for the in-browser pod…</p>;
+    return <p className="mt-6 text-sm text-muted-foreground">Starting the demo pod…</p>;
   }
   if (vault.status === "error") {
     return (
       <p className="mt-6 text-sm text-muted-foreground" role="alert">
-        The in-browser pod is unavailable: {vault.message}
+        The demo pod is unavailable: {vault.message}
       </p>
     );
   }
@@ -117,14 +117,18 @@ export function GrantsDashboard() {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="font-semibold text-card-foreground text-sm">{row.label}</p>
-                  <p className="mt-0.5 break-all text-muted-foreground text-xs">{row.webid}</p>
                   <p className="mt-1 text-muted-foreground text-xs" data-grant-status-line="">
+                    Loan file:{" "}
                     {granted
-                      ? `Granted (${(row.standing?.modes ?? []).join(", ")})`
+                      ? (row.standing?.modes ?? []).join(", ")
                       : revoked
-                        ? "Revoked — immutable: this organisation cannot be silently re-granted"
-                        : "No access"}
+                        ? "access revoked. It cannot be silently re-granted."
+                        : "no access"}
                   </p>
+                  <details className="mt-1 text-muted-foreground text-xs">
+                    <summary className="cursor-pointer">Technical details</summary>
+                    <p className="mt-1 break-all">Service identity (WebID): {row.webid}</p>
+                  </details>
                 </div>
                 <div className="flex gap-2">
                   <button
@@ -143,7 +147,7 @@ export function GrantsDashboard() {
                     onClick={() => void change(row, "revoke")}
                     type="button"
                   >
-                    Revoke
+                    Revoke access
                   </button>
                 </div>
               </div>
@@ -151,6 +155,9 @@ export function GrantsDashboard() {
           );
         })}
       </ul>
+      <p className="mt-3 text-muted-foreground text-xs">
+        Closing-record access is granted in the Closing app. It appears in Consent receipts.
+      </p>
     </section>
   );
 }

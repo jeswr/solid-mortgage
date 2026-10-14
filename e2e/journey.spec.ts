@@ -320,10 +320,10 @@ test.describe("cross-app borrower journey (sm-36, five scenes on the seeded pod)
     await borrower.authenticatePage(page, "**/verifications/api/**");
     await page.goto(`${origins.verifications}/verifications/assets`);
     await acknowledgeInterstitial(page, "The Work Number, Finicity, or Equifax");
-    await page.getByRole("button", { name: "Issue credential" }).click();
+    await page.getByRole("button", { name: "Issue credential", exact: true }).click();
     const outcome = page.locator("[data-panel-outcome]");
     await expect(outcome).toHaveAttribute("data-panel-outcome", "ok", { timeout: 60_000 });
-    await expect(outcome).toContainText("Issued.");
+    await expect(outcome).toContainText("Credential saved in Alex's pod.");
 
     // The signed VC is REALLY in the vault and passes the full fail-closed
     // chain, subject-bound to the authenticated borrower (decision 0015 L3).
@@ -436,6 +436,8 @@ test.describe("cross-app borrower journey (sm-36, five scenes on the seeded pod)
 
     // Scene-2 surfaces: banner + axe on both lender zones.
     await page.goto(`${origins.lenderBoa}/lender-boa/prequal`);
+    // The limitation items sit in the collapsed "Technical details" disclosure.
+    await page.locator("summary", { hasText: "Technical details" }).click();
     await expect(
       page.getByText("Live proofs are bound to an issuer-signed operand anchor"),
     ).toBeVisible();
@@ -449,7 +451,7 @@ test.describe("cross-app borrower journey (sm-36, five scenes on the seeded pod)
     await acknowledgeInterstitial(page, "Fifth Third Bank");
     await expect(
       page.getByRole("heading", {
-        name: "Get a competing rate quote without sharing your numbers",
+        name: "Second lender's prequalification criteria",
       }),
     ).toBeVisible();
     await expectBannerVisible(page, {
@@ -479,7 +481,7 @@ test.describe("cross-app borrower journey (sm-36, five scenes on the seeded pod)
 
     // Submit: the application + instant lender decision land IN the pod.
     const decisionBefore = await podBody("mortgage/decision");
-    await page.getByRole("button", { name: "Submit application (demo)" }).click();
+    await page.getByRole("button", { name: "Submit application" }).click();
     const estimate = page.locator("[data-loan-estimate]");
     await expect(estimate).toBeVisible({ timeout: 30_000 });
     await expect(estimate).toContainText("delivered or placed in the mail within 3 business days");
@@ -500,10 +502,10 @@ test.describe("cross-app borrower journey (sm-36, five scenes on the seeded pod)
     // including property's appraisal feed — verifies, and the rules approve.
     await borrower.authenticatePage(page, "**/gse/api/**");
     await page.goto(`${origins.gse}/gse/underwriting`);
-    await page.getByRole("button", { name: "Run automated underwriting" }).click();
+    await page.getByRole("button", { name: "Run AUS" }).click();
     const result = page.locator("[data-aus-result]");
     await expect(result).toHaveAttribute("data-aus-result", "approve", { timeout: 120_000 });
-    await expect(page.getByText("Recommendation: Approve")).toBeVisible();
+    await expect(page.getByText("AUS recommendation: Accept")).toBeVisible();
     for (const code of [
       "EVIDENCE_EMPLOYMENT_INCOME",
       "EVIDENCE_ASSETS",
@@ -582,7 +584,7 @@ test.describe("cross-app borrower journey (sm-36, five scenes on the seeded pod)
     // The same check on the lender's UI surface.
     await borrower.authenticatePage(page, "**/lender-boa/api/**");
     await page.goto(`${origins.lenderBoa}/lender-boa/freshness`);
-    await page.getByRole("button", { name: "Run freshness check" }).click();
+    await page.getByRole("button", { name: "Check credential validity" }).click();
     await expect(page.locator("[data-freshness-result]")).toHaveAttribute(
       "data-freshness-result",
       "green",
@@ -598,11 +600,13 @@ test.describe("cross-app borrower journey (sm-36, five scenes on the seeded pod)
     await borrower.authenticatePage(page, "**/verifications/api/**");
     await page.goto(`${origins.verifications}/verifications/employment`);
     await acknowledgeInterstitial(page, "The Work Number, Finicity, or Equifax");
-    await page.getByRole("button", { name: "Re-issue (freshness)" }).click();
+    await page.getByRole("button", { name: "Re-issue credential" }).click();
     const outcome = page.locator("[data-panel-outcome]");
     await expect(outcome).toHaveAttribute("data-panel-outcome", "ok", { timeout: 60_000 });
-    await expect(outcome).toContainText("Re-issued — validity restored.");
-    await expect(outcome).toContainText("Old status index 42 revoked");
+    await expect(outcome).toContainText("New credential issued.");
+    await expect(outcome).toContainText(
+      "Previous credential revoked on the status list (entry 42)",
+    );
 
     // The pod REALLY changed: replacement credential + renewed anchor.
     const newCredential = await podBody("mortgage/credentials/income");
@@ -683,8 +687,8 @@ test.describe("cross-app borrower journey (sm-36, five scenes on the seeded pod)
 
     // eSign: the ClosingRecord REALLY lands in the pod, and the record's ACL
     // document names the lender with Read (the close-time grant).
-    await page.getByRole("button", { name: "eSign closing package" }).click();
-    await expect(page.getByText("ClosingRecord written to Alex's pod")).toBeVisible({
+    await page.getByRole("button", { name: "eSign closing documents" }).click();
+    await expect(page.getByText("Closing record saved in Alex's pod")).toBeVisible({
       timeout: 30_000,
     });
     expect((await fetch(recordIri)).status).toBe(200);
@@ -693,7 +697,7 @@ test.describe("cross-app borrower journey (sm-36, five scenes on the seeded pod)
     expect(aclAfterClose).toContain(borrower.webid);
 
     // Servicing transfer: the servicer is granted…
-    await page.getByRole("button", { name: "Approve servicer access" }).click();
+    await page.getByRole("button", { name: "Grant servicer access" }).click();
     await expect(page.getByText("Servicer read access granted", { exact: false })).toBeVisible({
       timeout: 30_000,
     });
@@ -718,7 +722,7 @@ test.describe("cross-app borrower journey (sm-36, five scenes on the seeded pod)
     expect(await podBody("mortgage/closing-record.acl")).not.toContain(LENDER_AGENT);
 
     // The consent-receipt ledger recorded every transition (decision 0006).
-    await page.getByRole("button", { name: "Read consent-receipt ledger" }).click();
+    await page.getByRole("button", { name: "Show consent receipts" }).click();
     const cards = page.locator("[data-receipt-card]");
     await expect(cards).toHaveCount(3, { timeout: 30_000 });
     await expect(cards.nth(0)).toHaveAttribute("data-receipt-action", "grant");
@@ -728,7 +732,7 @@ test.describe("cross-app borrower journey (sm-36, five scenes on the seeded pod)
     await expect(cards.nth(2)).toHaveAttribute("data-receipt-action", "revoke");
     await expect(cards.nth(2)).toContainText(LENDER_AGENT);
     await expect(
-      page.getByText("WAC and the Solid protocol do not provide this audit ledger"),
+      page.getByText("This app saves the receipts; Solid's permission system does not."),
     ).toBeVisible();
 
     // Scene-5 state: axe over the closed + ledger-rendered surface.

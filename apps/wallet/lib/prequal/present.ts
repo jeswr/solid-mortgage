@@ -41,7 +41,7 @@ export const LENDER_TARGETS: readonly LenderTarget[] = [
   },
   {
     id: "lender-53",
-    label: "Competing lender — modelled on Fifth Third Bank",
+    label: "Second lender — modelled on Fifth Third Bank",
     basePath: "/lender-53",
   },
 ];
@@ -74,6 +74,32 @@ export type PresentOutcome =
     }
   | { readonly kind: "unauthenticated"; readonly detail: string }
   | { readonly kind: "unavailable"; readonly detail: string };
+
+/** Below-threshold proving fails locally with this ZkError code; nothing is sent. */
+const BELOW_THRESHOLD_CODE = "UNSATISFIABLE";
+
+/**
+ * Plain-language outcome copy shared by the manual page and the assistant.
+ * A below-threshold result is the only criteria outcome; every other
+ * rejection is a verification failure, never a credit outcome (review H3).
+ */
+export function describeOutcome(outcome: PresentOutcome): { title: string; detail?: string } {
+  switch (outcome.kind) {
+    case "qualified":
+      return { title: "Meets the lender's demo prequalification criteria." };
+    case "rejected":
+      return outcome.detail.startsWith(BELOW_THRESHOLD_CODE)
+        ? {
+            title: "Does not meet the demo prequalification criteria.",
+            detail: "No proof was sent to this lender.",
+          }
+        : { title: "We could not verify the proof. Try again.", detail: outcome.detail };
+    case "unauthenticated":
+      return { title: "The lender's service did not accept the proofs.", detail: outcome.detail };
+    default:
+      return { title: "Lender unavailable.", detail: outcome.detail };
+  }
+}
 
 export interface PresentToLenderOptions {
   readonly lender: LenderTarget;
@@ -155,9 +181,7 @@ export async function presentToLender(options: PresentToLenderOptions): Promise<
   if (challengeResponse.status === 401) {
     return {
       kind: "unauthenticated",
-      detail:
-        "the lender's VP-POST rail requires a DPoP-bound Solid-OIDC session — the simulated " +
-        "in-browser login cannot mint one (and honestly says so)",
+      detail: "This lender's service needs a real sign-in. Sign-in is simulated here.",
     };
   }
   if (!challengeResponse.ok) {
@@ -188,7 +212,7 @@ export async function presentToLender(options: PresentToLenderOptions): Promise<
     if (!anchorsByField.has(statement.field) || !options.hiddenValues.has(statement.field)) {
       return {
         kind: "unavailable",
-        detail: `the pod holds no credential + anchor for the advertised field ${statement.field}`,
+        detail: `Alex's pod has no credential for the field the lender asked about (${statement.field}).`,
       };
     }
   }
@@ -248,7 +272,7 @@ export async function presentToLender(options: PresentToLenderOptions): Promise<
   if (verifyResponse.status === 401) {
     return {
       kind: "unauthenticated",
-      detail: "the lender rejected the session mid-flow (401)",
+      detail: "The lender's service ended the session (401).",
     };
   }
   const payload = (await verifyResponse.json().catch(() => undefined)) as
@@ -258,7 +282,7 @@ export async function presentToLender(options: PresentToLenderOptions): Promise<
     return { kind: "qualified", proofs, rateQuote: payload.rateQuote };
   }
   if (verifyResponse.status === 403) {
-    return { kind: "rejected", proofs, detail: "the lender's fail-closed verification refused" };
+    return { kind: "rejected", proofs, detail: "The lender could not verify the proofs." };
   }
   return {
     kind: "unavailable",

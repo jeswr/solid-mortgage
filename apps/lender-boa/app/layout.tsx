@@ -18,11 +18,11 @@ export const metadata: Metadata = demoMetadata({
 
 const NAV = [
   { href: "/", label: "Overview" },
-  { href: "/prequal", label: "Pre-qualification" },
+  { href: "/prequal", label: "Prequalification" },
   { href: "/application", label: "Apply" },
-  { href: "/assistant", label: "Apply with assistant" },
-  { href: "/freshness", label: "Freshness" },
-  { href: "/pipeline", label: "Loan officer pipeline" },
+  { href: "/assistant", label: "Apply with an assistant" },
+  { href: "/freshness", label: "Re-verification" },
+  { href: "/pipeline", label: "Loan pipeline" },
 ] as const;
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {

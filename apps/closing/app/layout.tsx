@@ -19,9 +19,9 @@ export const metadata: Metadata = demoMetadata({
 /** In-page sections of the single-page closing scene. */
 const NAV = [
   { href: "#timeline-title", label: "Timeline" },
-  { href: "#ceremony-title", label: "Signing ceremony" },
+  { href: "#ceremony-title", label: "eSign" },
   { href: "#transfer-title", label: "Servicing transfer" },
-  { href: "#ledger-title", label: "Consent ledger" },
+  { href: "#ledger-title", label: "Consent receipts" },
 ] as const;
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
