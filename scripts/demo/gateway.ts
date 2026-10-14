@@ -19,6 +19,7 @@ import { createServer, request as httpRequest, type IncomingMessage, type Server
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { ActivityEvent, ActivityLog } from "./activity.ts";
+import { ASSISTANT_MODEL, assistantAvailable, decide, validateRequest } from "./assistant.ts";
 import { GUIDED_STEPS } from "./steps.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -162,6 +163,38 @@ export async function startGateway(options: GatewayOptions): Promise<Gateway> {
           sseClients.delete(response);
         });
         return;
+      }
+      case "/__demo/assistant": {
+        if (request.method === "GET") {
+          return send(
+            200,
+            "application/json",
+            JSON.stringify({ available: await assistantAvailable(), model: ASSISTANT_MODEL }),
+          );
+        }
+        if (request.method !== "POST") return send(405, "text/plain", "GET or POST");
+        if (request.headers["sec-fetch-site"] === "cross-site") {
+          return send(403, "text/plain", "same-site requests only");
+        }
+        if (!(await assistantAvailable()))
+          return send(503, "application/json", '{"available":false}');
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse((await readBody(request)).toString("utf8"));
+        } catch {
+          return send(400, "text/plain", "body must be JSON");
+        }
+        const assistantRequest = validateRequest(parsed);
+        if (assistantRequest === undefined) return send(400, "text/plain", "malformed request");
+        try {
+          return send(200, "application/json", JSON.stringify(await decide(assistantRequest)));
+        } catch (error) {
+          console.error(
+            "[demo] assistant call failed:",
+            error instanceof Error ? error.message : error,
+          );
+          return send(502, "application/json", '{"error":"assistant_unavailable"}');
+        }
       }
       case "/__demo/reset": {
         if (request.method !== "POST") return send(405, "text/plain", "POST only");

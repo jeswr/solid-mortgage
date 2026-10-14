@@ -6,10 +6,14 @@ import {
   type AgentReply,
   type AgentStep,
   AgentSteps,
+  type AssistantAction,
+  type AssistantTurn,
+  askAssistant,
   ConsentRequest,
   IllustrativeFigure,
+  useAssistantEngine,
 } from "@mortgage/ui";
-import { type ReactNode, useCallback, useRef, useState } from "react";
+import { type ReactNode, useRef, useState } from "react";
 import { formatPercent, formatUsd } from "../lib/format";
 import type { UrlaPrefill } from "../lib/server/prefill";
 
@@ -18,8 +22,12 @@ import type { UrlaPrefill } from "../lib/server/prefill";
  * assistant asks for consent PER SOURCE, reads the borrower's pod through the
  * same authenticated prefill rail the form uses, finds rent receipts in a
  * SIMULATED inbox (or asks for the figure), shows what it will submit, and
- * submits through the same rail on the borrower's "yes". Scripted, not a
- * language model — and it says so.
+ * submits through the same rail on the borrower's "yes".
+ *
+ * Free text at every step: when the local demo server offers a language model
+ * (`/__demo/assistant`, Claude through the operator's Claude Code), it picks one
+ * of the actions allowed in the current phase and writes the reply; otherwise a
+ * small scripted interpreter does. Either way the APP performs the action.
  */
 
 /** The demo inbox the assistant may search (fictional sender, illustrative amounts). */
@@ -43,28 +51,137 @@ type Phase = "consent" | "working" | "ask-rent" | "review" | "submitting" | "don
 
 const STEPS_ID = "agent-steps";
 
+const ACTIONS: Partial<Record<Phase, readonly AssistantAction[]>> = {
+  consent: [
+    {
+      id: "allow_all",
+      description: "Alex allows both sources: the Solid pod and the email inbox.",
+    },
+    {
+      id: "allow_pod_only",
+      description:
+        "Alex allows the Solid pod but not the email inbox (the assistant will ask for the rent).",
+    },
+    {
+      id: "decline_manual",
+      description:
+        "Alex does not want the assistant to read the pod, or wants to fill in the form manually.",
+    },
+  ],
+  "ask-rent": [
+    { id: "provide_rent", description: "Alex states the monthly rent (set monthlyRentUsd)." },
+    { id: "decline_manual", description: "Alex would rather fill in the form manually." },
+  ],
+  review: [
+    { id: "submit", description: "Alex clearly confirms the application should be submitted now." },
+    { id: "open_form", description: "Alex wants to review or edit the full form manually." },
+    { id: "change_rent", description: "Alex corrects the monthly rent (set monthlyRentUsd)." },
+  ],
+};
+
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const parseAmount = (text: string) => {
+  const amount = Number.parseFloat(text.replace(/[^0-9.]/g, ""));
+  return Number.isFinite(amount) && amount > 0 && amount < 100_000 ? Math.round(amount) : undefined;
+};
+
+/** The fallback when no language model is available: a few keyword rules. */
+function scriptedAction(phase: Phase, text: string): { action: string; rent?: number } {
+  const lower = text.toLowerCase();
+  const no = /\b(no|nope|don't|do not|manual|myself|form)\b/.test(lower);
+  if (phase === "consent") {
+    if (
+      /(no|not|without|skip|leave).{0,20}(email|inbox|mail)/.test(lower) ||
+      /pod only/.test(lower)
+    ) {
+      return { action: "allow_pod_only" };
+    }
+    if (no) return { action: "decline_manual" };
+    if (/\b(yes|yeah|sure|ok|okay|allow|go ahead|fine|please)\b/.test(lower))
+      return { action: "allow_all" };
+  }
+  if (phase === "ask-rent") {
+    const rent = parseAmount(text);
+    if (rent !== undefined) return { action: "provide_rent", rent };
+    if (no) return { action: "decline_manual" };
+  }
+  if (phase === "review") {
+    const rent = /rent/.test(lower) ? parseAmount(text) : undefined;
+    if (rent !== undefined) return { action: "change_rent", rent };
+    if (/form|review|edit|myself|manual/.test(lower)) return { action: "open_form" };
+    if (/\b(yes|yeah|submit|ok|okay|go|sure|looks good|send)\b/.test(lower))
+      return { action: "submit" };
+  }
+  return { action: "answer_only" };
+}
+
+const SCRIPTED_HELP: Partial<Record<Phase, string>> = {
+  consent: "You can allow your pod and inbox, your pod only, or fill in the form yourself.",
+  "ask-rent": "I just need your monthly rent, like 2150.",
+  review: "I can submit it now, change the rent, or you can review the full form yourself.",
+};
+
 export function AgentApplication({ apiBase, formHref }: { apiBase: string; formHref: string }) {
-  const [phase, setPhase] = useState<Phase>("consent");
+  const engine = useAssistantEngine();
+  const [phase, setPhaseState] = useState<Phase>("consent");
+  const phaseRef = useRef<Phase>("consent");
+  const [thinking, setThinking] = useState(false);
   const [messages, setMessages] = useState<AgentMessage[]>([]);
   const [steps, setSteps] = useState<AgentStep[]>([]);
+  const history = useRef<AssistantTurn[]>([
+    {
+      from: "agent",
+      text: "Hi Alex. I can complete this mortgage application for you. May I read your Solid pod (profile and credentials) and your email inbox (rent receipts only)?",
+    },
+  ]);
   const prefill = useRef<UrlaPrefill | undefined>(undefined);
   const housing = useRef<{ monthlyRentUsd: number; source: "email" | "manual" } | undefined>(
     undefined,
   );
   const nextId = useRef(0);
 
-  const say = useCallback((from: AgentMessage["from"], content: ReactNode) => {
+  const setPhase = (next: Phase) => {
+    phaseRef.current = next;
+    setPhaseState(next);
+  };
+
+  /** Add a message; `text` is what the language model sees of it. */
+  const say = (from: AgentMessage["from"], content: ReactNode, text?: string) => {
     nextId.current += 1;
     const id = `m${nextId.current}`;
     setMessages((current) => [...current, { id, from, content }]);
-  }, []);
+    const plain = text ?? (typeof content === "string" ? content : undefined);
+    if (plain !== undefined) history.current.push({ from, text: plain });
+  };
 
   const setStep = (id: string, patch: Partial<AgentStep>) =>
     setSteps((current) => current.map((step) => (step.id === id ? { ...step, ...patch } : step)));
 
-  const review = useCallback(() => {
+  const formLink = (text: string) => (
+    <a className="font-semibold underline" href={formHref}>
+      {text}
+    </a>
+  );
+
+  function facts(): string[] {
+    const data = prefill.current;
+    const lines: string[] = [];
+    if (data !== undefined) {
+      lines.push(
+        `Application draft: ${data.borrower.name}, ${data.borrower.address}; ${data.employment.jobTitle} at ${data.employment.employerName}, ${formatUsd(data.employment.monthlyGrossIncomeUsd)} a month (verified credential); ${data.assets.accounts.length} verified bank account(s); credit score from a verified credential.`,
+      );
+    }
+    if (housing.current !== undefined) {
+      lines.push(
+        `Current housing: renting at ${formatUsd(housing.current.monthlyRentUsd)} a month (${housing.current.source === "email" ? "from rent receipts in the simulated inbox" : "stated by Alex"}).`,
+      );
+    }
+    lines.push(`The full application form is also available at ${formHref}.`);
+    return lines;
+  }
+
+  function review() {
     const data = prefill.current;
     if (data === undefined) return;
     setPhase("review");
@@ -101,30 +218,28 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
         </ul>
         <p className="mt-2">Shall I submit it?</p>
       </div>,
+      `Here is the draft I will submit: ${facts().join(" ")} Shall I submit it?`,
     );
-  }, [say]);
+  }
+
+  /** Hand over to the form; `quiet` when the language model already said why. */
+  function manual(text: string, quiet = false) {
+    say(
+      "agent",
+      quiet ? (
+        <>{formLink("Open the application form")} (prefilled from your pod).</>
+      ) : (
+        <>
+          {text} {formLink("Open the application form")}; it is prefilled from your pod too.
+        </>
+      ),
+      text,
+    );
+    setPhase("manual");
+  }
 
   async function run(allowed: readonly string[]) {
-    const pod = allowed.includes("pod");
     const email = allowed.includes("email");
-    say(
-      "you",
-      pod ? `Allow ${email ? "my pod and my email" : "my pod only"}.` : "Don't read my pod.",
-    );
-    if (!pod) {
-      say(
-        "agent",
-        <>
-          No problem. I need your pod to fill in the application, so you can{" "}
-          <a className="font-semibold underline" href={formHref}>
-            fill in the form yourself
-          </a>{" "}
-          instead.
-        </>,
-      );
-      setPhase("manual");
-      return;
-    }
     setPhase("working");
     setSteps([
       {
@@ -139,10 +254,35 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
       },
       { id: "fill", label: "Fill in the loan application", state: "pending" },
     ]);
-    setMessages((current) => [...current, { id: STEPS_ID, from: "agent", content: null }]);
+    // One live action log, moved to the end on a retry.
+    setMessages((current) => [
+      ...current.filter((message) => message.id !== STEPS_ID),
+      { id: STEPS_ID, from: "agent", content: null },
+    ]);
 
     try {
       const response = await fetch(`${apiBase}/application/prefill`, { cache: "no-store" });
+      if (response.status === 404) {
+        // A document the application needs is not in the pod yet (e.g. scene 1 skipped).
+        setStep("pod", {
+          state: "failed",
+          detail: "A verification the lender needs is not in your pod yet.",
+        });
+        setPhase("consent");
+        say(
+          "agent",
+          <>
+            Your pod doesn't have all the verifications a lender needs yet (usually the assets
+            credential). Get it from{" "}
+            <a className="font-semibold underline" href="/verifications/assets">
+              Verification Services
+            </a>
+            , then come back and allow me again, or {formLink("fill in the form")}.
+          </>,
+          "Alex's pod is missing a verification (usually the assets credential from Verification Services). Alex can get it and then allow the assistant again, or use the form.",
+        );
+        return;
+      }
       if (!response.ok) throw new Error(`the lender refused the pod read (${response.status})`);
       const data = (await response.json()) as UrlaPrefill;
       if (data.source !== "pod") throw new Error("the lender could not reach your pod");
@@ -157,17 +297,7 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
         state: "failed",
         detail: error instanceof Error ? error.message : String(error),
       });
-      say(
-        "agent",
-        <>
-          I couldn't read your pod. You can{" "}
-          <a className="font-semibold underline" href={formHref}>
-            use the form
-          </a>{" "}
-          instead.
-        </>,
-      );
-      setPhase("manual");
+      manual("I couldn't read your pod, so the form is the way to go this time.");
       return;
     }
 
@@ -187,6 +317,7 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
       state: "done",
       detail: "Borrower, employment, assets and liabilities sections.",
     });
+    history.current.push({ from: "agent", text: "I read the pod and filled in the application." });
 
     if (!email) {
       setPhase("ask-rent");
@@ -198,7 +329,6 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
 
   async function submit() {
     setPhase("submitting");
-    say("you", "Yes, submit it.");
     try {
       const response = await fetch(`${apiBase}/application/submit`, {
         method: "POST",
@@ -235,6 +365,7 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
           </ul>
           <p className="mt-2">A loan officer will review your file next.</p>
         </div>,
+        `Submitted. The application and Loan Estimate (${formatUsd(body.loanEstimate.loanAmountUsd)} at ${formatPercent(body.loanEstimate.interestRatePercent)}, illustrative) are in Alex's pod. A loan officer reviews it next.`,
       );
     } catch (error) {
       setPhase("review");
@@ -242,41 +373,65 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
     }
   }
 
-  function reply(value: string) {
-    const text = value.trim().toLowerCase();
-    if (phase === "ask-rent") {
-      const amount = Number.parseFloat(text.replace(/[^0-9.]/g, ""));
-      say("you", value);
-      if (!Number.isFinite(amount) || amount <= 0) {
-        say("agent", "Sorry, I need a monthly amount, like 2150.");
-        return;
+  /** Perform an action the visitor chose (by button, or as interpreted from their text). */
+  function act(action: string, rent?: number, quiet = false) {
+    const current = phaseRef.current;
+    if (current === "consent") {
+      if (action === "allow_all") return void run(["pod", "email"]);
+      if (action === "allow_pod_only") return void run(["pod"]);
+      if (action === "decline_manual")
+        return manual("No problem, you can fill it in yourself.", quiet);
+    }
+    if (current === "ask-rent") {
+      if (action === "provide_rent" && rent !== undefined) {
+        housing.current = { monthlyRentUsd: rent, source: "manual" };
+        return review();
       }
-      housing.current = { monthlyRentUsd: Math.round(amount), source: "manual" };
-      review();
+      if (action === "decline_manual") return manual("Sure, you can finish it in the form.", quiet);
+    }
+    if (current === "review") {
+      if (action === "submit") return void submit();
+      if (action === "open_form") return manual("Sure, review everything in the form.", quiet);
+      if (action === "change_rent" && rent !== undefined) {
+        housing.current = { monthlyRentUsd: rent, source: "manual" };
+        return review();
+      }
+    }
+  }
+
+  /** A button press: echo the visitor's choice, then act. */
+  function choose(label: string, action: string, rent?: number) {
+    say("you", label);
+    act(action, rent);
+  }
+
+  /** Free text: the language model (or the scripted fallback) picks the action. */
+  async function converse(text: string) {
+    const current = phaseRef.current;
+    say("you", text);
+    setThinking(true);
+    const decision = engine
+      ? await askAssistant({
+          assistant: "lender-application",
+          phase: current,
+          actions: ACTIONS[current] ?? [],
+          context: facts(),
+          history: history.current.slice(0, -1),
+          message: text,
+        })
+      : undefined;
+    setThinking(false);
+    if (decision !== undefined) {
+      if (decision.reply !== "") say("agent", decision.reply);
+      act(decision.action, decision.monthlyRentUsd, decision.reply !== "");
       return;
     }
-    if (phase === "review") {
-      if (/^(yes|y|submit|ok|go|sure|looks good)/.test(text) || value === "submit") {
-        void submit();
-        return;
-      }
-      if (value === "form" || /form|review|myself|manual/.test(text)) {
-        say("you", "I'll review the full form myself.");
-        say(
-          "agent",
-          <>
-            Sure:{" "}
-            <a className="font-semibold underline" href={formHref}>
-              open the application form
-            </a>
-            . It is prefilled from your pod too.
-          </>,
-        );
-        return;
-      }
-      say("you", value);
-      say("agent", "I can submit it now, or you can review the full form yourself.");
+    const scripted = scriptedAction(current, text);
+    if (scripted.action === "answer_only") {
+      say("agent", SCRIPTED_HELP[current] ?? "I'm here if you need anything else.");
+      return;
     }
+    act(scripted.action, scripted.rent);
   }
 
   const replies: AgentReply[] =
@@ -288,6 +443,15 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
       : phase === "ask-rent"
         ? [{ label: "$2,150", value: "2150" }]
         : [];
+
+  function reply(value: string) {
+    if (value === "submit") return choose("Yes, submit it.", "submit");
+    if (value === "form") return choose("I'll review the full form myself.", "open_form");
+    if (value === "2150" && phaseRef.current === "ask-rent") {
+      return choose("$2,150 a month.", "provide_rent", 2150);
+    }
+    void converse(value);
+  }
 
   // The action log renders inside the conversation and updates in place.
   const rendered = messages.map((message) =>
@@ -308,7 +472,8 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
     <div className="flex flex-col gap-4">
       <AgentConversation
         agentName="Your home-buying assistant"
-        busy={phase === "working" || phase === "submitting"}
+        busy={phase === "working" || phase === "submitting" || thinking}
+        {...(engine !== undefined ? { engine } : {})}
         messages={[
           {
             id: "hello",
@@ -321,21 +486,19 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
                 </p>
                 {phase === "consent" && (
                   <ConsentRequest
-                    onAllow={(allowed) => void run(allowed)}
-                    onManual={() => {
-                      say("you", "No thanks, I'll fill it in myself.");
-                      say(
-                        "agent",
-                        <>
-                          Of course:{" "}
-                          <a className="font-semibold underline" href={formHref}>
-                            open the application form
-                          </a>
-                          .
-                        </>,
+                    onAllow={(allowed) => {
+                      if (!allowed.includes("pod")) {
+                        choose("Don't read my pod.", "decline_manual");
+                        return;
+                      }
+                      choose(
+                        allowed.includes("email")
+                          ? "Allow my pod and my email."
+                          : "Allow my pod only.",
+                        allowed.includes("email") ? "allow_all" : "allow_pod_only",
                       );
-                      setPhase("manual");
                     }}
+                    onManual={() => choose("No thanks, I'll fill it in myself.", "decline_manual")}
                     sources={[
                       {
                         id: "pod",
@@ -357,7 +520,7 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
           },
           ...rendered,
         ]}
-        onReply={phase === "review" || phase === "ask-rent" ? reply : undefined}
+        onReply={phase === "working" || phase === "submitting" ? undefined : reply}
         replies={replies}
       />
     </div>

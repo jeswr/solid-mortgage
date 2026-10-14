@@ -43,7 +43,9 @@ function registry(): Registry {
   return scope[REGISTRY];
 }
 
-export function staffViewEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
+export function staffViewEnabled(
+  env: Readonly<Record<string, string | undefined>> = process.env,
+): boolean {
   return env.MORTGAGE_DEMO_STAFF_VIEW === "1";
 }
 

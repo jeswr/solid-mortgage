@@ -51,21 +51,21 @@ Two apps offer an assistant instead of forms. In the Data Vault (`/wallet/assist
 shops for a pre-qualification; on the lender's site (`/lender-boa/assistant`) it fills in
 and submits the application. Each asks for consent **per source** before reading anything
 (your pod; your inbox, which is simulated), offers to let you do it yourself instead, shows
-each action it takes, and only submits on your yes. The assistants are scripted (no language
-model) and say so; every action they take is a real call the manual pages also make. The
-loan officer's side is the lender's pipeline (`/lender-boa/pipeline`), which reads each file
-live from the borrower's pod and can clear it to close.
+each action it takes, and only submits on your yes. You can type to it in plain language at
+any step ("you can read my pod but stay out of my email", "make the rent 2400").
 
-### Pod activity
+**Language model.** When the Claude Code CLI is installed and signed in on the machine
+running `pnpm demo`, the assistants are answered by **Claude Opus 5.5** through it
+(`claude -p`, headless, no tools), so every turn counts against that Claude Code account's
+usage. The model only chooses one of the actions the page allows at that moment and writes
+the reply; the app performs the action with its normal, authenticated calls. The zero-knowledge
+assistant never shows the model the borrower's income or score. Without Claude Code (or with
+`DEMO_LLM=off`) the assistants fall back to scripted replies, and the chat header says which
+is answering. `DEMO_LLM_MODEL` picks another model. This only works for local runs: a public
+deployment would need an API key instead of a personal login.
 
-Every request that reaches Alex Rivera's pod is listed live, newest first: reads, writes,
-deletes, and **access changes**. For an access change the panel shows the rules that were
-added (+), removed (−) and kept, with each party named. Filter by kind, or pop the panel
-out into its own window to keep it beside the apps during a presentation. Sign-ins the demo
-performs for you are listed too.
-
-**Reset demo data** (in the panel) puts the pod back to its starting state so the journey
-can be run again.
+The loan officer's side is the lender's pipeline (`/lender-boa/pipeline`), which reads each
+file live from the borrower's pod and can clear it to close.
 
 ## What is real and what is simplified
 

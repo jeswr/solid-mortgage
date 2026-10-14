@@ -24,6 +24,14 @@ export {
   headerNavLinkClass,
   type ShellAccount,
 } from "./app-shell";
+export {
+  type AssistantAction,
+  type AssistantAsk,
+  type AssistantDecision,
+  type AssistantTurn,
+  askAssistant,
+  useAssistantEngine,
+} from "./assistant-brain";
 export { ConceptDemoBanner, type ConceptDemoBannerProps } from "./concept-demo-banner";
 export { ConsentInterstitial, type ConsentInterstitialProps } from "./consent-interstitial";
 export {

@@ -34,6 +34,8 @@ export interface AgentConversationProps {
   readonly onReply?: (value: string) => void;
   /** Disable input while the agent is working. */
   readonly busy?: boolean;
+  /** What answers the visitor, e.g. "Claude Opus 5.5 (your local Claude Code)". Default: scripted. */
+  readonly engine?: string;
   readonly className?: string;
 }
 
@@ -43,6 +45,7 @@ export function AgentConversation({
   replies = [],
   onReply,
   busy = false,
+  engine,
   className,
 }: AgentConversationProps) {
   const [draft, setDraft] = useState("");
@@ -77,7 +80,9 @@ export function AgentConversation({
         <div>
           <p className="font-semibold text-card-foreground">{agentName}</p>
           <p className="text-muted-foreground text-xs">
-            Scripted demo assistant: it acts with your own sign-in, and only after you say yes.
+            {engine === undefined
+              ? "Scripted demo assistant: it acts with your own sign-in, and only after you say yes."
+              : `Answered by ${engine}. It acts with your own sign-in, and only after you say yes.`}
           </p>
         </div>
       </header>
@@ -130,7 +135,11 @@ export function AgentConversation({
               disabled={busy}
               id="agent-input"
               onChange={(event) => setDraft(event.target.value)}
-              placeholder="Type a reply (demo: do not enter real information)"
+              placeholder={
+                engine === undefined
+                  ? "Type a reply (demo: do not enter real information)"
+                  : "Ask or tell your assistant anything (demo: do not enter real information)"
+              }
               value={draft}
             />
             <button
