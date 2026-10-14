@@ -111,7 +111,7 @@ export function FreshnessPanel({ apiBase }: FreshnessPanelProps) {
       data-freshness-panel=""
     >
       <h2 id="freshness-check-heading" className="text-xl font-semibold text-card-foreground">
-        Check the employment credential
+        Credential checks
       </h2>
       <button
         className="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
@@ -160,9 +160,6 @@ export function FreshnessPanel({ apiBase }: FreshnessPanelProps) {
           </dl>
           <p className="mt-4 text-sm text-foreground" data-freshness-decision={report.decision}>
             {DECISION_COPY[report.decision]}
-          </p>
-          <p className="mt-2 text-xs text-muted-foreground">
-            Employment re-verification not demonstrated.
           </p>
           {!report.greenTick && (
             <div className="mt-4">

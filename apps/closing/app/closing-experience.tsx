@@ -150,6 +150,10 @@ export function ClosingExperience() {
             </dd>
           </div>
         </dl>
+        <p className="mt-3 text-muted-foreground text-xs" data-quote-caution="">
+          Your actual rate, payment, and costs could be higher. Get an official Loan Estimate before
+          choosing a loan.
+        </p>
         <button
           className="mt-6 rounded-lg bg-primary px-5 py-3 font-semibold text-primary-foreground disabled:opacity-50"
           disabled={active !== undefined || closing !== undefined}

@@ -86,10 +86,15 @@
     * { box-sizing: border-box; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
     [hidden] { display: none !important; }
     button { font: inherit; cursor: pointer; }
-    /* The dock is a bottom bar; pageStyle reserves its height under the page so it never
-       covers the end of the page's content. */
-    .dock { position: fixed; left: 0; right: 0; bottom: 0; z-index: 2147483000; display: flex; gap: 8px; flex-wrap: wrap;
-      align-items: center; padding: 8px 16px; background: rgb(248 250 252 / .97); border-top: 1px solid #e2e8f0; }
+    /* Unguided, the dock is one compact "Demo" pill in the bottom-right corner that opens a
+       short menu; pageStyle reserves space under the page so it never covers the end of the
+       page's content. Only the pills take clicks, never the empty area around them. */
+    .dock { position: fixed; right: 12px; bottom: 12px; z-index: 2147483000; display: flex; flex-direction: column;
+      align-items: flex-end; gap: 6px; pointer-events: none; }
+    .dock > *, .dock-menu > * { pointer-events: auto; }
+    .dock-menu { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+    .dock.collapsed .dock-menu { display: none; }
+    .dock .pill { padding: 6px 12px; font-size: 12px; }
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
     .pill { text-decoration: none; display: inline-flex; align-items: center; gap: 8px; border: 1px solid #1e293b; background: #0f172a; color: #f8fafc;
       border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600; box-shadow: 0 6px 20px rgb(15 23 42 / .25); }
@@ -168,7 +173,9 @@
     /* Wide screens: the page is given a right-hand column (see pageStyle), and the guide and the
        dock sit in it instead of over the page's content. */
     @media (min-width: 1200px) {
-      .guiding .dock { left: auto; right: 0; width: 392px; padding: 16px; background: none; border-top: 0; justify-content: flex-end; }
+      .guiding .dock { right: 0; bottom: 0; width: 392px; padding: 16px; flex-direction: row; justify-content: flex-end; }
+      .guiding .dock .dock-menu { display: flex; flex-direction: row; flex-wrap: wrap; justify-content: flex-end; }
+      .guiding .dock .launcher { display: none; }
       .guiding .guide { bottom: 64px; }
     }
   `;
@@ -180,7 +187,7 @@
       animation: solid-demo-pulse 1.6s ease-in-out infinite; }
     @keyframes solid-demo-pulse { 50% { outline-color: rgb(245 158 11 / .35); } }
     @media (prefers-reduced-motion: reduce) { [data-solid-demo-target] { animation: none; } }
-    html[data-solid-demo-dock] body { padding-bottom: 64px !important; }
+    html[data-solid-demo-dock] body { padding-bottom: 56px !important; }
     @media (min-width: 1200px) {
       html[data-solid-demo-guiding] body { padding-right: 392px !important; }
     }
@@ -926,7 +933,32 @@
               "← Overview",
             )
           : null;
-      frame.append(el("div", { class: "dock" }, overview, toggle, tourButton), sidebar, guide);
+      const menu = el(
+        "div",
+        { class: "dock-menu", id: "solid-demo-dock-menu" },
+        overview,
+        toggle,
+        tourButton,
+      );
+      const dock = el("div", { class: "dock" }, menu);
+      const setDockOpen = (open) => {
+        dock.classList.toggle("collapsed", !open);
+        launcher.setAttribute("aria-expanded", String(open));
+        write("dock-open", open);
+      };
+      const launcher = el(
+        "button",
+        {
+          class: "pill launcher",
+          type: "button",
+          "aria-controls": "solid-demo-dock-menu",
+          onclick: () => setDockOpen(dock.classList.contains("collapsed")),
+        },
+        "Demo",
+      );
+      dock.append(launcher);
+      setDockOpen(read("dock-open", false));
+      frame.append(dock, sidebar, guide);
       document.documentElement.setAttribute("data-solid-demo-dock", "");
       setSidebar(sidebarOpen);
       watchPage();

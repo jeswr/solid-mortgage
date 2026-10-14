@@ -47,7 +47,6 @@ export default function FreshnessPage() {
             <ul className="list-disc pl-5">
               <li>The lender, the verification provider and their branding.</li>
               <li>Alex's employment. No employer is contacted.</li>
-              <li>Employment re-verification not demonstrated.</li>
             </ul>
           }
         />

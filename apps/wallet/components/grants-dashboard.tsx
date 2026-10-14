@@ -49,11 +49,17 @@ function latestClosingReceipts(
   return latest;
 }
 
-function closingPermission(receipt: ConsentReceiptView | undefined): string {
+/**
+ * The last closing-record change recorded in a consent receipt. It is history,
+ * not the closing record's current permission list, and the receipt's writer
+ * is not verified (astra-review-3 new finding 1).
+ */
+function closingLastChange(receipt: ConsentReceiptView | undefined, failed: boolean): string {
+  if (failed) return "Could not load closing-record access history.";
   if (receipt === undefined) return "None recorded in this pod.";
   return receipt.action === "grant"
-    ? "Read access, granted in the eClosing app."
-    : "Access removed in the eClosing app.";
+    ? "Read access granted — receipt source unverified."
+    : "Access removed — receipt source unverified.";
 }
 
 /**
@@ -65,6 +71,7 @@ export function GrantsDashboard() {
   const vault = useVault();
   const [standings, setStandings] = useState<readonly GrantStanding[] | undefined>();
   const [ledger, setLedger] = useState<readonly ConsentReceiptView[]>([]);
+  const [ledgerFailed, setLedgerFailed] = useState(false);
   const [notice, setNotice] = useState<string | undefined>();
   const [busy, setBusy] = useState<string | undefined>();
 
@@ -86,10 +93,11 @@ export function GrantsDashboard() {
       readDemoStandings(grantOptions),
       // The closing-record rows are display-only: a ledger read failure must not
       // hide the loan-file controls.
-      readDemoLedger(grantOptions).catch((): readonly ConsentReceiptView[] => []),
+      readDemoLedger(grantOptions).catch(() => undefined),
     ]);
     setStandings(nextStandings);
-    setLedger(nextLedger);
+    setLedger(nextLedger ?? []);
+    setLedgerFailed(nextLedger === undefined);
   }, [options]);
 
   useEffect(() => {
@@ -223,9 +231,9 @@ export function GrantsDashboard() {
                   <dl className={rowGrid}>
                     <dt className="font-medium text-muted-foreground">Data</dt>
                     <dd className="m-0 text-card-foreground">Closing record</dd>
-                    <dt className="font-medium text-muted-foreground">Permission</dt>
+                    <dt className="font-medium text-muted-foreground">Last recorded change</dt>
                     <dd className="m-0 text-card-foreground" data-grant-closing-status="">
-                      {closingPermission(row.closing)}{" "}
+                      {closingLastChange(row.closing, ledgerFailed)}{" "}
                       <a className="underline" href={CLOSING_ACCESS_HREF}>
                         Manage in the eClosing app
                       </a>
@@ -253,8 +261,8 @@ export function GrantsDashboard() {
               </dd>
               <dt className="font-medium text-muted-foreground">Data</dt>
               <dd className="m-0 text-card-foreground">Closing record</dd>
-              <dt className="font-medium text-muted-foreground">Permission</dt>
-              <dd className="m-0 text-card-foreground">{closingPermission(receipt)}</dd>
+              <dt className="font-medium text-muted-foreground">Last recorded change</dt>
+              <dd className="m-0 text-card-foreground">{closingLastChange(receipt, false)}</dd>
             </dl>
             <details className="mt-3 text-muted-foreground text-xs">
               <summary className="cursor-pointer">Technical details</summary>

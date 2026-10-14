@@ -246,7 +246,7 @@ export const PERSONA_VALUES: readonly PersonaValues[] = [
     closingCostItems: ALEX_CLOSING_COST_ITEMS,
     closingCostsUsd: closingCostTotalUsd(ALEX_CLOSING_COST_ITEMS),
     underwritingConditions: [
-      "Provide updated employment verification within 10 business days of closing.",
+      "Obtain a verbal verification of employment (VOE) before the note date, within the timing Fannie Mae Selling Guide B3-3.1-04 sets for the option used (often 10 business days).",
     ],
     ausRecommendation: FIBO.UnderwritingDecision_Approve,
     recordingCounty: "Franklin County",

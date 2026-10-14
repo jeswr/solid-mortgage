@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
 import { afterEach, expect, test } from "vitest";
 import { ConsentRequest } from "../src/agent-chat.js";
 import { AppShell, BrandHeader, DEMO_BORROWER_ACCOUNT } from "../src/app-shell.js";
@@ -311,4 +311,23 @@ test("ConsentRequest starts optional sources unselected and allows only the sele
   expect(inbox?.checked).toBe(false);
   screen.getByRole("button", { name: "Allow selected sources" }).click();
   expect(allowed).toEqual([["pod"]]);
+});
+
+test("ConsentRequest reports the ticked sources as they change", () => {
+  const changes: (readonly string[])[] = [];
+  render(
+    <ConsentRequest
+      onAllow={() => undefined}
+      onChange={(ids) => changes.push(ids)}
+      onManual={() => undefined}
+      sources={[
+        { id: "pod", name: "Alex's pod", reads: "Profile and credentials" },
+        { id: "inbox", name: "Demo rent receipts", optional: true, reads: "Rent receipts" },
+      ]}
+    />,
+  );
+  const inbox = document.querySelector<HTMLInputElement>('[data-consent-source="inbox"]');
+  act(() => inbox?.click());
+  act(() => inbox?.click());
+  expect(changes).toEqual([["pod", "inbox"], ["pod"]]);
 });

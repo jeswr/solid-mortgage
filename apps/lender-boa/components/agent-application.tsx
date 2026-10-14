@@ -57,8 +57,14 @@ const STEPS_ID = "agent-steps";
 const ACTIONS: Partial<Record<Phase, readonly AssistantAction[]>> = {
   consent: [
     {
+      id: "allow_selected",
+      description:
+        "Alex agrees without naming sources: use only the sources currently ticked (the pod, plus the rent receipts only if ticked).",
+    },
+    {
       id: "allow_all",
-      description: "Alex allows both sources: the pod and the simulated rent receipts.",
+      description:
+        "Alex explicitly asks to include the simulated rent receipts as well as the pod.",
     },
     {
       id: "allow_pod_only",
@@ -108,6 +114,8 @@ export function AgentApplication({
   const engine = useAssistantEngine();
   const [phase, setPhaseState] = useState<Phase>("consent");
   const phaseRef = useRef<Phase>("consent");
+  /** The sources currently ticked in the consent request (optional ones start unticked). */
+  const selected = useRef<readonly string[]>(["pod"]);
   const [thinking, setThinking] = useState(false);
   const [messages, setMessages] = useState<AgentMessage[]>([]);
   const [steps, setSteps] = useState<AgentStep[]>([]);
@@ -121,6 +129,8 @@ export function AgentApplication({
   const nextId = useRef(0);
 
   const setPhase = (next: Phase) => {
+    // A fresh consent request starts with only the required pod ticked.
+    if (next === "consent" && phaseRef.current !== "consent") selected.current = ["pod"];
     phaseRef.current = next;
     setPhaseState(next);
   };
@@ -402,6 +412,14 @@ export function AgentApplication({
     const current = phaseRef.current;
     if (current === "consent") {
       if (action === "allow_all") return void run(["pod", "email"]);
+      if (action === "allow_selected") {
+        // Typed agreement honours the ticked sources: never more than shown.
+        if (!selected.current.includes("pod")) {
+          say("agent", "Tick Alex's pod to continue, or use the form.");
+          return;
+        }
+        return void run(selected.current.includes("email") ? ["pod", "email"] : ["pod"]);
+      }
       if (action === "allow_pod_only") return void run(["pod"]);
       if (action === "decline_manual")
         return manual("No problem, you can fill it in yourself.", quiet);
@@ -522,6 +540,9 @@ export function AgentApplication({
                 </p>
                 {phase === "consent" && (
                   <ConsentRequest
+                    onChange={(allowed) => {
+                      selected.current = allowed;
+                    }}
                     onAllow={(allowed) => {
                       if (!allowed.includes("pod")) {
                         choose("Don't read my pod.", "decline_manual");

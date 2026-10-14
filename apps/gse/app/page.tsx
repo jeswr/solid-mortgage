@@ -9,9 +9,9 @@ const beats = [
     body: "Alex gives the AUS access to the loan file. The AUS checks each credential, then applies the demo thresholds and returns a recommendation: Accept, Caution or Unable to validate.",
   },
   {
-    title: "Run again after a replacement credential",
-    scene: "Check the employment credential before closing",
-    body: "If the employment credential has expired, the AUS reports “Unable to validate”. Once the provider issues a replacement credential, the lender runs the AUS again.",
+    title: "Unable to validate",
+    scene: "When a credential fails its checks",
+    body: "If a credential fails its signature, issuer, date or status checks, the AUS reports “Unable to validate” and skips the risk rules.",
   },
 ] as const;
 

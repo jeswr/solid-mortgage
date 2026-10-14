@@ -36,6 +36,8 @@ const RECEIPTS_ONLY_POD = /\bpod only\b|\bonly (the |my )?pod\b|\bjust (the |my 
 const NEGATED_POD = new RegExp(`\\b${NEGATION}\\b.{0,24}\\bpod\\b`);
 const REFUSAL = /\b(no|nope|don't|dont|do not|not|never|stop|cancel|manual|myself|form)\b/;
 const AGREEMENT = /\b(yes|yeah|sure|ok|okay|allow|go ahead|fine|please)\b/;
+/** An explicit request to include the optional receipts (or every source). */
+const INCLUDES_RECEIPTS = new RegExp(`\\b(both|all|everything|${RECEIPTS.slice(1, -1)})\\b`);
 
 export function scriptedAction(phase: IntentPhase, text: string): ScriptedIntent {
   const lower = text.toLowerCase().replace(/[’‘]/g, "'");
@@ -45,7 +47,11 @@ export function scriptedAction(phase: IntentPhase, text: string): ScriptedIntent
       return { action: "allow_pod_only" };
     }
     if (REFUSAL.test(lower)) return { action: "decline_manual" };
-    if (AGREEMENT.test(lower)) return { action: "allow_all" };
+    // A plain "yes" agrees to the sources currently ticked; the optional
+    // receipts are added only when the visitor names them.
+    if (AGREEMENT.test(lower)) {
+      return { action: INCLUDES_RECEIPTS.test(lower) ? "allow_all" : "allow_selected" };
+    }
   }
   if (phase === "ask-rent") {
     const rent = parseAmount(text);

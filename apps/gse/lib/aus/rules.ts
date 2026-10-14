@@ -129,10 +129,10 @@ export const CAUTION_LABEL = "Caution — manual underwriting review required";
 
 /** Fannie Mae B3-3.1-04 — the scene-4 freshness anchor quoted on decisions. */
 export const VOE_RULE =
-  "Verbal verification of employment within 10 business days before the note date (Fannie Mae B3-3.1-04)";
+  "Verbal verification of employment before the note date, within the timing the Selling Guide sets for the option used (Fannie Mae B3-3.1-04)";
 
 export const APPROVAL_CONDITION =
-  "Provide updated employment verification within 10 business days of closing.";
+  "Obtain a verbal verification of employment (VOE) before the note date, within the timing Fannie Mae Selling Guide B3-3.1-04 sets for the option used (often 10 business days).";
 
 const EVIDENCE_LABELS: Readonly<Record<EvidenceKind, string>> = {
   "employment-income": "employment + income credential",

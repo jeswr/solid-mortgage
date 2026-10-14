@@ -42,7 +42,7 @@ export interface FreshnessReport {
  * has several timing and method provisions, and this demo performs none of them.
  */
 export const VOE_RULE =
-  "Fannie Mae B3-3.1-04 sets when and how employment must be re-verified before the note date. Employment re-verification not demonstrated";
+  "Fannie Mae B3-3.1-04 sets when and how employment must be re-verified before the note date";
 
 /** Verification seams `verifyCredential` consumes — injected in tests. */
 export type FreshnessSeams = Pick<

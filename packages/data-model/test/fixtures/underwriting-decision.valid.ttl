@@ -9,7 +9,7 @@
   a fibo-loan-ln-app:UnderwritingDecision ;
   fibo-fnd-rel-rel:evaluates <https://alex.pod.example/mortgage/application> ;
   mort:decisionStatus mort:DecisionStatus-ApprovedWithConditions ;
-  mort:underwritingCondition "Provide updated employment verification within 10 business days of closing." ;
+  mort:underwritingCondition "Obtain a verbal verification of employment (VOE) before the note date, within the timing Fannie Mae Selling Guide B3-3.1-04 sets for the option used (often 10 business days)." ;
   fibo-loan-ln-app:hasApprovedAmount [
     a schema:MonetaryAmount ;
     schema:value 340000.00 ;

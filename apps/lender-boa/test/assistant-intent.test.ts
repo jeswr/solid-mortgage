@@ -19,6 +19,9 @@ describe("application assistant scripted intent", () => {
     expect(scriptedAction("consent", "pod only").action).toBe("allow_pod_only");
     expect(scriptedAction("consent", "no email").action).toBe("allow_pod_only");
     expect(scriptedAction("consent", "Yes, allow both").action).toBe("allow_all");
+    expect(scriptedAction("consent", "Yes, include the rent receipts").action).toBe("allow_all");
+    expect(scriptedAction("consent", "yes").action).toBe("allow_selected");
+    expect(scriptedAction("consent", "OK, go ahead").action).toBe("allow_selected");
     expect(scriptedAction("consent", "Don't read my pod").action).toBe("decline_manual");
     expect(scriptedAction("consent", "No thanks").action).toBe("decline_manual");
     expect(scriptedAction("consent", "What is a pod?").action).toBe("answer_only");

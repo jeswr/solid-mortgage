@@ -7,6 +7,9 @@ import type { ConsentReceiptView } from "@/lib/grants/engine";
 import { useVault } from "@/lib/pod/vault-context";
 import { grantedAccessPhrase, partyForWebId, shortPartyLabel } from "./party-labels";
 
+/** The app that writes the closing-record consent receipts (apps/closing). */
+const CLOSING_PLATFORM = "Closing platform (Digital Closing and Servicing Transfer)";
+
 export function LedgerView() {
   const vault = useVault();
   const [receipts, setReceipts] = useState<readonly ConsentReceiptView[] | undefined>();
@@ -81,9 +84,10 @@ export function LedgerView() {
               issuedAt={receipt.issuedAt}
               organisationLabel={party === undefined ? undefined : shortPartyLabel(party.label)}
               recipient={receipt.recipient}
-              // Wallet records come from Data Vault's protected store; root-level
-              // records were written by another app and are not verified here.
-              recordedBy={external ? "Another app" : "Data Vault"}
+              // Wallet records come from Data Vault's protected store. The only
+              // app that writes root-level consent receipts in the mortgage folder
+              // is the closing platform; the card still marks the source unverified.
+              recordedBy={external ? CLOSING_PLATFORM : "Data Vault"}
               resource={receipt.resource}
               unverifiedSource={external}
             />

@@ -112,7 +112,7 @@ export function FlowPage({ flow }: { flow: IssuerFlowId }) {
           flow={flow}
           reissueHint={
             flow === "employment"
-              ? "Replace the credential and revoke the previous version. The replacement reuses the simulated data; it does not contact the employer, so it is not employment re-verification."
+              ? "Replace the credential and revoke the previous version. No employer is contacted, so this is not employment re-verification."
               : "Replace the credential and revoke the previous version."
           }
         />

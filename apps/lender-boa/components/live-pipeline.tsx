@@ -26,16 +26,20 @@ const AUS_LABEL: Record<string, string> = {
   UnableToDetermine: "Unable to validate",
 };
 
-/** The closing status: separate from the underwriter decision and the AUS recommendation. */
+/**
+ * Clear to close is the pipeline's own stage, set only when the underwriter
+ * marks the file clear to close here: an approved decision alone is not.
+ */
+function isClearToClose(file: PipelineFile): boolean {
+  return file.stage === "clear-to-close";
+}
+
+/** The file's queue status: separate from the underwriter decision and the AUS recommendation. */
 function statusOf(file: PipelineFile): string {
-  if (file.decisionStatus === "Approved") return "Clear to close";
+  if (isClearToClose(file)) return "Clear to close";
   if (file.decisionStatus === "ApprovedWithConditions") return "Conditions open";
   if (file.decisionStatus === "Denied") return "Denied";
   return "In review";
-}
-
-function closingStatusOf(file: PipelineFile): string {
-  return file.decisionStatus === "Approved" ? "Clear to close" : "Not yet clear to close";
 }
 
 /**
@@ -108,7 +112,7 @@ export function LivePipeline({ apiBase }: { apiBase: string }) {
   return (
     <ul className="mt-6 flex flex-col gap-4" data-live-pipeline="">
       {files.map((file) => {
-        const cleared = file.decisionStatus === "Approved";
+        const cleared = isClearToClose(file);
         return (
           <li
             className="rounded-xl border border-border bg-card p-5"
@@ -128,7 +132,11 @@ export function LivePipeline({ apiBase }: { apiBase: string }) {
                 className="rounded-full bg-muted px-3 py-1 font-medium text-sm"
                 data-pipeline-status=""
               >
-                {statusOf(file)}
+                {cleared ? (
+                  <IllustrativeFigure>{statusOf(file)}</IllustrativeFigure>
+                ) : (
+                  statusOf(file)
+                )}
               </span>
             </div>
             <dl className="mt-4 grid gap-2 text-sm sm:grid-cols-[12rem_1fr]">
@@ -154,7 +162,11 @@ export function LivePipeline({ apiBase }: { apiBase: string }) {
               </dd>
               <dt className="text-muted-foreground">Closing status</dt>
               <dd className="m-0" data-pipeline-closing-status="">
-                {closingStatusOf(file)}
+                {cleared ? (
+                  <IllustrativeFigure>Clear to close (simulated)</IllustrativeFigure>
+                ) : (
+                  "Not yet clear to close"
+                )}
               </dd>
               <dt className="text-muted-foreground">Loan file</dt>
               <dd className="m-0">

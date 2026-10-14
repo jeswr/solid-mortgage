@@ -150,7 +150,7 @@ export async function submitApplication(
   });
 
   const conditions = [
-    "Provide updated employment verification within 10 business days of closing.",
+    "Obtain a verbal verification of employment (VOE) before the note date, within the timing Fannie Mae Selling Guide B3-3.1-04 sets for the option used (often 10 business days).",
   ];
   const decision = buildUnderwritingDecision({
     iri: decisionIri,

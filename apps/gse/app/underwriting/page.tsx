@@ -30,9 +30,8 @@ export default function UnderwritingPage() {
       <div className="mt-8">
         <AusConsole apiBase="/gse/api" />
         <p className="mt-3 text-xs text-muted-foreground">
-          The AUS reads only the signed-in borrower&apos;s pod, and only after the borrower gives it
-          access. Local requests run as Alex; separate organisation permissions are not enforced
-          here.
+          The AUS reads the signed-in borrower&apos;s loan file. Local requests run as Alex;
+          separate organisation permissions are not enforced here.
         </p>
       </div>
 

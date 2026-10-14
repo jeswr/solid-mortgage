@@ -178,6 +178,8 @@ export interface ConsentRequestProps {
   readonly sources: readonly ConsentSource[];
   /** Called with the ids the visitor allowed (possibly none). */
   readonly onAllow: (allowed: readonly string[]) => void;
+  /** Called whenever the ticked sources change, so typed consent can honour the selection. */
+  readonly onChange?: (allowed: readonly string[]) => void;
   readonly onManual: () => void;
   readonly manualLabel?: string;
   readonly disabled?: boolean;
@@ -187,6 +189,7 @@ export interface ConsentRequestProps {
 export function ConsentRequest({
   sources,
   onAllow,
+  onChange,
   onManual,
   manualLabel = "No thanks, I'll do it myself",
   disabled = false,
@@ -194,10 +197,11 @@ export function ConsentRequest({
   const [allowed, setAllowed] = useState<readonly string[]>(
     sources.filter((source) => source.optional !== true).map((source) => source.id),
   );
-  const toggle = (id: string) =>
-    setAllowed((current) =>
-      current.includes(id) ? current.filter((entry) => entry !== id) : [...current, id],
-    );
+  const toggle = (id: string) => {
+    const next = allowed.includes(id) ? allowed.filter((entry) => entry !== id) : [...allowed, id];
+    setAllowed(next);
+    onChange?.(next);
+  };
   return (
     <div
       className="mt-2 rounded-xl border border-border bg-card p-4 text-card-foreground"

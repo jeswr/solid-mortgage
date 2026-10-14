@@ -104,26 +104,31 @@ export function IssuePanel({ flow, reissueHint }: IssuePanelProps) {
                 : "Replacement saved; the previous credential is revoked."}
             </p>
             {state.result.credential !== undefined && (
-              <ul className="mt-2 list-none space-y-1 p-0 text-muted-foreground">
-                <li>
-                  Credential: <code>{state.result.credential.id}</code>
-                </li>
-                <li>
+              <>
+                <p className="mt-2 text-muted-foreground">
                   Valid from {state.result.credential.validFrom} to{" "}
                   {state.result.credential.validUntil}
-                </li>
-                {state.result.anchor != null && (
-                  <li>
-                    Issuer-signed value encoding: <code>{state.result.anchor.id}</code>
-                  </li>
-                )}
-                {state.result.revokedIndex !== undefined && (
-                  <li>
-                    Previous credential revoked on the status list (entry{" "}
-                    {state.result.revokedIndex}). New entry: {state.result.newIndex}.
-                  </li>
-                )}
-              </ul>
+                </p>
+                <details className="mt-2 text-muted-foreground text-xs" data-panel-technical="">
+                  <summary className="cursor-pointer">Technical details</summary>
+                  <ul className="mt-1 list-none space-y-1 p-0 break-all">
+                    <li>
+                      Credential: <code>{state.result.credential.id}</code>
+                    </li>
+                    {state.result.anchor != null && (
+                      <li>
+                        Issuer-signed value encoding: <code>{state.result.anchor.id}</code>
+                      </li>
+                    )}
+                    {state.result.revokedIndex !== undefined && (
+                      <li>
+                        Previous credential revoked on the status list (entry{" "}
+                        {state.result.revokedIndex}). New entry: {state.result.newIndex}.
+                      </li>
+                    )}
+                  </ul>
+                </details>
+              </>
             )}
           </div>
         )}
