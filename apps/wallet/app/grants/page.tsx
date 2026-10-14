@@ -22,11 +22,8 @@ export default function GrantsPage() {
       </h1>
       <p className="mt-4 text-muted-foreground">
         Choose which organisations can read Alex&apos;s loan file. Each change updates the
-        pod&apos;s permission list and writes a consent receipt.
-      </p>
-      <p className="mt-3 rounded-md border border-amber-300 bg-amber-50 p-3 text-amber-950 text-sm">
-        Local demo: permission changes are saved, but requests run as Alex. This mode does not
-        demonstrate organisation-level access enforcement.
+        pod&apos;s permission list and writes a consent receipt. The eClosing app manages
+        closing-record access.
       </p>
 
       <GrantsDashboard />

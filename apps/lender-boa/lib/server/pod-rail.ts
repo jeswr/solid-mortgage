@@ -251,7 +251,7 @@ export function createPodRailService(options: PodRailServiceOptions): PodRailSer
         dispatched: false,
         nextStep:
           "Simulated: nothing was sent. A live lender would ask the employment verification " +
-          "provider to re-issue the credential. Re-issue it in Verification Services, then check again.",
+          "provider for a replacement credential. Issue the replacement credential in Verification Services, then check again.",
       });
     },
   };

@@ -12,22 +12,30 @@ const DECISION_LABEL: Record<string, string> = {
   Denied: "Denied",
 };
 
-/** The AUS recommendation, in the Accept / Caution terms of the modelled AUS. */
+/**
+ * The AUS recommendation, in the Accept / Caution terms the AUS app shows.
+ * The AUS app stores its "caution" outcome as the FIBO `Ineligible` code and a
+ * validation failure as `Refer`; neither is shown as "Ineligible" here.
+ */
 const AUS_LABEL: Record<string, string> = {
   Approve: "Accept",
   Eligible: "Accept",
-  Refer: "Caution",
-  Ineligible: "Ineligible",
-  Deny: "Ineligible",
+  Refer: "Unable to validate",
+  Ineligible: "Caution — manual underwriting review required",
+  Deny: "Caution — manual underwriting review required",
   UnableToDetermine: "Unable to validate",
 };
 
-/** The file's status: separate from the decision, which can carry open conditions. */
+/** The closing status: separate from the underwriter decision and the AUS recommendation. */
 function statusOf(file: PipelineFile): string {
   if (file.decisionStatus === "Approved") return "Clear to close";
   if (file.decisionStatus === "ApprovedWithConditions") return "Conditions open";
   if (file.decisionStatus === "Denied") return "Denied";
   return "In review";
+}
+
+function closingStatusOf(file: PipelineFile): string {
+  return file.decisionStatus === "Approved" ? "Clear to close" : "Not yet clear to close";
 }
 
 /**
@@ -127,7 +135,7 @@ export function LivePipeline({ apiBase }: { apiBase: string }) {
               <dt className="text-muted-foreground">AUS recommendation</dt>
               <dd className="m-0">
                 {file.ausRecommendation === undefined ? (
-                  "Not recorded"
+                  "Not run"
                 ) : (
                   <IllustrativeFigure>
                     {AUS_LABEL[file.ausRecommendation] ?? file.ausRecommendation}
@@ -144,9 +152,14 @@ export function LivePipeline({ apiBase }: { apiBase: string }) {
                   </IllustrativeFigure>
                 )}
               </dd>
+              <dt className="text-muted-foreground">Closing status</dt>
+              <dd className="m-0" data-pipeline-closing-status="">
+                {closingStatusOf(file)}
+              </dd>
               <dt className="text-muted-foreground">Loan file</dt>
               <dd className="m-0">
-                Credentials in the borrower's pod, read with the borrower's permission.
+                Credentials in the borrower's pod. Local requests run as Alex; separate organisation
+                permissions are not enforced here.
               </dd>
               <dt className="text-muted-foreground">Application</dt>
               <dd className="m-0 break-all">
@@ -159,11 +172,11 @@ export function LivePipeline({ apiBase }: { apiBase: string }) {
                   <dd className="m-0">
                     Renting,{" "}
                     <IllustrativeFigure>
-                      {formatUsd(file.housing.monthlyRentUsd)}
+                      {`${formatUsd(file.housing.monthlyRentUsd)} a month`}
                     </IllustrativeFigure>{" "}
-                    a month (
+                    (
                     {file.housing.source === "email"
-                      ? "from rent receipts the assistant found"
+                      ? "from demo rent receipts the assistant read"
                       : "entered by the borrower"}
                     )
                   </dd>

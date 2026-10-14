@@ -33,10 +33,10 @@ export const examinerChecks: ExaminerCheck[] = [
     citation: "Regulation Z §1026.19(e)(1)(iii) (TRID)",
     citationUrl: "https://www.consumerfinance.gov/rules-policy/regulations/1026/19/",
     id: "trid-loan-estimate",
-    notShown: "Compliant delivery, or a complete Loan Estimate.",
+    notShown: "A complete Loan Estimate or compliant delivery.",
     rule: "Loan Estimate delivered or placed in the mail no later than the third business day after the creditor receives the application (12 CFR 1026.19(e)(1)(iii)).",
     scene: 3,
-    shows: "Saving a disclosure copy in Alex's pod, with a timestamp.",
+    shows: "An application record and a simulated underwriting decision saved in Alex's pod.",
   },
   {
     chapterSlug: "close-and-stay-in-control",
@@ -46,7 +46,7 @@ export const examinerChecks: ExaminerCheck[] = [
     notShown: "Receipt and consummation. Those dates are simulated.",
     rule: "Consumer receives the Closing Disclosure no later than three business days before consummation (12 CFR 1026.19(f)(1)(ii)).",
     scene: 5,
-    shows: "The required review period, on a simulated timeline.",
+    shows: "The required review period, on an illustrative timeline.",
   },
   {
     chapterSlug: "nothing-goes-stale",
@@ -54,9 +54,9 @@ export const examinerChecks: ExaminerCheck[] = [
     citationUrl: "https://selling-guide.fanniemae.com/sel/b3-3.1-04/verbal-verification-employment",
     id: "voe-freshness",
     notShown: "A new employment confirmation from the employer.",
-    rule: "Verbal verification of employment no more than 10 business days before the note date.",
+    rule: "Verbal verification of employment before the note date, within the timing the Selling Guide sets for the option used (often 10 business days).",
     scene: 4,
-    shows: "A check of the employment credential's validity period.",
+    shows: "A check of the employment credential's signature, status and validity period.",
   },
   {
     chapterSlug: "nothing-goes-stale",
@@ -77,6 +77,7 @@ export const examinerChecks: ExaminerCheck[] = [
     notShown: "Servicing-transfer notices. These are separate and simulated.",
     rule: "Notice of servicing transfer: from the transferor servicer not less than 15 days before the effective date of transfer, and from the transferee servicer not more than 15 days after it (12 CFR 1024.33(b)(3)).",
     scene: 5,
-    shows: "Alex's permission changes, each recorded with a consent receipt.",
+    shows:
+      "Alex's permission changes, each recorded with a consent receipt. Local requests run as Alex; separate organisation permissions are not enforced here.",
   },
 ];

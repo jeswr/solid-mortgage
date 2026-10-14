@@ -23,6 +23,8 @@ export interface DemoPersona {
   monthlyDebtsUsd: number;
   /** Whole USD — verified asset balance for the Finicity-modelled attestation. */
   verifiedAssetsUsd: number;
+  /** Whole USD — the loan amount Alex applies for. */
+  requestedLoanUsd: number;
   employer: string;
 }
 
@@ -38,6 +40,7 @@ export const demoPersona: DemoPersona = {
   monthlyDebtsUsd: 1180,
   monthlyGrossIncomeUsd: 8500,
   name: "Alex Rivera",
+  requestedLoanUsd: 340000,
   verifiedAssetsUsd: 64000,
 };
 

@@ -73,11 +73,13 @@ export default function Home() {
 
       <section aria-labelledby="freshness" className="rounded-lg border border-border bg-card p-6">
         <h2 className="font-semibold text-card-foreground text-xl" id="freshness">
-          Re-verify employment before closing
+          Replace the employment credential before closing
         </h2>
         <p className="mt-2 max-w-3xl text-muted-foreground text-sm">
           The employment credential has a short validity period. When it expires, the provider can
-          re-issue it. The demo reuses the same simulated data and does not contact an employer.
+          issue a replacement credential and revoke the previous version. The demo reuses the same
+          simulated data and does not contact an employer, so this is not employment
+          re-verification.
         </p>
       </section>
     </main>

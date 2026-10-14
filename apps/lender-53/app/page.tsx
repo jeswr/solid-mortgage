@@ -15,14 +15,14 @@ export default function RateQuotePage() {
   return (
     <main className="mx-auto w-full max-w-3xl px-6 py-12">
       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        Scene 2 · Prequalify without disclosing income or credit score
+        Scene 2 · Check prequalification criteria
       </p>
       <h1 className="mt-1 text-3xl font-semibold tracking-tight text-foreground">
         Second lender's prequalification criteria
       </h1>
       <p className="mt-4 text-muted-foreground">
-        Second lender, modelled on {site.organization}. Alex checks its criteria without sending the
-        exact income or credit score.
+        Second lender, modelled on {site.organization}. Alex checks its criteria with a new proof
+        derived from the same credentials, without sending the exact income or credit score.
       </p>
 
       <section aria-labelledby="criteria-heading" className="mt-8">
@@ -50,15 +50,18 @@ export default function RateQuotePage() {
         className="mt-8 rounded-lg border border-border bg-card p-5"
       >
         <h2 id="quote-heading" className="text-xl font-semibold text-card-foreground">
-          Illustrative rate quote
+          Get an illustrative quote
         </h2>
+        <p className="mt-3 text-muted-foreground" data-quote-locked="">
+          <a className="font-semibold text-foreground underline" href="/wallet/prequal">
+            Return to Data Vault to run the check.
+          </a>{" "}
+          When both proofs pass, this lender returns an illustrative rate quote to the Data Vault
+          app. It is not an application or an offer of credit.
+        </p>
         <p className="mt-3 text-sm text-muted-foreground">
           Your actual rate, payment, and costs could be higher. Get an official Loan Estimate before
           choosing a loan.
-        </p>
-        <p className="mt-3 text-muted-foreground" data-quote-locked="">
-          When both proofs pass, this lender returns an illustrative rate quote to the Data Vault
-          app. It is not an application or an offer of credit.
         </p>
         <p className="mt-2 text-sm text-muted-foreground">
           Prequalification is not credit approval or a commitment to lend. The demo continues with

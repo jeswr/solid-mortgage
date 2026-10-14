@@ -32,6 +32,8 @@ export interface TryLive {
   app: DemoAppSlug;
   /** Route inside the app, e.g. "/application" (appended to the app's path). Omit for the app root. */
   path?: string;
+  /** Section id on the target page, e.g. "closing-access" (appended as a #fragment). */
+  hash?: string;
   label: string;
 }
 
@@ -90,19 +92,19 @@ export const chapters: Chapter[] = [
     ],
     title: "Verify income, assets and credit",
     underneath: [
-      "Each credential is a W3C Verifiable Credential: a signed report that anyone can check without calling the issuer.",
-      "The pod's permission list (Web Access Control) lets each provider write its credential. No one else can read it until Alex grants access.",
+      "A credential is a signed verification record: a W3C Verifiable Credential that anyone can check without calling the issuer.",
+      "The pod's permission list (Web Access Control) lets each provider write its credential. Permission changes are saved. This local demo makes requests as Alex; it does not enforce separate organisation permissions.",
       "The income and credit-score credentials are signed twice, so scene 2 can use them in zero-knowledge proofs.",
     ],
   },
   {
     anchor: "Reg B comment 2(f)-3 explains when a prequalification request becomes an application.",
-    lead: "Alex checks two lenders' prequalification criteria without sending exact income or credit score.",
+    lead: "Alex checks two lenders' prequalification criteria using proofs derived from Alex's credentials.",
     scene: 2,
     slug: "shop-without-undressing",
     steps: [
       {
-        body: "The lender, modelled on Bank of America, receives proofs that Alex's income is at least $7,000 a month and credit score 620 or higher.",
+        body: "The lender, modelled on Bank of America, checks proofs that Alex's income is at least $7,000 a month and credit score 620 or higher.",
         title: "Send proofs to the lender",
         tryLive: {
           app: "lender-boa",
@@ -111,7 +113,7 @@ export const chapters: Chapter[] = [
         },
       },
       {
-        body: "The second lender, modelled on Fifth Third Bank, checks the same proofs. Each lender returns an illustrative rate quote, not an offer of credit.",
+        body: "The second lender, modelled on Fifth Third Bank, checks a new proof derived from the same credentials. Each lender shows an illustrative rate quote, not an offer.",
         title: "Get a second quote",
         tryLive: { app: "lender-53", label: "Open the second lender" },
       },
@@ -121,11 +123,11 @@ export const chapters: Chapter[] = [
         tryLive: { app: "wallet", label: "Compare illustrative quotes", path: "/prequal" },
       },
     ],
-    title: "Prequalify without disclosing income or credit score",
+    title: "Check prequalification criteria",
     underneath: [
-      "A zero-knowledge proof shows that a figure meets a threshold without revealing the figure. The proofs run in the browser.",
-      "Each proof is tied to issuer-signed data. Some combined proofs are precomputed and labelled “proved offline · verified live”.",
-      "Limitations: not independently audited. A lender may be able to guess values with few possibilities, such as a credit score.",
+      "A zero-knowledge proof shows that a figure meets a threshold without sending the figure directly. The proofs run in the browser.",
+      "Each proof is tied to an issuer-signed value encoding. Some combined proofs are precomputed and labelled “proved offline · verified live”.",
+      "Prototype limitation: encoded values may reveal the underlying figures through guessing. The cryptography has not been independently audited.",
     ],
   },
   {
@@ -136,38 +138,38 @@ export const chapters: Chapter[] = [
     slug: "one-click-application",
     steps: [
       {
-        body: "In the Data Vault, Alex lets the lender read the profile and three credentials. Each change gets a consent receipt.",
+        body: "In the Data Vault, Alex lets the lender read the profile and three credentials. Each change gets a consent receipt. Local requests run as Alex.",
         title: "Grant access",
         tryLive: { app: "wallet", label: "Open access permissions", path: "/grants" },
       },
       {
-        body: "The lender prefills the Uniform Residential Loan Application (URLA) from the pod. Alex reviews and submits it.",
+        body: "The lender prefills demo fields of the Uniform Residential Loan Application (URLA) from the pod. Alex reviews and submits them.",
         title: "Review the prefilled application",
         tryLive: { app: "lender-boa", label: "Open the application", path: "/application" },
       },
       {
-        body: "The lender saves illustrative loan terms in Alex's pod. This summary is not a complete Loan Estimate.",
-        title: "Receive the loan terms",
-        tryLive: { app: "lender-boa", label: "View the loan terms", path: "/application" },
+        body: "The lender saves the application and shows illustrative loan terms. This summary is not a Loan Estimate.",
+        title: "See illustrative loan terms",
+        tryLive: { app: "lender-boa", label: "Open the demo application", path: "/application" },
       },
     ],
     title: "Apply with data from the pod",
   },
   {
     anchor:
-      "Fannie Mae Selling Guide B3-3.1-04: verbal verification of employment (VOE) within 10 business days before the note date.",
-    lead: "The lender re-verifies Alex's employment before closing, and the automated underwriting service runs again.",
+      "Fannie Mae Selling Guide B3-3.1-04 sets when employment must be verbally verified before the note date. The timing depends on the option used.",
+    lead: "Check its signature, status and validity period. This demo does not reconfirm employment with an employer.",
     scene: 4,
     slug: "nothing-goes-stale",
     steps: [
       {
-        body: "Alex's employment credential is 30 days old, outside the 10-business-day VOE window. The lender asks for a newer verification.",
+        body: "The lender checks the credential's signature, status and validity period. Passing these checks does not confirm current employment.",
         title: "Check the employment credential",
         tryLive: { app: "lender-boa", label: "Check credential validity", path: "/freshness" },
       },
       {
-        body: "The provider issues a replacement through the access Alex already gave. The employment data is simulated, not re-confirmed with an employer.",
-        title: "Issue a replacement credential",
+        body: "The provider issues a replacement with the same simulated data and new dates, and revokes the previous credential on its status list.",
+        title: "Issue a replacement demo credential",
         tryLive: {
           app: "verifications",
           label: "Issue replacement credential",
@@ -175,37 +177,37 @@ export const chapters: Chapter[] = [
         },
       },
       {
-        body: "The automated underwriting service (AUS), modelled on Freddie Mac, returns findings. The lender's underwriter makes the credit decision.",
-        title: "Run the AUS again",
-        tryLive: { app: "gse", label: "Run the AUS", path: "/underwriting" },
+        body: "The underwriter marks the employment condition satisfied, a simulated decision. The lender then sets the closing status to clear to close.",
+        title: "Mark the loan clear to close",
+        tryLive: { app: "lender-boa", label: "Open the loan pipeline", path: "/pipeline" },
       },
     ],
-    title: "Re-verify employment before closing",
+    title: "Check the employment credential",
     underneath: [
-      "The credential's validity period runs from 30 days ago to 14 days ahead. These are real credential dates, not a simulated clock.",
-      "Revoking a credential is a separate act that uses a status list. It is not part of this scene.",
+      "The check reads the credential's real issue and expiry dates, not a simulated clock. A valid credential does not establish current employment.",
+      "The replacement revokes the previous credential on the issuer's status list. Revoking a credential is different from revoking access.",
       "The replacement uses Alex's existing access permission, so Alex does not grant access again.",
     ],
   },
   {
     anchor:
       "Reg Z 12 CFR 1026.19(f)(1)(ii): Closing Disclosure three business days before consummation. Reg X 12 CFR 1024.33(b): servicing-transfer notices, simulated here.",
-    lead: "Alex signs the closing documents and gives the new servicer access. The Data Vault shows every access change.",
+    lead: "Alex completes a simulated signing, then gives the new servicer access. The Data Vault shows every access change.",
     scene: 5,
     slug: "close-and-stay-in-control",
     steps: [
       {
-        body: "On the eClosing platform, modelled on Wolters Kluwer (eOriginal), Alex eSigns. The platform saves the closing record in Alex's pod.",
-        title: "Sign the closing documents",
+        body: "On the eClosing platform, modelled on Wolters Kluwer (eOriginal), Alex completes a simulated signing. The platform saves a demo closing record in Alex's pod.",
+        title: "Simulate signing",
         tryLive: { app: "closing", label: "Open eClosing" },
       },
       {
-        body: "The servicer, modelled on Truist, asks to read the closing record. Alex grants it and revokes the lender's access, which does not delete the lender's copies.",
+        body: "The servicer, modelled on Truist, asks to read the closing record. Alex grants it and removes the lender's access; the lender's copies remain. Local requests run as Alex.",
         title: "Manage access after servicing transfers",
-        tryLive: { app: "closing", label: "Grant servicer access" },
+        tryLive: { app: "closing", hash: "closing-access", label: "Grant servicer access" },
       },
       {
-        body: "The Data Vault lists each consent receipt: every access given or revoked. It does not log every read.",
+        body: "The Data Vault lists each consent receipt: every access given or removed. It does not log every read.",
         title: "Review the access history",
         tryLive: { app: "wallet", label: "View consent receipts", path: "/ledger" },
       },

@@ -41,12 +41,14 @@ async function main(): Promise<void> {
         timeout: 60_000,
       },
     );
-    await guide
-      .locator(`text=Step ${index + 1} of ${GUIDED_STEPS.length}`)
-      .waitFor({ timeout: 30_000 });
+    const stepCount = guide.locator(`text=Step ${index + 1} of ${GUIDED_STEPS.length}`);
+    // The overlay is hidden while an app's concept-demo notice is open, so the step only
+    // needs to be rendered (attached) before the notice is accepted.
+    await stepCount.waitFor({ state: "attached", timeout: 30_000 });
 
     const notice = page.getByRole("button", { name: "I understand — enter the demo" });
     if (await notice.isVisible().catch(() => false)) await notice.click();
+    await stepCount.waitFor({ timeout: 30_000 });
 
     if (step.action !== undefined) {
       const doIt = guide.locator("[data-guide-do]");
@@ -66,6 +68,10 @@ async function main(): Promise<void> {
       await guide.locator("[data-guide-status][data-done]").waitFor({ timeout: STEP_TIMEOUT });
     } else if (step.doneSelector !== undefined) {
       await page.locator(step.doneSelector).first().waitFor({ timeout: 60_000 });
+      // The guide confirms the state itself (no "waiting" line beside loaded content).
+      await guide
+        .locator('[data-guide-status]:not([data-state="loading"])')
+        .waitFor({ timeout: 10_000 });
     }
     if (process.env.DEMO_SCREENSHOTS) {
       await page.screenshot({

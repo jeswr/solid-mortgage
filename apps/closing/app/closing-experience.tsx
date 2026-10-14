@@ -98,8 +98,7 @@ export function ClosingExperience() {
           Close the loan and transfer servicing
         </h1>
         <p className="mt-5 max-w-3xl text-lg text-muted-foreground">
-          Alex signs the closing documents, then gives the new servicer access to the closing
-          record.
+          Alex simulates signing, then gives the new servicer access to the closing record.
         </p>
       </section>
 
@@ -118,24 +117,9 @@ export function ClosingExperience() {
           </a>
           ).
         </p>
-        <ol className="mt-6 grid gap-4 md:grid-cols-3">
-          <li className="rounded-lg border border-border bg-card p-5">
-            <p className="font-medium text-sm">Tuesday · Closing Disclosure received</p>
-            <p className="mt-2 text-muted-foreground text-sm">
-              A copy is saved in Alex&apos;s pod. Delivery is simulated.
-            </p>
-          </li>
-          <li className="rounded-lg border border-border bg-card p-5">
-            <p className="font-medium text-sm">Three business days</p>
-            <p className="mt-2 text-muted-foreground text-sm">Alex reviews the final terms.</p>
-          </li>
-          <li className="rounded-lg border border-border bg-card p-5">
-            <p className="font-medium text-sm">Friday · consummation</p>
-            <p className="mt-2 text-muted-foreground text-sm">
-              Alex eSigns the closing documents (simulated).
-            </p>
-          </li>
-        </ol>
+        <p className="mt-4 max-w-3xl font-medium text-sm" data-closing-timeline="">
+          Illustrative timeline: Closing Disclosure received Tuesday; consummation Friday.
+        </p>
       </section>
 
       <section
@@ -146,8 +130,12 @@ export function ClosingExperience() {
           eClosing platform, modelled on {site.eCloseOrganization}
         </p>
         <h2 className="mt-2 font-semibold text-2xl" id="ceremony-title">
-          Review and eSign the closing documents
+          Simulate closing
         </h2>
+        <p className="mt-2 max-w-3xl text-muted-foreground">
+          Review the sample loan summary. This action saves a demo closing record; it does not
+          execute loan documents.
+        </p>
         <dl className="mt-6 grid gap-4 sm:grid-cols-2">
           <div>
             <dt className="text-muted-foreground text-sm">Principal</dt>
@@ -171,30 +159,29 @@ export function ClosingExperience() {
           {active === "close"
             ? "Saving closing record…"
             : closing
-              ? "Closing documents signed"
-              : "eSign closing documents"}
+              ? "Signing simulated"
+              : "Simulate signing"}
         </button>
         {closing !== undefined && (
           <div className="mt-5 rounded-lg bg-muted p-4 text-sm" role="status">
-            <p className="font-semibold">Closing record saved in Alex&apos;s pod</p>
+            <p className="font-semibold">
+              Simulated signing complete. Closing record saved in Alex&apos;s pod.
+            </p>
             <p className="mt-1 break-all text-muted-foreground">
               eNote reference: {closing.eNoteReference}
             </p>
             <p className="mt-1 text-muted-foreground">
-              Alex keeps a copy and the eNote reference. The eNote&apos;s Authoritative Copy stays
-              in the eVault. Signing and eNote custody are simulated.
+              Alex&apos;s pod holds the closing record and the eNote reference. The eNote&apos;s
+              Authoritative Copy stays in the eVault. Signing and eNote custody are simulated.
             </p>
           </div>
         )}
-        <p className="mt-5 text-muted-foreground text-sm">
-          Industry context: eOriginal managed about 92% of MERS eRegistry eNotes through January
-          2022. The current share is unverified.
-        </p>
       </section>
 
       <section
         aria-labelledby="transfer-title"
-        className="mt-12 overflow-hidden rounded-xl border border-border"
+        className="mt-12 scroll-mt-6 overflow-hidden rounded-xl border border-border"
+        id="closing-access"
         style={{ ...brandCssProperties(SERVICER_THEME), fontFamily: "var(--font-brand)" }}
       >
         <header className="border-primary border-b-4 bg-card p-6">
@@ -227,6 +214,10 @@ export function ClosingExperience() {
             </a>
             ); here they are simulated. Separately, Alex controls who can read the closing record.
           </p>
+          <p className="mt-3 max-w-3xl text-muted-foreground text-sm" data-local-mode-note="">
+            Permission changes are saved. This local demo makes requests as Alex; it does not
+            enforce separate organisation permissions.
+          </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <button
               className="rounded-lg bg-primary px-5 py-3 font-semibold text-primary-foreground disabled:opacity-50"
@@ -247,10 +238,10 @@ export function ClosingExperience() {
               type="button"
             >
               {active === "revoke"
-                ? "Revoking…"
+                ? "Removing…"
                 : revoked
-                  ? "Lender access revoked"
-                  : "Revoke lender access"}
+                  ? "Lender access removed"
+                  : "Remove lender access to closing record"}
             </button>
           </div>
           {granted && (
@@ -260,8 +251,8 @@ export function ClosingExperience() {
           )}
           {revoked && (
             <p className="mt-2 text-sm" role="status">
-              Lender read access revoked. Copies the lender already holds are unaffected. A consent
-              receipt was saved.
+              Lender access to closing record removed. Copies the lender already holds are
+              unaffected. A consent receipt was saved.
             </p>
           )}
         </div>
@@ -315,8 +306,9 @@ export function ClosingExperience() {
         defaultOpen
         real={
           <p>
-            Pod sign-in, data-shape checks on each write, permission changes (Web Access Control)
-            and consent receipts.
+            Data-shape checks on each write, saved permission changes (Web Access Control) and
+            consent receipts. Local requests run as Alex; separate organisation permissions are not
+            enforced here.
           </p>
         }
         simulated={

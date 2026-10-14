@@ -109,19 +109,22 @@ export function IssueFlow(props: IssueFlowProps) {
           onClick={issue}
           type="button"
         >
-          {busy ? "Issuing…" : "Issue credential"}
+          {busy ? "Issuing…" : issued !== null ? "Demo credential issued" : "Issue demo credential"}
         </button>
-        <p className="mt-2 text-sm text-muted-foreground">
-          The demo signs the credential and saves it in the signed-in borrower&apos;s pod.
-        </p>
+        {issued === null && !unauthenticated && (
+          <p className="mt-2 text-sm text-muted-foreground" data-issue-hint="">
+            {props.brand === "appraisal"
+              ? "Preview the simulated appraisal. Select ‘Issue demo credential’ to save it."
+              : "Preview the simulated title search result. Select ‘Issue demo credential’ to save it."}
+          </p>
+        )}
         {unauthenticated && (
           <p
             className="mt-3 text-sm text-muted-foreground"
             data-issue-unauthenticated=""
             role="status"
           >
-            This is a simulated {props.brand === "appraisal" ? "appraisal" : "title"} preview.
-            Sign-in is simulated here, so no credential was issued.
+            Preview only. Credential issuance is unavailable in this mode.
           </p>
         )}
         {error !== null && (
@@ -139,7 +142,9 @@ export function IssueFlow(props: IssueFlowProps) {
           data-credential-iri={issued.credentialIri}
         >
           <h2 id="issued-heading" className="text-xl font-semibold text-card-foreground">
-            Credential saved in the pod
+            {issued.brand === "appraisal"
+              ? "Appraisal credential saved."
+              : "Title search credential saved."}
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
             Saved at <code className="break-all">{issued.credentialIri}</code>. Status list entry{" "}
@@ -163,7 +168,7 @@ export function IssueFlow(props: IssueFlowProps) {
               <CredentialCard
                 issuer="Demo title provider"
                 status="valid"
-                title="Title search result"
+                title="Simulated title search result"
                 validFrom={issued.validFrom.slice(0, 10)}
                 validUntil={issued.validUntil.slice(0, 10)}
               >
@@ -186,7 +191,12 @@ function titleStatusCopy(status: "clear" | "clouded"): string {
 function AppraisalPreview({ preview }: { preview: AppraisalDemoPreview }) {
   return (
     <div>
-      <CredentialCard issuer="Demo appraisal provider" status="pending" title="Appraisal (preview)">
+      <CredentialCard
+        issuer="Demo appraisal provider"
+        preview
+        status="pending"
+        title="Simulated appraisal"
+      >
         <dl className="grid gap-3 sm:grid-cols-2">
           <div>
             <dt className="text-muted-foreground text-xs">Subject property</dt>
@@ -226,8 +236,9 @@ function TitlePreview({ preview }: { preview: TitleDemoPreview }) {
   return (
     <CredentialCard
       issuer="Demo title provider"
+      preview
       status="pending"
-      title="Title search result (preview)"
+      title="Simulated title search result"
     >
       <dl className="grid gap-3 sm:grid-cols-2">
         <div>

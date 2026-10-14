@@ -2,7 +2,8 @@
 
 import { DemoLockedField, IllustrativeFigure } from "@mortgage/ui";
 import { useEffect, useState } from "react";
-import { formatPercent, formatUsd } from "../lib/format";
+import { formatPercent, formatUsd, QUOTE_CAUTION } from "../lib/format";
+import type { DemoLoanSummary } from "../lib/server/loan";
 import type { UrlaPrefill } from "../lib/server/prefill";
 
 /** The LE payload reflected by POST /api/application/submit. */
@@ -29,6 +30,8 @@ export interface ApplicationFormProps {
   demoPrefill: UrlaPrefill;
   /** The app's base path (multi-zone: client fetches must carry it). */
   apiBase: string;
+  /** The loan request and subject property the demo application carries. */
+  loan: DemoLoanSummary;
 }
 
 /**
@@ -41,7 +44,7 @@ export interface ApplicationFormProps {
  * the API answers 401 and the demo persona stays, with copy saying exactly
  * that.
  */
-export function ApplicationForm({ demoPrefill, apiBase }: ApplicationFormProps) {
+export function ApplicationForm({ demoPrefill, apiBase, loan }: ApplicationFormProps) {
   const [prefill, setPrefill] = useState<UrlaPrefill>(demoPrefill);
   const [podConnected, setPodConnected] = useState(false);
   const [prefillError, setPrefillError] = useState<string | null>(null);
@@ -165,6 +168,27 @@ export function ApplicationForm({ demoPrefill, apiBase }: ApplicationFormProps) 
             />
           </div>
         </fieldset>
+        <fieldset className="mt-4 rounded-lg border border-border bg-card p-5">
+          <legend className="px-1 text-sm font-semibold text-foreground">
+            Section 4 · Loan and property
+          </legend>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <DemoLockedField label="Subject property" value={loan.subjectProperty} />
+            <DemoLockedField
+              label="Requested loan amount"
+              value={formatUsd(loan.requestedLoanUsd)}
+            />
+            <DemoLockedField
+              label="Estimated property value"
+              value={formatUsd(loan.estimatedValueUsd)}
+            />
+            <DemoLockedField label="Loan term" value={`${loan.loanTermMonths / 12} years`} />
+          </div>
+        </fieldset>
+        <p className="mt-3 text-muted-foreground text-xs">
+          Demo application fields only. Other URLA sections (declarations, demographic information,
+          real identifiers) are not included. Never enter a real Social Security number.
+        </p>
       </form>
 
       <div className="mt-6">
@@ -200,8 +224,10 @@ export function ApplicationForm({ demoPrefill, apiBase }: ApplicationFormProps) 
               Illustrative loan terms
             </h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Application saved in Alex's pod. This summary is not a Loan Estimate or credit
-              approval.
+              These terms are illustrative. They are not a Loan Estimate or credit approval.
+            </p>
+            <p className="mt-2 text-sm text-muted-foreground" data-quote-caution="">
+              {QUOTE_CAUTION}
             </p>
             <p className="mt-2 text-sm text-muted-foreground">
               The lender's Loan Estimate must be {result.loanEstimate.tridTiming} (12 CFR
@@ -228,23 +254,22 @@ export function ApplicationForm({ demoPrefill, apiBase }: ApplicationFormProps) 
                 <dt className="text-sm text-muted-foreground">Monthly principal &amp; interest</dt>
                 <dd className="font-semibold">
                   <IllustrativeFigure>
-                    {formatUsd(result.loanEstimate.monthlyPrincipalAndInterestUsd)}
+                    {`${formatUsd(result.loanEstimate.monthlyPrincipalAndInterestUsd)} a month`}
                   </IllustrativeFigure>
                 </dd>
               </div>
               <div>
-                <dt className="text-sm text-muted-foreground">Estimated closing costs</dt>
-                <dd className="font-semibold">
-                  <IllustrativeFigure>
-                    {formatUsd(result.loanEstimate.estimatedClosingCostsUsd)}
-                  </IllustrativeFigure>
-                </dd>
+                <dt className="text-sm text-muted-foreground">Closing costs</dt>
+                <dd className="font-semibold">Not itemised in this demo</dd>
               </div>
             </dl>
-            <p className="mt-4 text-xs text-muted-foreground">
-              Saved: <code className="break-all">{result.applicationIri}</code>
-            </p>
           </section>
+          <p className="mt-4 text-sm" data-saved-application="">
+            Application saved in Alex's pod.{" "}
+            <a className="font-semibold underline" href={result.applicationIri}>
+              View saved application
+            </a>
+          </p>
           <section
             aria-labelledby="decision-heading"
             className="mt-4 rounded-lg border border-border bg-card p-5"
@@ -255,6 +280,9 @@ export function ApplicationForm({ demoPrefill, apiBase }: ApplicationFormProps) 
             </h2>
             <p className="mt-2 font-semibold">
               <IllustrativeFigure>Approved with conditions</IllustrativeFigure>
+            </p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              AUS recommendation: Not run. The automated underwriting system runs in a later step.
             </p>
             <ul className="mt-2 list-disc pl-5 text-sm text-muted-foreground">
               {result.conditions.map((condition) => (

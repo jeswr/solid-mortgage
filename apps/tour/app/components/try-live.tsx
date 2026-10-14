@@ -9,6 +9,8 @@ export interface TryLiveButtonProps {
   label: string;
   /** Route inside the app, e.g. "/application"; omitted → the app root. */
   path?: string;
+  /** Section id on the target page, appended as a #fragment. */
+  hash?: string;
   className?: string;
 }
 
@@ -18,7 +20,7 @@ export interface TryLiveButtonProps {
  * aria-disabled and an explanation — so the story stays accurate about what runs in
  * this environment and nothing can navigate into a failing zone (middle-click included).
  */
-export function TryLiveButton({ app, label, path, className }: TryLiveButtonProps) {
+export function TryLiveButton({ app, label, path, hash, className }: TryLiveButtonProps) {
   const target = demoApps[app];
   const statuses = useServiceStatuses([target.healthPath]);
   const status: ServiceStatus = statuses[target.healthPath] ?? "checking";
@@ -31,7 +33,7 @@ export function TryLiveButton({ app, label, path, className }: TryLiveButtonProp
           className,
         )}
         data-try-live={app}
-        href={path === undefined ? target.path : `${target.path}${path}`}
+        href={`${target.path}${path ?? ""}${hash === undefined ? "" : `#${hash}`}`}
       >
         {label}
         <span aria-hidden="true">→</span>

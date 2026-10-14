@@ -32,7 +32,7 @@ function OutcomeView({ outcome }: { outcome: PresentOutcome }) {
       {detail !== undefined && <p className="mt-1 text-muted-foreground text-xs">{detail}</p>}
       {outcome.kind === "qualified" && (
         <p className="mt-1 text-muted-foreground text-xs">
-          {outcome.proofs.length} proofs sent. No figures disclosed.
+          {outcome.proofs.length} proofs sent. Exact figures are not sent directly.
         </p>
       )}
       {rate?.interestRatePercent !== undefined && (

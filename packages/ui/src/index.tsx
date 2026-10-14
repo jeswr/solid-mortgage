@@ -37,6 +37,7 @@ export { ConsentInterstitial, type ConsentInterstitialProps } from "./consent-in
 export {
   CredentialCard,
   type CredentialCardProps,
+  type CredentialKind,
   type CredentialStatus,
 } from "./credential-card";
 export { DemoLockedField, type DemoLockedFieldProps } from "./demo-locked-field";
@@ -47,6 +48,7 @@ export {
   type ReceiptAction,
   ReceiptCard,
   type ReceiptCardProps,
+  receiptDataLabel,
 } from "./receipt-card";
 export { StatCard, type StatCardProps } from "./stat-card";
 export * from "./themes";

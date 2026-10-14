@@ -45,6 +45,8 @@ describe.each(chapters)("chapter $slug (scene $scene)", (chapter) => {
       expect(demoApps[step.tryLive.app]).toBeDefined();
       // An explicit route inside that app (M12), never a bare trailing slash.
       if (step.tryLive.path !== undefined) expect(step.tryLive.path).toMatch(/^\/[a-z-]+$/u);
+      // A section target is a bare id (the "#" is added by the link).
+      if (step.tryLive.hash !== undefined) expect(step.tryLive.hash).toMatch(/^[a-z-]+$/u);
     }
   });
 

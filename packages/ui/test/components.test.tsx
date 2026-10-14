@@ -9,7 +9,7 @@ import { DemoLockedField } from "../src/demo-locked-field.js";
 import { bannerFullText, DEMO_FIELD_HINT, footerLegalLine } from "../src/disclaimers.js";
 import { HonestyPanel } from "../src/honesty-panel.js";
 import { IllustrativeFigure } from "../src/illustrative-figure.js";
-import { ReceiptCard } from "../src/receipt-card.js";
+import { ReceiptCard, receiptDataLabel } from "../src/receipt-card.js";
 import { StatCard } from "../src/stat-card.js";
 import { orgThemes } from "../src/themes.js";
 
@@ -19,6 +19,13 @@ test("IllustrativeFigure keeps the R5 tag in the same element as the figure", ()
   const { container } = render(<IllustrativeFigure>6.875%</IllustrativeFigure>);
   const figure = container.querySelector("[data-illustrative-figure]");
   expect(figure?.textContent).toBe("6.875% — illustrative figure, not an offer");
+});
+
+test("IllustrativeFigure puts the unit inside the tagged value, before the tag", () => {
+  const { container } = render(<IllustrativeFigure unit="a month">$8,500</IllustrativeFigure>);
+  expect(container.querySelector("[data-illustrative-figure]")?.textContent).toBe(
+    "$8,500 a month — illustrative figure, not an offer",
+  );
 });
 
 test("DemoLockedField is read-only and hint-described by default (R7)", () => {
@@ -96,6 +103,21 @@ test("AppShell renders the original product brand, framing, nav, and demo accoun
   const shell = container.querySelector<HTMLElement>("[data-app-shell]");
   expect(shell?.style.getPropertyValue("--radius")).toBe(theme.brand?.radius);
   expect(shell?.style.getPropertyValue("--font-heading")).toBe(theme.brand?.headingFontStack);
+  // Body copy uses the shared readable sans-serif; the brand font stays on headings.
+  expect(shell?.style.fontFamily).toBe("var(--font-body)");
+  expect(container.querySelector("[data-viewing-as]")).toBeNull();
+});
+
+test("AppShell shows a 'Viewing as' role line for staff screens, apart from the account", () => {
+  const { container } = render(
+    <AppShell appName="Pipeline" theme={orgThemes["lender-boa"]} viewingAs="lender underwriter">
+      <main>content</main>
+    </AppShell>,
+  );
+  expect(container.querySelector("[data-viewing-as]")?.textContent).toBe(
+    "Viewing as: lender underwriter",
+  );
+  expect(container.querySelector("[data-account-chip]")).toBeNull();
 });
 
 test("BrandHeader renders every header style, with the chip in the split utility strip", () => {
@@ -179,6 +201,21 @@ test("CredentialCard shows issuer, validity window, and a non-colour-only status
   expect(screen.getByText("Valid from 2026-01-01 · until 2027-01-01")).toBeDefined();
   const status = container.querySelector("[data-credential-status='revoked']");
   expect(status?.textContent).toContain("Revoked");
+  const card = container.querySelector("[data-credential-card]");
+  expect(card?.hasAttribute("data-credential-kind")).toBe(false);
+  expect(card?.hasAttribute("data-credential-preview")).toBe(false);
+});
+
+test("CredentialCard exposes its kind and distinguishes a preview from an issued credential", () => {
+  const { container } = render(
+    <CredentialCard issuer="appraisal provider" kind="assets" preview status="pending" title="X" />,
+  );
+  const card = container.querySelector("[data-credential-card]");
+  expect(card?.getAttribute("data-credential-kind")).toBe("assets");
+  expect(card?.hasAttribute("data-credential-preview")).toBe(true);
+  expect(screen.getByText("Demo issuer: appraisal provider")).toBeDefined();
+  expect(screen.getByText("Preview — not issued.")).toBeDefined();
+  expect(screen.queryByText(/Issued by/)).toBeNull();
 });
 
 test("HonestyPanel is a native disclosure with injected real/simulated content", () => {
@@ -195,24 +232,65 @@ test("HonestyPanel is a native disclosure with injected real/simulated content",
   expect(openContainer.querySelector<HTMLDetailsElement>("details")?.open).toBe(true);
 });
 
-test("ReceiptCard renders the app-level who, what, and when trail", () => {
+test("ReceiptCard reads as a sentence, with identifiers under Technical details", () => {
+  const { container } = render(
+    <ReceiptCard
+      accessLabel="read access"
+      action="grant"
+      actor="https://pod.example/profile/card#me"
+      iri="https://pod.example/mortgage/consent-receipt-1"
+      issuedAt="2026-07-16T14:30:00.000Z"
+      organisationLabel="Servicer"
+      recipient="https://servicer.example/profile/card#service"
+      recordedBy="eClosing app"
+      resource="https://pod.example/mortgage/closing-record"
+    />,
+  );
+  expect(
+    screen.getByRole("heading", { name: "Servicer — read access granted", level: 3 }),
+  ).toBeDefined();
+  expect(container.querySelector("[data-receipt-data]")?.textContent).toBe("Closing record");
+  expect(screen.getByText("Alex Rivera")).toBeDefined();
+  expect(container.querySelector("[data-receipt-recorded-by]")?.textContent).toBe("eClosing app");
+  expect(container.querySelector("time")?.getAttribute("datetime")).toBe(
+    "2026-07-16T14:30:00.000Z",
+  );
+  expect(container.querySelector("time")?.textContent).toMatch(/UTC$/);
+  // Identifiers are collapsed, and the unverified-source line only shows when it applies.
+  const technical = container.querySelector<HTMLDetailsElement>("details[data-receipt-technical]");
+  expect(technical?.open).toBe(false);
+  expect(technical?.textContent).toContain("https://servicer.example/profile/card#service");
+  expect(technical?.textContent).toContain("https://pod.example/mortgage/consent-receipt-1");
+  expect(container.querySelector("[data-receipt-external]")).toBeNull();
+  expect(container.textContent).not.toMatch(/written by/i);
+});
+
+test("ReceiptCard defaults: no organisation label, derived data label, unverified source", () => {
   const { container } = render(
     <ReceiptCard
       action="revoke"
       actor="https://pod.example/profile/card#me"
       issuedAt="2026-07-16T14:30:00.000Z"
       recipient="https://lender.example/profile/card#service"
-      resource="https://pod.example/mortgage/closing-record"
+      resource="https://pod.example/mortgage/"
+      unverifiedSource
     />,
   );
   expect(screen.getByRole("heading", { name: "Access revoked", level: 3 })).toBeDefined();
-  expect(screen.getByText("https://pod.example/profile/card#me")).toBeDefined();
-  expect(screen.getByText("https://lender.example/profile/card#service")).toBeDefined();
-  expect(screen.getByText("https://pod.example/mortgage/closing-record")).toBeDefined();
-  expect(container.querySelector("time")?.getAttribute("datetime")).toBe(
-    "2026-07-16T14:30:00.000Z",
+  expect(container.querySelector("[data-receipt-data]")?.textContent).toBe("Loan file");
+  expect(container.querySelector("[data-receipt-recorded-by]")).toBeNull();
+  expect(container.querySelector("[data-receipt-external]")?.textContent).toBe(
+    "Source has not been verified by Data Vault.",
   );
-  expect(screen.getByText(/written by this application/)).toBeDefined();
+});
+
+test("receiptDataLabel names the pod resource a record covers", () => {
+  expect(receiptDataLabel("https://pod.example/mortgage/closing-record")).toBe("Closing record");
+  expect(receiptDataLabel("https://pod.example/mortgage/")).toBe("Loan file");
+  expect(receiptDataLabel("https://pod.example/mortgage/loan-application#it")).toBe(
+    "loan application",
+  );
+  expect(receiptDataLabel("https://pod.example/")).toBe("pod.example");
 });
 
 test("ConsentRequest starts optional sources unselected and allows only the selected ones", () => {

@@ -10,7 +10,7 @@ import { site } from "./site";
 const reasons = [
   "Lenders could reuse verified data that Alex already holds, instead of ordering it again.",
   "Verification providers issue a signed credential once. Each lender decides whether to accept it.",
-  "Each organisation reads only the items Alex permits, and each change gets a consent receipt.",
+  "Alex could let each organisation read only named items, with a consent receipt for each change.",
   "Examiners can compare the journey with public rules in the Examiner View.",
 ];
 
@@ -97,6 +97,37 @@ export default function Home() {
         </ol>
       </section>
 
+      <section
+        aria-labelledby="cop-heading"
+        className="rounded-xl border border-border bg-card p-6"
+        data-cop-invitation=""
+      >
+        <h2 className="font-semibold text-2xl text-card-foreground tracking-tight" id="cop-heading">
+          Discuss a mortgage-data pilot
+        </h2>
+        <p className="mt-2 max-w-3xl text-muted-foreground">
+          Join the {site.organization} to test verification reuse, permissioned access and audit
+          records with your organisation.
+        </p>
+        <div className="mt-5 flex flex-wrap items-center gap-4">
+          <a
+            className="rounded-lg bg-primary px-5 py-3 font-semibold text-primary-foreground text-sm transition-opacity hover:opacity-90"
+            data-cta-pilot=""
+            href={site.copContactUrl}
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            Discuss a pilot
+          </a>
+          <a
+            className="font-medium text-foreground text-sm underline underline-offset-2 hover:opacity-80"
+            href="/apps"
+          >
+            Explore the apps
+          </a>
+        </div>
+      </section>
+
       <section aria-labelledby="ecosystem-heading" id="ecosystem">
         <h2
           className="font-semibold text-2xl text-foreground tracking-tight"
@@ -105,8 +136,7 @@ export default function Home() {
           Twelve roles, one borrower
         </h2>
         <p className="mt-2 max-w-3xl text-muted-foreground">
-          Each app plays a role that a real organisation holds today. Select a role to see what the
-          demo shows.
+          Select a role to see what the demo shows.
         </p>
         <div className="mt-6">
           <EcosystemMap />
@@ -149,37 +179,6 @@ export default function Home() {
         <p className="mt-2 text-muted-foreground">Copy these values when presenting.</p>
         <div className="mt-5">
           <DemoIdentityCard />
-        </div>
-      </section>
-
-      <section
-        aria-labelledby="cop-heading"
-        className="rounded-xl border border-border bg-card p-6"
-        data-cop-invitation=""
-      >
-        <h2 className="font-semibold text-2xl text-card-foreground tracking-tight" id="cop-heading">
-          Help test this with your organisation
-        </h2>
-        <p className="mt-2 max-w-3xl text-muted-foreground">
-          Join the {site.organization} to assess data requirements, acceptance criteria and a pilot
-          use case.
-        </p>
-        <div className="mt-5 flex flex-wrap items-center gap-4">
-          <a
-            className="rounded-lg bg-primary px-5 py-3 font-semibold text-primary-foreground text-sm transition-opacity hover:opacity-90"
-            data-cta-pilot=""
-            href={site.copContactUrl}
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            Discuss a pilot
-          </a>
-          <a
-            className="font-medium text-foreground text-sm underline underline-offset-2 hover:opacity-80"
-            href="/apps"
-          >
-            Explore the apps
-          </a>
         </div>
       </section>
     </main>

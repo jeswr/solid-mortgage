@@ -140,7 +140,7 @@ test.describe("closing scene 5 (real authenticated rail)", () => {
   test("without a session the UI shows the honest Mode-1 fallback", async ({ page }) => {
     await page.goto(`${appOrigin}/closing`);
     await page.getByRole("button", { name: INTERSTITIAL_CONTINUE_LABEL }).click();
-    await page.getByRole("button", { name: "eSign closing documents" }).click();
+    await page.getByRole("button", { name: "Simulate signing" }).click();
     await expect(page.locator("[data-closing-unauthenticated]")).toContainText(
       "No authenticated borrower session",
     );
@@ -169,8 +169,10 @@ test.describe("closing scene 5 (real authenticated rail)", () => {
       bannerFullText({ organization: "Truist", role: "mortgage servicer" }),
     );
 
-    await page.getByRole("button", { name: "eSign closing documents" }).click();
-    await expect(page.getByText("Closing record saved in Alex's pod")).toBeVisible({
+    await page.getByRole("button", { name: "Simulate signing" }).click();
+    await expect(
+      page.getByText("Simulated signing complete. Closing record saved in Alex's pod."),
+    ).toBeVisible({
       timeout: 30_000,
     });
     // The close granted the lender for real (an authenticated read succeeds).
@@ -182,8 +184,10 @@ test.describe("closing scene 5 (real authenticated rail)", () => {
     });
     expect((await servicer.authFetch(record)).status).toBe(200);
 
-    await page.getByRole("button", { name: "Revoke lender access" }).click();
-    await expect(page.getByText("Lender read access revoked", { exact: false })).toBeVisible({
+    await page.getByRole("button", { name: "Remove lender access to closing record" }).click();
+    await expect(
+      page.getByText("Lender access to closing record removed", { exact: false }),
+    ).toBeVisible({
       timeout: 30_000,
     });
     expect([401, 403]).toContain((await lender.authFetch(record)).status);

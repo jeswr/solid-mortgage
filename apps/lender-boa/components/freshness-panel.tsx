@@ -20,12 +20,27 @@ export interface FreshnessPanelProps {
 }
 
 const DECISION_COPY: Record<FreshnessResponse["decision"], string> = {
-  stands: "Credential valid. It verifies and is within its validity period.",
+  stands: "Credential checks passed.",
   "blocked-stale":
-    "Condition open: employment re-verification required. The credential has expired.",
+    "Condition open: the credential is outside its validity period. A replacement credential is needed.",
   "blocked-invalid":
     "Condition open: the credential did not verify (signature, trusted issuer or status).",
 };
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** "Issued 2026-09-14 (30 days ago); valid until 2026-10-28", from the credential's own dates. */
+function datesOf(window: FreshnessResponse["window"], now: Date = new Date()): string {
+  const parts: string[] = [];
+  if (window.validFrom !== undefined) {
+    const days = Math.floor((now.getTime() - new Date(window.validFrom).getTime()) / DAY_MS);
+    parts.push(
+      `Issued ${window.validFrom.slice(0, 10)}${days >= 0 ? ` (${days} day${days === 1 ? "" : "s"} ago)` : ""}`,
+    );
+  }
+  if (window.validUntil !== undefined) parts.push(`valid until ${window.validUntil.slice(0, 10)}`);
+  return parts.length === 0 ? "No validity dates recorded" : parts.join("; ");
+}
 
 /**
  * Scene-4 client panel: run the freshness re-check against the caller's OWN
@@ -122,9 +137,8 @@ export function FreshnessPanel({ apiBase }: FreshnessPanelProps) {
           <dl className="grid gap-3 sm:grid-cols-2">
             <div>
               <dt className="text-sm text-muted-foreground">Validity period</dt>
-              <dd className="text-sm">
-                {report.window.validFrom?.slice(0, 10) ?? "—"} →{" "}
-                {report.window.validUntil?.slice(0, 10) ?? "—"}
+              <dd className="text-sm" data-freshness-dates="">
+                {datesOf(report.window)}
               </dd>
             </div>
             <div>
@@ -140,14 +154,16 @@ export function FreshnessPanel({ apiBase }: FreshnessPanelProps) {
               </dd>
             </div>
             <div>
-              <dt className="text-sm text-muted-foreground">Lender check passed</dt>
+              <dt className="text-sm text-muted-foreground">Credential checks passed</dt>
               <dd className="text-sm font-semibold">{report.greenTick ? "yes" : "no"}</dd>
             </div>
           </dl>
           <p className="mt-4 text-sm text-foreground" data-freshness-decision={report.decision}>
             {DECISION_COPY[report.decision]}
           </p>
-          <p className="mt-2 text-xs text-muted-foreground">{report.rule}</p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Employment re-verification not demonstrated.
+          </p>
           {!report.greenTick && (
             <div className="mt-4">
               <button
@@ -158,9 +174,9 @@ export function FreshnessPanel({ apiBase }: FreshnessPanelProps) {
               >
                 {reissue !== null
                   ? reissue.dispatched
-                    ? "Re-verification requested"
+                    ? "Replacement requested"
                     : "Request simulated"
-                  : "Request re-verification"}
+                  : "Request a replacement credential"}
               </button>
               {reissue !== null && (
                 <p className="mt-2 text-sm text-muted-foreground" data-reissue-requested="">

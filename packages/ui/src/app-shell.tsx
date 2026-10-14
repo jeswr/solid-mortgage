@@ -29,6 +29,11 @@ export interface AppShellProps {
   headerActions?: ReactNode;
   /** Optional right-side signed-in chip for borrower-facing apps (demo persona). */
   account?: ShellAccount;
+  /**
+   * Staff screens: the role the visitor is viewing as, e.g. "lender underwriter". Renders
+   * "Viewing as: {viewingAs}" below the banner, separate from the demo-account identity.
+   */
+  viewingAs?: string;
   children: ReactNode;
   className?: string;
 }
@@ -326,12 +331,15 @@ export function AppShell({
   aboutHref = "/",
   headerActions,
   account,
+  viewingAs,
   children,
   className,
 }: AppShellProps) {
   const width = WIDTH_CLASS[theme.brand?.width ?? "5xl"];
   const style = brandCssProperties(theme) as CSSProperties;
-  if (theme.brand !== undefined) style.fontFamily = "var(--font-brand)";
+  // Body copy uses the shared readable sans-serif; brand fonts stay on headings (h1–h3 via
+  // --font-heading) and the product name.
+  if (theme.brand !== undefined) style.fontFamily = "var(--font-body)";
   return (
     <div
       className={cn(
@@ -362,6 +370,14 @@ export function AppShell({
         placement="static"
         variant={variant}
       />
+      {viewingAs !== undefined && (
+        <p
+          className={cn("mx-auto w-full px-6 pt-3 text-muted-foreground text-sm", width)}
+          data-viewing-as=""
+        >
+          Viewing as: <span className="font-medium text-foreground">{viewingAs}</span>
+        </p>
+      )}
       {/* The skip link's target lives HERE so every consumer gets a working
           "Skip to main content" without declaring its own #main-content. */}
       <div className="flex-1" id="main-content" tabIndex={-1}>

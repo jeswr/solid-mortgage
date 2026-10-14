@@ -1,5 +1,7 @@
 import { HonestyPanel, IllustrativeFigure } from "@mortgage/ui";
 import { ZK_HONESTY } from "@mortgage/vc-kit";
+import { QUOTE_CAUTION } from "../../lib/format";
+import { ILLUSTRATIVE_RATE_QUOTE } from "../../lib/server/statements";
 import { site } from "../site";
 
 export const metadata = {
@@ -17,7 +19,7 @@ export default function PrequalPage() {
   return (
     <main className="mx-auto w-full max-w-3xl px-6 py-12">
       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        Scene 2 · Prequalify without disclosing income or credit score
+        Scene 2 · Check prequalification criteria
       </p>
       <h1 className="mt-1 text-3xl font-semibold tracking-tight text-foreground">
         Prequalification criteria
@@ -46,13 +48,14 @@ export default function PrequalPage() {
           </li>
         </ul>
         <p className="mt-3 text-sm text-muted-foreground">
-          Your actual rate, payment, and costs could be higher. Get an official Loan Estimate before
-          choosing a loan.
+          If Alex meets both criteria, the lender returns an illustrative rate quote of{" "}
+          <IllustrativeFigure>
+            {`${ILLUSTRATIVE_RATE_QUOTE.interestRatePercent}%`}
+          </IllustrativeFigure>
+          . Prequalification is not credit approval or a commitment to lend.
         </p>
-        <p className="mt-2 text-sm text-muted-foreground">
-          If Alex meets both criteria, the lender shows an illustrative rate quote, such as{" "}
-          <IllustrativeFigure>6.875%</IllustrativeFigure>. Prequalification is not credit approval
-          or a commitment to lend.
+        <p className="mt-2 text-sm text-muted-foreground" data-quote-caution="">
+          {QUOTE_CAUTION}
         </p>
       </section>
 

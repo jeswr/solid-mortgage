@@ -1,4 +1,5 @@
 import { ApplicationForm } from "../../components/application-form";
+import { demoLoanSummary } from "../../lib/server/loan";
 import { demoPrefill } from "../../lib/server/prefill";
 import { site } from "../site";
 
@@ -20,10 +21,14 @@ export default function ApplicationPage() {
         Scene 3 · Apply with data from the pod
       </p>
       <h1 className="mt-1 text-3xl font-semibold tracking-tight text-foreground">
-        Review Alex's application
+        Review Alex's demo application fields
       </h1>
       <div className="mt-4">
-        <ApplicationForm apiBase="/lender-boa/api" demoPrefill={demoPrefill()} />
+        <ApplicationForm
+          apiBase="/lender-boa/api"
+          demoPrefill={demoPrefill()}
+          loan={demoLoanSummary()}
+        />
       </div>
     </main>
   );

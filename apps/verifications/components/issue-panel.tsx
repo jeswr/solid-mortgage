@@ -91,8 +91,8 @@ export function IssuePanel({ flow, reissueHint }: IssuePanelProps) {
           type="button"
         >
           {state.phase === "busy" && state.action === "reissue"
-            ? "Re-issuing…"
-            : "Re-issue credential"}
+            ? "Issuing replacement…"
+            : "Issue replacement credential"}
         </button>
       </div>
       <div aria-live="polite" className="mt-4 text-sm">
@@ -101,7 +101,7 @@ export function IssuePanel({ flow, reissueHint }: IssuePanelProps) {
             <p className="font-medium" style={{ color: "var(--primary)" }}>
               {state.action === "issue"
                 ? "Credential saved in Alex's pod."
-                : "New credential issued."}
+                : "Replacement saved; the previous credential is revoked."}
             </p>
             {state.result.credential !== undefined && (
               <ul className="mt-2 list-none space-y-1 p-0 text-muted-foreground">
@@ -114,7 +114,7 @@ export function IssuePanel({ flow, reissueHint }: IssuePanelProps) {
                 </li>
                 {state.result.anchor != null && (
                   <li>
-                    Issuer-signed commitment: <code>{state.result.anchor.id}</code>
+                    Issuer-signed value encoding: <code>{state.result.anchor.id}</code>
                   </li>
                 )}
                 {state.result.revokedIndex !== undefined && (

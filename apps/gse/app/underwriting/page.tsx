@@ -31,7 +31,8 @@ export default function UnderwritingPage() {
         <AusConsole apiBase="/gse/api" />
         <p className="mt-3 text-xs text-muted-foreground">
           The AUS reads only the signed-in borrower&apos;s pod, and only after the borrower gives it
-          access.
+          access. Local requests run as Alex; separate organisation permissions are not enforced
+          here.
         </p>
       </div>
 
@@ -49,8 +50,11 @@ export default function UnderwritingPage() {
             illustrative)
           </li>
           <li>Loan-to-value ratio of {t.maxLtvPercent}% or lower, against the appraised value</li>
-          <li>Assets of at least {t.minReservesMonths} months of principal and interest</li>
         </ul>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Assets ÷ monthly principal and interest is shown for illustration only. It is not a
+          reserve assessment and does not affect the recommendation.
+        </p>
         <p className="mt-2 text-sm text-muted-foreground">
           First, every credential must pass its checks. If one fails, the AUS reports “Unable to
           validate” and skips the risk rules.
@@ -69,8 +73,8 @@ export default function UnderwritingPage() {
           real={
             <ul className="list-disc pl-5">
               <li>
-                The pod&apos;s permission list controls what the AUS can read. Revoking access stops
-                the run.
+                The pod&apos;s permission list records what the AUS may read. Local requests run as
+                Alex; separate organisation permissions are not enforced here.
               </li>
               <li>The credential checks and the rule evaluation.</li>
               <li>The findings saved to the borrower&apos;s pod.</li>

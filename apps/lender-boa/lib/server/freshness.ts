@@ -37,9 +37,12 @@ export interface FreshnessReport {
   readonly rule: string;
 }
 
-/** Fannie Mae B3-3.1-04: verbal VOE within 10 business days before closing. */
+/**
+ * The rule this check relates to, without overstating it: Fannie Mae B3-3.1-04
+ * has several timing and method provisions, and this demo performs none of them.
+ */
 export const VOE_RULE =
-  "Verbal verification of employment within 10 business days before the note date (Fannie Mae B3-3.1-04)";
+  "Fannie Mae B3-3.1-04 sets when and how employment must be re-verified before the note date. Employment re-verification not demonstrated";
 
 /** Verification seams `verifyCredential` consumes — injected in tests. */
 export type FreshnessSeams = Pick<

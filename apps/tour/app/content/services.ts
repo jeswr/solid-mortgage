@@ -127,7 +127,8 @@ export interface Service {
   roleNumber?: number;
   role: string;
   modelledOn: string;
-  membership: string;
+  /** EDMA membership, shown only where it is publicly confirmed. */
+  membership?: string;
   summary: string;
   /** Scene (SPEC §2) where this role is on screen, if any. */
   scene?: 1 | 2 | 3 | 4 | 5;
@@ -146,7 +147,7 @@ export const services: Service[] = [
     scene: 1,
     slug: "vault",
     summary:
-      "Alex's pod and the Data Vault app: profile, credentials, access permissions and consent receipts. The other roles read Alex's data only with permission.",
+      "Alex's pod and the Data Vault app: profile, credentials, access permissions and consent receipts. Local requests run as Alex; separate organisation permissions are not enforced here.",
   },
   {
     apps: ["lender-boa", "lender-53"],
@@ -157,7 +158,7 @@ export const services: Service[] = [
     scene: 3,
     slug: "lender",
     summary:
-      "Checks prequalification proofs, prefills the application from the pod and tracks the loan to closing. A second lender, modelled on Fifth Third Bank, checks the same proofs.",
+      "Checks prequalification proofs, prefills the application from the pod and tracks the loan to closing. A second lender, modelled on Fifth Third Bank, checks a new proof derived from the same credentials.",
   },
   {
     apps: ["gse"],
@@ -165,10 +166,10 @@ export const services: Service[] = [
     modelledOn: "Freddie Mac",
     role: "GSE / automated underwriting",
     roleNumber: 2,
-    scene: 4,
+    scene: 3,
     slug: "aus",
     summary:
-      "Checks the loan file Alex gave access to and returns findings. The lender's underwriter makes the credit decision.",
+      "Checks the loan file Alex gave access to and returns an AUS recommendation. The lender's underwriter makes the credit decision.",
   },
   {
     apps: ["verifications"],
@@ -192,7 +193,6 @@ export const services: Service[] = [
   },
   {
     apps: ["verifications"],
-    membership: "EDMA member (not publicly confirmed)",
     modelledOn: "Mastercard Finicity",
     role: "Asset verification",
     roleNumber: 5,
@@ -206,8 +206,9 @@ export const services: Service[] = [
     modelledOn: "Cotality",
     role: "Appraisal / valuation",
     roleNumber: 6,
+    scene: 3,
     slug: "appraisal",
-    summary: "Issues an appraisal credential for the property. Not shown in the five scenes.",
+    summary: "Previews a simulated appraisal and can save it as a demo credential in Alex's pod.",
   },
   {
     apps: ["property"],
@@ -215,19 +216,21 @@ export const services: Service[] = [
     modelledOn: "First American",
     role: "Title and settlement",
     roleNumber: 7,
+    scene: 3,
     slug: "title",
-    summary: "Issues a title search result before closing. Not shown in the five scenes.",
+    summary:
+      "Previews a simulated title search result before closing. It is not a title commitment or policy.",
   },
   {
     apps: ["closing"],
     membership: "EDMA member",
     modelledOn: "Wolters Kluwer (eOriginal)",
-    role: "eClosing and servicing",
+    role: "eClosing platform",
     roleNumber: 8,
     scene: 5,
     slug: "eclosing",
     summary:
-      "Runs a simulated eClosing and saves the closing record in Alex's pod. The servicer, modelled on Truist, then asks Alex for access.",
+      "Runs a simulated closing and saves a demo closing record in Alex's pod. Servicer, modelled on Truist: a separate role in the same app that asks Alex for read access.",
   },
   {
     apps: [],

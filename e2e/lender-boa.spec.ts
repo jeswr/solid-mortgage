@@ -563,7 +563,7 @@ test.describe("lender-boa (sm-30)", () => {
     // Pod-sourced values (persona fixtures), rendered in demo-locked fields.
     await expect(page.getByLabel("Name")).toHaveValue("Alex Rivera");
     await expect(page.getByLabel("Employer")).toHaveValue("Ridgeline Analytics LLC");
-    await expect(page.getByLabel("Monthly gross income")).toHaveValue("$8,200");
+    await expect(page.getByLabel("Monthly gross income")).toHaveValue("$8,500");
   });
 
   test("submitting delivers the Loan Estimate back into the TOKEN-derived pod", async ({
@@ -604,7 +604,7 @@ test.describe("lender-boa (sm-30)", () => {
     // list lives on an unreachable fixture origin — fail-closed, never green.
     await expect(page.getByText("within validity period", { exact: true })).toBeVisible();
     await expect(result).toHaveAttribute("data-freshness-result", "blocked");
-    await page.getByRole("button", { name: "Request re-verification" }).click();
+    await page.getByRole("button", { name: "Request a replacement credential" }).click();
     await expect(page.locator("[data-reissue-requested]")).toBeVisible();
   });
 });

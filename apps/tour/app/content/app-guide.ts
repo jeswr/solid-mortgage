@@ -36,7 +36,7 @@ export const appGuides: Partial<Record<DemoAppSlug, AppGuide>> = {
       {
         path: "/wallet/grants",
         label: "Access permissions",
-        tryThis: "Grant or revoke an organisation's access.",
+        tryThis: "Grant or remove an organisation's access.",
       },
       {
         path: "/wallet/ledger",
@@ -57,7 +57,7 @@ export const appGuides: Partial<Record<DemoAppSlug, AppGuide>> = {
       {
         path: "/verifications/employment",
         label: "Employment and income",
-        tryThis: "Issue a replacement credential.",
+        tryThis: "Issue a replacement demo credential.",
       },
       {
         path: "/verifications/assets",
@@ -78,7 +78,7 @@ export const appGuides: Partial<Record<DemoAppSlug, AppGuide>> = {
       {
         path: "/lender-boa/prequal",
         label: "Prequalification",
-        tryThis: "Check a zero-knowledge proof.",
+        tryThis: "View lender criteria.",
       },
       {
         path: "/lender-boa/assistant",
@@ -97,14 +97,14 @@ export const appGuides: Partial<Record<DemoAppSlug, AppGuide>> = {
       },
       {
         path: "/lender-boa/freshness",
-        label: "Re-verification",
-        tryThis: "Check the employment credential's validity.",
+        label: "Employment credential check",
+        tryThis: "Check the employment credential's signature, status and dates.",
       },
     ],
   },
   "lender-53": {
     youAre: "the second lender",
-    purpose: "Check prequalification proofs without seeing income or credit score.",
+    purpose: "Check new prequalification proofs derived from Alex's credentials.",
     pages: [
       {
         path: "/lender-53",
@@ -115,7 +115,8 @@ export const appGuides: Partial<Record<DemoAppSlug, AppGuide>> = {
   },
   gse: {
     youAre: "the automated underwriting service",
-    purpose: "Check the loan file and return findings. The lender's underwriter decides.",
+    purpose:
+      "Check the loan file and return an AUS recommendation. The lender's underwriter decides.",
     pages: [
       {
         path: "/gse/underwriting",
@@ -126,25 +127,26 @@ export const appGuides: Partial<Record<DemoAppSlug, AppGuide>> = {
   },
   property: {
     youAre: "the appraisal and title providers",
-    purpose: "Issue the appraisal and title search records for the property.",
+    purpose:
+      "Preview the simulated appraisal and title search result, then issue demo credentials.",
     pages: [
       { path: "/property", label: "Overview", tryThis: "See both records." },
       {
         path: "/property/appraisal",
         label: "Appraisal",
-        tryThis: "Review the appraisal.",
+        tryThis: "Preview the appraisal and issue a demo credential.",
       },
-      { path: "/property/title", label: "Title", tryThis: "Review the title search result." },
+      { path: "/property/title", label: "Title", tryThis: "Preview the title search result." },
     ],
   },
   closing: {
     youAre: "the eClosing platform and the new servicer",
-    purpose: "Sign the closing documents, then change who can read the closing record.",
+    purpose: "Simulate closing, then change who can read the closing record.",
     pages: [
       {
         path: "/closing",
         label: "Closing",
-        tryThis: "eSign, grant servicer access, then revoke the lender's access.",
+        tryThis: "Simulate signing, grant servicer access, then remove lender access.",
       },
     ],
   },

@@ -9,15 +9,12 @@ import { site } from "./site";
 export default function Home() {
   return (
     <main className="mx-auto w-full max-w-3xl px-6 py-12">
-      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-        Solid Mortgage Showcase
-      </p>
-      <h1 className="mt-1 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+      <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
         {site.appName}
       </h1>
       <p className="mt-4 text-muted-foreground">
-        Alex&apos;s mortgage documents and verification records are stored in a Solid pod: a
-        personal data store with access permissions. Choose a section below.
+        Alex&apos;s pod is a personal data store with access permissions. It holds Alex&apos;s
+        mortgage documents and credentials.
       </p>
 
       <VaultHome />

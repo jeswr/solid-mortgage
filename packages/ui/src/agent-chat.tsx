@@ -6,9 +6,9 @@ import { type FormEvent, type ReactNode, useEffect, useRef, useState } from "rea
 /**
  * Building blocks for the demo's ASSISTANT flows: the borrower talks to their own agent,
  * which asks for consent per data source before it reads anything, offers a manual
- * fallback, then shows each action it takes. The agents in this demo are SCRIPTED (no
- * language model): `AgentConversation` always says so, and every action they take is a
- * real call the visitor could have made by hand.
+ * fallback, then shows each action it takes. Replies come from a script, or (local demo
+ * only) from a language model named under "About the assistant"; either way every action
+ * is a real call the visitor could have made by hand.
  */
 
 export type AgentSpeaker = "agent" | "you";
@@ -80,12 +80,18 @@ export function AgentConversation({
         <div>
           <p className="font-semibold text-card-foreground">{agentName}</p>
           <p className="text-muted-foreground text-xs">
-            {engine === undefined
-              ? "Scripted demo assistant. It acts only after you say yes."
-              : `Answered by ${engine}. It acts only after you say yes.`}
+            Demo assistant. It acts only after you say yes.
           </p>
         </div>
       </header>
+      <details className="border-border border-b px-5 py-2 text-xs" data-agent-about="">
+        <summary className="cursor-pointer text-muted-foreground">About the assistant</summary>
+        <p className="mt-1 text-muted-foreground" data-agent-engine="">
+          {engine === undefined
+            ? "Replies come from a fixed script; no language model is used."
+            : `Replies are written by ${engine}.`}
+        </p>
+      </details>
       <ol aria-live="polite" className="flex flex-col gap-3 px-5 py-4">
         {messages.map((message) => (
           <li
@@ -267,34 +273,63 @@ const STEP_ICON: Record<AgentStepState, string> = {
   failed: "✕",
 };
 
+export interface AgentStepsProps {
+  readonly steps: readonly AgentStep[];
+  /**
+   * The log's heading, e.g. "Application saved". `"auto"` derives it from the steps:
+   * "Working on it" while any step is pending or running, then "Checks complete" (or
+   * "Some steps failed"). Omitted: no heading (the caller renders its own).
+   */
+  readonly heading?: ReactNode;
+}
+
+/** The default heading: the log's actual state, never a stale "Working on it". */
+export function agentStepsHeading(steps: readonly AgentStep[]): string {
+  if (steps.some((step) => step.state === "pending" || step.state === "running")) {
+    return "Working on it";
+  }
+  if (steps.some((step) => step.state === "failed")) return "Some steps failed";
+  return "Checks complete";
+}
+
 /** The agent's visible action log: what it is doing, step by step. */
-export function AgentSteps({ steps }: { readonly steps: readonly AgentStep[] }) {
+export function AgentSteps({ steps, heading }: AgentStepsProps) {
   return (
-    <ol className="mt-2 flex flex-col gap-1.5 text-sm" data-agent-steps="">
-      {steps.map((step) => (
-        <li className="flex gap-2" data-agent-step={step.id} data-state={step.state} key={step.id}>
-          <span
-            aria-hidden="true"
-            className={cn(
-              "w-4 shrink-0 text-center font-semibold",
-              step.state === "done" && "text-primary",
-              step.state === "failed" && "text-red-700",
-              step.state === "running" && "animate-pulse",
-            )}
+    <>
+      {heading !== undefined && (
+        <p data-agent-steps-heading="">{heading === "auto" ? agentStepsHeading(steps) : heading}</p>
+      )}
+      <ol className="mt-2 flex flex-col gap-1.5 text-sm" data-agent-steps="">
+        {steps.map((step) => (
+          <li
+            className="flex gap-2"
+            data-agent-step={step.id}
+            data-state={step.state}
+            key={step.id}
           >
-            {STEP_ICON[step.state]}
-          </span>
-          <span>
-            <span className={step.state === "pending" ? "text-muted-foreground" : ""}>
-              {step.label}
+            <span
+              aria-hidden="true"
+              className={cn(
+                "w-4 shrink-0 text-center font-semibold",
+                step.state === "done" && "text-primary",
+                step.state === "failed" && "text-red-700",
+                step.state === "running" && "animate-pulse",
+              )}
+            >
+              {STEP_ICON[step.state]}
             </span>
-            <span className="sr-only"> ({step.state})</span>
-            {step.detail !== undefined && (
-              <span className="block text-muted-foreground text-xs">{step.detail}</span>
-            )}
-          </span>
-        </li>
-      ))}
-    </ol>
+            <span>
+              <span className={step.state === "pending" ? "text-muted-foreground" : ""}>
+                {step.label}
+              </span>
+              <span className="sr-only"> ({step.state})</span>
+              {step.detail !== undefined && (
+                <span className="block text-muted-foreground text-xs">{step.detail}</span>
+              )}
+            </span>
+          </li>
+        ))}
+      </ol>
+    </>
   );
 }

@@ -17,8 +17,8 @@ export default function AppsPage() {
       </h1>
       <p className="mt-4 max-w-3xl text-muted-foreground">
         Choose a role to explore the demo. All apps share Alex's pod, so a change in one shows in
-        the others. In the local demo, requests run as Alex, so organisation-level access
-        enforcement is not shown.
+        the others. Local requests run as Alex; separate organisation permissions are not enforced
+        here.
       </p>
       <AppDirectory />
     </main>

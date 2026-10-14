@@ -217,6 +217,9 @@ test.describe("wallet — Data Vault (sm-28) + real-SharedWorker pod (sm-foo)", 
       timeout: 60_000,
     });
     await expect(page.locator("[data-closing-record]")).toBeVisible();
+    for (const kind of ["employment", "assets", "credit"]) {
+      await expect(page.locator(`[data-credential-kind="${kind}"]`)).toHaveCount(1);
+    }
     await expectSimulatedStrip(page);
     await expectAxeClean(page);
   });
@@ -230,8 +233,10 @@ test.describe("wallet — Data Vault (sm-28) + real-SharedWorker pod (sm-foo)", 
 
     // The proving surface is cross-origin isolated (bb.js multithreading).
     expect(await page.evaluate(() => globalThis.crossOriginIsolated)).toBe(true);
-    // The decision-0005 honesty content is on the surface.
-    await expect(page.getByText("research-grade", { exact: false }).first()).toBeVisible();
+    // The material decision-0005 limitation is visible above the action (review H2).
+    await expect(page.locator("[data-zk-limitation]")).toContainText(
+      "Prototype limitation: encoded values may reveal the underlying figures through guessing.",
+    );
 
     const run = page.locator("[data-prequal-run]");
     await expect(run).toBeEnabled({ timeout: POD_BOOT_TIMEOUT });
@@ -303,6 +308,9 @@ test.describe("wallet — Data Vault (sm-28) + real-SharedWorker pod (sm-foo)", 
     await page.locator('[data-grant-action="grant-lender-boa"]').click();
     await expect(lenderRow).toHaveAttribute("data-grant-state", "granted", { timeout: 30_000 });
     await expect(page.locator("[data-grants-notice]")).toContainText("Receipt written");
+    await expect(page.locator("[data-grants-local-mode]")).toHaveText(
+      "Permission changes are saved. This local demo makes requests as Alex; it does not enforce separate organisation permissions.",
+    );
 
     await page.locator('[data-grant-action="revoke-lender-boa"]').click();
     await expect(lenderRow).toHaveAttribute("data-grant-state", "revoked", { timeout: 30_000 });
@@ -320,6 +328,10 @@ test.describe("wallet — Data Vault (sm-28) + real-SharedWorker pod (sm-foo)", 
     await expect(cards).toHaveCount(2, { timeout: 60_000 });
     await expect(cards.nth(0)).toHaveAttribute("data-receipt-action", "grant");
     await expect(cards.nth(1)).toHaveAttribute("data-receipt-action", "revoke");
+    await expect(cards.nth(0)).toContainText(
+      "Primary mortgage lender — read and write access granted",
+    );
+    await expect(cards.nth(0)).toContainText("Recorded by");
     await expect(
       page.getByText("Records of permission changes, not a log of every data read."),
     ).toBeVisible();

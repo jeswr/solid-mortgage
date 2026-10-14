@@ -2,7 +2,7 @@
  * The shared branded issuer-flow page (server component): per-org theme
  * tokens, role-first framing, the PINNED demo-persona values the flow signs
  * (marked illustrative), a collapsed "How it works" (credential + issuer-signed
- * commitment + status list), and the live issue/re-issue panel. The layout-level
+ * value encoding + status list), and the live issue/replacement panel. The layout-level
  * ConceptDemoBanner covers every route; each flow page adds the §4.3 footer
  * legal line under its own modelled organisation.
  */
@@ -43,7 +43,7 @@ function claimRows(flow: IssuerFlowId): ClaimRow[] {
         {
           illustrative: true,
           label: "Monthly gross income",
-          value: `${USD.format(claims.monthlyGrossIncomeUsd)}/mo`,
+          value: `${USD.format(claims.monthlyGrossIncomeUsd)} a month`,
         },
       ];
     case "asset-credential":
@@ -58,7 +58,7 @@ function claimRows(flow: IssuerFlowId): ClaimRow[] {
         {
           illustrative: true,
           label: "Total monthly debt",
-          value: `${USD.format(claims.totalMonthlyDebtUsd)}/mo`,
+          value: `${USD.format(claims.totalMonthlyDebtUsd)} a month`,
         },
         { label: "Score model", value: "Illustrative" },
       ];
@@ -84,9 +84,7 @@ export function FlowPage({ flow }: { flow: IssuerFlowId }) {
           </p>
           <h1 className="mt-2 font-semibold text-3xl tracking-tight">{definition.label}</h1>
           <p className="mt-3 max-w-3xl text-muted-foreground">
-            The demo signs a verifiable credential and saves it in Alex&apos;s pod. A verifiable
-            credential is a digitally signed verification report that any party can check without
-            calling the issuer. All data is simulated.
+            Review Alex&apos;s demo details, then issue the credential to the pod.
           </p>
         </section>
 
@@ -114,8 +112,8 @@ export function FlowPage({ flow }: { flow: IssuerFlowId }) {
           flow={flow}
           reissueHint={
             flow === "employment"
-              ? "Re-issue signs a new credential with a new validity period. It reuses the simulated data and does not contact the employer. A verbal VOE must be dated no more than 10 business days before the note date (Fannie Mae B3-3.1-04)."
-              : "Re-issue signs a new credential with a new validity period, using the same simulated data."
+              ? "Replace the credential and revoke the previous version. The replacement reuses the simulated data; it does not contact the employer, so it is not employment re-verification."
+              : "Replace the credential and revoke the previous version."
           }
         />
 
@@ -133,8 +131,9 @@ export function FlowPage({ flow }: { flow: IssuerFlowId }) {
               </li>
             ) : (
               <li>
-                <strong>Issuer-signed commitment:</strong> at <code>{definition.anchor.path}</code>.
-                Lenders check zero-knowledge proofs against it.
+                <strong>Issuer-signed value encoding:</strong> at{" "}
+                <code>{definition.anchor.path}</code>. Lenders check zero-knowledge proofs against
+                it. The encoding is deterministic, so anyone holding it can test guessed values.
               </li>
             )}
             <li>

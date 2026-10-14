@@ -12,7 +12,7 @@
   mort:underwritingCondition "Provide updated employment verification within 10 business days of closing." ;
   fibo-loan-ln-app:hasApprovedAmount [
     a schema:MonetaryAmount ;
-    schema:value 335000.00 ;
+    schema:value 340000.00 ;
     schema:currency "USD"
   ] ;
   dcterms:type fibo-loan-ln-app:UnderwritingDecision-Approve ;

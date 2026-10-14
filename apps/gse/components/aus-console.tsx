@@ -33,7 +33,7 @@ interface AusRunResponse {
         proposedMonthlyPaymentUsd: number;
         dtiPercent: number | null;
         ltvPercent: number | null;
-        reservesMonths: number | null;
+        assetsToPaymentMonths: number | null;
       }
     | { evaluated: false; reason: string };
   conditions: string[];
@@ -56,30 +56,40 @@ export interface AusConsoleProps {
  */
 const OUTCOME_LABEL: Record<AusRunResponse["outcome"], string> = {
   approve: "Accept",
-  caution: "Caution",
+  // Stored in the pod as FIBO UnderwritingDecision-Ineligible (FIBO has no
+  // caution individual); it is always DISPLAYED as caution, never "Ineligible".
+  caution: "Caution — manual underwriting review required",
   refer: "Unable to validate",
 };
 
 const OUTCOME_COPY: Record<AusRunResponse["outcome"], string> = {
   approve:
-    "Every credential passed its checks and every risk rule passed. The lender's underwriter makes the credit decision.",
+    "All configured demo checks passed. This is not a complete underwriting assessment. The lender's underwriter makes the credit decision.",
   refer:
     "One or more credentials could not be validated. Obtain a new verification, then run the AUS again.",
   caution:
-    "The credentials passed their checks, but a risk rule failed. The lender's underwriter must review the loan manually.",
+    "The credentials passed their checks, but a demo threshold failed. The lender's underwriter must review the loan manually.",
 };
 
-/** Plain-English finding labels by finding code (the rule text is stored in the pod). */
+/**
+ * Neutral finding names by finding code (the rule text is stored in the pod).
+ * The name never states the outcome — that is the separate result field.
+ */
 const FINDING_LABEL: Readonly<Record<string, string>> = {
-  EVIDENCE_EMPLOYMENT_INCOME: "Employment and income credential passes its checks",
-  EVIDENCE_ASSETS: "Asset credential passes its checks",
-  EVIDENCE_CREDIT_SCORE: "Credit-score credential passes its checks",
-  EVIDENCE_APPRAISAL: "Appraisal credential passes its checks and matches the property",
-  CREDIT_SCORE_MINIMUM: "Credit score meets the demo minimum",
+  EVIDENCE_EMPLOYMENT_INCOME: "Employment credential",
+  EVIDENCE_ASSETS: "Asset credential",
+  EVIDENCE_CREDIT_SCORE: "Credit-score credential",
+  EVIDENCE_APPRAISAL: "Appraisal credential",
+  CREDIT_SCORE_MINIMUM: "Credit-score threshold",
   DEBT_TO_INCOME: "Debt-to-income ratio (principal and interest only)",
   LOAN_TO_VALUE: "Loan-to-value ratio (appraised value)",
-  RESERVES: "Assets divided by monthly principal and interest",
 };
+
+/** The separate result field: a failed credential is "Unable to validate". */
+function findingResult(finding: AusFindingView): "Passed" | "Failed" | "Unable to validate" {
+  if (finding.pass) return "Passed";
+  return finding.category === "evidence" ? "Unable to validate" : "Failed";
+}
 
 const OBSERVED_PLAIN: readonly (readonly [string, string])[] = [
   ["failed fail-closed verification", "signature, issuer or status check failed"],
@@ -177,7 +187,7 @@ export function AusConsole({ apiBase }: AusConsoleProps) {
 
           {report.qualifying.evaluated ? (
             <>
-              <dl className="mt-4 grid gap-3 sm:grid-cols-4">
+              <dl className="mt-4 grid gap-3 sm:grid-cols-3">
                 <div>
                   <dt className="text-sm text-muted-foreground">Monthly principal and interest</dt>
                   <dd className="text-sm font-semibold tabular-nums">
@@ -202,16 +212,15 @@ export function AusConsole({ apiBase }: AusConsoleProps) {
                     {report.qualifying.ltvPercent ?? "—"}%
                   </dd>
                 </div>
-                <div>
-                  <dt className="text-sm text-muted-foreground">Assets ÷ monthly P&amp;I</dt>
-                  <dd className="text-sm font-semibold tabular-nums">
-                    {report.qualifying.reservesMonths ?? "—"} months
-                  </dd>
-                </div>
               </dl>
               <p className="mt-2 text-xs text-muted-foreground" data-aus-calculation-note="">
                 Simplified demo calculations. Taxes, insurance, assessments and funds needed to
                 close are not included.
+              </p>
+              <p className="mt-2 text-sm text-foreground" data-aus-assets-ratio="">
+                Assets ÷ monthly principal and interest:{" "}
+                {report.qualifying.assetsToPaymentMonths ?? "—"} months — illustrative. Funds to
+                close are not deducted; this is not a reserve assessment.
               </p>
             </>
           ) : (
@@ -244,7 +253,14 @@ export function AusConsole({ apiBase }: AusConsoleProps) {
                     )}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {finding.pass ? "pass" : "fail"} · {plainObserved(finding)}
+                    <span
+                      className="font-semibold text-card-foreground"
+                      data-finding-result={finding.pass ? "pass" : "fail"}
+                    >
+                      {findingResult(finding)}
+                    </span>
+                    {" · "}
+                    {plainObserved(finding)}
                   </p>
                 </div>
               </li>

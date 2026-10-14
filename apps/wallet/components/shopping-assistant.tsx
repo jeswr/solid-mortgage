@@ -27,8 +27,8 @@ import {
  * The agentic pre-qualification: the borrower asks their assistant to shop for
  * a rate. After consent it reads the two value encodings from the pod, proves
  * both thresholds IN THIS BROWSER for each lender (the same real proofs and
- * VP-POST as the manual page), and compares the quotes. Hidden values never
- * leave the device — and are never shown to the language model either.
+ * VP-POST as the manual page), and compares the quotes. The exact figures are
+ * not sent directly to the lenders, and never to the language model.
  *
  * Free text at every step: with the local demo server's language model
  * (`/__demo/assistant`) the visitor's words pick one of the allowed actions;
@@ -37,8 +37,8 @@ import {
 
 const STEPS_ID = "agent-steps";
 
-const GREETING =
-  "Hi Alex. I can get illustrative rate quotes from two lenders. They get proofs, not your income or credit score.";
+// astra-review-2 finding 16: one short greeting; no promises about what lenders learn (H2).
+const GREETING = "Check two lenders' criteria using Alex's income and credit-score credentials.";
 const QUOTE_STATEMENT =
   "Your actual rate, payment, and costs could be higher. Get an official Loan Estimate before choosing a loan.";
 const NOT_APPROVAL = "Prequalification is not credit approval or a commitment to lend.";
@@ -84,7 +84,7 @@ function scriptedAction(phase: Phase, text: string): string {
 
 const SCRIPTED_HELP: Partial<Record<Phase, string>> = {
   consent:
-    "I'd read your income and credit-score credentials and send each lender proofs only. Shall I go ahead?",
+    "I'd read your income and credit-score credentials from your pod and send each lender proofs derived from them. Shall I go ahead?",
   choose: "I can take you to the primary lender's application now, or we can wait.",
 };
 
@@ -197,7 +197,7 @@ export function ShoppingAssistant({
       material = await readProofMaterial(session.authFetch);
       setStep("anchors", {
         state: "done",
-        detail: "Read from your pod. Your figures stay in this browser.",
+        detail: "Read from your pod.",
       });
     } catch (error) {
       setStep("anchors", {
@@ -246,7 +246,7 @@ export function ShoppingAssistant({
         });
         setStep(lender.id, {
           state: "done",
-          detail: `Meets the demo criteria. ${outcome.proofs.length} proofs sent, no figures.`,
+          detail: `Meets the demo criteria. ${outcome.proofs.length} proofs sent; exact figures are not sent directly.`,
         });
       } else {
         setStep(lender.id, {
@@ -375,7 +375,7 @@ export function ShoppingAssistant({
           ...message,
           content: (
             <div>
-              <p>Working on it:</p>
+              <p>{phase === "working" ? "Working on it:" : "Checks complete:"}</p>
               <AgentSteps steps={steps} />
             </div>
           ),
@@ -394,13 +394,21 @@ export function ShoppingAssistant({
           from: "agent",
           content: (
             <div>
-              <p>{GREETING} For that I need:</p>
+              <p>{GREETING}</p>
+              {phase === "consent" && (
+                // Review finding 7: recipients are not data sources — the lenders are
+                // listed apart from the one source Alex chooses to allow.
+                <p className="mt-2 text-sm" data-consent-recipients="">
+                  <span className="font-medium">Send proofs to:</span> two lenders. Exact figures
+                  are not sent directly; no documents and no credit inquiry.
+                </p>
+              )}
               {phase === "consent" && (
                 <ConsentRequest
                   disabled={vault.status !== "ready"}
                   manualLabel="No thanks, I'll do it myself"
                   onAllow={(allowed) =>
-                    allowed.includes("pod") && allowed.includes("lenders")
+                    allowed.includes("pod")
                       ? choose("Yes, go ahead.", "allow")
                       : choose("Not right now.", "decline_manual")
                   }
@@ -408,14 +416,9 @@ export function ShoppingAssistant({
                   sources={[
                     {
                       id: "pod",
-                      name: "Your pod (Data Vault)",
+                      name: "Read from: Alex's pod",
                       reads:
-                        "Income and credit-score credentials, to build proofs in this browser.",
-                    },
-                    {
-                      id: "lenders",
-                      name: "Two lenders",
-                      reads: "Proofs only. No figures, documents or credit inquiry.",
+                        "Income and credit-score credentials, used to build proofs in this browser.",
                     },
                   ]}
                 />

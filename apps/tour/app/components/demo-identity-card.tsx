@@ -47,7 +47,6 @@ function CopyRow({ label, value, note }: CopyRowProps) {
  */
 export function DemoIdentityCard() {
   const income = demoPersona.monthlyGrossIncomeUsd;
-  const dtiBound = Math.floor(zkThresholds.dtiRatioMax * income);
   return (
     <div className="rounded-xl border border-border bg-card p-5" data-demo-identity-card="">
       <h3 className="font-semibold text-card-foreground">Demo data — {demoPersona.name}</h3>
@@ -66,12 +65,15 @@ export function DemoIdentityCard() {
         />
         <CopyRow
           label="Monthly debts"
-          note={`Under the demo's debt-to-income limit of $${dtiBound.toLocaleString("en-US")} a month`}
           value={`$${demoPersona.monthlyDebtsUsd.toLocaleString("en-US")} a month`}
         />
         <CopyRow
           label="Verified assets"
           value={`$${demoPersona.verifiedAssetsUsd.toLocaleString("en-US")}`}
+        />
+        <CopyRow
+          label="Requested loan"
+          value={`$${demoPersona.requestedLoanUsd.toLocaleString("en-US")}`}
         />
         <CopyRow label="Employer" value={demoPersona.employer} />
       </div>

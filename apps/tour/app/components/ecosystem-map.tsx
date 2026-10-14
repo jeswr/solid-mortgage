@@ -112,7 +112,9 @@ export function EcosystemMap() {
             )}
             {selected.role}
           </h3>
-          <p className="text-muted-foreground text-sm">{selected.membership}</p>
+          {selected.membership !== undefined && (
+            <p className="text-muted-foreground text-sm">{selected.membership}</p>
+          )}
         </div>
         <p className="mt-1 text-muted-foreground text-sm">modelled on {selected.modelledOn}</p>
         <p className="mt-3 text-card-foreground text-sm">{selected.summary}</p>

@@ -14,7 +14,9 @@ import {
   useAssistantEngine,
 } from "@mortgage/ui";
 import { type ReactNode, useRef, useState } from "react";
-import { formatPercent, formatUsd } from "../lib/format";
+import { scriptedAction } from "../lib/assistant-intent";
+import { formatPercent, formatUsd, QUOTE_CAUTION } from "../lib/format";
+import type { DemoLoanSummary } from "../lib/server/loan";
 import type { UrlaPrefill } from "../lib/server/prefill";
 
 /**
@@ -22,7 +24,8 @@ import type { UrlaPrefill } from "../lib/server/prefill";
  * assistant asks for consent PER SOURCE, reads the borrower's pod through the
  * same authenticated prefill rail the form uses, finds rent receipts in a
  * SIMULATED inbox (or asks for the figure), shows what it will submit, and
- * submits through the same rail on the borrower's "yes".
+ * submits through the same rail only when the borrower presses the explicit
+ * "Submit application" control (never from free text).
  *
  * Free text at every step: when the local demo server offers a language model
  * (`/__demo/assistant`, Claude through the operator's Claude Code), it picks one
@@ -60,7 +63,7 @@ const ACTIONS: Partial<Record<Phase, readonly AssistantAction[]>> = {
     {
       id: "allow_pod_only",
       description:
-        "Alex allows the pod but not the rent receipts (the assistant will ask for the rent).",
+        "Alex allows the pod but not the rent receipts (the current rent is left blank).",
     },
     {
       id: "decline_manual",
@@ -72,57 +75,36 @@ const ACTIONS: Partial<Record<Phase, readonly AssistantAction[]>> = {
     { id: "provide_rent", description: "Alex states the monthly rent (set monthlyRentUsd)." },
     { id: "decline_manual", description: "Alex would rather fill in the form manually." },
   ],
+  // No "submit" action: submission needs the explicit "Submit application" button.
   review: [
-    { id: "submit", description: "Alex clearly confirms the application should be submitted now." },
-    { id: "open_form", description: "Alex wants to review or edit the full form manually." },
+    { id: "open_form", description: "Alex wants to review or edit the application form manually." },
     { id: "change_rent", description: "Alex corrects the monthly rent (set monthlyRentUsd)." },
   ],
 };
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const parseAmount = (text: string) => {
-  const amount = Number.parseFloat(text.replace(/[^0-9.]/g, ""));
-  return Number.isFinite(amount) && amount > 0 && amount < 100_000 ? Math.round(amount) : undefined;
-};
-
-/** The fallback when no language model is available: a few keyword rules. */
-function scriptedAction(phase: Phase, text: string): { action: string; rent?: number } {
-  const lower = text.toLowerCase();
-  const no = /\b(no|nope|don't|do not|manual|myself|form)\b/.test(lower);
-  if (phase === "consent") {
-    if (
-      /(no|not|without|skip|leave).{0,20}(email|inbox|mail)/.test(lower) ||
-      /pod only/.test(lower)
-    ) {
-      return { action: "allow_pod_only" };
-    }
-    if (no) return { action: "decline_manual" };
-    if (/\b(yes|yeah|sure|ok|okay|allow|go ahead|fine|please)\b/.test(lower))
-      return { action: "allow_all" };
-  }
-  if (phase === "ask-rent") {
-    const rent = parseAmount(text);
-    if (rent !== undefined) return { action: "provide_rent", rent };
-    if (no) return { action: "decline_manual" };
-  }
-  if (phase === "review") {
-    const rent = /rent/.test(lower) ? parseAmount(text) : undefined;
-    if (rent !== undefined) return { action: "change_rent", rent };
-    if (/form|review|edit|myself|manual/.test(lower)) return { action: "open_form" };
-    if (/\b(yes|yeah|submit|ok|okay|go|sure|looks good|send)\b/.test(lower))
-      return { action: "submit" };
-  }
-  return { action: "answer_only" };
-}
-
 const SCRIPTED_HELP: Partial<Record<Phase, string>> = {
-  consent: "Allow your pod and rent receipts, your pod only, or use the form.",
+  consent: "Allow your pod, optionally with the demo rent receipts, or use the form.",
   "ask-rent": "What is your monthly rent? For example, 2150.",
-  review: "I can submit now or change the rent. You can also check the full application.",
+  review:
+    "To submit, use the Submit application button. I can also change the rent, or you can open the form.",
 };
 
-export function AgentApplication({ apiBase, formHref }: { apiBase: string; formHref: string }) {
+const totalAssets = (data: UrlaPrefill) =>
+  data.assets.accounts.reduce((sum, account) => sum + account.amountUsd, 0);
+
+const GREETING = "Prepare Alex's application from the pod. Review it before submitting.";
+
+export function AgentApplication({
+  apiBase,
+  formHref,
+  loan,
+}: {
+  apiBase: string;
+  formHref: string;
+  loan: DemoLoanSummary;
+}) {
   const engine = useAssistantEngine();
   const [phase, setPhaseState] = useState<Phase>("consent");
   const phaseRef = useRef<Phase>("consent");
@@ -130,10 +112,7 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
   const [messages, setMessages] = useState<AgentMessage[]>([]);
   const [steps, setSteps] = useState<AgentStep[]>([]);
   const history = useRef<AssistantTurn[]>([
-    {
-      from: "agent",
-      text: "Hi Alex. I can prepare your mortgage application. Choose the data sources I may read: your pod, and optionally your simulated rent receipts.",
-    },
+    { from: "agent", text: `${GREETING} Choose the data sources I may read.` },
   ]);
   const prefill = useRef<UrlaPrefill | undefined>(undefined);
   const housing = useRef<{ monthlyRentUsd: number; source: "email" | "manual" } | undefined>(
@@ -167,9 +146,12 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
   function facts(): string[] {
     const data = prefill.current;
     const lines: string[] = [];
+    lines.push(
+      `Loan request: ${formatUsd(loan.requestedLoanUsd)} for ${loan.subjectProperty}, estimated value ${formatUsd(loan.estimatedValueUsd)} (illustrative).`,
+    );
     if (data !== undefined) {
       lines.push(
-        `Application draft: ${data.borrower.name}, ${data.borrower.address}; ${data.employment.jobTitle} at ${data.employment.employerName}, ${formatUsd(data.employment.monthlyGrossIncomeUsd)} a month; ${data.assets.accounts.length} bank account(s); credit score. All from Alex's pod; credential signatures are not checked in this step.`,
+        `Application draft: ${data.borrower.name}, ${data.borrower.address}; ${data.employment.jobTitle} at ${data.employment.employerName}, ${formatUsd(data.employment.monthlyGrossIncomeUsd)} a month; monthly debts ${formatUsd(data.credit.totalMonthlyDebtUsd)}; assets ${formatUsd(totalAssets(data))}; credit score ${data.credit.creditScoreValue}. All from Alex's pod; credential signatures are not checked in this step.`,
       );
     }
     if (housing.current !== undefined) {
@@ -177,7 +159,9 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
         `Current housing: renting at ${formatUsd(housing.current.monthlyRentUsd)} a month (${housing.current.source === "email" ? "from rent receipts in the simulated inbox" : "stated by Alex"}).`,
       );
     }
-    lines.push(`The full application form is also available at ${formHref}.`);
+    lines.push(
+      `Submitting needs the Submit application button; the assistant cannot submit. The application form is at ${formHref}.`,
+    );
     return lines;
   }
 
@@ -189,36 +173,74 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
       "agent",
       <div data-agent-review="">
         <p>
-          Review the application summary. {formLink("Open the full application")} to check all
-          fields before submitting.
+          Review the demo application fields. {formLink("Open the application form")} to check every
+          field.
         </p>
-        <ul className="mt-2 list-disc pl-5">
-          <li>
+        <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+          <dt className="text-muted-foreground">Borrower</dt>
+          <dd className="m-0">
             {data.borrower.name}, {data.borrower.address}
-          </li>
-          <li>
-            {data.employment.jobTitle} at {data.employment.employerName},{" "}
+          </dd>
+          <dt className="text-muted-foreground">Subject property</dt>
+          <dd className="m-0">{loan.subjectProperty}</dd>
+          <dt className="text-muted-foreground">Requested loan</dt>
+          <dd className="m-0">
+            <IllustrativeFigure>{formatUsd(loan.requestedLoanUsd)}</IllustrativeFigure>
+          </dd>
+          <dt className="text-muted-foreground">Estimated value</dt>
+          <dd className="m-0">
+            <IllustrativeFigure>{formatUsd(loan.estimatedValueUsd)}</IllustrativeFigure>
+          </dd>
+          <dt className="text-muted-foreground">Employment</dt>
+          <dd className="m-0">
+            {data.employment.jobTitle} at {data.employment.employerName}
+          </dd>
+          <dt className="text-muted-foreground">Gross income</dt>
+          <dd className="m-0">
             <IllustrativeFigure>
-              {formatUsd(data.employment.monthlyGrossIncomeUsd)}
-            </IllustrativeFigure>{" "}
-            a month
-          </li>
-          <li>
+              {`${formatUsd(data.employment.monthlyGrossIncomeUsd)} a month`}
+            </IllustrativeFigure>
+          </dd>
+          <dt className="text-muted-foreground">Monthly debts</dt>
+          <dd className="m-0">
+            <IllustrativeFigure>
+              {`${formatUsd(data.credit.totalMonthlyDebtUsd)} a month`}
+            </IllustrativeFigure>
+          </dd>
+          <dt className="text-muted-foreground">Assets</dt>
+          <dd className="m-0">
+            <IllustrativeFigure>{formatUsd(totalAssets(data))}</IllustrativeFigure> in{" "}
             {data.assets.accounts.length} bank account
-            {data.assets.accounts.length === 1 ? "" : "s"} and your credit score
-          </li>
-          {housing.current !== undefined && (
-            <li>
-              Renting at{" "}
-              <IllustrativeFigure>{formatUsd(housing.current.monthlyRentUsd)}</IllustrativeFigure> a
-              month (
-              {housing.current.source === "email" ? "from your rent receipts" : "you told me"})
-            </li>
-          )}
-        </ul>
-        <p className="mt-2">Credential signatures are not checked in this step. Submit it?</p>
+            {data.assets.accounts.length === 1 ? "" : "s"}
+          </dd>
+          <dt className="text-muted-foreground">Credit score</dt>
+          <dd className="m-0">{data.credit.creditScoreValue}</dd>
+          <dt className="text-muted-foreground">Current housing</dt>
+          <dd className="m-0">
+            {housing.current === undefined ? (
+              "Not provided"
+            ) : (
+              <>
+                Renting,{" "}
+                <IllustrativeFigure>
+                  {`${formatUsd(housing.current.monthlyRentUsd)} a month`}
+                </IllustrativeFigure>{" "}
+                ({housing.current.source === "email" ? "from demo rent receipts" : "you told me"})
+              </>
+            )}
+          </dd>
+          <dt className="text-muted-foreground">Not included</dt>
+          <dd className="m-0">
+            Declarations, demographic information and real identifiers. Never enter a real Social
+            Security number.
+          </dd>
+        </dl>
+        <p className="mt-2">
+          From the pod; credential signatures are not checked in this step. Use Submit application
+          when you are ready.
+        </p>
       </div>,
-      `Application summary: ${facts().join(" ")} Submit it?`,
+      `Application summary: ${facts().join(" ")} Alex submits with the Submit application button.`,
     );
   }
 
@@ -251,7 +273,7 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
         id: "email",
         label: email
           ? "Find rent receipts in the simulated inbox"
-          : "Rent receipts: not allowed. I'll ask you.",
+          : "Demo rent receipts: not selected. Current rent left blank.",
         state: email ? "pending" : "skipped",
       },
       { id: "fill", label: "Fill in the application", state: "pending" },
@@ -321,11 +343,8 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
     });
     history.current.push({ from: "agent", text: "I read the pod and filled in the application." });
 
-    if (!email) {
-      setPhase("ask-rent");
-      say("agent", "What is your monthly rent? Any demo figure will do.");
-      return;
-    }
+    // Without the optional receipts the current rent stays "Not provided";
+    // Alex can add it from the review.
     review();
   }
 
@@ -358,13 +377,16 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
             <li>
               Monthly principal and interest{" "}
               <IllustrativeFigure>
-                {formatUsd(body.loanEstimate.monthlyPrincipalAndInterestUsd)}
+                {`${formatUsd(body.loanEstimate.monthlyPrincipalAndInterestUsd)} a month`}
               </IllustrativeFigure>
             </li>
           </ul>
           <p className="mt-2">
             This summary is not a Loan Estimate or credit approval. The lender reviews your file
             next.
+          </p>
+          <p className="mt-2 text-xs" data-quote-caution="">
+            {QUOTE_CAUTION}
           </p>
         </div>,
         `Application saved in Alex's pod. Illustrative loan terms: ${formatUsd(body.loanEstimate.loanAmountUsd)} at ${formatPercent(body.loanEstimate.interestRatePercent)}. This is not a Loan Estimate or credit approval. The lender reviews the file next.`,
@@ -425,7 +447,10 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
     setThinking(false);
     if (decision !== undefined) {
       if (decision.reply !== "") say("agent", decision.reply);
-      act(decision.action, decision.monthlyRentUsd, decision.reply !== "");
+      // Free text never submits: only the "Submit application" control does.
+      if (decision.action !== "submit") {
+        act(decision.action, decision.monthlyRentUsd, decision.reply !== "");
+      }
       return;
     }
     const scripted = scriptedAction(current, text);
@@ -440,7 +465,10 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
     phase === "review"
       ? [
           { label: "Submit application", value: "submit" },
-          { label: "Open the full application", value: "form" },
+          ...(housing.current === undefined
+            ? [{ label: "Add current rent", value: "add-rent" }]
+            : []),
+          { label: "Open the application form", value: "form" },
         ]
       : phase === "ask-rent"
         ? [{ label: "$2,150", value: "2150" }]
@@ -448,7 +476,13 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
 
   function reply(value: string) {
     if (value === "submit") return choose("Submit the application.", "submit");
-    if (value === "form") return choose("I'll check the full application myself.", "open_form");
+    if (value === "form") return choose("I'll check the application form myself.", "open_form");
+    if (value === "add-rent" && phaseRef.current === "review") {
+      say("you", "Add my current rent.");
+      setPhase("ask-rent");
+      say("agent", "What is your monthly rent? Any demo figure will do.");
+      return;
+    }
     if (value === "2150" && phaseRef.current === "ask-rent") {
       return choose("$2,150 a month.", "provide_rent", 2150);
     }
@@ -462,8 +496,7 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
           ...message,
           content: (
             <div>
-              <p>Working on it:</p>
-              <AgentSteps steps={steps} />
+              <AgentSteps heading={phase === "done" ? "Application saved" : "auto"} steps={steps} />
             </div>
           ),
         }
@@ -482,9 +515,10 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
             from: "agent",
             content: (
               <div>
-                <p>
-                  Hi Alex. I can prepare your mortgage application. Choose the data sources I may
-                  read.
+                <p>{GREETING}</p>
+                <p className="mt-2 text-xs" data-agent-disclosure="">
+                  When AI replies are enabled, application details are sent to the assistant
+                  service.
                 </p>
                 {phase === "consent" && (
                   <ConsentRequest
@@ -504,15 +538,15 @@ export function AgentApplication({ apiBase, formHref }: { apiBase: string; formH
                     sources={[
                       {
                         id: "pod",
-                        name: "Your pod (Data Vault)",
-                        reads:
-                          "Reads your profile and verification records to prepare the application. When AI replies are enabled, application details are sent to the assistant service.",
+                        name: "Alex's pod (Data Vault)",
+                        reads: "Use Alex's pod to prepare the application.",
                       },
                       {
                         id: "email",
-                        name: "Demo rent receipts — optional",
+                        name: "Demo rent receipts",
                         note: "simulated",
-                        reads: "Rent receipts in a simulated inbox, for your current housing cost.",
+                        optional: true,
+                        reads: "Optional: read simulated rent receipts to fill the current rent.",
                       },
                     ]}
                   />

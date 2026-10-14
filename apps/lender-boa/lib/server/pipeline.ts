@@ -73,6 +73,18 @@ async function view(file: IntakeFile, config: LenderConfig): Promise<PipelineFil
   };
 }
 
+function existingAusRecommendation(
+  iri: string,
+  dataset: ConstructorParameters<typeof UnderwritingDecision>[1] | undefined,
+): string | undefined {
+  if (dataset === undefined) return undefined;
+  try {
+    return new UnderwritingDecision(iri, dataset, DataFactory).ausRecommendation;
+  } catch {
+    return undefined;
+  }
+}
+
 export async function readPipeline(config: LenderConfig): Promise<readonly PipelineFile[]> {
   return Promise.all(listIntake().map((file) => view(file, config)));
 }
@@ -88,17 +100,20 @@ export async function clearToClose(
   const base = assertAllowedPodBase(file.podBase, config);
   const values = PERSONA_VALUES[0];
   if (values === undefined) throw new Error("persona values missing");
+  const existing = await readPodResource(file.decisionIri, base);
+  // Keep whatever the AUS recorded (or its absence): clear to close is the
+  // underwriter's step and never invents an AUS recommendation.
+  const ausRecommendation = existingAusRecommendation(file.decisionIri, existing?.dataset);
   const decision = buildUnderwritingDecision({
     iri: file.decisionIri,
     evaluates: file.applicationIri,
     decisionStatus: MORT.DecisionStatus_Approved,
     conditions: [],
     approvedAmountUsd: values.approvedLoanUsd,
-    ausRecommendation: values.ausRecommendation,
+    ...(ausRecommendation !== undefined ? { ausRecommendation } : {}),
     issued: now,
     creator: "https://lender.example/orgs/underwriting#id",
   });
-  const existing = await readPodResource(file.decisionIri, base);
   await writePodTurtle(file.decisionIri, await resourceToTurtle(decision), {
     etag: existing?.etag,
   });

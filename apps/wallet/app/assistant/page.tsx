@@ -13,18 +13,22 @@ export default function AssistantPage() {
   return (
     <main className="mx-auto w-full max-w-3xl px-6 py-12">
       <p className="font-semibold text-muted-foreground text-xs uppercase tracking-wide">
-        Scene 2 · Prequalify without disclosing income or credit score
+        Scene 2 · Prequalification
       </p>
       <h1 className="mt-1 font-semibold text-3xl text-foreground tracking-tight">
         Compare illustrative rate quotes
       </h1>
       <p className="mt-3 text-muted-foreground">
-        Compare two illustrative rate quotes using Alex&apos;s income and credit-score credentials.
-        To do it step by step, use the{" "}
+        Check two lenders&apos; prequalification criteria using proofs derived from Alex&apos;s
+        credentials. To do it step by step, use the{" "}
         <a className="underline" href="/wallet/prequal">
           prequalification page
         </a>
         .
+      </p>
+      <p className="mt-4 rounded-lg border border-border bg-card p-4 text-sm" data-zk-limitation="">
+        <strong>Prototype limitation:</strong> encoded values may reveal the underlying figures
+        through guessing. The cryptography has not been independently audited.
       </p>
       <div className="mt-6">
         <ShoppingAssistant applyHref="/lender-boa/assistant" manualHref="/wallet/prequal" />

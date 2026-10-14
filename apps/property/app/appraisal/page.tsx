@@ -33,11 +33,8 @@ export default function AppraisalPage() {
           Appraisal
         </p>
         <h1 className="mt-1 text-3xl font-semibold tracking-tight text-foreground">
-          Review the appraisal
+          Review the simulated appraised value
         </h1>
-        <p className="mt-4 text-muted-foreground">
-          The appraised value is shown in the credential, so it is never proved in zero-knowledge.
-        </p>
         <div className="mt-6">
           <IssueFlow
             apiBase="/property/api"
@@ -66,7 +63,9 @@ export default function AppraisalPage() {
                 <li>
                   The organisation&apos;s involvement: this is not {appraisalBrand.organization}.
                 </li>
-                <li>Sign-in is simulated here, so the record above is a preview.</li>
+                <li>
+                  When issuance is unavailable in this mode, the record above stays a preview.
+                </li>
               </ul>
             }
           />

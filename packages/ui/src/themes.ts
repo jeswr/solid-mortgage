@@ -78,7 +78,11 @@ export interface OrgBrand {
   markText: string;
   markShape: BrandMarkShape;
   header: BrandHeaderStyle;
-  /** Body font stack (system fonts only). */
+  /**
+   * Brand font stack (system fonts only): the product name and, unless
+   * {@link headingFontStack} is set, h1–h3. Body text, fields and tables use the shared
+   * {@link BODY_FONT_STACK} for readability (astra-review-2 finding 20).
+   */
   fontStack: string;
   /** Optional heading font stack (h1–h3); defaults to {@link fontStack}. */
   headingFontStack?: string;
@@ -159,6 +163,9 @@ const FONT = {
   system: 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
   transitional: 'Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif',
 } as const;
+
+/** Shared readable sans-serif for body text, fields and tables in every branded app. */
+export const BODY_FONT_STACK: string = FONT.system;
 
 /** One shared product identity across the three verification issuer flows. */
 const PROOFLINE_BRAND: OrgBrand = {
@@ -439,6 +446,7 @@ export function brandCssProperties(theme: OrgTheme): ThemeStyleProperties {
   const brand = theme.brand;
   if (brand === undefined) return style;
   style["--font-brand"] = brand.fontStack;
+  style["--font-body"] = BODY_FONT_STACK;
   style["--font-heading"] = brand.headingFontStack ?? brand.fontStack;
   style["--radius"] = brand.radius;
   style["--radius-sm"] = `calc(${brand.radius} * 0.5)`;

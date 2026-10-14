@@ -1,4 +1,5 @@
 import { AgentApplication } from "../../components/agent-application";
+import { demoLoanSummary } from "../../lib/server/loan";
 import { site } from "../site";
 
 export const metadata = {
@@ -19,11 +20,15 @@ export default function AssistantPage() {
         Apply with an assistant
       </h1>
       <p className="mt-3 text-muted-foreground">
-        The assistant prepares Alex's application from the sources Alex selects. It submits only
-        when Alex confirms.
+        The assistant prepares Alex's application from the sources Alex selects. Only the Submit
+        application button submits it.
       </p>
       <div className="mt-6">
-        <AgentApplication apiBase="/lender-boa/api" formHref="/lender-boa/application" />
+        <AgentApplication
+          apiBase="/lender-boa/api"
+          formHref="/lender-boa/application"
+          loan={demoLoanSummary()}
+        />
       </div>
     </main>
   );

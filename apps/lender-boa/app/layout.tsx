@@ -21,7 +21,7 @@ const NAV = [
   { href: "/prequal", label: "Prequalification" },
   { href: "/application", label: "Apply" },
   { href: "/assistant", label: "Apply with an assistant" },
-  { href: "/freshness", label: "Re-verification" },
+  { href: "/freshness", label: "Credential check" },
   { href: "/pipeline", label: "Loan pipeline" },
 ] as const;
 

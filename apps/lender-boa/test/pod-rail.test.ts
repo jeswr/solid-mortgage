@@ -6,9 +6,10 @@
  */
 
 import { fetchRdf, parseRdf } from "@jeswr/fetch-rdf";
-import { PERSONA_VALUES, personas, validate } from "@mortgage/data-model";
+import { PERSONA_VALUES, personas, UnderwritingDecision, validate } from "@mortgage/data-model";
 import { type SolidTestServer, seedPod, startSolidServer } from "@mortgage/solid-kit/testing";
 import { reissueCredential, StatusIndexAllocator } from "@mortgage/vc-kit";
+import { DataFactory } from "n3";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import type { LenderConfig } from "../lib/server/config";
 import { checkEmploymentFreshness } from "../lib/server/freshness";
@@ -148,6 +149,9 @@ describe("scene 3 — application submit + Loan Estimate delivery", () => {
       focusNode: result.decisionIri,
     });
     expect(decisionReport.conforms).toBe(true);
+    // Submission is not an AUS run: no recommendation until the AUS writes one.
+    const wrapped = new UnderwritingDecision(result.decisionIri, decision.dataset, DataFactory);
+    expect(wrapped.ausRecommendation).toBeUndefined();
   });
 
   test("re-submitting updates conditionally (no lost-update clobber)", async () => {

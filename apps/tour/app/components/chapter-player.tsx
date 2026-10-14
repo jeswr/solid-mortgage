@@ -45,6 +45,7 @@ export function ChapterPlayer({ chapter }: { chapter: Chapter }) {
           <TryLiveButton
             app={step.tryLive.app}
             label={step.tryLive.label}
+            hash={step.tryLive.hash}
             path={step.tryLive.path}
           />
         </div>

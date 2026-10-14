@@ -1,6 +1,6 @@
 "use client";
 
-import { CredentialCard } from "@mortgage/ui";
+import { CredentialCard, type CredentialKind } from "@mortgage/ui";
 import { useEffect, useState } from "react";
 import {
   type ClosingRecordView,
@@ -16,7 +16,14 @@ function formatDate(date: Date | undefined): string | undefined {
   return date === undefined ? undefined : `${DATE_FORMAT.format(date)} UTC`;
 }
 
-/** Verification records: verify-on-view over the pod's five credentials. */
+/** `data-credential-kind` per wallet credential (the guide and e2e key off it). */
+const CARD_KIND: Partial<Record<WalletCredentialView["id"], CredentialKind>> = {
+  income: "employment",
+  assets: "assets",
+  credit: "credit",
+};
+
+/** Credentials: verify-on-view over the pod's five credentials. */
 export function CredentialList() {
   const vault = useVault();
   const [views, setViews] = useState<readonly WalletCredentialView[] | undefined>();
@@ -70,6 +77,7 @@ export function CredentialList() {
         <CredentialCard
           issuer={view.issuerLabel}
           key={view.id}
+          kind={CARD_KIND[view.id]}
           status={view.status}
           title={view.title}
           validFrom={formatDate(view.validFrom)}
@@ -98,7 +106,7 @@ export function CredentialList() {
         </article>
       )}
       <p className="mt-2 text-muted-foreground text-xs">
-        Income and credit score are not shown. Prequalification proves thresholds about them.
+        Exact income and credit-score figures are not shown here.
       </p>
     </div>
   );

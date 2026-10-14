@@ -32,7 +32,11 @@ import { resourceToTurtle } from "./wrappers/serialize.js";
  * Value discipline: every ZK-provable value fits its decision 0005 digit
  * budget and clears the scene-2 demo thresholds (income >= $7,000/month,
  * score >= 620, recast DTI: debts <= floor(0.43 x income)); the loan never
- * exceeds the appraised value; assets cover down payment + closing costs.
+ * exceeds the appraised value. Alex's figures are the canonical captured
+ * journey values (income $8,500/month, score 742, debts $1,180/month,
+ * assets $64,000, loan $340,000). Closing costs are an ILLUSTRATIVE itemised
+ * demo schedule (`closingCostItems`; the total is their sum) - never an
+ * industry statistic such as the cost to originate a loan.
  *
  * Determinism: `personas()` never reads the clock (decision 0012) - all
  * validity windows derive from the caller's `now` - and the same `now` +
@@ -134,6 +138,34 @@ export interface Persona {
   byPath: ReadonlyMap<string, PersonaResource>;
 }
 
+/** One line of an illustrative demo closing-cost schedule. */
+export interface ClosingCostItem {
+  readonly label: string;
+  readonly amountUsd: number;
+}
+
+/** Alex's illustrative itemised demo closing costs (total $4,340). */
+export const ALEX_CLOSING_COST_ITEMS: readonly ClosingCostItem[] = [
+  { label: "Origination charge", amountUsd: 1700 },
+  { label: "Appraisal fee", amountUsd: 575 },
+  { label: "Credit report fee", amountUsd: 45 },
+  { label: "Title services and lender's title policy", amountUsd: 1880 },
+  { label: "Recording fees", amountUsd: 140 },
+];
+
+const JORDAN_CLOSING_COST_ITEMS: readonly ClosingCostItem[] = [
+  { label: "Origination charge", amountUsd: 1240 },
+  { label: "Appraisal fee", amountUsd: 575 },
+  { label: "Credit report fee", amountUsd: 45 },
+  { label: "Title services and lender's title policy", amountUsd: 1510 },
+  { label: "Recording fees", amountUsd: 140 },
+];
+
+/** Total of an itemised closing-cost schedule. */
+export function closingCostTotalUsd(items: readonly ClosingCostItem[]): number {
+  return items.reduce((total, item) => total + item.amountUsd, 0);
+}
+
 /** The plain values one persona is built from (exported for test assertions). */
 export interface PersonaValues {
   id: PersonaId;
@@ -164,6 +196,9 @@ export interface PersonaValues {
   approvedLoanUsd: number;
   loanTermMonths: number;
   interestRatePercent: number;
+  /** Illustrative itemised demo closing costs (no real fee schedule). */
+  closingCostItems: readonly ClosingCostItem[];
+  /** Sum of `closingCostItems` - the only closing-cost total any app shows. */
   closingCostsUsd: number;
   underwritingConditions: readonly string[];
   ausRecommendation: string;
@@ -190,11 +225,11 @@ export const PERSONA_VALUES: readonly PersonaValues[] = [
     employerName: "Ridgeline Analytics LLC",
     jobTitle: "Senior Data Engineer",
     employmentStartDate: "2021-03-01",
-    monthlyGrossIncomeUsd: 8200,
-    creditScoreValue: 745,
-    totalMonthlyDebtUsd: 610,
+    monthlyGrossIncomeUsd: 8500,
+    creditScoreValue: 742,
+    totalMonthlyDebtUsd: 1180,
     bankName: "Summit Federal Credit Union",
-    bankBalanceUsd: 97400,
+    bankBalanceUsd: 64000,
     subjectPropertyAddress: {
       streetAddress: "1121 Maple Hollow Court",
       addressLocality: "Columbus",
@@ -208,13 +243,14 @@ export const PERSONA_VALUES: readonly PersonaValues[] = [
     approvedLoanUsd: 340000,
     loanTermMonths: 360,
     interestRatePercent: 6.125,
-    closingCostsUsd: 11600,
+    closingCostItems: ALEX_CLOSING_COST_ITEMS,
+    closingCostsUsd: closingCostTotalUsd(ALEX_CLOSING_COST_ITEMS),
     underwritingConditions: [
       "Provide updated employment verification within 10 business days of closing.",
     ],
     ausRecommendation: FIBO.UnderwritingDecision_Approve,
     recordingCounty: "Franklin County",
-    servicerName: "Concept Demo Servicing Co.",
+    servicerName: "Demo servicer",
   },
   {
     id: "jordan-avery",
@@ -251,11 +287,12 @@ export const PERSONA_VALUES: readonly PersonaValues[] = [
     approvedLoanUsd: 248000,
     loanTermMonths: 360,
     interestRatePercent: 6.375,
-    closingCostsUsd: 9150,
+    closingCostItems: JORDAN_CLOSING_COST_ITEMS,
+    closingCostsUsd: closingCostTotalUsd(JORDAN_CLOSING_COST_ITEMS),
     underwritingConditions: [],
     ausRecommendation: FIBO.UnderwritingDecision_Eligible,
     recordingCounty: "Delaware County",
-    servicerName: "Concept Demo Servicing Co.",
+    servicerName: "Demo servicer",
   },
 ];
 

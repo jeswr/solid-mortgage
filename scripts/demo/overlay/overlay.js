@@ -86,7 +86,11 @@
     * { box-sizing: border-box; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
     [hidden] { display: none !important; }
     button { font: inherit; cursor: pointer; }
-    .dock { position: fixed; left: 16px; bottom: 72px; z-index: 2147483000; display: flex; gap: 8px; flex-wrap: wrap; }
+    /* The dock is a bottom bar; pageStyle reserves its height under the page so it never
+       covers the end of the page's content. */
+    .dock { position: fixed; left: 0; right: 0; bottom: 0; z-index: 2147483000; display: flex; gap: 8px; flex-wrap: wrap;
+      align-items: center; padding: 8px 16px; background: rgb(248 250 252 / .97); border-top: 1px solid #e2e8f0; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
     .pill { text-decoration: none; display: inline-flex; align-items: center; gap: 8px; border: 1px solid #1e293b; background: #0f172a; color: #f8fafc;
       border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600; box-shadow: 0 6px 20px rgb(15 23 42 / .25); }
     .pill.light { background: #fff; color: #0f172a; border-color: #cbd5e1; }
@@ -153,14 +157,18 @@
     .guide .btn { background: #1e293b; color: #f8fafc; border-color: #475569; }
     .guide .btn.primary { background: #f59e0b; color: #0f172a; border-color: #f59e0b; }
     .guide .link { background: none; border: 0; color: #fbbf24; text-decoration: underline; font-size: 12px; padding: 0; }
+    .guide a.btn { display: inline-block; text-decoration: none; }
+    .guide .links { margin: 6px 0; }
+    /* Narrower screens: the guide is a band across the top, and pageStyle pushes the page down
+       by its height (--solid-demo-guide-h), so the guide sits above the content, not over it. */
     @media (max-width: 1199px) {
-      .guiding .guide { bottom: 120px; }
-      .guide.shifted { right: 16px; }
+      .guide { top: 0; left: 0; right: 0; bottom: auto; width: auto; border-radius: 0 0 12px 12px; max-height: 50vh; }
+      .guide.shifted { right: 0; }
     }
     /* Wide screens: the page is given a right-hand column (see pageStyle), and the guide and the
        dock sit in it instead of over the page's content. */
     @media (min-width: 1200px) {
-      .guiding .dock { left: auto; right: 16px; bottom: 16px; width: 360px; justify-content: flex-end; }
+      .guiding .dock { left: auto; right: 0; width: 392px; padding: 16px; background: none; border-top: 0; justify-content: flex-end; }
       .guiding .guide { bottom: 64px; }
     }
   `;
@@ -172,8 +180,12 @@
       animation: solid-demo-pulse 1.6s ease-in-out infinite; }
     @keyframes solid-demo-pulse { 50% { outline-color: rgb(245 158 11 / .35); } }
     @media (prefers-reduced-motion: reduce) { [data-solid-demo-target] { animation: none; } }
+    html[data-solid-demo-dock] body { padding-bottom: 64px !important; }
     @media (min-width: 1200px) {
       html[data-solid-demo-guiding] body { padding-right: 392px !important; }
+    }
+    @media (max-width: 1199px) {
+      html[data-solid-demo-guiding] body { padding-top: var(--solid-demo-guide-h, 0px) !important; }
     }
   `;
 
@@ -184,6 +196,8 @@
   let unseen = 0;
   let guided = read("guided", { active: false, index: 0 });
   let refreshTimer;
+  /** The current step's refresh, re-run when the page changes (see watchPage). */
+  let currentRefresh;
 
   const host = el("div", { id: "solid-demo-overlay" });
   const root = host.attachShadow({ mode: "open" });
@@ -191,8 +205,15 @@
   const frame = el("div", { class: standalone ? "standalone" : "" });
   root.append(frame);
 
+  // Small polite live regions: the new guide step's title, and each new activity entry's
+  // summary (the activity list itself is not live, so re-rendering it is not re-announced).
+  const guideAnnouncer = el("div", { class: "sr-only", role: "status", "aria-live": "polite" });
+  const activityAnnouncer = el("div", { class: "sr-only", "aria-live": "polite" });
+  frame.append(guideAnnouncer, activityAnnouncer);
+  let announcedStep;
+
   // ── Pod activity sidebar ───────────────────────────────────────────────────────
-  const list = el("ol", { class: "events", "aria-live": "polite", "aria-label": "Pod activity" });
+  const list = el("ol", { class: "events", "aria-label": "Pod activity" });
   const filterBar = el("div", {
     class: "filters row",
     role: "group",
@@ -360,6 +381,7 @@
       badge.hidden = false;
     }
     if (!matches(event)) return;
+    if (sidebarOpen || standalone) activityAnnouncer.textContent = event.summary;
     list.querySelector(".empty")?.remove();
     if (topGroup && sameRead(topGroup.event, event) && list.firstElementChild) {
       topGroup = { event, times: topGroup.times + 1 };
@@ -544,6 +566,81 @@
       if (node !== except) node.removeAttribute("data-solid-demo-target");
     }
   }
+  /** Highlight one page control; a no-op when it is already highlighted. */
+  function setTarget(node) {
+    clearTargets(node);
+    if (!node.hasAttribute("data-solid-demo-target"))
+      node.setAttribute("data-solid-demo-target", "");
+  }
+
+  /** Link on a guide card: gateway paths open on their app's origin; URLs in a new tab. */
+  function guideLink(link) {
+    const external = /^https?:/.test(link.href);
+    return el(
+      "a",
+      {
+        class: link.primary ? "btn primary" : "btn",
+        href: external ? link.href : new URL(link.href, originFor(link.href)).href,
+        target: external ? "_blank" : undefined,
+        rel: external ? "noopener noreferrer" : undefined,
+        "data-guide-link": "",
+      },
+      link.label,
+    );
+  }
+
+  /**
+   * While an app's concept-demo notice (the consent interstitial) is open, the whole overlay
+   * is hidden and inert, so it never sits above the notice or takes focus from it.
+   */
+  function syncInterstitial() {
+    const open = document.querySelector("[data-consent-interstitial]") !== null;
+    if (host.inert !== open) host.inert = open;
+    const display = open ? "none" : "";
+    if (host.style.display !== display) host.style.display = display;
+  }
+
+  /**
+   * Re-check the step whenever the page changes (React rendering a result, a list loading),
+   * throttled, so the guide never reports "waiting" beside content that has already loaded.
+   */
+  let watchTimer = 0;
+  function watchPage() {
+    const onChange = () => {
+      if (watchTimer) return;
+      watchTimer = setTimeout(() => {
+        watchTimer = 0;
+        syncInterstitial();
+        currentRefresh?.();
+      }, 60);
+    };
+    new MutationObserver(onChange).observe(document.body ?? document.documentElement, {
+      attributes: true,
+      attributeFilter: [
+        "aria-disabled",
+        "disabled",
+        "hidden",
+        "data-credential-status",
+        "data-grant-state",
+        "data-panel-outcome",
+        "data-pipeline-stage",
+      ],
+      characterData: true,
+      childList: true,
+      subtree: true,
+    });
+    syncInterstitial();
+  }
+
+  /** Keep the page's top padding equal to the guide's height (narrow screens, see pageStyle). */
+  if (typeof ResizeObserver === "function") {
+    new ResizeObserver(() => {
+      document.documentElement.style.setProperty(
+        "--solid-demo-guide-h",
+        guide.hidden ? "0px" : `${guide.offsetHeight}px`,
+      );
+    }).observe(guide);
+  }
 
   /** Show or hide the guide, and reserve the page's right-hand column while it shows. */
   function setGuideVisible(visible) {
@@ -558,6 +655,8 @@
     write("guided", guided);
     clearTargets();
     clearInterval(refreshTimer);
+    currentRefresh = undefined;
+    announcedStep = undefined;
     setGuideVisible(false);
   }
 
@@ -587,6 +686,7 @@
     const setStatus = (key, ...nodes) => {
       if (key === statusKey) return;
       statusKey = key;
+      status.setAttribute("data-state", key.split(":")[0]);
       if (key.startsWith("done")) status.setAttribute("data-done", "");
       else status.removeAttribute("data-done");
       status.replaceChildren(...nodes);
@@ -625,8 +725,7 @@
       const finalLabel = last ? "Finish" : "Next";
       const notice = noticeButton();
       if (notice) {
-        clearTargets(notice);
-        notice.setAttribute("data-solid-demo-target", "");
+        setTarget(notice);
         setStatus(
           "notice",
           "Read this app's concept-demo notice, then press ",
@@ -657,8 +756,7 @@
           doIt.hidden = true;
           return;
         }
-        clearTargets(button);
-        button.setAttribute("data-solid-demo-target", "");
+        setTarget(button);
         const busy = button.disabled === true || button.getAttribute("aria-disabled") === "true";
         const name = pressed || busy ? step.action.label : buttonName(button, step.action.label);
         setStatus(
@@ -680,7 +778,20 @@
       clearTargets();
       setNextLabel(finalLabel);
       if (step.doneSelector && !isDone(step)) {
-        setStatus("loading", "Waiting for the page to load…");
+        setStatus(
+          "loading",
+          step.doneMessage
+            ? "Not found yet. The page may still be loading."
+            : "Waiting for the page to load…",
+        );
+      } else if (step.doneMessage) {
+        setStatus(
+          "found",
+          el("span", { class: "done" }, "✓ "),
+          `${step.doneMessage} Press `,
+          el("strong", {}, finalLabel),
+          ".",
+        );
       } else {
         setStatus("look", "Have a look, then press ", el("strong", {}, finalLabel), ".");
       }
@@ -742,6 +853,7 @@
       el("div", { class: "scene" }, step.scene),
       el("h3", {}, step.title),
       el("p", {}, step.body),
+      step.links?.length ? el("div", { class: "row links" }, step.links.map(guideLink)) : "",
       status,
       details,
       el(
@@ -766,6 +878,11 @@
       ),
     );
     guide.setAttribute("data-guide-step", step.id);
+    if (announcedStep !== step.id) {
+      announcedStep = step.id;
+      guideAnnouncer.textContent = `Step ${index + 1} of ${steps.length}: ${step.title}`;
+    }
+    currentRefresh = refresh;
     refresh();
     if (focusedRole) {
       const target = guide.querySelector(`[data-guide-role="${focusedRole}"]`);
@@ -810,7 +927,9 @@
             )
           : null;
       frame.append(el("div", { class: "dock" }, overview, toggle, tourButton), sidebar, guide);
+      document.documentElement.setAttribute("data-solid-demo-dock", "");
       setSidebar(sidebarOpen);
+      watchPage();
       renderGuide();
     }
     const source = new EventSource("/__demo/events");

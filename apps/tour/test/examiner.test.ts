@@ -28,7 +28,7 @@ test("timing beats state each regulation's formulation, never an overstatement",
   expect(le?.rule).toContain("delivered or placed in the mail");
   expect(le?.rule).toContain("third business day");
   expect(le?.citation).toContain("1026.19(e)(1)(iii)");
-  expect(le?.notShown).toContain("Compliant delivery");
+  expect(le?.notShown).toMatch(/compliant delivery/iu);
 
   // Reg Z §1026.19(f)(1)(ii): the consumer must RECEIVE the CD three business days
   // before consummation — "receives" is the correct verb here.

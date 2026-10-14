@@ -56,10 +56,8 @@ export function VaultHome() {
           Alex&apos;s profile
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Read from the pod at <code className="break-all">{vault.connection.podBaseUrl}</code>
-          {vault.connection.kind === "remote"
-            ? ", on the local demo server."
-            : ", in this browser."}
+          Read from Alex&apos;s pod
+          {vault.connection.kind === "remote" ? " on the local demo server." : " in this browser."}
         </p>
         {profile === undefined ? (
           <p className="mt-3 text-sm text-muted-foreground">
@@ -73,8 +71,6 @@ export function VaultHome() {
             <dd className="m-0" data-profile-name="">
               {profile.name}
             </dd>
-            <dt className="font-medium text-muted-foreground">WebID</dt>
-            <dd className="m-0 break-all">{vault.connection.webId}</dd>
             <dt className="font-medium text-muted-foreground">Email</dt>
             <dd className="m-0">{profile.emails.join(", ")}</dd>
             {profile.telephone !== undefined && (
@@ -93,6 +89,15 @@ export function VaultHome() {
             </dd>
           </dl>
         )}
+        <details className="mt-2 text-muted-foreground text-xs">
+          <summary className="cursor-pointer">Technical details</summary>
+          <dl className="mt-1 grid gap-1 sm:grid-cols-[8rem_1fr]">
+            <dt className="font-medium">Pod address</dt>
+            <dd className="m-0 break-all">{vault.connection.podBaseUrl}</dd>
+            <dt className="font-medium">WebID</dt>
+            <dd className="m-0 break-all">{vault.connection.webId}</dd>
+          </dl>
+        </details>
       </section>
 
       <nav aria-label="Sections" className="mt-8">
@@ -100,18 +105,18 @@ export function VaultHome() {
           {[
             {
               href: "/credentials",
-              title: "Verification records",
-              body: "Signed income, asset and credit records.",
+              title: "Credentials",
+              body: "Income, asset and credit-score credentials, checked on view.",
             },
             {
               href: "/prequal",
               title: "Prequalify",
-              body: "Meet two lenders' criteria without sending exact figures.",
+              body: "Check two lenders' criteria using proofs.",
             },
             {
               href: "/grants",
               title: "Access permissions",
-              body: "Who can read the loan file.",
+              body: "Which organisations can read the loan file and closing record.",
             },
             {
               href: "/ledger",

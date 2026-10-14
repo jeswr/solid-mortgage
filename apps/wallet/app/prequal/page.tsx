@@ -17,14 +17,14 @@ export default function PrequalPage() {
   return (
     <main className="mx-auto w-full max-w-3xl px-6 py-12">
       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        Scene 2 · Prequalify without disclosing income or credit score
+        Scene 2 · Prequalification
       </p>
       <h1 className="mt-1 text-3xl font-semibold tracking-tight text-foreground">
         Check prequalification criteria
       </h1>
       <p className="mt-4 text-muted-foreground">
-        Check two lenders&apos; prequalification criteria without sending Alex&apos;s exact income
-        or credit score. The demo checks two criteria using proofs generated in this browser:
+        Check two lenders&apos; prequalification criteria using proofs derived from Alex&apos;s
+        credentials. The demo checks two criteria:
       </p>
       <ul className="mt-2 list-disc pl-5 text-muted-foreground">
         <li>
@@ -35,12 +35,12 @@ export default function PrequalPage() {
         </li>
       </ul>
 
-      <PrequalClient />
-
       <p className="mt-6 rounded-lg border border-border bg-card p-4 text-sm" data-zk-limitation="">
-        <strong>Limitation:</strong> research-grade cryptography, not independently audited. Encoded
-        values may let a lender guess the underlying figures.
+        <strong>Prototype limitation:</strong> encoded values may reveal the underlying figures
+        through guessing. The cryptography has not been independently audited.
       </p>
+
+      <PrequalClient />
 
       <details className="mt-6 rounded-lg border border-border bg-card" data-zk-technical="">
         <summary className="cursor-pointer px-4 py-3 font-medium text-card-foreground text-sm">

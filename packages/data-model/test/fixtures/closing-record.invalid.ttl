@@ -23,7 +23,7 @@
   ] ;
   fibo-loan-ln-ln:hasPrincipalAmount [
     a schema:MonetaryAmount ;
-    schema:value 335000.00 ;
+    schema:value 340000.00 ;
     schema:currency "USD"
   ] ;
   schema:interestRate "6.125 percent" ;

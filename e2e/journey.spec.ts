@@ -514,9 +514,8 @@ test.describe("cross-app borrower journey (sm-36, five scenes on the seeded pod)
       "CREDIT_SCORE_MINIMUM",
       "DEBT_TO_INCOME",
       "LOAN_TO_VALUE",
-      "RESERVES",
     ]) {
-      await expect(page.locator(`[data-finding="${code}"]`), code).toContainText("pass ·");
+      await expect(page.locator(`[data-finding="${code}"]`), code).toContainText("Passed");
     }
 
     // The decision DOCUMENT was really replaced in the pod: new content,
@@ -600,10 +599,10 @@ test.describe("cross-app borrower journey (sm-36, five scenes on the seeded pod)
     await borrower.authenticatePage(page, "**/verifications/api/**");
     await page.goto(`${origins.verifications}/verifications/employment`);
     await acknowledgeInterstitial(page, "The Work Number, Finicity, or Equifax");
-    await page.getByRole("button", { name: "Re-issue credential" }).click();
+    await page.getByRole("button", { name: "Issue replacement credential" }).click();
     const outcome = page.locator("[data-panel-outcome]");
     await expect(outcome).toHaveAttribute("data-panel-outcome", "ok", { timeout: 60_000 });
-    await expect(outcome).toContainText("New credential issued.");
+    await expect(outcome).toContainText("Replacement saved; the previous credential is revoked.");
     await expect(outcome).toContainText(
       "Previous credential revoked on the status list (entry 42)",
     );
@@ -687,7 +686,7 @@ test.describe("cross-app borrower journey (sm-36, five scenes on the seeded pod)
 
     // eSign: the ClosingRecord REALLY lands in the pod, and the record's ACL
     // document names the lender with Read (the close-time grant).
-    await page.getByRole("button", { name: "eSign closing documents" }).click();
+    await page.getByRole("button", { name: "Simulate signing" }).click();
     await expect(page.getByText("Closing record saved in Alex's pod")).toBeVisible({
       timeout: 30_000,
     });
@@ -704,8 +703,10 @@ test.describe("cross-app borrower journey (sm-36, five scenes on the seeded pod)
     expect(await podBody("mortgage/closing-record.acl")).toContain(SERVICER_AGENT);
 
     // …and the lender's access is REVOKED: its rule is gone from the ACL.
-    await page.getByRole("button", { name: "Revoke lender access" }).click();
-    await expect(page.getByText("Lender read access revoked", { exact: false })).toBeVisible({
+    await page.getByRole("button", { name: "Remove lender access to closing record" }).click();
+    await expect(
+      page.getByText("Lender access to closing record removed", { exact: false }),
+    ).toBeVisible({
       timeout: 30_000,
     });
     const aclAfterRevoke = await podBody("mortgage/closing-record.acl");

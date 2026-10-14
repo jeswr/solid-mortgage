@@ -1,4 +1,7 @@
 export {
+  ALEX_CLOSING_COST_ITEMS,
+  type ClosingCostItem,
+  closingCostTotalUsd,
   PERSONA_VALUES,
   type Persona,
   type PersonaFactoryOptions,

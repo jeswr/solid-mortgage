@@ -4,7 +4,7 @@ import { site } from "./site";
 const scenes = [
   {
     href: "/prequal",
-    title: "Prequalify without disclosing income or credit score",
+    title: "Check prequalification criteria",
     scene: "Scene 2",
     body: "Alex sends threshold proofs, not the exact figures.",
   },
@@ -16,14 +16,14 @@ const scenes = [
   },
   {
     href: "/freshness",
-    title: "Re-verify employment before closing",
+    title: "Check the employment credential",
     scene: "Scene 4",
-    body: "The lender checks that the employment credential is still valid.",
+    body: "The lender checks the credential's signature, status and dates before closing.",
   },
   {
     href: "/pipeline",
     title: "Loan pipeline",
-    scene: "Lender view",
+    scene: "Lender underwriter view",
     body: "Applications, conditions and status.",
   },
 ] as const;
@@ -38,8 +38,8 @@ export default function Home() {
         {site.appName}
       </h1>
       <p className="mt-5 max-w-2xl text-lg text-muted-foreground">
-        Lender, modelled on {site.organization}. Alex prequalifies, applies, and is re-verified
-        before closing.
+        Lender, modelled on {site.organization}. Alex prequalifies, applies, and the lender checks
+        the employment credential before closing.
       </p>
       <ul className="mt-10 grid list-none gap-4 p-0 sm:grid-cols-2">
         {scenes.map((item) => (

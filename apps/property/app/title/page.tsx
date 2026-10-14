@@ -30,11 +30,10 @@ export default function TitlePage() {
       <main className="mx-auto w-full max-w-3xl px-6 py-12">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Title</p>
         <h1 className="mt-1 text-3xl font-semibold tracking-tight text-foreground">
-          Review the title search result
+          Review the simulated title search result
         </h1>
         <p className="mt-4 text-muted-foreground">
-          This simulated record shows the title search outcome. It is not a title commitment or
-          insurance policy.
+          Simulated title search result. It is not a title commitment or policy.
         </p>
         <div className="mt-6">
           <IssueFlow
@@ -62,7 +61,9 @@ export default function TitlePage() {
               <ul className="list-disc pl-5">
                 <li>The property and the search outcome.</li>
                 <li>The organisation&apos;s involvement: this is not {titleBrand.organization}.</li>
-                <li>Sign-in is simulated here, so the record above is a preview.</li>
+                <li>
+                  When issuance is unavailable in this mode, the record above stays a preview.
+                </li>
               </ul>
             }
           />

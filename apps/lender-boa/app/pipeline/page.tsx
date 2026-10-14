@@ -19,15 +19,19 @@ export default function PipelinePage() {
   return (
     <main className="mx-auto w-full max-w-5xl px-6 py-12">
       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        Lender view
+        Viewing as: lender underwriter
       </p>
       <h1 className="mt-1 text-3xl font-semibold tracking-tight text-foreground">Loan pipeline</h1>
       <p className="mt-4 max-w-2xl text-muted-foreground">
-        The lender reads each application from the borrower's pod, with the borrower's permission.
+        The lender reads each application from the borrower's pod.
       </p>
       <p className="mt-2 max-w-2xl text-muted-foreground text-sm">
-        The automated underwriting system (AUS) returns a recommendation. The underwriter approves
-        with conditions, then marks the loan clear to close when the conditions are met.
+        Each file shows three separate states: the automated underwriting system (AUS)
+        recommendation, the underwriter decision, and the closing status.
+      </p>
+      <p className="mt-2 max-w-2xl text-muted-foreground text-sm">
+        Permission changes are saved. This local demo makes requests as Alex; it does not enforce
+        separate organisation permissions.
       </p>
       <section aria-labelledby="queue-heading" className="mt-8">
         <h2 className="font-semibold text-foreground text-xl" id="queue-heading">
@@ -65,7 +69,7 @@ export default function PipelinePage() {
                   <IllustrativeFigure>{formatUsd(persona.requestedLoanUsd)}</IllustrativeFigure>
                 </td>
                 <td className="py-3 pr-4 text-muted-foreground">
-                  Debts {formatUsd(persona.totalMonthlyDebtUsd)} and income{" "}
+                  Debts {formatUsd(persona.totalMonthlyDebtUsd)} a month and income{" "}
                   {formatUsd(persona.monthlyGrossIncomeUsd)} a month, from credentials
                 </td>
                 <td className="py-3 font-semibold">

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { readDemoLedger } from "@/lib/grants/client";
 import type { ConsentReceiptView } from "@/lib/grants/engine";
 import { useVault } from "@/lib/pod/vault-context";
+import { grantedAccessPhrase, partyForWebId, shortPartyLabel } from "./party-labels";
 
 export function LedgerView() {
   const vault = useVault();
@@ -63,22 +64,32 @@ export function LedgerView() {
   }
   return (
     <div className="mt-6 grid gap-3" data-ledger-list="">
-      {receipts.map((receipt) => (
-        <div data-receipt-provenance={receipt.provenance} key={receipt.iri}>
-          <ReceiptCard
-            action={receipt.action}
-            actor={receipt.actor}
-            issuedAt={receipt.issuedAt}
-            recipient={receipt.recipient}
-            resource={receipt.resource}
-          />
-          {receipt.provenance === "external" && (
-            <p className="mt-1 text-amber-700 text-xs" data-receipt-external="">
-              Written by another app. Data Vault has not verified it.
-            </p>
-          )}
-        </div>
-      ))}
+      {receipts.map((receipt) => {
+        const party = partyForWebId(receipt.recipient);
+        const external = receipt.provenance === "external";
+        return (
+          <div data-receipt-provenance={receipt.provenance} key={receipt.iri}>
+            <ReceiptCard
+              accessLabel={
+                party !== undefined && !external
+                  ? `${grantedAccessPhrase(party.id)} access`
+                  : "access"
+              }
+              action={receipt.action}
+              actor={receipt.actor}
+              iri={receipt.iri}
+              issuedAt={receipt.issuedAt}
+              organisationLabel={party === undefined ? undefined : shortPartyLabel(party.label)}
+              recipient={receipt.recipient}
+              // Wallet records come from Data Vault's protected store; root-level
+              // records were written by another app and are not verified here.
+              recordedBy={external ? "Another app" : "Data Vault"}
+              resource={receipt.resource}
+              unverifiedSource={external}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 }
