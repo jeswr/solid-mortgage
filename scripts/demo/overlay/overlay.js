@@ -34,7 +34,12 @@
   // Hand-off between apps: each app is its own origin (own storage), so the guided step
   // and the panel state travel in the URL and are stripped again on arrival.
   const params = new URLSearchParams(location.search);
-  if (params.get("guided") === "1") write("guided", { active: true, index: 0 });
+  // Starting the tour puts the shared demo data back to its start (rate-limited server-side).
+  const resetForTour = () => fetch("/__demo/reset?reason=tour", { method: "POST" }).catch(() => {});
+  if (params.get("guided") === "1") {
+    write("guided", { active: true, index: 0 });
+    void resetForTour();
+  }
   const handedStep = Number.parseInt(params.get("demo-step") ?? "", 10);
   if (Number.isInteger(handedStep) && handedStep >= 0) {
     write("guided", { active: true, index: handedStep });
@@ -563,8 +568,9 @@
     else renderGuide();
   }
 
-  function startGuided(index) {
+  async function startGuided(index) {
     tourButton.hidden = true;
+    if (index === 0) await resetForTour();
     go(index);
   }
 

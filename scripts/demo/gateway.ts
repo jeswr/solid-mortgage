@@ -45,6 +45,17 @@ export interface GatewayOptions {
   readonly persona: { readonly name: string; readonly webid: string; readonly podBase: string };
   /** Re-seed the pod to its starting state. */
   readonly reset: () => Promise<void>;
+  /** Interface the listeners bind (`127.0.0.1` locally, `0.0.0.0` on a server). */
+  readonly bindHost?: string;
+  /**
+   * Hosted mode: the public origin of each app (`tour` or a zone prefix), e.g. its Vercel
+   * domain proxying to this server. Defaults to `http://127.0.0.1:<port>`.
+   */
+  readonly publicOrigins?: Readonly<Record<string, string>>;
+  /** Trust `X-Forwarded-Host`/`-Proto` from the fronting proxy (hosted mode only). */
+  readonly trustProxy?: boolean;
+  /** Reset the shared demo data after this long without traffic (ms; hosted mode). */
+  readonly idleResetMs?: number;
 }
 
 export interface Gateway {
@@ -99,8 +110,9 @@ export async function startGateway(options: GatewayOptions): Promise<Gateway> {
   const signedInApps = new Set<string>();
   const sseClients = new Set<import("node:http").ServerResponse>();
 
+  const frameOf = (event: ActivityEvent) => `id: ${event.id}\ndata: ${JSON.stringify(event)}\n\n`;
   const broadcast = (event: ActivityEvent) => {
-    const frame = `data: ${JSON.stringify(event)}\n\n`;
+    const frame = frameOf(event);
     for (const client of sseClients) client.write(frame);
   };
   log.on("event", broadcast);
@@ -111,9 +123,37 @@ export async function startGateway(options: GatewayOptions): Promise<Gateway> {
   const zoneFor = (path: string) =>
     options.zones.find((zone) => path === zone.prefix || path.startsWith(`${zone.prefix}/`));
 
-  const originOf = (port: number) => `http://127.0.0.1:${port}`;
-  const origins: Record<string, string> = { tour: originOf(options.port) };
-  for (const zone of options.zones) origins[zone.prefix] = originOf(zone.publicPort);
+  const originOf = (key: string, port: number) =>
+    options.publicOrigins?.[key]?.replace(/\/+$/, "") ?? `http://127.0.0.1:${port}`;
+  const origins: Record<string, string> = { tour: originOf("tour", options.port) };
+  for (const zone of options.zones) origins[zone.prefix] = originOf(zone.prefix, zone.publicPort);
+
+  // Shared demo data: reset on request (rate-limited) and, when hosted, after idle time.
+  let lastTraffic = Date.now();
+  let dirty = false;
+  let lastReset = 0;
+  let resetting: Promise<void> | undefined;
+  const resetData = async (force = false): Promise<void> => {
+    if (resetting !== undefined) return resetting;
+    if (!force && Date.now() - lastReset < 15_000) return;
+    resetting = options
+      .reset()
+      .then(() => {
+        lastReset = Date.now();
+        dirty = false;
+        signedInApps.clear();
+      })
+      .finally(() => {
+        resetting = undefined;
+      });
+    return resetting;
+  };
+  if (options.idleResetMs !== undefined) {
+    const idleMs = options.idleResetMs;
+    setInterval(() => {
+      if (dirty && Date.now() - lastTraffic > idleMs) void resetData(true);
+    }, 60_000).unref();
+  }
 
   const overlayConfig = () =>
     JSON.stringify({
@@ -156,6 +196,11 @@ export async function startGateway(options: GatewayOptions): Promise<Gateway> {
           connection: "keep-alive",
         });
         response.write(": connected\n\n");
+        // Replay what a reconnecting client missed (proxies may cut long-lived streams).
+        const lastId = Number(request.headers["last-event-id"]);
+        if (Number.isFinite(lastId)) {
+          for (const event of log.all()) if (event.id > lastId) response.write(frameOf(event));
+        }
         sseClients.add(response);
         const ping = setInterval(() => response.write(": ping\n\n"), 15_000);
         request.on("close", () => {
@@ -201,8 +246,7 @@ export async function startGateway(options: GatewayOptions): Promise<Gateway> {
         if (request.headers["sec-fetch-site"] === "cross-site") {
           return send(403, "text/plain", "same-site requests only");
         }
-        await options.reset();
-        signedInApps.clear();
+        await resetData();
         return send(200, "application/json", '{"ok":true}');
       }
       default:
@@ -213,8 +257,20 @@ export async function startGateway(options: GatewayOptions): Promise<Gateway> {
   const handle =
     (ownKey: string, ownPort: number) =>
     async (request: IncomingMessage, response: import("node:http").ServerResponse) => {
-      const host = request.headers.host ?? `127.0.0.1:${ownPort}`;
-      const url = new URL(request.url ?? "/", `http://${host}`);
+      const forwardedHost = options.trustProxy
+        ? String(request.headers["x-forwarded-host"] ?? "")
+            .split(",")[0]
+            ?.trim()
+        : undefined;
+      const forwardedProto = options.trustProxy
+        ? String(request.headers["x-forwarded-proto"] ?? "")
+            .split(",")[0]
+            ?.trim()
+        : undefined;
+      const host = forwardedHost || request.headers.host || `127.0.0.1:${ownPort}`;
+      const proto = forwardedProto === "https" ? "https" : "http";
+      const url = new URL(request.url ?? "/", `${proto}://${host}`);
+      lastTraffic = Date.now();
       if (url.pathname.startsWith("/__demo/")) {
         try {
           await handleDemoRoute(request, response, url.pathname);
@@ -251,7 +307,7 @@ export async function startGateway(options: GatewayOptions): Promise<Gateway> {
       const headers: Record<string, string | string[] | undefined> = {
         ...request.headers,
         "x-forwarded-host": host,
-        "x-forwarded-proto": "http",
+        "x-forwarded-proto": proto,
       };
       const wantsHtml = method === "GET" && (request.headers.accept ?? "").includes("text/html");
       if (wantsHtml) headers["accept-encoding"] = "identity";
@@ -274,6 +330,7 @@ export async function startGateway(options: GatewayOptions): Promise<Gateway> {
 
       const body = method === "GET" || method === "HEAD" ? undefined : await readBody(request);
       if (isApi) inflight.set(appName, (inflight.get(appName) ?? 0) + 1);
+      if (isApi && method !== "GET") dirty = true;
       const done = () => {
         if (!isApi) return;
         const left = (inflight.get(appName) ?? 1) - 1;
@@ -323,7 +380,7 @@ export async function startGateway(options: GatewayOptions): Promise<Gateway> {
       const server = createServer(handle(key, port));
       await new Promise<void>((resolve, reject) => {
         server.once("error", reject);
-        server.listen(port, "127.0.0.1", resolve);
+        server.listen(port, options.bindHost ?? "127.0.0.1", resolve);
       });
       return server;
     }),

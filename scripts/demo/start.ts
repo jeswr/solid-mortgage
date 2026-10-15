@@ -38,6 +38,20 @@ const host = "127.0.0.1";
 const gatewayPort = Number(process.env.DEMO_PORT ?? 4400);
 
 /**
+ * Hosted mode (a server behind public URLs, e.g. Vercel projects proxying to it):
+ * - DEMO_BIND_HOST: interface for the public listeners (default 127.0.0.1);
+ * - DEMO_PUBLIC_ORIGINS: JSON map of public origins — `tour`, each zone prefix
+ *   (`/wallet`, …) and `pod` — which then appear in every link, redirect and pod IRI;
+ * - DEMO_POD_PORT: fixed port for the pod (default: any free port);
+ * - DEMO_IDLE_RESET_MINUTES: reset the shared demo data after this long without traffic.
+ */
+const bindHost = process.env.DEMO_BIND_HOST ?? host;
+const publicOrigins = process.env.DEMO_PUBLIC_ORIGINS
+  ? (JSON.parse(process.env.DEMO_PUBLIC_ORIGINS) as Record<string, string>)
+  : undefined;
+const hosted = publicOrigins !== undefined;
+
+/**
  * The grantable parties' WebIDs (RFC 2606 `.example`: ACL agents, never dereferenced) —
  * the same IRIs the Data Vault grants to (`apps/wallet/lib/grants/client.ts`).
  */
@@ -161,9 +175,11 @@ async function main(): Promise<void> {
   } as const;
 
   // ── The borrower's pod, behind the activity recorder ─────────────────────────
-  const recorderPort = await freePort();
+  const recorderPort = process.env.DEMO_POD_PORT
+    ? Number(process.env.DEMO_POD_PORT)
+    : await freePort();
   const podPort = await freePort();
-  const podOrigin = `http://${host}:${recorderPort}`;
+  const podOrigin = publicOrigins?.pod?.replace(/\/+$/, "") ?? `http://${host}:${recorderPort}`;
   const podBase = `${podOrigin}/`;
   const { startSolidServer } = (await import(
     createRequire(resolve(root, "packages/solid-kit/package.json")).resolve("@jeswr/solid-server")
@@ -193,6 +209,7 @@ async function main(): Promise<void> {
   const browserOrigins = new Map<string, string>();
   const recorder = await startPodRecorder({
     listenPort: recorderPort,
+    bindHost,
     podPort,
     log,
     directory,
@@ -369,17 +386,22 @@ async function main(): Promise<void> {
       port: await startApp(spec.appName, spec.dir, `${spec.prefix}/api/health`, spec.env),
     })),
   );
-  const gatewayOrigin = `http://${host}:${gatewayPort}`;
+  const localGateway = `http://${host}:${gatewayPort}`;
+  const gatewayOrigin = publicOrigins?.tour?.replace(/\/+$/, "") ?? localGateway;
   browserOrigins.set(gatewayOrigin, "Overview");
-  for (const zone of zones) browserOrigins.set(`http://${host}:${zone.publicPort}`, zone.appName);
+  for (const zone of zones) {
+    const origin =
+      publicOrigins?.[zone.prefix]?.replace(/\/+$/, "") ?? `http://${host}:${zone.publicPort}`;
+    browserOrigins.set(origin, zone.appName);
+  }
   const zoneEnv: Record<string, string> = {
-    MORTGAGE_WALLET_ZONE_URL: gatewayOrigin,
-    MORTGAGE_VERIFICATIONS_ZONE_URL: gatewayOrigin,
-    MORTGAGE_PRIMARY_LENDER_ZONE_URL: gatewayOrigin,
-    MORTGAGE_COMPARISON_LENDER_ZONE_URL: gatewayOrigin,
-    MORTGAGE_UNDERWRITING_ZONE_URL: gatewayOrigin,
-    MORTGAGE_PROPERTY_ZONE_URL: gatewayOrigin,
-    MORTGAGE_CLOSING_ZONE_URL: gatewayOrigin,
+    MORTGAGE_WALLET_ZONE_URL: localGateway,
+    MORTGAGE_VERIFICATIONS_ZONE_URL: localGateway,
+    MORTGAGE_PRIMARY_LENDER_ZONE_URL: localGateway,
+    MORTGAGE_COMPARISON_LENDER_ZONE_URL: localGateway,
+    MORTGAGE_UNDERWRITING_ZONE_URL: localGateway,
+    MORTGAGE_PROPERTY_ZONE_URL: localGateway,
+    MORTGAGE_CLOSING_ZONE_URL: localGateway,
   };
   const tourPort = await startApp("Tour", "apps/tour", "/api/health", zoneEnv);
 
@@ -391,6 +413,9 @@ async function main(): Promise<void> {
     borrowerHeaders: (method, htu) => borrowerIssuer.authHeaders(method, htu),
     persona: { name: "Alex Rivera", webid: borrowerIssuer.webid, podBase },
     reset,
+    bindHost,
+    ...(publicOrigins !== undefined ? { publicOrigins, trustProxy: true } : {}),
+    ...(hosted ? { idleResetMs: Number(process.env.DEMO_IDLE_RESET_MINUTES ?? 30) * 60_000 } : {}),
   });
 
   console.log("");
@@ -399,7 +424,7 @@ async function main(): Promise<void> {
   console.log(`  All apps:     ${gatewayOrigin}/apps`);
   for (const zone of zones) {
     console.log(
-      `  ${`${zone.appName}:`.padEnd(29)} http://${host}:${zone.publicPort}${zone.prefix}`,
+      `  ${`${zone.appName}:`.padEnd(29)} ${gatewayRef.origins[zone.prefix]}${zone.prefix}`,
     );
   }
   console.log(`  Pod activity: ${gatewayOrigin}/__demo/activity`);

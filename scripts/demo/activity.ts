@@ -213,6 +213,8 @@ const modeText = (modes: readonly string[]) =>
 export interface PodRecorderOptions {
   /** Port the pod proxy listens on (the pod's public `baseUrl` origin). */
   readonly listenPort: number;
+  /** Interface to listen on (default 127.0.0.1). */
+  readonly bindHost?: string;
   /** Port the real (in-memory) pod listens on. */
   readonly podPort: number;
   readonly log: ActivityLog;
@@ -412,7 +414,7 @@ export async function startPodRecorder(options: PodRecorderOptions): Promise<Ser
 
   await new Promise<void>((resolve, reject) => {
     server.once("error", reject);
-    server.listen(options.listenPort, "127.0.0.1", resolve);
+    server.listen(options.listenPort, options.bindHost ?? "127.0.0.1", resolve);
   });
   return server;
 }

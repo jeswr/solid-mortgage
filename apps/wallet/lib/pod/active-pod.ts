@@ -3,8 +3,8 @@
  * the app runs under the local demo server (`pnpm demo`) — that server's shared seeded
  * pod, so the vault shows the same data every other app reads and writes.
  *
- * Discovery is loopback-only: on any other host the wallet never asks, and behaves
- * exactly as the deployed Mode-1 demo.
+ * Discovery asks the demo server's own `/__demo/config.json`: a plain deployment of the
+ * wallet has no such route (404), and then behaves exactly as the Mode-1 demo.
  */
 import { WALLET_POD_BASE } from "./seed";
 
@@ -25,11 +25,9 @@ export interface SharedDemoPod {
   readonly name: string;
 }
 
-const LOOPBACK_HOSTS = new Set(["127.0.0.1", "localhost", "[::1]"]);
-
 /** The local demo server's shared pod, if this page is served by one. */
 export async function discoverSharedDemoPod(): Promise<SharedDemoPod | undefined> {
-  if (typeof location === "undefined" || !LOOPBACK_HOSTS.has(location.hostname)) return undefined;
+  if (typeof location === "undefined") return undefined;
   try {
     const response = await fetch("/__demo/config.json", { cache: "no-store" });
     if (!response.ok) return undefined;
