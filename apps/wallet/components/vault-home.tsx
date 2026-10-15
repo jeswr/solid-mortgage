@@ -6,9 +6,8 @@ import { type BorrowerProfileView, readBorrowerProfile } from "@/lib/pod/credent
 import { useVault } from "@/lib/pod/vault-context";
 
 /**
- * The vault overview: pod boot state, the persona profile READ FROM THE POD
- * (not a hardcoded object — scene 1's "the data lives in the pod" beat), and
- * the section launcher.
+ * The Data Vault overview: pod boot state, Alex's profile READ FROM THE POD
+ * (not a hardcoded object), and the section launcher.
  */
 export function VaultHome() {
   const vault = useVault();
@@ -34,7 +33,7 @@ export function VaultHome() {
   if (vault.status === "booting") {
     return (
       <p className="mt-8 rounded-lg border border-border bg-card p-4 text-sm" data-vault-booting="">
-        Starting your in-browser pod (a real WASM Solid server) and seeding the demo persona…
+        Starting Alex&apos;s demo pod…
       </p>
     );
   }
@@ -45,7 +44,7 @@ export function VaultHome() {
         data-vault-boot-error=""
         role="alert"
       >
-        The in-browser pod failed to start: {vault.message}
+        The demo pod failed to start: {vault.message}
       </p>
     );
   }
@@ -54,16 +53,16 @@ export function VaultHome() {
     <div className="mt-8" data-vault-ready="">
       <section aria-labelledby="profile-heading">
         <h2 className="text-xl font-semibold text-foreground" id="profile-heading">
-          Borrower profile
+          Alex&apos;s profile
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Read live from <code className="break-all">{vault.connection.podBaseUrl}</code> — a pod
-          running entirely in this browser.
+          Read from Alex&apos;s pod
+          {vault.connection.kind === "remote" ? " on the local demo server." : " in this browser."}
         </p>
         {profile === undefined ? (
           <p className="mt-3 text-sm text-muted-foreground">
             {profileError === undefined
-              ? "Reading the profile document from the pod…"
+              ? "Reading the profile…"
               : `Could not read the profile: ${profileError}`}
           </p>
         ) : (
@@ -72,8 +71,6 @@ export function VaultHome() {
             <dd className="m-0" data-profile-name="">
               {profile.name}
             </dd>
-            <dt className="font-medium text-muted-foreground">WebID</dt>
-            <dd className="m-0 break-all">{vault.connection.webId}</dd>
             <dt className="font-medium text-muted-foreground">Email</dt>
             <dd className="m-0">{profile.emails.join(", ")}</dd>
             {profile.telephone !== undefined && (
@@ -92,30 +89,39 @@ export function VaultHome() {
             </dd>
           </dl>
         )}
+        <details className="mt-2 text-muted-foreground text-xs">
+          <summary className="cursor-pointer">Technical details</summary>
+          <dl className="mt-1 grid gap-1 sm:grid-cols-[8rem_1fr]">
+            <dt className="font-medium">Pod address</dt>
+            <dd className="m-0 break-all">{vault.connection.podBaseUrl}</dd>
+            <dt className="font-medium">WebID</dt>
+            <dd className="m-0 break-all">{vault.connection.webId}</dd>
+          </dl>
+        </details>
       </section>
 
-      <nav aria-label="Vault sections" className="mt-8">
+      <nav aria-label="Sections" className="mt-8">
         <ul className="grid list-none gap-3 p-0 sm:grid-cols-2">
           {[
             {
               href: "/credentials",
-              title: "Credential wallet",
-              body: "Your verifications as reusable, signed credentials — verified on view.",
+              title: "Credentials",
+              body: "Income, asset and credit-score credentials, checked on view.",
             },
             {
               href: "/prequal",
-              title: "Shop without undressing",
-              body: "Prove income and score thresholds to two lenders — revealing neither value.",
+              title: "Prequalify",
+              body: "Check two lenders' criteria using proofs.",
             },
             {
               href: "/grants",
-              title: "Access grants",
-              body: "Who can read what, granted and revoked by you — enforced by your pod.",
+              title: "Access permissions",
+              body: "Which organisations can read the loan file and closing record.",
             },
             {
               href: "/ledger",
-              title: "Consent-receipt ledger",
-              body: "Every grant and revocation, receipted. The scene-5 payoff.",
+              title: "Consent receipts",
+              body: "Each access granted or revoked.",
             },
           ].map((item) => (
             <li className="rounded-lg border border-border bg-card p-4" key={item.href}>

@@ -123,7 +123,12 @@ test.describe("property (sm-33)", () => {
     expect(response?.status()).toBe(200);
     // The appraised value is disclosed in the preview.
     await expect(page.locator("[data-appraised-value]").first()).toBeVisible();
-    await expect(page.getByText("never proved in zero-knowledge", { exact: false })).toBeVisible();
+    await expect(page.locator("[data-issue-hint]")).toContainText(
+      "Preview the simulated appraisal. Select ‘Issue demo credential’ to save it.",
+    );
+    await expect(page.locator("[data-credential-preview]").first()).toContainText(
+      "Preview — not issued.",
+    );
     await expect(page.locator("[data-consistency-check]")).toContainText(
       "covers the requested loan",
     );
@@ -153,13 +158,14 @@ test.describe("property (sm-33)", () => {
   }) => {
     await authenticatePage(page);
     await page.goto(`${appOrigin}/property/appraisal`);
-    await page.getByRole("button", { name: "Issue into my pod (demo)" }).click();
+    await page.getByRole("button", { name: "Issue demo credential", exact: true }).click();
     const issued = page.locator("[data-issued-credential]");
     await expect(issued).toBeVisible();
     await expect(issued).toHaveAttribute(
       "data-credential-iri",
       `${podBase}mortgage/credentials/appraisal`,
     );
+    await expect(issued).toContainText("Appraisal credential saved.");
     await expect(issued).toContainText("illustrative figure, not an offer");
     // The signed credential now exists in the token-derived pod.
     const written = await fetch(`${podBase}mortgage/credentials/appraisal`, {
@@ -173,7 +179,7 @@ test.describe("property (sm-33)", () => {
   }) => {
     await authenticatePage(page);
     await page.goto(`${appOrigin}/property/title`);
-    await page.getByRole("button", { name: "Issue into my pod (demo)" }).click();
+    await page.getByRole("button", { name: "Issue demo credential", exact: true }).click();
     const issued = page.locator("[data-issued-credential]");
     await expect(issued).toBeVisible();
     await expect(issued).toHaveAttribute(

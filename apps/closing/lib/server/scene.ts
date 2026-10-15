@@ -53,10 +53,12 @@
  */
 import { serialize } from "@jeswr/rdf-serialize";
 import {
+  ALEX_CLOSING_COST_ITEMS,
   buildClosingRecord,
   buildConsentReceipt,
   ClosingRecord,
   ConsentReceipt,
+  closingCostTotalUsd,
   DPV,
   resourceToTurtle,
   validate,
@@ -370,14 +372,15 @@ async function executeClosingSerialized(
         postalCode: "43230",
       },
     },
-    principalUsd: 335000,
-    closingCostsUsd: 11600,
+    principalUsd: 340000,
+    // Illustrative itemised demo schedule — never the cost-to-originate statistic.
+    closingCostsUsd: closingCostTotalUsd(ALEX_CLOSING_COST_ITEMS),
     interestRatePercent: 6.125,
     loanTermMonths: 360,
     closingDate: now,
     recordingReference: `SIMULATED-FRANKLIN-${now.toISOString().slice(0, 10)}`,
     eNoteReference,
-    servicerName: "Truist-modelled mortgage servicer",
+    servicerName: "Demo servicer",
   });
   await writePodTurtle(iri, await resourceToTurtle(record), {
     etag: undefined,

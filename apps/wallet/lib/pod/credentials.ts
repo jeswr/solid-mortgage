@@ -24,7 +24,8 @@ import type { CredentialStatus } from "@mortgage/ui";
 import { type VcKitVerificationError, verifyCredential } from "@mortgage/vc-kit";
 import type { DatasetCore } from "@rdfjs/types";
 import { DataFactory } from "n3";
-import { ANCHOR_POD_PATHS, CREDENTIAL_POD_PATHS, podIssuerIris, WALLET_POD_BASE } from "./seed";
+import { activePodBase } from "./active-pod";
+import { ANCHOR_POD_PATHS, CREDENTIAL_POD_PATHS, podIssuerIris } from "./seed";
 
 export interface WalletCredentialView {
   readonly id: keyof typeof CREDENTIAL_POD_PATHS;
@@ -53,12 +54,12 @@ const CREDENTIAL_DEFINITIONS: Record<
   income: {
     title: "Employment and income",
     kind: "employment-income-credential",
-    issuerLabel: "employment and income verifier",
+    issuerLabel: "employment verification provider",
   },
   assets: {
     title: "Assets",
     kind: "asset-credential",
-    issuerLabel: "depository institution",
+    issuerLabel: "asset verification provider",
   },
   credit: {
     title: "Credit score",
@@ -66,19 +67,19 @@ const CREDENTIAL_DEFINITIONS: Record<
     issuerLabel: "credit bureau",
   },
   appraisal: {
-    title: "Appraisal value",
+    title: "Appraisal",
     kind: "appraisal-credential",
     issuerLabel: "appraisal management company",
   },
   title: {
-    title: "Title clear",
+    title: "Title search result",
     kind: "title-clear-credential",
     issuerLabel: "title company",
   },
 };
 
 function iriOf(path: string): string {
-  return `${WALLET_POD_BASE.slice(0, -1)}${path}`;
+  return `${activePodBase().slice(0, -1)}${path}`;
 }
 
 async function readDataset(iri: string, podFetch: typeof fetch): Promise<DatasetCore | undefined> {
@@ -146,7 +147,7 @@ export async function listWalletCredentials(
       const result = await verifyCredential(dataset, {
         expectShape: definition.kind,
         now,
-        trustedIssuers: podIssuerIris(),
+        trustedIssuers: podIssuerIris(activePodBase()),
         webIdFetch: options.podFetch,
         statusFetch: options.podFetch,
       });
@@ -243,7 +244,7 @@ async function readAnchor(path: string, podFetch: typeof fetch): Promise<AnchorM
   const iri = iriOf(path);
   const [dataset, response] = await Promise.all([readDataset(iri, podFetch), podFetch(iri)]);
   if (dataset === undefined || !response.ok) {
-    throw new Error(`operand anchor is missing from the pod: ${iri}`);
+    throw new Error(`an issuer-signed value encoding is missing from the pod: ${iri}`);
   }
   const anchor = new ZkOperandAnchor(iri, dataset, DataFactory);
   const subject = anchor.credentialSubject;

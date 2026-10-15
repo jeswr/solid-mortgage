@@ -16,17 +16,24 @@ import {
 } from "../src/disclaimers.js";
 
 // These literal assertions pin the EXACT copy required by regn-optics.md §4 / decision 0002
-// (R1/R5/R6/R8). Do not weaken them; a copy change must be a deliberate decision.
+// (R1/R5/R6/R8), as shortened per astra-review-2 L1. Do not weaken them; a copy change must
+// be a deliberate decision.
 
-test("R1 banner copy v2 — desktop, modelled with role (regn-optics §4.1)", () => {
+test("R1 banner copy v3 — desktop, modelled with role (regn-optics §4.1)", () => {
   expect(bannerFullText({ organization: "Bank of America", role: "primary mortgage lender" })).toBe(
-    "Concept demo — this is not Bank of America. A research prototype by the EDMA Solid Community of Practice, modelled on the primary mortgage lender role. All data is simulated. Nothing here is an offer of credit.",
+    "Concept demo — this is not Bank of America. Modelled on the primary mortgage lender role. Not affiliated with, sponsored by or endorsed by Bank of America. Simulated data. Not an offer of credit.",
   );
 });
 
-test("R1 banner copy v2 — desktop, modelled without a role clause", () => {
+test("R1 banner copy v3 — desktop, modelled without a role clause", () => {
   expect(bannerFullText({ organization: "Verizon" })).toBe(
-    "Concept demo — this is not Verizon. A research prototype by the EDMA Solid Community of Practice. All data is simulated. Nothing here is an offer of credit.",
+    "Concept demo — this is not Verizon. Not affiliated with, sponsored by or endorsed by Verizon. Simulated data. Not an offer of credit.",
+  );
+});
+
+test("R1 banner copy v3 — several organisations are named once, then 'these organisations'", () => {
+  expect(bannerFullText({ organization: "Cotality and First American" })).toBe(
+    "Concept demo — this is not Cotality and First American. Not affiliated with, sponsored by or endorsed by these organisations. Simulated data. Not an offer of credit.",
   );
 });
 
@@ -38,7 +45,7 @@ test("R1 banner copy v2 — mobile-compressed variant", () => {
 
 test("R1 banner copy — own-branded (convener) variant drops the self-negation", () => {
   expect(bannerFullText({ organization: "EDMA Solid Community of Practice", variant: "own" })).toBe(
-    "Concept demo. A research prototype by the EDMA Solid Community of Practice. All data is simulated. Nothing here is an offer of credit.",
+    "Concept demo. A research prototype by the EDMA Solid Community of Practice. Simulated data. Not an offer of credit.",
   );
   expect(
     bannerCompactText({ organization: "EDMA Solid Community of Practice", variant: "own" }),
@@ -54,17 +61,26 @@ test("footer legal line (regn-optics §4.3)", () => {
   );
 });
 
-test("R8 interstitial copy v2 (regn-optics §4.2)", () => {
+test("R8 interstitial copy v3 (regn-optics §4.2, shortened per astra-review-2 L1)", () => {
   expect(INTERSTITIAL_HEADING).toBe("You're entering a concept demonstration");
   expect(INTERSTITIAL_CONTINUE_LABEL).toBe("I understand — enter the demo");
   expect(INTERSTITIAL_LEARN_MORE_LABEL).toBe("Learn more about the project");
   const paragraphs = interstitialParagraphs("Verizon").map(copyText);
   expect(paragraphs).toEqual([
-    "This site is a research prototype built by the EDMA Solid Community of Practice to show how a US mortgage journey could work on Solid personal data stores.",
-    "It is modelled on the role Verizon plays in that journey. It was not built by Verizon and is not affiliated with, sponsored by, or endorsed by Verizon. The Verizon name is used only to identify that market role.",
-    "Everything here is simulated. Rates, fees, credit decisions, documents, and personas are fictitious and illustrative. Nothing on this site is an offer or solicitation of credit or of any financial product or service.",
-    "Do not enter real personal or financial information. Use the demo personas provided.",
+    "This research prototype was built by the EDMA Solid Community of Practice to demonstrate a US mortgage journey using Solid personal data stores.",
+    "This app models the role Verizon plays in that journey. It was not built by Verizon and is not affiliated with, sponsored by or endorsed by Verizon.",
+    "All people, data, rates, fees, decisions and documents are simulated. This is not an offer or solicitation of credit or financial services.",
+    "Do not enter real personal or financial information. Use the supplied demo data.",
   ]);
+});
+
+test("R8 interstitial — several organisations are listed once, then 'these organisations'", () => {
+  const paragraph = copyText(
+    interstitialParagraphs("Wolters Kluwer (eOriginal) or Truist")[1] ?? [],
+  );
+  expect(paragraph).toBe(
+    "This app models the roles Wolters Kluwer (eOriginal) or Truist play in that journey. It was not built by these organisations and is not affiliated with, sponsored by or endorsed by any of them.",
+  );
 });
 
 test("R5 illustrative-figure tag (regn-optics §4.4)", () => {
@@ -113,7 +129,7 @@ test("R8 interstitial own variant (sm-90e): shared core copy + collective negati
   expect(own[3]).toBe(modelled[3]);
   // The negation paragraph negates the organisations named inside the demo, not the convener.
   expect(own[1]).toBe(
-    "The organisations named inside the demo illustrate market roles only. None of them built this demo, and none is affiliated with, sponsors, or endorses it.",
+    "Organisations named in this demo illustrate market roles only. None of them built it, and none is affiliated with, sponsors or endorses it.",
   );
   expect(own[1]).not.toContain("EDMA");
 });

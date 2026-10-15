@@ -23,17 +23,25 @@ export interface DemoPersona {
   monthlyDebtsUsd: number;
   /** Whole USD — verified asset balance for the Finicity-modelled attestation. */
   verifiedAssetsUsd: number;
+  /** Whole USD — the loan amount Alex applies for. */
+  requestedLoanUsd: number;
   employer: string;
 }
 
+/**
+ * Pinned to the values the verification providers issue (apps/verifications/lib/server/flows.ts,
+ * the vc-kit canonical demo claims), so the card matches the credentials on screen
+ * (astra-review-1 H11).
+ */
 export const demoPersona: DemoPersona = {
   creditScore: 742,
-  descriptor: "First-time homebuyer — fictional persona, all data simulated",
-  employer: "Meridian Logistics LLC (fictional employer)",
-  monthlyDebtsUsd: 1240,
-  monthlyGrossIncomeUsd: 8250,
+  descriptor: "First-time homebuyer. Fictional; all data simulated.",
+  employer: "Ridgeline Analytics LLC (fictional employer)",
+  monthlyDebtsUsd: 1180,
+  monthlyGrossIncomeUsd: 8500,
   name: "Alex Rivera",
-  verifiedAssetsUsd: 64500,
+  requestedLoanUsd: 340000,
+  verifiedAssetsUsd: 64000,
 };
 
 /** Scene-2 thresholds (decision 0005) — shown beside the values so the proof statement reads itself. */

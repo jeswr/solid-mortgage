@@ -1,6 +1,6 @@
 "use client";
 
-import { CredentialCard } from "@mortgage/ui";
+import { CredentialCard, type CredentialKind } from "@mortgage/ui";
 import { useEffect, useState } from "react";
 import {
   type ClosingRecordView,
@@ -16,7 +16,14 @@ function formatDate(date: Date | undefined): string | undefined {
   return date === undefined ? undefined : `${DATE_FORMAT.format(date)} UTC`;
 }
 
-/** The credential wallet: verify-on-view over the pod's five credentials. */
+/** `data-credential-kind` per wallet credential (the guide and e2e key off it). */
+const CARD_KIND: Partial<Record<WalletCredentialView["id"], CredentialKind>> = {
+  income: "employment",
+  assets: "assets",
+  credit: "credit",
+};
+
+/** Credentials: verify-on-view over the pod's five credentials. */
 export function CredentialList() {
   const vault = useVault();
   const [views, setViews] = useState<readonly WalletCredentialView[] | undefined>();
@@ -45,21 +52,21 @@ export function CredentialList() {
   if (vault.status === "error") {
     return (
       <p className="mt-6 text-sm text-muted-foreground" role="alert">
-        The in-browser pod is unavailable: {vault.message}
+        The demo pod is unavailable: {vault.message}
       </p>
     );
   }
   if (error !== undefined) {
     return (
       <p className="mt-6 text-sm text-muted-foreground" role="alert">
-        Could not read the credentials from the pod: {error}
+        Could not read the credentials: {error}
       </p>
     );
   }
   if (vault.status === "booting" || views === undefined) {
     return (
       <p className="mt-6 text-sm text-muted-foreground" data-credentials-loading="">
-        Reading and verifying the pod&apos;s credentials…
+        Checking Alex&apos;s credentials…
       </p>
     );
   }
@@ -70,6 +77,7 @@ export function CredentialList() {
         <CredentialCard
           issuer={view.issuerLabel}
           key={view.id}
+          kind={CARD_KIND[view.id]}
           status={view.status}
           title={view.title}
           validFrom={formatDate(view.validFrom)}
@@ -77,7 +85,7 @@ export function CredentialList() {
         >
           <p className="text-muted-foreground text-xs break-all">
             {view.verified
-              ? `Verified against ${view.issuer} — signature, status and shape all pass.`
+              ? "Checked: issuer, signature, dates and status."
               : (view.detail ??
                 view.errors.map((entry) => `${entry.code}: ${entry.message}`).join("; "))}
           </p>
@@ -92,15 +100,13 @@ export function CredentialList() {
         <article className="rounded-lg border border-border bg-card p-4" data-closing-record="">
           <p className="font-semibold text-card-foreground text-sm">Closing record</p>
           <p className="mt-0.5 text-muted-foreground text-sm">
-            Pod document (not a credential) — eNote {closing.eNoteReference}, closed{" "}
+            A pod document, not a credential. eNote reference {closing.eNoteReference}, closed{" "}
             {formatDate(closing.closingDate)}, servicer {closing.servicerName}.
           </p>
         </article>
       )}
       <p className="mt-2 text-muted-foreground text-xs">
-        The ZK-provable values (monthly income, credit score) are deliberately NOT displayed here —
-        scene 2 proves statements about them without disclosure. The loan documents live beside
-        these credentials in the pod&apos;s <code>/mortgage/</code> container.
+        Exact income and credit-score figures are not shown here.
       </p>
     </div>
   );

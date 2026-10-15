@@ -1,15 +1,18 @@
 "use client";
 
 import {
+  BrandMark,
+  brandCssProperties,
   ConceptDemoBanner,
   HonestyPanel,
   IllustrativeFigure,
   orgThemes,
   ReceiptCard,
-  themeCssProperties,
 } from "@mortgage/ui";
 import { useState } from "react";
 import { site } from "./site";
+
+const SERVICER_THEME = orgThemes["closing-servicing"];
 
 interface ReceiptView {
   iri: string;
@@ -60,7 +63,7 @@ export function ClosingExperience() {
         body: method === "POST" ? "{}" : undefined,
       });
       if (response.status === 401) {
-        // The only "no session" signal — the honest Mode-1 fallback (decision
+        // The only "no session" signal — the Mode-1 preview fallback (decision
         // 0015): requests carry the borrower's DPoP-bound session or nothing.
         setUnauthenticated(true);
         return;
@@ -86,17 +89,16 @@ export function ClosingExperience() {
     <main className="mx-auto w-full max-w-5xl px-6 py-10">
       <section aria-labelledby="scene-title">
         <p className="font-semibold text-muted-foreground text-sm uppercase tracking-[0.18em]">
-          Scene 5 · Close and stay in control
+          Alex Rivera · simulated closing
         </p>
         <h1
           className="mt-3 max-w-3xl font-semibold text-4xl tracking-tight sm:text-5xl"
           id="scene-title"
         >
-          Sign once. See every consent change.
+          Close the loan and transfer servicing
         </h1>
         <p className="mt-5 max-w-3xl text-lg text-muted-foreground">
-          Alex Rivera receives the Closing Disclosure, completes a simulated digital signing
-          ceremony, transfers servicing, and reads the application&apos;s consent-receipt ledger.
+          Alex simulates signing, then gives the new servicer access to the closing record.
         </p>
       </section>
 
@@ -105,8 +107,8 @@ export function ClosingExperience() {
           Closing Disclosure timeline
         </h2>
         <p className="mt-2 max-w-3xl text-muted-foreground">
-          Consumer receives the Closing Disclosure no later than three business days before
-          consummation (
+          Alex must receive the Closing Disclosure at least three business days before consummation
+          (
           <a
             className="underline underline-offset-4"
             href="https://www.consumerfinance.gov/rules-policy/regulations/1026/19/"
@@ -115,26 +117,9 @@ export function ClosingExperience() {
           </a>
           ).
         </p>
-        <ol className="mt-6 grid gap-4 md:grid-cols-3">
-          <li className="rounded-lg border border-border bg-card p-5">
-            <p className="font-medium text-sm">Tuesday · disclosure received</p>
-            <p className="mt-2 text-muted-foreground text-sm">
-              Borrower copy lands in Alex&apos;s pod.
-            </p>
-          </li>
-          <li className="rounded-lg border border-border bg-card p-5">
-            <p className="font-medium text-sm">Three-business-day review</p>
-            <p className="mt-2 text-muted-foreground text-sm">
-              The borrower keeps the review window.
-            </p>
-          </li>
-          <li className="rounded-lg border border-border bg-card p-5">
-            <p className="font-medium text-sm">Friday · consummation</p>
-            <p className="mt-2 text-muted-foreground text-sm">
-              The simulated eSign ceremony completes.
-            </p>
-          </li>
-        </ol>
+        <p className="mt-4 max-w-3xl font-medium text-sm" data-closing-timeline="">
+          Illustrative timeline: Closing Disclosure received Tuesday; consummation Friday.
+        </p>
       </section>
 
       <section
@@ -142,16 +127,20 @@ export function ClosingExperience() {
         className="mt-12 rounded-xl border border-border bg-card p-6"
       >
         <p className="text-muted-foreground text-sm">
-          eClose ceremony · modelled on {site.eCloseOrganization}
+          eClosing platform, modelled on {site.eCloseOrganization}
         </p>
         <h2 className="mt-2 font-semibold text-2xl" id="ceremony-title">
-          Review and eSign the closing package
+          Simulate closing
         </h2>
-        <dl className="mt-6 grid gap-4 sm:grid-cols-3">
+        <p className="mt-2 max-w-3xl text-muted-foreground">
+          Review the sample loan summary. This action saves a demo closing record; it does not
+          execute loan documents.
+        </p>
+        <dl className="mt-6 grid gap-4 sm:grid-cols-2">
           <div>
             <dt className="text-muted-foreground text-sm">Principal</dt>
             <dd className="mt-1 font-semibold">
-              <IllustrativeFigure>$335,000</IllustrativeFigure>
+              <IllustrativeFigure>$340,000</IllustrativeFigure>
             </dd>
           </div>
           <div>
@@ -160,13 +149,11 @@ export function ClosingExperience() {
               <IllustrativeFigure>6.125%</IllustrativeFigure>
             </dd>
           </div>
-          <div>
-            <dt className="text-muted-foreground text-sm">Closing costs</dt>
-            <dd className="mt-1 font-semibold">
-              <IllustrativeFigure>$11,600</IllustrativeFigure>
-            </dd>
-          </div>
         </dl>
+        <p className="mt-3 text-muted-foreground text-xs" data-quote-caution="">
+          Your actual rate, payment, and costs could be higher. Get an official Loan Estimate before
+          choosing a loan.
+        </p>
         <button
           className="mt-6 rounded-lg bg-primary px-5 py-3 font-semibold text-primary-foreground disabled:opacity-50"
           disabled={active !== undefined || closing !== undefined}
@@ -174,40 +161,45 @@ export function ClosingExperience() {
           type="button"
         >
           {active === "close"
-            ? "Writing closing record…"
+            ? "Saving closing record…"
             : closing
-              ? "Closing package signed"
-              : "eSign closing package"}
+              ? "Signing simulated"
+              : "Simulate signing"}
         </button>
         {closing !== undefined && (
           <div className="mt-5 rounded-lg bg-muted p-4 text-sm" role="status">
-            <p className="font-semibold">ClosingRecord written to Alex&apos;s pod</p>
+            <p className="font-semibold">
+              Simulated signing complete. Closing record saved in Alex&apos;s pod.
+            </p>
             <p className="mt-1 break-all text-muted-foreground">
               eNote reference: {closing.eNoteReference}
             </p>
             <p className="mt-1 text-muted-foreground">
-              The authoritative eNote remains in the simulated eVault; the pod stores only
-              Alex&apos;s borrower-facing record and reference.
+              Alex&apos;s pod holds the closing record and the eNote reference. The eNote&apos;s
+              Authoritative Copy stays in the eVault. Signing and eNote custody are simulated.
             </p>
           </div>
         )}
-        <p className="mt-5 text-muted-foreground text-sm">
-          Historical context only: eOriginal managed about 92% of MERS eRegistry eNotes through
-          January 2022; the share today is unverified.
-        </p>
       </section>
 
       <section
         aria-labelledby="transfer-title"
-        className="mt-12 overflow-hidden rounded-xl border border-border"
-        style={themeCssProperties(orgThemes["closing-servicing"])}
+        className="mt-12 scroll-mt-6 overflow-hidden rounded-xl border border-border"
+        id="closing-access"
+        style={{ ...brandCssProperties(SERVICER_THEME), fontFamily: "var(--font-brand)" }}
       >
-        <header className="bg-card p-6">
+        <header className="border-primary border-b-4 bg-card p-6">
+          {SERVICER_THEME.brand !== undefined && (
+            <p className="mb-3 flex items-center gap-3 font-bold text-lg">
+              <BrandMark brand={SERVICER_THEME.brand} />
+              {SERVICER_THEME.brand.productName}
+            </p>
+          )}
           <p className="text-muted-foreground text-sm">
-            Mortgage servicer · modelled on {site.servicerOrganization}
+            Mortgage servicer, modelled on {site.servicerOrganization}
           </p>
           <h2 className="mt-2 font-semibold text-2xl" id="transfer-title">
-            Approve the servicing transfer
+            Manage access after servicing transfers
           </h2>
         </header>
         <ConceptDemoBanner
@@ -217,15 +209,18 @@ export function ClosingExperience() {
         />
         <div className="bg-background p-6">
           <p className="max-w-3xl text-muted-foreground">
-            RESPA transfer notices come from the transferor no less than 15 days before the
-            effective date and from the transferee no more than 15 days after it (
+            The old and new servicers each send Alex a notice of servicing transfer (
             <a
               className="underline underline-offset-4"
               href="https://www.consumerfinance.gov/rules-policy/regulations/1024/33/"
             >
               12 CFR 1024.33(b)(3)
             </a>
-            ). This demo pairs that timeline with borrower-controlled pod access.
+            ); here they are simulated. Separately, Alex controls who can read the closing record.
+          </p>
+          <p className="mt-3 max-w-3xl text-muted-foreground text-sm" data-local-mode-note="">
+            Permission changes are saved. This local demo makes requests as Alex; it does not
+            enforce separate organisation permissions.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <button
@@ -235,10 +230,10 @@ export function ClosingExperience() {
               type="button"
             >
               {active === "grant"
-                ? "Approving…"
+                ? "Granting…"
                 : granted
-                  ? "Servicer approved"
-                  : "Approve servicer access"}
+                  ? "Servicer access granted"
+                  : "Grant servicer access"}
             </button>
             <button
               className="rounded-lg border border-border bg-card px-5 py-3 font-semibold disabled:opacity-50"
@@ -247,21 +242,21 @@ export function ClosingExperience() {
               type="button"
             >
               {active === "revoke"
-                ? "Revoking…"
+                ? "Removing…"
                 : revoked
-                  ? "Lender access revoked"
-                  : "Revoke lender access"}
+                  ? "Lender access removed"
+                  : "Remove lender access to closing record"}
             </button>
           </div>
           {granted && (
             <p className="mt-4 text-sm" role="status">
-              Servicer read access granted; an app-level DPV receipt was written.
+              Servicer read access granted. A consent receipt was saved.
             </p>
           )}
           {revoked && (
             <p className="mt-2 text-sm" role="status">
-              Lender read access revoked by a real WAC ACL change; a separate app-level DPV receipt
-              was written.
+              Lender access to closing record removed. Copies the lender already holds are
+              unaffected. A consent receipt was saved.
             </p>
           )}
         </div>
@@ -269,12 +264,11 @@ export function ClosingExperience() {
 
       <section aria-labelledby="ledger-title" className="mt-12">
         <h2 className="font-semibold text-2xl" id="ledger-title">
-          Consent-receipt ledger
+          Consent receipts
         </h2>
         <p className="mt-2 max-w-3xl text-muted-foreground">
-          This trail is maintained by the application as DPV consent resources in Alex&apos;s pod.
-          WAC enforces the access change; WAC and the Solid protocol do not provide this audit
-          ledger.
+          Each consent receipt records when Alex gave or revoked access. It is not a log of every
+          read. This app saves the receipts; Solid&apos;s permission system does not.
         </p>
         <button
           className="mt-5 rounded-lg border border-border bg-card px-5 py-3 font-semibold disabled:opacity-50"
@@ -282,7 +276,7 @@ export function ClosingExperience() {
           onClick={() => run("ledger", "ledger", "GET")}
           type="button"
         >
-          {active === "ledger" ? "Reading ledger…" : "Read consent-receipt ledger"}
+          {active === "ledger" ? "Loading receipts…" : "Show consent receipts"}
         </button>
         <div className="mt-6 grid gap-4" aria-live="polite">
           {receipts.map((receipt) => (
@@ -300,16 +294,14 @@ export function ClosingExperience() {
           data-closing-unauthenticated=""
           role="status"
         >
-          No authenticated borrower session — the server rail is off in this mode. In the default
-          in-browser demo there is no real login, so the closing ceremony stays a preview; a
-          DPoP-bound Solid-OIDC session unlocks the real pod writes.
+          No authenticated borrower session. Sign-in is simulated here, so nothing was saved to a
+          pod.
         </p>
       )}
 
       {error !== undefined && (
         <p className="mt-8 rounded-lg border border-border bg-card p-4 text-sm" role="alert">
-          {error}. The authenticated server rail fails closed; the concept UI never falls back to
-          caller-supplied pod or WebID parameters.
+          {error}
         </p>
       )}
 
@@ -318,14 +310,15 @@ export function ClosingExperience() {
         defaultOpen
         real={
           <p>
-            Authenticated pod binding, SHACL-validated RDF writes, WAC grant/revocation, and DPV
-            receipt resources.
+            Data-shape checks on each write, saved permission changes (Web Access Control) and
+            consent receipts. Local requests run as Alex; separate organisation permissions are not
+            enforced here.
           </p>
         }
         simulated={
           <p>
-            The signing ceremony, organisations&apos; involvement, figures, eVault/eNote registry,
-            notices, and demo persona.
+            The eSigning, the eVault and eNote registry, servicing notices, the organisations&apos;
+            involvement, all figures and Alex.
           </p>
         }
       />

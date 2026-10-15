@@ -43,19 +43,31 @@ export interface BannerCopy {
   aboutLabel: string;
 }
 
-/** R1 banner copy v2, desktop variant (regn-optics §4.1). */
+/**
+ * True when `organization` lists several organisations ("Cotality and First American",
+ * "The Work Number, Finicity, or Equifax"): the copy then names them once and refers back
+ * to "these organisations" (astra-review-2 L1).
+ */
+export function namesSeveralOrganisations(organization: string): boolean {
+  return /,| and | or /.test(organization);
+}
+
+/** R1 banner copy v3, desktop variant (shortened per astra-review-2 L1; R1 elements kept). */
 export function bannerFullCopy(options: BannerCopyOptions): BannerCopy {
   if (options.variant === "own") {
     return {
       lead: "Concept demo.",
-      rest: ` A research prototype by the ${EDMA_NAME}. All data is simulated. Nothing here is an offer of credit.`,
+      rest: ` A research prototype by the ${EDMA_NAME}. Simulated data. Not an offer of credit.`,
       aboutLabel: "About this demo",
     };
   }
-  const roleClause = options.role === undefined ? "" : `, modelled on the ${options.role} role`;
+  const reference = namesSeveralOrganisations(options.organization)
+    ? "these organisations"
+    : options.organization;
+  const roleClause = options.role === undefined ? "" : ` Modelled on the ${options.role} role.`;
   return {
     lead: `Concept demo — this is not ${options.organization}.`,
-    rest: ` A research prototype by the ${EDMA_NAME}${roleClause}. All data is simulated. Nothing here is an offer of credit.`,
+    rest: `${roleClause} Not affiliated with, sponsored by or endorsed by ${reference}. Simulated data. Not an offer of credit.`,
     aboutLabel: "About this demo",
   };
 }
@@ -107,33 +119,63 @@ export function footerLegalLine(options: FooterCopyOptions): string {
   return segments.join(" · ");
 }
 
-/** R8 interstitial copy v2 (regn-optics §4.2). */
+/** R8 interstitial labels (regn-optics §4.2). */
 export const INTERSTITIAL_HEADING = "You're entering a concept demonstration";
 export const INTERSTITIAL_CONTINUE_LABEL = "I understand — enter the demo";
 export const INTERSTITIAL_LEARN_MORE_LABEL = "Learn more about the project";
 
-/** §4.2 simulation paragraph — shared verbatim by both interstitial variants. */
+/** Simulation paragraph — shared verbatim by both interstitial variants. */
 const SIMULATED_PARAGRAPH: CopySegment[] = [
-  { strong: true, text: "Everything here is simulated." },
-  {
-    text: " Rates, fees, credit decisions, documents, and personas are fictitious and illustrative. Nothing on this site is an offer or solicitation of credit or of any financial product or service.",
-  },
+  { strong: true, text: "All people, data, rates, fees, decisions and documents are simulated." },
+  { text: " This is not an offer or solicitation of credit or financial services." },
 ];
 
-/** §4.2 do-not-enter paragraph — shared verbatim by both interstitial variants. */
+/** Do-not-enter paragraph — shared verbatim by both interstitial variants. */
 const DO_NOT_ENTER_PARAGRAPH: CopySegment[] = [
   { strong: true, text: "Do not enter real personal or financial information." },
-  { text: " Use the demo personas provided." },
+  { text: " Use the supplied demo data." },
 ];
 
+/** Convener paragraph — shared verbatim by both interstitial variants. */
+const CONVENER_PARAGRAPH: CopySegment[] = [
+  { text: "This research prototype was built by the " },
+  { strong: true, text: EDMA_NAME },
+  { text: " to demonstrate a US mortgage journey using Solid personal data stores." },
+];
+
+/** The organisation paragraph of the modelled variant (R8: "not built by {Org}"). */
+function modelledParagraph(organization: string): CopySegment[] {
+  if (namesSeveralOrganisations(organization)) {
+    return [
+      { text: "This app models the roles " },
+      { strong: true, text: organization },
+      { text: " play in that journey. It was " },
+      { strong: true, text: "not built by these organisations" },
+      { text: " and is " },
+      { strong: true, text: "not affiliated with, sponsored by or endorsed by any of them" },
+      { text: "." },
+    ];
+  }
+  return [
+    { text: "This app models the role " },
+    { strong: true, text: organization },
+    { text: " plays in that journey. It was " },
+    { strong: true, text: `not built by ${organization}` },
+    { text: " and is " },
+    { strong: true, text: `not affiliated with, sponsored by or endorsed by ${organization}` },
+    { text: "." },
+  ];
+}
+
 /**
- * The four interstitial paragraphs, with the §4.2 bold phrases marked.
+ * The four interstitial paragraphs, with the bold phrases marked (R8 v3, shortened per
+ * astra-review-2 L1; "not built by", "offer or solicitation" and "do not enter real personal
+ * or financial information" are kept).
  *
- * `variant: "own"` (the convener-branded tour app, sm-90e) keeps the §4.2 structure but
- * replaces the org-negation paragraph — negating the convener against itself would be
- * self-contradictory — with a collective negation of every organisation named inside the
- * demo. The simulation and do-not-enter paragraphs are shared verbatim with the modelled
- * variant so the R8 core copy cannot drift between variants.
+ * `variant: "own"` (the convener-branded tour app, sm-90e) replaces the org-negation
+ * paragraph — negating the convener against itself would be self-contradictory — with a
+ * collective negation of every organisation named inside the demo. The other paragraphs are
+ * shared verbatim with the modelled variant so the R8 core copy cannot drift.
  */
 export function interstitialParagraphs(
   organization: string,
@@ -141,21 +183,14 @@ export function interstitialParagraphs(
 ): CopySegment[][] {
   if (variant === "own") {
     return [
+      CONVENER_PARAGRAPH,
       [
-        { text: "This site is a research prototype built by the " },
-        { strong: true, text: EDMA_NAME },
-        { text: " to show how a US mortgage journey could work on Solid personal data stores." },
-      ],
-      [
-        { text: "The organisations named inside the demo " },
+        { text: "Organisations named in this demo " },
         { strong: true, text: "illustrate market roles only" },
         { text: ". " },
-        { strong: true, text: "None of them built this demo" },
+        { strong: true, text: "None of them built it" },
         { text: ", and " },
-        {
-          strong: true,
-          text: "none is affiliated with, sponsors, or endorses it",
-        },
+        { strong: true, text: "none is affiliated with, sponsors or endorses it" },
         { text: "." },
       ],
       SIMULATED_PARAGRAPH,
@@ -163,20 +198,8 @@ export function interstitialParagraphs(
     ];
   }
   return [
-    [
-      { text: "This site is a research prototype built by the " },
-      { strong: true, text: EDMA_NAME },
-      { text: " to show how a US mortgage journey could work on Solid personal data stores." },
-    ],
-    [
-      { text: "It is modelled on the role " },
-      { strong: true, text: organization },
-      { text: " plays in that journey. It was " },
-      { strong: true, text: `not built by ${organization}` },
-      { text: " and is " },
-      { strong: true, text: `not affiliated with, sponsored by, or endorsed by ${organization}` },
-      { text: `. The ${organization} name is used only to identify that market role.` },
-    ],
+    CONVENER_PARAGRAPH,
+    modelledParagraph(organization),
     SIMULATED_PARAGRAPH,
     DO_NOT_ENTER_PARAGRAPH,
   ];

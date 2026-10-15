@@ -56,7 +56,7 @@ export const demoApps: Record<DemoAppSlug, DemoApp> = {
     zoneEnv: "MORTGAGE_UNDERWRITING_ZONE_URL",
   },
   "lender-53": {
-    appName: "Mortgage Pre-qualification",
+    appName: "Mortgage Prequalification",
     healthPath: "/lender-53/api/health",
     modelledOn: "Fifth Third Bank",
     path: "/lender-53",
@@ -118,8 +118,8 @@ export const launcherApps: DemoApp[] = [
 
 /**
  * The twelve value-chain roles (docs/research/org-map.md, the product-phase mapping) plus
- * the borrower's own vault at the centre. Roles without a demo app yet are shown honestly
- * as recruitment/product-phase seats.
+ * the borrower's pod at the centre. Roles without a demo app are listed as mapped roles
+ * with no app.
  */
 export interface Service {
   slug: string;
@@ -127,11 +127,12 @@ export interface Service {
   roleNumber?: number;
   role: string;
   modelledOn: string;
-  membership: string;
+  /** EDMA membership, shown only where it is publicly confirmed. */
+  membership?: string;
   summary: string;
-  /** Scene (SPEC §2) where this seat is on screen, if any. */
+  /** Scene (SPEC §2) where this role is on screen, if any. */
   scene?: 1 | 2 | 3 | 4 | 5;
-  /** Demo apps this role launches into. Empty = mapped seat, no app in this demo. */
+  /** Demo apps this role launches into. Empty = mapped role, no app in this demo. */
   apps: DemoAppSlug[];
   center?: boolean;
 }
@@ -142,11 +143,11 @@ export const services: Service[] = [
     center: true,
     membership: "EDMA member",
     modelledOn: "Verizon",
-    role: "Borrower data vault",
+    role: "Borrower's pod",
     scene: 1,
     slug: "vault",
     summary:
-      "Alex Rivera's pod: profile, credential wallet, access grants, revocation, and the consent-receipt ledger. Every other seat works against data the borrower controls here.",
+      "Alex's pod and the Data Vault app: profile, credentials, access permissions and consent receipts. Local requests run as Alex; separate organisation permissions are not enforced here.",
   },
   {
     apps: ["lender-boa", "lender-53"],
@@ -157,92 +158,88 @@ export const services: Service[] = [
     scene: 3,
     slug: "lender",
     summary:
-      "Full origination portal: ZK pre-qual verification, pod-prefilled application, Loan Estimate and Closing Disclosure timeline. A second, competing lender — modelled on Fifth Third Bank, a Data Excellence Program founder — verifies the same proof in scene 2.",
+      "Checks prequalification proofs, prefills the application from the pod and tracks the loan to closing. A second lender, modelled on Fifth Third Bank, checks a new proof derived from the same credentials.",
   },
   {
     apps: ["gse"],
-    membership: "EDMA member · DEP founder",
+    membership: "EDMA member · Data Excellence Program founder",
     modelledOn: "Freddie Mac",
     role: "GSE / automated underwriting",
     roleNumber: 2,
-    scene: 4,
+    scene: 3,
     slug: "aus",
     summary:
-      "Automated underwriting over the granted loan file: decision plus findings, re-run in seconds when a credential is refreshed. The GSEs' own data-validation programmes are the demo's cost anchor.",
+      "Checks the loan file Alex gave access to and returns an AUS recommendation. The lender's underwriter makes the credit decision.",
   },
   {
     apps: ["verifications"],
-    membership: "External approach",
+    membership: "Not an EDMA member",
     modelledOn: "Equifax",
     role: "Credit bureau",
     roleNumber: 3,
     scene: 1,
     slug: "credit-bureau",
-    summary:
-      "Issues the credit-score credential into the vault. One issuance replaces a fresh per-lender pull — a tri-merge report runs about $200 each time today.",
+    summary: "Issues a credit-score credential into Alex's pod.",
   },
   {
     apps: ["verifications"],
-    membership: "External approach",
+    membership: "Not an EDMA member",
     modelledOn: "The Work Number (Equifax)",
     role: "Income / employment verification",
     roleNumber: 4,
     scene: 1,
     slug: "employment-verification",
-    summary:
-      "Employer-sourced employment-and-income credential — the verification role the GSEs already accept from digital suppliers, re-plumbed to land in the borrower's own pod.",
+    summary: "Issues an employment and income credential into Alex's pod.",
   },
   {
     apps: ["verifications"],
-    membership: "EDMA member (publicly unconfirmed — re-verify before outreach)",
     modelledOn: "Mastercard Finicity",
-    role: "Asset verification / open banking",
+    role: "Asset verification",
     roleNumber: 5,
     scene: 1,
     slug: "asset-verification",
-    summary:
-      "Bank-sourced asset credential via open banking: balances attested once, held by the borrower, reusable at every downstream seat.",
+    summary: "Issues an asset credential, from bank data Alex authorised, into Alex's pod.",
   },
   {
     apps: ["property"],
-    membership: "External approach",
+    membership: "Not an EDMA member",
     modelledOn: "Cotality",
     role: "Appraisal / valuation",
     roleNumber: 6,
+    scene: 3,
     slug: "appraisal",
-    summary:
-      "Appraisal-value credential for the subject property. In the ten-minute script this seat is background; the app carries its branded flow for the product phase.",
+    summary: "Previews a simulated appraisal and can save it as a demo credential in Alex's pod.",
   },
   {
     apps: ["property"],
-    membership: "External approach",
+    membership: "Not an EDMA member",
     modelledOn: "First American",
-    role: "Title + settlement",
+    role: "Title and settlement",
     roleNumber: 7,
+    scene: 3,
     slug: "title",
     summary:
-      "Title-clear credential ahead of closing. The 885-million-document title-data exposure of 2019 is the demo's sharpest argument for access-in-place over copies.",
+      "Previews a simulated title search result before closing. It is not a title commitment or policy.",
   },
   {
     apps: ["closing"],
     membership: "EDMA member",
     modelledOn: "Wolters Kluwer (eOriginal)",
-    role: "eClosing / digital closing",
+    role: "eClosing platform",
     roleNumber: 8,
     scene: 5,
     slug: "eclosing",
     summary:
-      "eClose ceremony on real industry plumbing — then servicing transfers to a Truist-modelled servicer (also an EDMA member): the borrower approves the new grant and revokes the old lender.",
+      "Runs a simulated closing and saves a demo closing record in Alex's pod. Servicer, modelled on Truist: a separate role in the same app that asks Alex for read access.",
   },
   {
     apps: [],
-    membership: "The CoP's own seat, with MISMO engaged via open workgroups",
+    membership: "EDMA Solid Community of Practice",
     modelledOn: "EDM Association / OMG (FIBO) with MISMO",
     role: "Data / standards steward",
     roleNumber: 9,
     slug: "standards",
-    summary:
-      "Pod data is FIBO-grounded and mapped field-by-field to MISMO v3.4. That binding table is the CoP's standards deliverable — value for every member, app or no app.",
+    summary: "The pod's data uses FIBO terms, mapped to MISMO v3.4 in the project documentation.",
   },
   {
     apps: [],
@@ -252,17 +249,17 @@ export const services: Service[] = [
     roleNumber: 10,
     slug: "org-identity",
     summary:
-      "LEI-anchored organisational credentials (vLEI) are the partner-phase identity rail behind every stakeholder WebID. Narrative seat in this demo; no app yet.",
+      "Legal Entity Identifier credentials (vLEI) could identify each organisation. No app in this demo.",
   },
   {
     apps: ["examiner"],
-    membership: "Convened via member public bodies, not the CFPB",
+    membership: "No agency affiliation",
     modelledOn: "Unbranded — no agency affiliation",
-    role: "Regulator lens",
+    role: "Regulator / examiner",
     roleNumber: 11,
     slug: "regulator",
     summary:
-      "An unbranded Examiner View renders the journey's TRID and RESPA timing beats as an examiner-facing checklist over public rules. Not affiliated with or endorsed by the CFPB.",
+      "An unbranded Examiner View compares the demo with public TRID and RESPA rules. Not affiliated with or endorsed by the CFPB.",
   },
   {
     apps: [],
@@ -271,8 +268,7 @@ export const services: Service[] = [
     role: "Homeowners insurance",
     roleNumber: 12,
     slug: "insurance",
-    summary:
-      "Insurance binder at closing is a product-phase extension: the seat is mapped to a member, the app is not yet in the demo.",
+    summary: "Homeowners insurance at closing. No app in this demo.",
   },
 ];
 

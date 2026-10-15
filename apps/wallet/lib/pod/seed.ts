@@ -79,13 +79,13 @@ export const POD_ISSUERS = MORTGAGE_SEED_ISSUER_ROLES;
 
 export type PodIssuerId = MortgageSeedIssuerRole;
 
-export function podIssuerIri(id: PodIssuerId): string {
-  return `${WALLET_POD_BASE.slice(0, -1)}${POD_ISSUERS[id].docPath}`;
+export function podIssuerIri(id: PodIssuerId, podBase: string = WALLET_POD_BASE): string {
+  return `${podBase.slice(0, -1)}${POD_ISSUERS[id].docPath}`;
 }
 
 /** Every issuer IRI — the client's `trustedIssuers` for verify-on-view. */
-export function podIssuerIris(): string[] {
-  return (Object.keys(POD_ISSUERS) as PodIssuerId[]).map(podIssuerIri);
+export function podIssuerIris(podBase: string = WALLET_POD_BASE): string[] {
+  return (Object.keys(POD_ISSUERS) as PodIssuerId[]).map((id) => podIssuerIri(id, podBase));
 }
 
 /**

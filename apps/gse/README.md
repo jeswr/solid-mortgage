@@ -20,9 +20,12 @@ names are rendered anywhere.
   genuine appraisal of a different property fails the evidence gate and can never set
   the LTV denominator.
 - Runs **DETERMINISTIC rules** (`lib/aus/rules.ts` — pure functions, no clock, no
-  randomness): an evidence gate ahead of four published threshold rules (credit score,
-  DTI, LTV, reserves). Outcomes: `approve` / `refer` (evidence cannot be relied on) /
-  `caution` (risk threshold failed). When the evidence gate fails, the risk rules are
+  randomness): an evidence gate ahead of three published threshold rules (credit score,
+  P&I-only DTI, LTV). Assets ÷ monthly P&I is a display-only figure (funds to close
+  are not deducted — not a reserve assessment) and never decides the outcome.
+  Outcomes: `approve` / `refer` (evidence cannot be relied on) / `caution` (risk
+  threshold failed; stored as FIBO `UnderwritingDecision-Ineligible` but always
+  displayed as "Caution — manual underwriting review required"). When the evidence gate fails, the risk rules are
   NOT evaluated and no qualifying figures are emitted (`qualifying.evaluated: false`) —
   untrusted numbers are never presented as risk-scored.
 - **Delivers the result two ways**: the FULL findings report goes to the requesting

@@ -57,7 +57,7 @@ export function Launcher() {
             })}
           </ul>
           <p className="px-2 pt-2 text-muted-foreground text-xs">
-            Zones marked “Not deployed” are not wired in this environment.
+            Apps marked “Not deployed” are not running here.
           </p>
         </div>
       )}

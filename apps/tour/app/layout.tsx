@@ -25,6 +25,9 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
               <a className="text-muted-foreground hover:text-foreground" href="/#chapters">
                 Chapters
               </a>
+              <a className="text-muted-foreground hover:text-foreground" href="/apps">
+                Apps
+              </a>
               <a className="text-muted-foreground hover:text-foreground" href="/examiner">
                 Examiner View
               </a>

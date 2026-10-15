@@ -1,5 +1,6 @@
 "use client";
 
+import { IllustrativeFigure } from "@mortgage/ui";
 import { useCallback, useState } from "react";
 
 interface AusEvidenceView {
@@ -32,7 +33,7 @@ interface AusRunResponse {
         proposedMonthlyPaymentUsd: number;
         dtiPercent: number | null;
         ltvPercent: number | null;
-        reservesMonths: number | null;
+        assetsToPaymentMonths: number | null;
       }
     | { evaluated: false; reason: string };
   conditions: string[];
@@ -47,14 +48,60 @@ export interface AusConsoleProps {
   apiBase: string;
 }
 
+/**
+ * Display recommendation per outcome. The API's `recommendation` string is
+ * the FIBO-aligned label written to the pod (unit-tested); the screen uses
+ * the GSE risk-class terms (Accept / Caution) and shows a verification
+ * failure as a validation message, not a risk class.
+ */
+const OUTCOME_LABEL: Record<AusRunResponse["outcome"], string> = {
+  approve: "Accept",
+  // Stored in the pod as FIBO UnderwritingDecision-Ineligible (FIBO has no
+  // caution individual); it is always DISPLAYED as caution, never "Ineligible".
+  caution: "Caution — manual underwriting review required",
+  refer: "Unable to validate",
+};
+
 const OUTCOME_COPY: Record<AusRunResponse["outcome"], string> = {
   approve:
-    "Approve — every credential verified and every risk rule passed. The decision document was written into the borrower's pod.",
+    "All configured demo checks passed. This is not a complete underwriting assessment. The lender's underwriter makes the credit decision.",
   refer:
-    "Refer — the evidence cannot be relied on (a credential failed verification, attests a different subject, or its validity window lapsed). Re-verify through the existing grant, then re-run.",
+    "One or more credentials could not be validated. Obtain a new verification, then run the AUS again.",
   caution:
-    "Caution — the evidence verifies, but a risk threshold failed. Not eligible for automated approval; route to manual underwriting.",
+    "The credentials passed their checks, but a demo threshold failed. The lender's underwriter must review the loan manually.",
 };
+
+/**
+ * Neutral finding names by finding code (the rule text is stored in the pod).
+ * The name never states the outcome — that is the separate result field.
+ */
+const FINDING_LABEL: Readonly<Record<string, string>> = {
+  EVIDENCE_EMPLOYMENT_INCOME: "Employment credential",
+  EVIDENCE_ASSETS: "Asset credential",
+  EVIDENCE_CREDIT_SCORE: "Credit-score credential",
+  EVIDENCE_APPRAISAL: "Appraisal credential",
+  CREDIT_SCORE_MINIMUM: "Credit-score threshold",
+  DEBT_TO_INCOME: "Debt-to-income ratio (principal and interest only)",
+  LOAN_TO_VALUE: "Loan-to-value ratio (appraised value)",
+};
+
+/** The separate result field: a failed credential is "Unable to validate". */
+function findingResult(finding: AusFindingView): "Passed" | "Failed" | "Unable to validate" {
+  if (finding.pass) return "Passed";
+  return finding.category === "evidence" ? "Unable to validate" : "Failed";
+}
+
+const OBSERVED_PLAIN: readonly (readonly [string, string])[] = [
+  ["failed fail-closed verification", "signature, issuer or status check failed"],
+  ["attests a different subject", "names a different person"],
+  ["validity window lapsed", "expired"],
+  ["credential missing from the granted loan file", "missing from the loan file"],
+];
+
+function plainObserved(finding: AusFindingView): string {
+  if (finding.category === "evidence" && finding.pass) return "checks passed";
+  return OBSERVED_PLAIN.reduce((text, [from, to]) => text.replace(from, to), finding.observed);
+}
 
 /**
  * The AUS run console: one click runs the deterministic rules over the
@@ -62,7 +109,7 @@ const OUTCOME_COPY: Record<AusRunResponse["outcome"], string> = {
  * and pod from the authenticated session; no pod parameter exists) and shows
  * the full findings report from the response payload — the pod receives the
  * decision DOCUMENT (status, recommendation, conditions quoting the failed
- * findings), and the "Delivered" copy below says exactly that. Without an
+ * findings), and the "Saved to the pod" copy below says exactly that. Without an
  * authenticated Solid session (the default in-browser demo) the API answers
  * 401 and the panel says so honestly instead of simulating a run.
  */
@@ -92,7 +139,7 @@ export function AusConsole({ apiBase }: AusConsoleProps) {
       }
       setReport(body);
     } catch {
-      setError("the AUS run failed — is the pod reachable?");
+      setError("The AUS run failed. Check that the pod is reachable.");
     } finally {
       setBusy(false);
     }
@@ -105,7 +152,7 @@ export function AusConsole({ apiBase }: AusConsoleProps) {
       data-aus-console=""
     >
       <h2 className="text-xl font-semibold text-card-foreground" id="aus-run-heading">
-        Automated underwriting run
+        Run the AUS
       </h2>
       <button
         className="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
@@ -113,14 +160,13 @@ export function AusConsole({ apiBase }: AusConsoleProps) {
         onClick={run}
         type="button"
       >
-        {busy ? "Running…" : report === null ? "Run automated underwriting" : "Re-run"}
+        {busy ? "Running…" : report === null ? "Run AUS" : "Run AUS again"}
       </button>
 
       {authRequired && (
         <p className="mt-3 text-sm text-muted-foreground" data-aus-auth-required="">
-          The run reads YOUR granted loan file, so it requires an authenticated borrower session
-          (hosted mode). The default in-browser demo has no real login — the rail honestly stays off
-          rather than simulating a security property it does not have.
+          Sign-in is simulated here, so the AUS cannot read a loan file. Running it needs a real
+          Solid sign-in.
         </p>
       )}
       {error !== null && (
@@ -132,7 +178,7 @@ export function AusConsole({ apiBase }: AusConsoleProps) {
       {report !== null && (
         <div className="mt-5" data-aus-result={report.outcome}>
           <p className="text-lg font-semibold text-card-foreground">
-            Recommendation: {report.recommendation}
+            AUS recommendation: {OUTCOME_LABEL[report.outcome]}
             <span className="text-sm font-normal text-muted-foreground">
               {" — illustrative decision, not an offer"}
             </span>
@@ -140,37 +186,46 @@ export function AusConsole({ apiBase }: AusConsoleProps) {
           <p className="mt-2 text-sm text-foreground">{OUTCOME_COPY[report.outcome]}</p>
 
           {report.qualifying.evaluated ? (
-            <dl className="mt-4 grid gap-3 sm:grid-cols-4">
-              <div>
-                <dt className="text-sm text-muted-foreground">Qualifying payment</dt>
-                <dd className="text-sm font-semibold tabular-nums">
-                  {report.qualifying.proposedMonthlyPaymentUsd > 0
-                    ? `$${report.qualifying.proposedMonthlyPaymentUsd.toLocaleString("en-US")}/mo`
-                    : "—"}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-sm text-muted-foreground">Debt-to-income</dt>
-                <dd className="text-sm font-semibold tabular-nums">
-                  {report.qualifying.dtiPercent ?? "—"}%
-                </dd>
-              </div>
-              <div>
-                <dt className="text-sm text-muted-foreground">Loan-to-value</dt>
-                <dd className="text-sm font-semibold tabular-nums">
-                  {report.qualifying.ltvPercent ?? "—"}%
-                </dd>
-              </div>
-              <div>
-                <dt className="text-sm text-muted-foreground">Reserves</dt>
-                <dd className="text-sm font-semibold tabular-nums">
-                  {report.qualifying.reservesMonths ?? "—"} months
-                </dd>
-              </div>
-            </dl>
+            <>
+              <dl className="mt-4 grid gap-3 sm:grid-cols-3">
+                <div>
+                  <dt className="text-sm text-muted-foreground">Monthly principal and interest</dt>
+                  <dd className="text-sm font-semibold tabular-nums">
+                    {report.qualifying.proposedMonthlyPaymentUsd > 0 ? (
+                      <IllustrativeFigure>
+                        {`$${report.qualifying.proposedMonthlyPaymentUsd.toLocaleString("en-US")} a month`}
+                      </IllustrativeFigure>
+                    ) : (
+                      "—"
+                    )}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-muted-foreground">Debt-to-income (P&amp;I only)</dt>
+                  <dd className="text-sm font-semibold tabular-nums">
+                    {report.qualifying.dtiPercent ?? "—"}%
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-muted-foreground">Loan-to-value (appraised value)</dt>
+                  <dd className="text-sm font-semibold tabular-nums">
+                    {report.qualifying.ltvPercent ?? "—"}%
+                  </dd>
+                </div>
+              </dl>
+              <p className="mt-2 text-xs text-muted-foreground" data-aus-calculation-note="">
+                Simplified demo calculations. Taxes, insurance, assessments and funds needed to
+                close are not included.
+              </p>
+              <p className="mt-2 text-sm text-foreground" data-aus-assets-ratio="">
+                Assets ÷ monthly principal and interest:{" "}
+                {report.qualifying.assetsToPaymentMonths ?? "—"} months — illustrative. Funds to
+                close are not deducted; this is not a reserve assessment.
+              </p>
+            </>
           ) : (
             <p className="mt-4 text-sm text-muted-foreground" data-aus-qualifying="unevaluated">
-              Qualifying figures not evaluated: {report.qualifying.reason}.
+              Not calculated, because a credential could not be validated.
             </p>
           )}
 
@@ -192,11 +247,20 @@ export function AusConsole({ apiBase }: AusConsoleProps) {
                 />
                 <div>
                   <p className="text-sm text-card-foreground">
-                    {finding.rule}{" "}
-                    <span className="text-muted-foreground">({finding.threshold})</span>
+                    {FINDING_LABEL[finding.code] ?? finding.rule}
+                    {finding.category === "risk" && (
+                      <span className="text-muted-foreground"> ({finding.threshold})</span>
+                    )}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {finding.pass ? "pass" : "fail"} · observed: {finding.observed}
+                    <span
+                      className="font-semibold text-card-foreground"
+                      data-finding-result={finding.pass ? "pass" : "fail"}
+                    >
+                      {findingResult(finding)}
+                    </span>
+                    {" · "}
+                    {plainObserved(finding)}
                   </p>
                 </div>
               </li>
@@ -204,15 +268,12 @@ export function AusConsole({ apiBase }: AusConsoleProps) {
           </ul>
 
           <h3 className="mt-6 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            Delivered
+            Saved to the pod
           </h3>
           <p className="mt-2 break-all text-sm text-muted-foreground" data-aus-decision-iri="">
-            Decision document written to <code>{report.decisionIri}</code> — the decision status,
-            the recommendation, and the conditions (every failed finding quoted verbatim) — readable
-            by the borrower and by every party the borrower's grant names. The full per-rule
-            findings report above is returned only in this response.
+            The recommendation and conditions are saved at <code>{report.decisionIri}</code>. The
+            lender can read them only with the borrower&apos;s permission.
           </p>
-          <p className="mt-2 text-xs text-muted-foreground">{report.rule}</p>
         </div>
       )}
     </section>

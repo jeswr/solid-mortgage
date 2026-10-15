@@ -140,7 +140,7 @@ test.describe("closing scene 5 (real authenticated rail)", () => {
   test("without a session the UI shows the honest Mode-1 fallback", async ({ page }) => {
     await page.goto(`${appOrigin}/closing`);
     await page.getByRole("button", { name: INTERSTITIAL_CONTINUE_LABEL }).click();
-    await page.getByRole("button", { name: "eSign closing package" }).click();
+    await page.getByRole("button", { name: "Simulate signing" }).click();
     await expect(page.locator("[data-closing-unauthenticated]")).toContainText(
       "No authenticated borrower session",
     );
@@ -169,21 +169,25 @@ test.describe("closing scene 5 (real authenticated rail)", () => {
       bannerFullText({ organization: "Truist", role: "mortgage servicer" }),
     );
 
-    await page.getByRole("button", { name: "eSign closing package" }).click();
-    await expect(page.getByText("ClosingRecord written to Alex's pod")).toBeVisible({
+    await page.getByRole("button", { name: "Simulate signing" }).click();
+    await expect(
+      page.getByText("Simulated signing complete. Closing record saved in Alex's pod."),
+    ).toBeVisible({
       timeout: 30_000,
     });
     // The close granted the lender for real (an authenticated read succeeds).
     expect((await lender.authFetch(record)).status).toBe(200);
 
-    await page.getByRole("button", { name: "Approve servicer access" }).click();
+    await page.getByRole("button", { name: "Grant servicer access" }).click();
     await expect(page.getByText("Servicer read access granted", { exact: false })).toBeVisible({
       timeout: 30_000,
     });
     expect((await servicer.authFetch(record)).status).toBe(200);
 
-    await page.getByRole("button", { name: "Revoke lender access" }).click();
-    await expect(page.getByText("Lender read access revoked", { exact: false })).toBeVisible({
+    await page.getByRole("button", { name: "Remove lender access to closing record" }).click();
+    await expect(
+      page.getByText("Lender access to closing record removed", { exact: false }),
+    ).toBeVisible({
       timeout: 30_000,
     });
     expect([401, 403]).toContain((await lender.authFetch(record)).status);
@@ -204,7 +208,7 @@ test.describe("closing scene 5 (real authenticated rail)", () => {
     expect([401, 403]).toContain((await lender.authFetch(record)).status);
     expect((await servicer.authFetch(record)).status).toBe(200);
 
-    await page.getByRole("button", { name: "Read consent-receipt ledger" }).click();
+    await page.getByRole("button", { name: "Show consent receipts" }).click();
     const cards = page.locator("[data-receipt-card]");
     await expect(cards).toHaveCount(3, { timeout: 30_000 });
     await expect(cards.nth(0)).toHaveAttribute("data-receipt-action", "grant");
@@ -215,7 +219,7 @@ test.describe("closing scene 5 (real authenticated rail)", () => {
     await expect(cards.nth(2)).toContainText(lender.webid);
     await expect(cards.nth(0).locator("time")).toHaveAttribute("datetime", /^\d{4}-\d{2}-\d{2}T/);
     await expect(
-      page.getByText("WAC and the Solid protocol do not provide this audit ledger"),
+      page.getByText("This app saves the receipts; Solid's permission system does not."),
     ).toBeVisible();
 
     const results = await new AxeBuilder({ page })

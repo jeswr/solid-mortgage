@@ -12,6 +12,18 @@ Status: research + design phase. `SPEC.md` will define the stakeholder applicati
 data model (FIBO/MISMO-grounded), and the sparq-backed infrastructure once research lands in
 `docs/research/`.
 
+## Run the demo locally
+
+```bash
+pnpm install && pnpm build
+pnpm demo
+```
+
+Open http://127.0.0.1:4400/ for a guided click-through across every app (each runs on its own
+port, and the demo signs you in automatically), an app launcher at `/apps`, two
+assistant-led flows, and a pop-out log of every pod read, write and access-rule change. See
+[`docs/demo.md`](docs/demo.md).
+
 ## Layout (planned)
 
 - `docs/research/` — grounding research: US mortgage process, EDMA member/role mapping, vocab,

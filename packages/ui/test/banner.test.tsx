@@ -30,15 +30,15 @@ test("stub-compatible: organization-only props render source and offer negation"
   render(<ConceptDemoBanner organization="Freddie Mac" />);
   const banner = screen.getByRole("note", { name: "Concept demonstration notice" });
   expect(banner.textContent).toContain("Concept demo — this is not Freddie Mac.");
-  expect(banner.textContent).toContain("Nothing here is an offer of credit.");
-  expect(banner.textContent).not.toContain("modelled on the");
+  expect(banner.textContent).toContain("Not an offer of credit.");
+  expect(banner.textContent).not.toContain("Modelled on the");
 });
 
 test("own-branded variant drops the self-negation but keeps the offer negation", () => {
   render(<ConceptDemoBanner organization="EDMA Solid Community of Practice" variant="own" />);
   const banner = screen.getByRole("note", { name: "Concept demonstration notice" });
   expect(banner.textContent).not.toContain("this is not");
-  expect(banner.textContent).toContain("Nothing here is an offer of credit.");
+  expect(banner.textContent).toContain("Not an offer of credit.");
 });
 
 test("placement: fixed-bottom by default, in-flow when static (AppShell)", () => {

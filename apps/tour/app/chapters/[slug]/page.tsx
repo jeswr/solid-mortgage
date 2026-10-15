@@ -63,7 +63,7 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
         </h1>
         <p className="mt-3 text-lg text-muted-foreground">{chapter.lead}</p>
         <p className="mt-3 rounded-lg border border-border bg-muted/50 px-4 py-2 text-foreground text-sm">
-          <span className="font-semibold">Anchor:</span> {chapter.anchor}
+          <span className="font-semibold">Rule or standard:</span> {chapter.anchor}
         </p>
       </header>
 
@@ -76,15 +76,14 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
           className="mt-6"
           real={
             <p>
-              The threshold proofs are real zero-knowledge circuits, proved and verified in the
-              browser, anchored to real issuer signatures over the credentials.
+              The threshold proofs are real zero-knowledge proofs. They are created and checked in
+              the browser and tied to the issuers' signatures.
             </p>
           }
           simulated={
             <p>
-              Sign-in — including holder binding when a proof is presented — is simulated in the
-              default visitor mode, and the lenders' quotes are illustrative figures, not offers.
-              The proving stack is research-grade; external audit is pending.
+              Sign-in is simulated in the default mode. The lenders' quotes are illustrative, not
+              offers. The proof system is not independently audited.
             </p>
           }
         />
@@ -119,7 +118,7 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
             data-next-chapter=""
             href="/examiner"
           >
-            The regulator lens: Examiner View →
+            Next: Examiner View →
           </a>
         )}
       </nav>

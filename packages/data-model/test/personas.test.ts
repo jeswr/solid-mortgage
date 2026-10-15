@@ -1,6 +1,13 @@
 import { DataFactory } from "n3";
 import { describe, expect, test } from "vitest";
-import { PERSONA_VALUES, type Persona, personas, RESOURCE_POD_PATHS } from "../src/personas.js";
+import {
+  ALEX_CLOSING_COST_ITEMS,
+  closingCostTotalUsd,
+  PERSONA_VALUES,
+  type Persona,
+  personas,
+  RESOURCE_POD_PATHS,
+} from "../src/personas.js";
 import { validate } from "../src/shacl.js";
 import { MORT } from "../src/vocab/mort.js";
 import {
@@ -171,6 +178,32 @@ describe("personas()", { timeout: 60_000 }, () => {
       expect(closing.principalAmount.amountValue).toBe(approved);
       expect(closing.borrowerIri).toBe(persona.webId);
     }
+  });
+
+  test("Alex carries the canonical captured journey figures", () => {
+    const alex = PERSONA_VALUES.find((values) => values.id === "alex-rivera");
+    expect(alex).toMatchObject({
+      bankBalanceUsd: 64000,
+      creditScoreValue: 742,
+      employerName: "Ridgeline Analytics LLC",
+      monthlyGrossIncomeUsd: 8500,
+      requestedLoanUsd: 340000,
+      totalMonthlyDebtUsd: 1180,
+    });
+  });
+
+  test("closing costs are an itemised demo schedule, never the $11,600 statistic", async () => {
+    expect(closingCostTotalUsd(ALEX_CLOSING_COST_ITEMS)).toBe(4340);
+    for (const values of PERSONA_VALUES) {
+      expect(values.closingCostItems.length).toBeGreaterThan(0);
+      expect(values.closingCostsUsd).toBe(closingCostTotalUsd(values.closingCostItems));
+      expect(values.closingCostsUsd).not.toBe(11600);
+    }
+    const [alex] = await personas({ now: NOW });
+    const closingResource = alex?.byPath.get("/mortgage/closing");
+    if (closingResource === undefined) throw new Error("closing resource missing");
+    const closing = new ClosingRecord(closingResource.iri, closingResource.dataset, DataFactory);
+    expect(closing.totalClosingCosts?.amountValue).toBe(4340);
   });
 
   test("podBases override rewrites every resource IRI", async () => {

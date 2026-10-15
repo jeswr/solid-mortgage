@@ -199,9 +199,11 @@ test.describe("lender-53 thin competing quote (sm-31)", () => {
     await page.getByRole("button", { name: "I understand — enter the demo" }).click();
     await expect(
       page.getByRole("heading", {
-        name: "Get a competing rate quote without sharing your numbers",
+        name: "Second lender's prequalification criteria",
       }),
     ).toBeVisible();
+    // The limitation items sit in the collapsed "Technical details" disclosure.
+    await page.locator("summary", { hasText: "Technical details" }).click();
     await expect(
       page.getByText("Live proofs are bound to an issuer-signed operand anchor"),
     ).toBeVisible();

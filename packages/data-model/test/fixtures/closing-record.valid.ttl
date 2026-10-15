@@ -1,3 +1,5 @@
+# Closing costs: the illustrative itemised demo total (ALEX_CLOSING_COST_ITEMS
+# in src/personas.ts), never an industry cost-to-originate statistic.
 @prefix schema: <https://schema.org/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
@@ -21,12 +23,12 @@
   ] ;
   fibo-loan-ln-ln:hasPrincipalAmount [
     a schema:MonetaryAmount ;
-    schema:value 335000.00 ;
+    schema:value 340000.00 ;
     schema:currency "USD"
   ] ;
   fibo-loan-ln-ln:hasTotalClosingCosts [
     a schema:MonetaryAmount ;
-    schema:value 11600.00 ;
+    schema:value 4340.00 ;
     schema:currency "USD"
   ] ;
   schema:interestRate 6.125 ;

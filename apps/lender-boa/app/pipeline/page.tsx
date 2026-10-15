@@ -1,61 +1,66 @@
 import { PERSONA_VALUES } from "@mortgage/data-model";
 import { IllustrativeFigure } from "@mortgage/ui";
+import { LivePipeline } from "../../components/live-pipeline";
 import { formatUsd } from "../../lib/format";
 import { site } from "../site";
 
 export const metadata = {
-  title: `Loan-officer pipeline — Concept Demo (not ${site.organization})`,
+  title: `Loan pipeline — Concept Demo (not ${site.organization})`,
 };
 
-const STAGES: Readonly<Record<string, string>> = {
-  "alex-rivera": "Conditional approval — pre-close re-verification due",
-  "jordan-avery": "Underwriting — evidence complete",
-};
+/** Alex's file appears in the live queue, so the static sample shows only the others. */
+const SAMPLE_FILES = PERSONA_VALUES.filter((persona) => persona.id !== "alex-rivera");
 
 /**
- * The loan-officer view of the same journey (demo data: the two persona
- * fixtures). Every figure is illustrative; evidence arrives as verifiable
- * credentials under the borrower's grant, so there is nothing to re-collect.
+ * The lender's view of the same journey. The live queue reads submitted files
+ * from the borrower's pod; the sample table is illustrative persona data.
  */
 export default function PipelinePage() {
   return (
     <main className="mx-auto w-full max-w-5xl px-6 py-12">
       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        Lender view · origination pipeline
+        Viewing as: lender underwriter
       </p>
-      <h1 className="mt-1 text-3xl font-semibold tracking-tight text-foreground">
-        Loan-officer pipeline
-      </h1>
+      <h1 className="mt-1 text-3xl font-semibold tracking-tight text-foreground">Loan pipeline</h1>
       <p className="mt-4 max-w-2xl text-muted-foreground">
-        Each file's evidence is the borrower's own verified credentials, read under a revocable
-        grant — no document chasing, no stale verifications, full audit trail.
+        The lender reads each application from the borrower's pod.
       </p>
-      <div className="mt-8 overflow-x-auto">
+      <p className="mt-2 max-w-2xl text-muted-foreground text-sm">
+        Each file shows three separate states: the automated underwriting system (AUS)
+        recommendation, the underwriter decision, and the closing status.
+      </p>
+      <p className="mt-2 max-w-2xl text-muted-foreground text-sm">
+        Permission changes are saved. This local demo makes requests as Alex; it does not enforce
+        separate organisation permissions.
+      </p>
+      <section aria-labelledby="queue-heading" className="mt-8">
+        <h2 className="font-semibold text-foreground text-xl" id="queue-heading">
+          Queue
+        </h2>
+        <LivePipeline apiBase="/lender-boa/api" />
+      </section>
+      <h2 className="mt-12 font-semibold text-foreground text-xl">Sample files (simulated)</h2>
+      <div className="mt-4 overflow-x-auto">
         <table className="w-full border-collapse text-sm">
-          <caption className="sr-only">
-            Demo pipeline of loan applications (all data simulated)
-          </caption>
+          <caption className="sr-only">Sample loan applications (all data simulated)</caption>
           <thead>
             <tr className="border-b border-border text-left text-muted-foreground">
               <th className="py-2 pr-4 font-medium" scope="col">
-                Borrower (demo persona)
+                Borrower
               </th>
               <th className="py-2 pr-4 font-medium" scope="col">
                 Requested loan
               </th>
               <th className="py-2 pr-4 font-medium" scope="col">
-                DTI evidence
-              </th>
-              <th className="py-2 pr-4 font-medium" scope="col">
-                Stage
+                Debts and income
               </th>
               <th className="py-2 font-medium" scope="col">
-                Decision
+                Underwriter decision
               </th>
             </tr>
           </thead>
           <tbody>
-            {PERSONA_VALUES.map((persona) => (
+            {SAMPLE_FILES.map((persona) => (
               <tr key={persona.id} className="border-b border-border align-top">
                 <th className="py-3 pr-4 font-semibold text-foreground" scope="row">
                   {persona.name}
@@ -64,10 +69,9 @@ export default function PipelinePage() {
                   <IllustrativeFigure>{formatUsd(persona.requestedLoanUsd)}</IllustrativeFigure>
                 </td>
                 <td className="py-3 pr-4 text-muted-foreground">
-                  debts {formatUsd(persona.totalMonthlyDebtUsd)} / income{" "}
-                  {formatUsd(persona.monthlyGrossIncomeUsd)} per month (VC-attested)
+                  Debts {formatUsd(persona.totalMonthlyDebtUsd)} a month and income{" "}
+                  {formatUsd(persona.monthlyGrossIncomeUsd)} a month, from credentials
                 </td>
-                <td className="py-3 pr-4 text-muted-foreground">{STAGES[persona.id]}</td>
                 <td className="py-3 font-semibold">
                   <IllustrativeFigure>Approved with conditions</IllustrativeFigure>
                 </td>

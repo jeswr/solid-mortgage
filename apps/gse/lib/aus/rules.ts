@@ -8,7 +8,8 @@
  * the proprietary scorecard the real GSE system runs.
  *
  * Outcome model (role-based framing only — no vendor product vocabulary):
- *   - "approve": every evidence gate AND every risk rule passes;
+ *   - "approve": every evidence gate AND every configured demo check passes
+ *                (not a complete underwriting assessment);
  *   - "refer":   the EVIDENCE cannot be relied on (a credential failed the
  *                fail-closed verifier, attests a different subject, or its
  *                validity window lapsed) — re-verify through the existing
@@ -76,7 +77,12 @@ export interface AusQualifyingFigures {
   readonly proposedMonthlyPaymentUsd: number;
   readonly dtiPercent: number;
   readonly ltvPercent: number;
-  readonly reservesMonths: number;
+  /**
+   * Gross liquid assets ÷ monthly principal and interest — an ILLUSTRATIVE
+   * display figure only. Funds to close are not deducted, so this is NOT a
+   * reserve assessment, and it never decides the outcome.
+   */
+  readonly assetsToPaymentMonths: number;
 }
 
 /**
@@ -114,18 +120,19 @@ export const AUS_THRESHOLDS = {
   maxDtiPercent: 45,
   /** Loan-to-value ceiling, percent. */
   maxLtvPercent: 95,
-  /** Liquid reserves after close, in months of the proposed payment. */
-  minReservesMonths: 2,
   /** Fixed qualifying note rate (deterministic input, matches the demo quote). */
   qualifyingRatePercent: 6.125,
 } as const;
 
+/** Display label for a caution recommendation (stored as FIBO Ineligible). */
+export const CAUTION_LABEL = "Caution — manual underwriting review required";
+
 /** Fannie Mae B3-3.1-04 — the scene-4 freshness anchor quoted on decisions. */
 export const VOE_RULE =
-  "Verbal verification of employment within 10 business days before the note date (Fannie Mae B3-3.1-04)";
+  "Verbal verification of employment before the note date, within the timing the Selling Guide sets for the option used (Fannie Mae B3-3.1-04)";
 
 export const APPROVAL_CONDITION =
-  "Provide updated employment verification within 10 business days of closing.";
+  "Obtain a verbal verification of employment (VOE) before the note date, within the timing Fannie Mae Selling Guide B3-3.1-04 sets for the option used (often 10 business days).";
 
 const EVIDENCE_LABELS: Readonly<Record<EvidenceKind, string>> = {
   "employment-income": "employment + income credential",
@@ -247,8 +254,12 @@ export function runAusRules(file: AusLoanFile): AusResult {
   const ltvPercent = ltvComputable
     ? round1((file.requestedAmountUsd / file.appraisedValueUsd) * 100)
     : Number.NaN;
-  const reservesComputable = payment > 0 && file.liquidAssetsUsd >= 0;
-  const reservesMonths = reservesComputable ? round1(file.liquidAssetsUsd / payment) : Number.NaN;
+  // Display-only proxy (not a reserve assessment: funds to close are not
+  // deducted) — deliberately NOT a risk rule, so it cannot decide the outcome.
+  const assetsComputable = payment > 0 && file.liquidAssetsUsd >= 0;
+  const assetsToPaymentMonths = assetsComputable
+    ? round1(file.liquidAssetsUsd / payment)
+    : Number.NaN;
 
   const riskFindings: AusFinding[] = [
     {
@@ -277,14 +288,6 @@ export function runAusRules(file: AusLoanFile): AusResult {
       rule: "Loan-to-value ratio against the appraised value",
       threshold: `<= ${t.maxLtvPercent}%`,
     },
-    {
-      category: "risk",
-      code: "RESERVES",
-      observed: reservesComputable ? `${reservesMonths} months` : "not computable",
-      pass: reservesComputable && reservesMonths >= t.minReservesMonths,
-      rule: "Liquid reserves cover the proposed monthly payment",
-      threshold: `>= ${t.minReservesMonths} months`,
-    },
   ];
 
   const findings = [...evidenceFindings, ...riskFindings];
@@ -303,17 +306,23 @@ export function runAusRules(file: AusLoanFile): AusResult {
     findings,
     outcome,
     qualifying: {
+      assetsToPaymentMonths,
       dtiPercent,
       evaluated: true,
       ltvPercent,
       proposedMonthlyPaymentUsd: payment,
       qualifyingRatePercent: t.qualifyingRatePercent,
-      reservesMonths,
     },
   };
 }
 
-/** The FIBO AUS-recommendation named individual for an outcome. */
+/**
+ * The FIBO AUS-recommendation named individual for an outcome. FIBO has no
+ * "Caution" individual, so caution is STORED as UnderwritingDecision-Ineligible
+ * (the shape's closed `sh:in` list) — every display of that IRI must read
+ * "Caution — manual underwriting review required" (see CAUTION_LABEL), never
+ * "Ineligible".
+ */
 export function recommendationIriOf(outcome: AusOutcome): string {
   switch (outcome) {
     case "approve":

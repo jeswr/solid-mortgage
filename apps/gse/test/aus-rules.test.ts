@@ -38,13 +38,13 @@ function greenEvidence(overrides: Partial<Record<EvidenceKind, Partial<AusEviden
 function approvableFile(overrides: Partial<AusLoanFile> = {}): AusLoanFile {
   return {
     appraisedValueUsd: 425000,
-    creditScoreValue: 745,
+    creditScoreValue: 742,
     evidence: greenEvidence(),
-    liquidAssetsUsd: 97400,
+    liquidAssetsUsd: 64000,
     loanTermMonths: 360,
-    monthlyGrossIncomeUsd: 8200,
+    monthlyGrossIncomeUsd: 8500,
     requestedAmountUsd: 340000,
-    totalMonthlyDebtUsd: 610,
+    totalMonthlyDebtUsd: 1180,
     ...overrides,
   };
 }
@@ -66,9 +66,9 @@ describe("the approve path", () => {
       proposedMonthlyPaymentUsd(340000, AUS_THRESHOLDS.qualifyingRatePercent, 360),
     );
     expect(qualifying.proposedMonthlyPaymentUsd).toBe(2066);
-    expect(qualifying.dtiPercent).toBe(32.6); // (610 + 2066) / 8200
+    expect(qualifying.dtiPercent).toBe(38.2); // (1,180 + 2,066) / 8,500
     expect(qualifying.ltvPercent).toBe(80); // 340,000 / 425,000
-    expect(qualifying.reservesMonths).toBe(47.1); // 97,400 / 2,066
+    expect(qualifying.assetsToPaymentMonths).toBe(31); // 64,000 / 2,066 (display only)
     expect(qualifying.qualifyingRatePercent).toBe(6.125);
   });
 
@@ -190,10 +190,18 @@ describe("the caution path (risk rules)", () => {
     expect(finding?.observed).toBe("98.8%");
   });
 
-  test("insufficient reserves caution", () => {
+  test("the assets ÷ P&I proxy is display-only: low assets never caution", () => {
     const result = runAusRules(approvableFile({ liquidAssetsUsd: 1000 }));
-    expect(result.outcome).toBe("caution");
-    expect(result.findings.find((entry) => entry.code === "RESERVES")?.pass).toBe(false);
+    expect(result.outcome).toBe("approve");
+    expect(result.findings.some((entry) => entry.code === "RESERVES")).toBe(false);
+    if (!result.qualifying.evaluated) throw new Error("unreachable: approve emits figures");
+    expect(result.qualifying.assetsToPaymentMonths).toBe(0.5); // 1,000 / 2,066
+  });
+
+  test("the assets ÷ P&I proxy is not computable without a payment", () => {
+    const result = runAusRules(approvableFile({ requestedAmountUsd: 0 }));
+    if (!result.qualifying.evaluated) throw new Error("unreachable: evidence passed");
+    expect(Number.isNaN(result.qualifying.assetsToPaymentMonths)).toBe(true);
   });
 
   test("the caution conditions quote the failed risk rules", () => {

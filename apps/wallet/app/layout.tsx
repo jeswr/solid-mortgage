@@ -1,4 +1,11 @@
-import { AppShell, ConsentInterstitial, demoMetadata, orgThemes } from "@mortgage/ui";
+import {
+  AppShell,
+  ConsentInterstitial,
+  DEMO_BORROWER_ACCOUNT,
+  demoMetadata,
+  headerNavLinkClass,
+  orgThemes,
+} from "@mortgage/ui";
 import type { Metadata } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -12,11 +19,12 @@ export const metadata: Metadata = demoMetadata({
 });
 
 const NAV = [
-  { href: "/", label: "Vault" },
+  { href: "/", label: "Home" },
   { href: "/credentials", label: "Credentials" },
-  { href: "/prequal", label: "ZK pre-qual" },
-  { href: "/grants", label: "Access grants" },
-  { href: "/ledger", label: "Receipt ledger" },
+  { href: "/prequal", label: "Prequalify" },
+  { href: "/grants", label: "Access permissions" },
+  { href: "/ledger", label: "Consent receipts" },
+  { href: "/assistant", label: "Assistant" },
 ] as const;
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
@@ -24,16 +32,14 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
     <html lang="en">
       <body>
         <AppShell
+          account={DEMO_BORROWER_ACCOUNT}
           appName={site.appName}
           headerActions={
             <nav aria-label="Data Vault sections">
               <ul className="flex list-none flex-wrap gap-4 p-0 text-sm">
                 {NAV.map((item) => (
                   <li key={item.href}>
-                    <Link
-                      className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-                      href={item.href}
-                    >
+                    <Link className={headerNavLinkClass} href={item.href}>
                       {item.label}
                     </Link>
                   </li>

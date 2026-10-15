@@ -2,7 +2,7 @@
   "name": "@jeswr/solid-mortgage-workspace",
   "private": true,
   "version": "0.0.0",
-  "description": "Solid Mortgage Showcase — multi-stakeholder EDMA demo suite on Solid",
+  "description": "Solid Mortgage Showcase \u2014 multi-stakeholder EDMA demo suite on Solid",
   "type": "module",
   "license": "UNLICENSED",
   "author": "Jesse Wright <63333554+jeswr@users.noreply.github.com>",
@@ -26,6 +26,8 @@
   "scripts": {
     "dev": "node scripts/dev-apps.mjs",
     "dev:pod": "node scripts/dev-pod.ts",
+    "demo": "node scripts/demo/start.ts",
+    "demo:check": "node scripts/demo/check.ts",
     "lint": "pnpm run lint:root && pnpm run check:packages && turbo run lint --concurrency=4",
     "lint:root": "biome check package.json turbo.json biome.json vitest.config.ts playwright.config.ts scripts guardrails test e2e",
     "lint:fix": "biome check --write .",

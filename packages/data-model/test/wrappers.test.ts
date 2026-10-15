@@ -50,7 +50,7 @@ const EMPLOYMENT_INIT: EmploymentIncomeCredentialInit = {
   employerName: "Ridgeline Analytics LLC",
   jobTitle: "Senior Data Engineer",
   startDate: new Date("2021-03-01T00:00:00Z"),
-  monthlyGrossIncomeUsd: 8200,
+  monthlyGrossIncomeUsd: 8500,
   evidence: "https://alex.pod.example/reports/income-verification",
 };
 
@@ -110,7 +110,7 @@ describe("wrapper round-trip (build -> serialize -> parse -> read)", () => {
     expect(subject.worksFor.organizationName).toBe("Ridgeline Analytics LLC");
     expect(subject.jobTitle).toBe("Senior Data Engineer");
     expect(subject.startDate.toISOString()).toBe("2021-03-01T00:00:00.000Z");
-    expect(subject.monthlyGrossIncomeUsd).toBe(8200);
+    expect(subject.monthlyGrossIncomeUsd).toBe(8500);
   });
 
   test("identical inits serialise byte-identically", async () => {
@@ -147,8 +147,8 @@ describe("ZK digit-budget enforcement (decision 0005)", () => {
     validUntil: new Date("2026-10-05T00:00:00Z"),
     credentialStatus: "https://bureau.example/status/credit#3",
     credentialSubject: WEB_ID,
-    creditScoreValue: 745,
-    totalMonthlyDebtUsd: 610,
+    creditScoreValue: 742,
+    totalMonthlyDebtUsd: 1180,
   };
 
   test("setters reject out-of-budget values before any RDF is written", () => {

@@ -2,7 +2,8 @@
  * Scene-3 application submit: build the URLA-subset loan application and the
  * instant "approved with conditions" decision from the GRANTED pod data, and
  * deliver both back into the borrower's pod (`/mortgage/application`,
- * `/mortgage/decision`) — the Loan Estimate beat. Documents are built through
+ * `/mortgage/decision`), with illustrative loan terms (not a Loan Estimate).
+ * The decision carries no AUS recommendation until the AUS runs. Documents are built through
  * the data-model wrapper layer and serialised by `resourceToTurtle`, which
  * SHACL-validates before any byte leaves the process.
  *
@@ -70,6 +71,25 @@ function demoLoanValues() {
   return persona;
 }
 
+/** The loan request the demo application carries (persona constants; illustrative). */
+export interface DemoLoanSummary {
+  readonly subjectProperty: string;
+  readonly requestedLoanUsd: number;
+  readonly estimatedValueUsd: number;
+  readonly loanTermMonths: number;
+}
+
+export function demoLoanSummary(): DemoLoanSummary {
+  const values = demoLoanValues();
+  const address = values.subjectPropertyAddress;
+  return {
+    subjectProperty: `${address.streetAddress}, ${address.addressLocality}, ${address.addressRegion} ${address.postalCode}`,
+    requestedLoanUsd: values.requestedLoanUsd,
+    estimatedValueUsd: values.appraisedValueUsd,
+    loanTermMonths: values.loanTermMonths,
+  };
+}
+
 export function loanEstimateOf(loanAmountUsd: number, closingCostsUsd: number): LoanEstimate {
   return {
     simulated: true,
@@ -130,7 +150,7 @@ export async function submitApplication(
   });
 
   const conditions = [
-    "Provide updated employment verification within 10 business days of closing.",
+    "Obtain a verbal verification of employment (VOE) before the note date, within the timing Fannie Mae Selling Guide B3-3.1-04 sets for the option used (often 10 business days).",
   ];
   const decision = buildUnderwritingDecision({
     iri: decisionIri,
@@ -138,7 +158,8 @@ export async function submitApplication(
     decisionStatus: MORT.DecisionStatus_ApprovedWithConditions,
     conditions,
     approvedAmountUsd: values.approvedLoanUsd,
-    ausRecommendation: values.ausRecommendation,
+    // No AUS recommendation: the AUS has not run at submission. The GSE app
+    // records its recommendation on this decision when it runs.
     issued: now,
     // The demo lender identity (matches the persona fixtures' issuer set;
     // RFC 2606 .example — never a real org's IRI, decision 0010).

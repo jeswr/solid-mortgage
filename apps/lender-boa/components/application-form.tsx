@@ -2,7 +2,8 @@
 
 import { DemoLockedField, IllustrativeFigure } from "@mortgage/ui";
 import { useEffect, useState } from "react";
-import { formatPercent, formatUsd } from "../lib/format";
+import { formatPercent, formatUsd, QUOTE_CAUTION } from "../lib/format";
+import type { DemoLoanSummary } from "../lib/server/loan";
 import type { UrlaPrefill } from "../lib/server/prefill";
 
 /** The LE payload reflected by POST /api/application/submit. */
@@ -29,6 +30,8 @@ export interface ApplicationFormProps {
   demoPrefill: UrlaPrefill;
   /** The app's base path (multi-zone: client fetches must carry it). */
   apiBase: string;
+  /** The loan request and subject property the demo application carries. */
+  loan: DemoLoanSummary;
 }
 
 /**
@@ -41,7 +44,7 @@ export interface ApplicationFormProps {
  * the API answers 401 and the demo persona stays, with copy saying exactly
  * that.
  */
-export function ApplicationForm({ demoPrefill, apiBase }: ApplicationFormProps) {
+export function ApplicationForm({ demoPrefill, apiBase, loan }: ApplicationFormProps) {
   const [prefill, setPrefill] = useState<UrlaPrefill>(demoPrefill);
   const [podConnected, setPodConnected] = useState(false);
   const [prefillError, setPrefillError] = useState<string | null>(null);
@@ -60,9 +63,7 @@ export function ApplicationForm({ demoPrefill, apiBase }: ApplicationFormProps) 
           // An AUTHENTICATED failure (403 binding, 5xx pod/config) is a real
           // error — surface it instead of masquerading as the demo fallback.
           if (!cancelled) {
-            setPrefillError(
-              `live pod prefill failed (${response.status}) — showing the demo persona`,
-            );
+            setPrefillError(`Pod prefill failed (${response.status}). Showing demo data.`);
           }
           return;
         }
@@ -72,7 +73,7 @@ export function ApplicationForm({ demoPrefill, apiBase }: ApplicationFormProps) 
         setPodConnected(true);
       } catch {
         if (!cancelled) {
-          setPrefillError("live pod prefill failed (network) — showing the demo persona");
+          setPrefillError("Pod prefill failed (network). Showing demo data.");
         }
       }
     })();
@@ -89,12 +90,12 @@ export function ApplicationForm({ demoPrefill, apiBase }: ApplicationFormProps) 
       const response = await fetch(`${apiBase}/application/submit`, { method: "POST" });
       const body = (await response.json()) as SubmitResponse & { detail?: string };
       if (!response.ok) {
-        setError(body.detail ?? `submission failed (${response.status})`);
+        setError(body.detail ?? `Submission failed (${response.status}).`);
         return;
       }
       setResult(body);
     } catch {
-      setError("submission failed — is the pod reachable?");
+      setError("Submission failed. Is the pod reachable?");
     } finally {
       setBusy(false);
     }
@@ -104,17 +105,20 @@ export function ApplicationForm({ demoPrefill, apiBase }: ApplicationFormProps) 
     <div>
       <p className="text-muted-foreground" data-prefill-source={prefill.source}>
         {podConnected
-          ? "These values were read live from your granted pod data — not re-typed into a form. This prefill only checks the data's shape (SHACL) and its subject binding; full credential-signature verification is not yet wired into this demo path (tracked)."
+          ? "The lender read these values from Alex's pod. It checked their format and that they belong to Alex. It did not check credential signatures in this step."
           : prefillError !== null
-            ? "Showing the demo persona — the live pod prefill attempt did not complete (details below)."
-            : "Showing the demo persona. The live pod prefill requires an authenticated borrower session (hosted mode) — in the default in-browser demo there is no real login, so this rail honestly stays off."}
+            ? "Showing demo data for Alex. The pod prefill did not complete (details below)."
+            : "Showing demo data for Alex. Prefill from the pod needs a signed-in borrower, which this in-browser demo does not have."}
       </p>
       {prefillError !== null && (
         <p className="mt-2 text-sm text-accent" data-prefill-error="" role="alert">
           {prefillError}
         </p>
       )}
-      <form aria-label="Uniform Residential Loan Application (URLA subset, demo)" className="mt-6">
+      <form
+        aria-label="Uniform Residential Loan Application (URLA), sections 1–2, demo"
+        className="mt-6"
+      >
         <fieldset className="rounded-lg border border-border bg-card p-5">
           <legend className="px-1 text-sm font-semibold text-foreground">
             Section 1 · Borrower information
@@ -144,7 +148,7 @@ export function ApplicationForm({ demoPrefill, apiBase }: ApplicationFormProps) 
         </fieldset>
         <fieldset className="mt-4 rounded-lg border border-border bg-card p-5">
           <legend className="px-1 text-sm font-semibold text-foreground">
-            Sections 2–3 · Assets and liabilities
+            Section 2 · Assets and liabilities
           </legend>
           <div className="grid gap-4 sm:grid-cols-2">
             {prefill.assets.accounts.map((account) => (
@@ -159,11 +163,32 @@ export function ApplicationForm({ demoPrefill, apiBase }: ApplicationFormProps) 
               value={formatUsd(prefill.credit.totalMonthlyDebtUsd)}
             />
             <DemoLockedField
-              label="Credit score (soft, VC-attested)"
+              label="Credit score (from credit-score credential)"
               value={String(prefill.credit.creditScoreValue)}
             />
           </div>
         </fieldset>
+        <fieldset className="mt-4 rounded-lg border border-border bg-card p-5">
+          <legend className="px-1 text-sm font-semibold text-foreground">
+            Section 4 · Loan and property
+          </legend>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <DemoLockedField label="Subject property" value={loan.subjectProperty} />
+            <DemoLockedField
+              label="Requested loan amount"
+              value={formatUsd(loan.requestedLoanUsd)}
+            />
+            <DemoLockedField
+              label="Estimated property value"
+              value={formatUsd(loan.estimatedValueUsd)}
+            />
+            <DemoLockedField label="Loan term" value={`${loan.loanTermMonths / 12} years`} />
+          </div>
+        </fieldset>
+        <p className="mt-3 text-muted-foreground text-xs">
+          Demo application fields only. Other URLA sections (declarations, demographic information,
+          real identifiers) are not included. Never enter a real Social Security number.
+        </p>
       </form>
 
       <div className="mt-6">
@@ -174,13 +199,11 @@ export function ApplicationForm({ demoPrefill, apiBase }: ApplicationFormProps) 
             onClick={submit}
             type="button"
           >
-            {busy ? "Submitting…" : "Submit application (demo)"}
+            {busy ? "Submitting…" : "Submit application"}
           </button>
         ) : (
           <p className="text-sm text-muted-foreground">
-            Submitting writes the application and the Loan Estimate into YOUR pod, so it needs the
-            authenticated borrower session the prefill above explains. Without one, this form shows
-            the demo persona.
+            Submitting saves the application in Alex's pod, so it needs a signed-in borrower.
           </p>
         )}
         {error !== null && (
@@ -191,67 +214,86 @@ export function ApplicationForm({ demoPrefill, apiBase }: ApplicationFormProps) 
       </div>
 
       {result !== null && (
-        <section
-          aria-labelledby="le-heading"
-          className="mt-8 rounded-lg border border-border bg-card p-5"
-          data-loan-estimate=""
-        >
-          <h2 id="le-heading" className="text-xl font-semibold text-card-foreground">
-            Loan Estimate
-          </h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            TRID requires the Loan Estimate to be {result.loanEstimate.tridTiming}. The application
-            and its decision were written to your pod immediately:{" "}
-            <code className="break-all">{result.applicationIri}</code> and{" "}
-            <code className="break-all">{result.decisionIri}</code>. The estimate figures below are
-            derived from that decision (illustrative — not an offer).
+        <>
+          <section
+            aria-labelledby="le-heading"
+            className="mt-8 rounded-lg border border-border bg-card p-5"
+            data-loan-estimate=""
+          >
+            <h2 id="le-heading" className="text-xl font-semibold text-card-foreground">
+              Illustrative loan terms
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              These terms are illustrative. They are not a Loan Estimate or credit approval.
+            </p>
+            <p className="mt-2 text-sm text-muted-foreground" data-quote-caution="">
+              {QUOTE_CAUTION}
+            </p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              The lender's Loan Estimate must be {result.loanEstimate.tridTiming} (12 CFR
+              1026.19(e)(1)(iii)).
+            </p>
+            <dl className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div>
+                <dt className="text-sm text-muted-foreground">Loan amount</dt>
+                <dd className="font-semibold">
+                  <IllustrativeFigure>
+                    {formatUsd(result.loanEstimate.loanAmountUsd)}
+                  </IllustrativeFigure>
+                </dd>
+              </div>
+              <div>
+                <dt className="text-sm text-muted-foreground">Interest rate</dt>
+                <dd className="font-semibold">
+                  <IllustrativeFigure>
+                    {formatPercent(result.loanEstimate.interestRatePercent)}
+                  </IllustrativeFigure>
+                </dd>
+              </div>
+              <div>
+                <dt className="text-sm text-muted-foreground">Monthly principal &amp; interest</dt>
+                <dd className="font-semibold">
+                  <IllustrativeFigure>
+                    {`${formatUsd(result.loanEstimate.monthlyPrincipalAndInterestUsd)} a month`}
+                  </IllustrativeFigure>
+                </dd>
+              </div>
+              <div>
+                <dt className="text-sm text-muted-foreground">Closing costs</dt>
+                <dd className="font-semibold">Not itemised in this demo</dd>
+              </div>
+            </dl>
+          </section>
+          <p className="mt-4 text-sm" data-saved-application="">
+            Application saved in Alex's pod.{" "}
+            <a className="font-semibold underline" href={result.applicationIri}>
+              View saved application
+            </a>
           </p>
-          <dl className="mt-4 grid gap-3 sm:grid-cols-2">
-            <div>
-              <dt className="text-sm text-muted-foreground">Loan amount</dt>
-              <dd className="font-semibold">
-                <IllustrativeFigure>
-                  {formatUsd(result.loanEstimate.loanAmountUsd)}
-                </IllustrativeFigure>
-              </dd>
-            </div>
-            <div>
-              <dt className="text-sm text-muted-foreground">Interest rate</dt>
-              <dd className="font-semibold">
-                <IllustrativeFigure>
-                  {formatPercent(result.loanEstimate.interestRatePercent)}
-                </IllustrativeFigure>
-              </dd>
-            </div>
-            <div>
-              <dt className="text-sm text-muted-foreground">Monthly principal &amp; interest</dt>
-              <dd className="font-semibold">
-                <IllustrativeFigure>
-                  {formatUsd(result.loanEstimate.monthlyPrincipalAndInterestUsd)}
-                </IllustrativeFigure>
-              </dd>
-            </div>
-            <div>
-              <dt className="text-sm text-muted-foreground">Estimated closing costs</dt>
-              <dd className="font-semibold">
-                <IllustrativeFigure>
-                  {formatUsd(result.loanEstimate.estimatedClosingCostsUsd)}
-                </IllustrativeFigure>
-              </dd>
-            </div>
-            <div>
-              <dt className="text-sm text-muted-foreground">Decision</dt>
-              <dd className="font-semibold">
-                <IllustrativeFigure>Approved with conditions</IllustrativeFigure>
-              </dd>
-            </div>
-          </dl>
-          <ul className="mt-4 list-disc pl-5 text-sm text-muted-foreground">
-            {result.conditions.map((condition) => (
-              <li key={condition}>{condition}</li>
-            ))}
-          </ul>
-        </section>
+          <section
+            aria-labelledby="decision-heading"
+            className="mt-4 rounded-lg border border-border bg-card p-5"
+            data-underwriting-decision=""
+          >
+            <h2 id="decision-heading" className="text-xl font-semibold text-card-foreground">
+              Underwriter decision (simulated)
+            </h2>
+            <p className="mt-2 font-semibold">
+              <IllustrativeFigure>Approved with conditions</IllustrativeFigure>
+            </p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              AUS recommendation: Not run. The automated underwriting system runs in a later step.
+            </p>
+            <ul className="mt-2 list-disc pl-5 text-sm text-muted-foreground">
+              {result.conditions.map((condition) => (
+                <li key={condition}>{condition}</li>
+              ))}
+            </ul>
+            <p className="mt-4 text-xs text-muted-foreground">
+              Saved: <code className="break-all">{result.decisionIri}</code>
+            </p>
+          </section>
+        </>
       )}
     </div>
   );

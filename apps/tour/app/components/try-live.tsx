@@ -7,16 +7,20 @@ import { type ServiceStatus, useServiceStatuses } from "./use-service-status";
 export interface TryLiveButtonProps {
   app: DemoAppSlug;
   label: string;
+  /** Route inside the app, e.g. "/application"; omitted → the app root. */
+  path?: string;
+  /** Section id on the target page, appended as a #fragment. */
+  hash?: string;
   className?: string;
 }
 
 /**
  * "Try this live" deep link (showcase-patterns §1). When the target zone is not deployed
  * the control stays VISIBLE but disabled — a placeholder link (no href, no handler) with
- * aria-disabled and an explanation — so the story remains honest about what is wired in
+ * aria-disabled and an explanation — so the story stays accurate about what runs in
  * this environment and nothing can navigate into a failing zone (middle-click included).
  */
-export function TryLiveButton({ app, label, className }: TryLiveButtonProps) {
+export function TryLiveButton({ app, label, path, hash, className }: TryLiveButtonProps) {
   const target = demoApps[app];
   const statuses = useServiceStatuses([target.healthPath]);
   const status: ServiceStatus = statuses[target.healthPath] ?? "checking";
@@ -29,7 +33,7 @@ export function TryLiveButton({ app, label, className }: TryLiveButtonProps) {
           className,
         )}
         data-try-live={app}
-        href={target.path}
+        href={`${target.path}${path ?? ""}${hash === undefined ? "" : `#${hash}`}`}
       >
         {label}
         <span aria-hidden="true">→</span>
@@ -52,8 +56,8 @@ export function TryLiveButton({ app, label, className }: TryLiveButtonProps) {
       </a>
       <span className="text-muted-foreground text-xs">
         {status === "checking"
-          ? "Checking whether this app is deployed…"
-          : `${target.appName} is not deployed in this environment — the step still reads honestly without it.`}
+          ? "Checking whether this app is running…"
+          : `${target.appName} is not deployed in this environment.`}
       </span>
     </span>
   );
