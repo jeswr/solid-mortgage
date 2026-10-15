@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { site } from "../apps/tour/app/site.ts";
-import { GUIDED_STEPS, PILOT_CONTACT_URL } from "../scripts/demo/steps.ts";
+import { COP_FORUM_URL, COP_MEETINGS_URL, GUIDED_STEPS } from "../scripts/demo/steps.ts";
 
 const words = (text: string) => text.split(/\s+/u).filter((word) => word.length > 0).length;
 
@@ -30,16 +30,21 @@ describe("guided steps", () => {
     }
   });
 
-  test("the tour ends with the pilot invitation and its two links", () => {
+  test("the tour ends with the community invitation and its links", () => {
     const last = GUIDED_STEPS[GUIDED_STEPS.length - 1];
-    expect(last.title).toBe("Discuss a mortgage-data pilot");
+    expect(last.title).toBe("Join the EDMA Solid Community of Practice");
     expect(last.action).toBeUndefined();
-    expect(last.links?.map((link) => link.label)).toEqual(["Discuss a pilot", "Explore the apps"]);
-    expect(last.links?.[0]).toMatchObject({ href: PILOT_CONTACT_URL, primary: true });
+    expect(last.links?.map((link) => link.label)).toEqual([
+      "Register for the weekly meetings",
+      "Join the forum",
+      "Explore the apps",
+    ]);
+    expect(last.links?.[0]).toMatchObject({ href: COP_MEETINGS_URL, primary: true });
   });
 
-  test("the pilot link matches the tour's contact URL", () => {
-    expect(PILOT_CONTACT_URL).toBe(site.copContactUrl);
+  test("the community links match the tour site config", () => {
+    expect(COP_MEETINGS_URL).toBe(site.copMeetingsUrl);
+    expect(COP_FORUM_URL).toBe(site.copForumUrl);
   });
 
   test("closing actions use the shared closing labels", () => {

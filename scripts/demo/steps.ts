@@ -44,10 +44,9 @@ export interface GuidedLink {
   readonly primary?: boolean;
 }
 
-/**
- * Where "Discuss a pilot" points. Keep in step with `copContactUrl` in apps/tour/app/site.ts.
- */
-export const PILOT_CONTACT_URL = "https://edma-microsite.vercel.app/";
+/** Community of Practice links. Keep in step with apps/tour/app/site.ts. */
+export const COP_MEETINGS_URL = "https://hub.edmcouncil.org/NC__Event?id=a0lVQ0000061alxYAA";
+export const COP_FORUM_URL = "https://edmconnect.edmcouncil.org/solidforum/home";
 
 const VERIFY = "1 · Verify income, assets and credit";
 const PREQUALIFY = "2 · Check prequalification criteria";
@@ -263,11 +262,12 @@ export const GUIDED_STEPS: readonly GuidedStep[] = [
   {
     id: "done",
     scene: "End of the tour",
-    title: "Discuss a mortgage-data pilot",
-    body: "Join the EDMA Solid Community of Practice to test verification reuse, permissioned access and audit records with your organisation.",
+    title: "Join the EDMA Solid Community of Practice",
+    body: "Test verification reuse, permissioned access and audit records with your organisation. The community meets weekly.",
     path: "/",
     links: [
-      { label: "Discuss a pilot", href: PILOT_CONTACT_URL, primary: true },
+      { label: "Register for the weekly meetings", href: COP_MEETINGS_URL, primary: true },
+      { label: "Join the forum", href: COP_FORUM_URL },
       { label: "Explore the apps", href: "/apps" },
     ],
   },

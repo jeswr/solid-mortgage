@@ -103,21 +103,30 @@ export default function Home() {
         data-cop-invitation=""
       >
         <h2 className="font-semibold text-2xl text-card-foreground tracking-tight" id="cop-heading">
-          Discuss a mortgage-data pilot
+          Join the {site.organization}
         </h2>
         <p className="mt-2 max-w-3xl text-muted-foreground">
-          Join the {site.organization} to test verification reuse, permissioned access and audit
-          records with your organisation.
+          Test verification reuse, permissioned access and audit records with your organisation. The
+          community meets weekly.
         </p>
         <div className="mt-5 flex flex-wrap items-center gap-4">
           <a
             className="rounded-lg bg-primary px-5 py-3 font-semibold text-primary-foreground text-sm transition-opacity hover:opacity-90"
             data-cta-pilot=""
-            href={site.copContactUrl}
+            href={site.copMeetingsUrl}
             rel="noopener noreferrer"
             target="_blank"
           >
-            Discuss a pilot
+            Register for the weekly meetings
+          </a>
+          <a
+            className="font-medium text-foreground text-sm underline underline-offset-2 hover:opacity-80"
+            data-cta-forum=""
+            href={site.copForumUrl}
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            Join the forum
           </a>
           <a
             className="font-medium text-foreground text-sm underline underline-offset-2 hover:opacity-80"
