@@ -24,3 +24,4 @@ test-results/
 *.db
 .beads-credential-key
 .beads/proxieddb/
+.deploy/

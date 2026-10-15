@@ -1,5 +1,11 @@
 # Deploying the showcase to Vercel (sm-37)
 
+> **Hosted guided tour (current).** The full tour (auto-login, pod activity log, guided
+> steps) runs as ONE server process — `pnpm demo` in hosted mode — and every public
+> `*.vercel.app` link is a thin Vercel proxy project in front of it, so each app keeps its
+> own origin. See "Hosted guided tour" at the end of this file. The per-app Next.js
+> deployments described below are the earlier, standalone (Mode-1) setup.
+
 One Vercel project per app, all from this single monorepo, in the personal scope
 **jeswr / "Jesse Wright's projects"**. Project names are **neutral** (R2/R4: no org marks —
 `lender-a`, not the branded org) so no public hostname carries an insignia.
@@ -173,3 +179,29 @@ lead-sign-off territory.
 - Git-integration deploys stay BLOCKED until the commit-author seat issue is resolved; the
   checked-in `vercel.json` `ignoreCommand` arms itself when that returns. Until then, deploys
   are CLI-only (see above).
+
+
+## Hosted guided tour
+
+**Server.** Any Ubuntu 24.04 host with ports 4400–4408 reachable from Vercel (public
+internet). Provision it with `deploy/hosted/setup-server.sh` (EC2 user-data or `sudo bash`):
+it installs Node 25.1.0 and pnpm, clones and builds the repo at `DEMO_REF` (default `main`),
+and installs the `solid-mortgage-demo` systemd unit (`deploy/hosted/solid-mortgage-demo.service`).
+The unit runs `scripts/demo/start.ts` with `DEMO_BIND_HOST=0.0.0.0`, `DEMO_POD_PORT=4408`,
+`DEMO_IDLE_RESET_MINUTES=30`, `DEMO_LLM=off`, and `DEMO_PUBLIC_ORIGINS` from
+`/etc/solid-mortgage/demo.env` (seeded from `deploy/hosted/origins.json`). To redeploy:
+re-run the setup script (it fetches, rebuilds and restarts).
+
+**Proxies.** `node scripts/demo/vercel-proxies.ts http://<server-host>` writes one directory per
+public origin under `.deploy/vercel/<project>/` with a `vercel.json` that rewrites every path
+to that app's port. Each project needs `framework`, `rootDirectory`, `buildCommand`,
+`installCommand` and `outputDirectory` cleared (they still carry the Next.js settings above),
+then deploy from its directory: `vercel deploy --prod --yes` (the directories are not git
+repos, so the commit-author block above does not apply). `solid-mortgage-pod` is a new
+project: the pod's public origin, which the Data Vault fetches from the browser.
+
+**Behaviour.** All visitors share one demo borrower and pod. Starting the guided tour resets
+the data (rate-limited to once per 15 s), and it also resets after 30 minutes without traffic.
+The assistants are scripted unless an Anthropic API key is configured on the server
+(`ANTHROPIC_API_KEY` and `DEMO_LLM=on` in `/etc/solid-mortgage/demo.env`, plus the Claude Code
+CLI installed for the `demo` user) — never a personal Claude login.

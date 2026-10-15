@@ -1,0 +1,11 @@
+{
+  "tour": "https://solid-mortgage.vercel.app",
+  "/wallet": "https://solid-mortgage-wallet.vercel.app",
+  "/verifications": "https://solid-mortgage-verifications.vercel.app",
+  "/lender-boa": "https://solid-mortgage-lender-a.vercel.app",
+  "/lender-53": "https://solid-mortgage-lender-b.vercel.app",
+  "/gse": "https://solid-mortgage-underwriting.vercel.app",
+  "/property": "https://solid-mortgage-property.vercel.app",
+  "/closing": "https://solid-mortgage-closing.vercel.app",
+  "pod": "https://solid-mortgage-pod.vercel.app"
+}

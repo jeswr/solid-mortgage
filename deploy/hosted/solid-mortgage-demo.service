@@ -1,0 +1,24 @@
+[Unit]
+Description=Solid Mortgage Showcase — full guided tour (hosted mode)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=demo
+WorkingDirectory=/opt/solid-mortgage
+Environment=NODE_ENV=production
+Environment=DEMO_BIND_HOST=0.0.0.0
+Environment=DEMO_POD_PORT=4408
+Environment=DEMO_IDLE_RESET_MINUTES=30
+# Public visitors must not run on a personal Claude login: scripted assistants
+# unless an Anthropic API key is configured in /etc/solid-mortgage/demo.env
+# (then also set DEMO_LLM=on there).
+Environment=DEMO_LLM=off
+EnvironmentFile=-/etc/solid-mortgage/demo.env
+ExecStart=/usr/local/bin/node scripts/demo/start.ts
+Restart=always
+RestartSec=5
+KillMode=control-group
+
+[Install]
+WantedBy=multi-user.target
