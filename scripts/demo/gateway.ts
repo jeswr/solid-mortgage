@@ -347,7 +347,7 @@ export async function startGateway(options: GatewayOptions): Promise<Gateway> {
             appResponse.on("data", (chunk: Buffer) => chunks.push(chunk));
             appResponse.on("end", () => {
               const html = injectOverlay(Buffer.concat(chunks).toString("utf8"));
-              const outHeaders = { ...appResponse.headers };
+              const outHeaders = { ...appResponse.headers, "cache-control": "private, no-store" };
               delete outHeaders["content-length"];
               delete outHeaders["content-encoding"];
               response.writeHead(appResponse.statusCode ?? 502, outHeaders);
@@ -356,7 +356,15 @@ export async function startGateway(options: GatewayOptions): Promise<Gateway> {
             });
             return;
           }
-          response.writeHead(appResponse.statusCode ?? 502, appResponse.headers);
+          // Only build assets may be cached by a fronting CDN: pages carry the overlay and
+          // per-visitor state, API answers are per-session (hosted mode sits behind Vercel).
+          const immutable = url.pathname.includes("/_next/static/");
+          response.writeHead(
+            appResponse.statusCode ?? 502,
+            immutable
+              ? appResponse.headers
+              : { ...appResponse.headers, "cache-control": "private, no-store" },
+          );
           appResponse.pipe(response);
           appResponse.on("end", done);
         },
