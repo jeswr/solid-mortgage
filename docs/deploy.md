@@ -205,3 +205,12 @@ the data (rate-limited to once per 15 s), and it also resets after 30 minutes wi
 The assistants are scripted unless an Anthropic API key is configured on the server
 (`ANTHROPIC_API_KEY` and `DEMO_LLM=on` in `/etc/solid-mortgage/demo.env`, plus the Claude Code
 CLI installed for the `demo` user) — never a personal Claude login.
+
+**Live resources (2026-10-16).** AWS account `pss`, eu-west-2: instance `i-040c3b648e02e6ad6`
+(`solid-mortgage-demo`, t4g.medium, Ubuntu 24.04 arm64), Elastic IP `3.8.106.49`
+(`eipalloc-040f504466d003f3e`), security group `sg-0be23f76b9059ea36` (4400–4408 open,
+SSH from the operator's IP; key `sparq-dev`). Vercel: the eight app projects above are now
+proxy projects (framework and root directory cleared), plus `solid-mortgage-pod`.
+`solid-mortgage-vocab` is unchanged. Redeploy the server with
+`ssh -i ~/.ssh/sparq-dev.pem ubuntu@3.8.106.49 'sudo DEMO_REF=main bash /opt/solid-mortgage/deploy/hosted/setup-server.sh'`;
+regenerate and redeploy proxies only if the server address changes.

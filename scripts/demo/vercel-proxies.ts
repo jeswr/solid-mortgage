@@ -49,6 +49,8 @@ for (const [key, origin] of Object.entries(origins)) {
     rewrites: [
       // `/:path*` does not match the bare root, so it gets its own rule.
       { source: "/", destination: `${backend}:${port}/` },
+      // …and neither does a trailing slash (Solid containers end in "/").
+      { source: "/:path*/", destination: `${backend}:${port}/:path*/` },
       { source: "/:path*", destination: `${backend}:${port}/:path*` },
     ],
   };
