@@ -46,13 +46,15 @@ for (const [key, origin] of Object.entries(origins)) {
     buildCommand: null,
     installCommand: null,
     outputDirectory: null,
-    rewrites: [{ source: "/:path*", destination: `${backend}:${port}/:path*` }],
+    rewrites: [
+      // `/:path*` does not match the bare root, so it gets its own rule.
+      { source: "/", destination: `${backend}:${port}/` },
+      // …and neither does a trailing slash (Solid containers end in "/").
+      { source: "/:path*/", destination: `${backend}:${port}/:path*/` },
+      { source: "/:path*", destination: `${backend}:${port}/:path*` },
+    ],
   };
   writeFileSync(resolve(dir, "vercel.json"), `${JSON.stringify(config, null, 2)}\n`);
-  // A static file so the deployment has output; every request is rewritten anyway.
-  writeFileSync(
-    resolve(dir, "index.html"),
-    "<!doctype html><title>Solid Mortgage Showcase</title>\n",
-  );
+  // No static files: Vercel serves a matching file before it applies rewrites.
   console.log(`${project.padEnd(32)} → ${backend}:${port}`);
 }

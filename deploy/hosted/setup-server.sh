@@ -14,15 +14,21 @@ APP_DIR="/opt/solid-mortgage"
 
 arch="$(uname -m)"; case "$arch" in aarch64|arm64) node_arch=arm64 ;; x86_64) node_arch=x64 ;; *) echo "unsupported arch $arch"; exit 1 ;; esac
 
+# Next.js builds need more memory than a small instance has: add swap once.
+if ! swapon --show | grep -q /swapfile; then
+  fallocate -l 4G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile
+  grep -q /swapfile /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
+fi
+
 apt-get update -y
-apt-get install -y git curl ca-certificates xz-utils
+apt-get install -y git curl ca-certificates xz-utils libatomic1
 
 if ! command -v node >/dev/null || [ "$(node -v)" != "v${NODE_VERSION}" ]; then
   curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${node_arch}.tar.xz" -o /tmp/node.tar.xz
   tar -xJf /tmp/node.tar.xz -C /usr/local --strip-components=1
 fi
-corepack enable
-corepack prepare pnpm@10.4.1 --activate
+# Node 25 no longer bundles corepack: install the repo's pinned pnpm directly.
+npm install -g pnpm@10.4.1
 
 id -u "$APP_USER" >/dev/null 2>&1 || useradd --system --create-home --shell /usr/sbin/nologin "$APP_USER"
 if [ ! -d "$APP_DIR/.git" ]; then
@@ -32,7 +38,7 @@ git -C "$APP_DIR" fetch --depth 1 origin "$DEMO_REF"
 git -C "$APP_DIR" checkout -f FETCH_HEAD
 chown -R "$APP_USER:$APP_USER" "$APP_DIR"
 
-sudo -u "$APP_USER" -H bash -lc "cd $APP_DIR && CI=1 pnpm install --frozen-lockfile && pnpm build"
+sudo -u "$APP_USER" -H bash -lc "cd $APP_DIR && CI=1 pnpm install --frozen-lockfile && pnpm exec turbo run build --concurrency=1"
 
 install -m 0644 "$APP_DIR/deploy/hosted/solid-mortgage-demo.service" /etc/systemd/system/solid-mortgage-demo.service
 mkdir -p /etc/solid-mortgage

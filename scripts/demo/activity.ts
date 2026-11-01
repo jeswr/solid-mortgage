@@ -264,7 +264,11 @@ export async function startPodRecorder(options: PodRecorderOptions): Promise<Ser
         podResponse.on("data", (chunk: Buffer) => chunks.push(chunk));
         podResponse.on("end", () => {
           const responseBody = Buffer.concat(chunks);
-          response.writeHead(podResponse.statusCode ?? 502, podResponse.headers);
+          // Never let a fronting CDN cache pod answers: reads must see the latest writes.
+          response.writeHead(podResponse.statusCode ?? 502, {
+            ...podResponse.headers,
+            "cache-control": "private, no-store",
+          });
           response.end(responseBody);
           try {
             observe(request, method, path, body, podResponse.statusCode ?? 502, responseBody);
