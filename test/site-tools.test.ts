@@ -58,6 +58,12 @@ describe("site routes", () => {
     expect(headersFor("/wallet/prove/run")["Cross-Origin-Opener-Policy"]).toBe("same-origin");
     expect(headersFor("/wallet/")["Cross-Origin-Embedder-Policy"]).toBeUndefined();
     expect(headersFor("/wallet/prover")["Cross-Origin-Embedder-Policy"]).toBeUndefined();
+    // Workers an isolated page starts must carry the same embedder policy, or they are blocked.
+    for (const worker of ["/wallet/assets/main.worker-x.js", "/pods-sw.js", "/agents/wallet.js"]) {
+      expect(headersFor(worker)["Cross-Origin-Embedder-Policy"]).toBe("require-corp");
+      expect(headersFor(worker)["Cross-Origin-Opener-Policy"]).toBeUndefined();
+    }
+    expect(headersFor("/lender/assets/x.js")["Cross-Origin-Embedder-Policy"]).toBeUndefined();
     expect(headersFor("/bank/assets/x.js")["Cache-Control"]).toContain("immutable");
   });
 });
