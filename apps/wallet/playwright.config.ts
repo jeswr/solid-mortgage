@@ -25,8 +25,6 @@ export default defineConfig({
   use: { baseURL: `http://127.0.0.1:${port}/wallet/`, trace: "retain-on-failure" },
   webServer: {
     command: `node e2e/serve.mjs --port ${port}`,
-    // A SIGTERM lets the server remove its temporary site root (the default is SIGKILL).
-    gracefulShutdown: { signal: "SIGTERM", timeout: 5_000 },
     url: `http://127.0.0.1:${port}/wallet/`,
     reuseExistingServer: false,
     timeout: 180_000,
