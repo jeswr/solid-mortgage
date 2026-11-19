@@ -99,7 +99,7 @@ shape. `support` holds the node shapes they share (`NamedPartyShape`,
 |---|---|---|
 | `agent-profile` | `foaf:PersonalProfileDocument` | `profile/card` in every pod |
 | `contact-details` | `schema:ContactPoint` | Alex `profile/contact` |
-| `identity-credential` | `mort:IdentityCredential` | Alex `credentials/identity` |
+| `identity-credential` | `mort:IdentityCredential` | Alex `identity/identity-credential` |
 | `purchase-agreement` | `mort:PurchaseAgreement` | Alex `property/purchase-agreement` |
 | `subject-property` | `schema:SingleFamilyResidence` | Alex `property/subject-property` |
 | `loan-estimate` | `mort:LoanEstimate` | Alex `mortgage/juniper/loan-estimate` |
@@ -107,13 +107,13 @@ shape. `support` holds the node shapes they share (`NamedPartyShape`,
 | `score-notice` | `mort:CreditScoreNotice` | Alex `mortgage/juniper/score-notice` |
 | `credit-report` | `mort:CreditReport` | bureau pod, read by the lender |
 | `title-commitment-credential` | `mort:TitleCommitmentCredential` | Alex `mortgage/closing/title-commitment` |
-| `evidence-of-insurance-credential` | `mort:EvidenceOfInsuranceCredential` | Alex `mortgage/closing/evidence-of-insurance` |
+| `evidence-of-insurance-credential` | `mort:EvidenceOfInsuranceCredential` | Alex `insurance/evidence-of-insurance` |
 | `settlement-statement` | `mort:SettlementStatement` | Alex `mortgage/closing/settlement-statement` |
 | `recording-receipt` | `mort:RecordingReceipt` | Alex `mortgage/closing/recording-receipt` |
 | `recorded-instrument` | `mort:RecordedInstrument` | county `records/` (public) |
-| `servicing-notice` | `mort:LoanTransferNotice` | Alex `mortgage/servicing/notices/` |
-| `escrow-statement` | `mort:EscrowAccountStatement` | Alex `mortgage/servicing/escrow-statement` |
-| `payment-mandate` | `mort:PaymentMandate` | Alex `mortgage/servicing/payment-mandate` |
+| `servicing-notice` | `mort:LoanTransferNotice` | Alex `mortgage/juniper/sale-notice`, `mortgage/juniper/servicing-transfer-notice`, `mortgage/servicing/transfer-notice` |
+| `escrow-statement` | `mort:EscrowAccountStatement` | Alex `mortgage/juniper/initial-escrow-statement`, `mortgage/servicing/escrow-statement` |
+| `payment-mandate` | `mort:PaymentMandate` | Alex `banking/payment-mandate` |
 | `access-request` | `odrl:Request` | Alex `inbox/` |
 | `odrl-policy` | `odrl:Agreement` | Alex `policies/` |
 | `consent-receipt` (extended) | `dpv:ConsentRecord` | Alex `consents/` |
