@@ -115,6 +115,10 @@ test("without a published recording the player says Video coming soon and fetche
     if (request.url().includes("/video/") && request.method() !== "HEAD")
       videoGets.push(request.url());
   });
+  // The site ships recordings (video/published/); take them away to see the fallback.
+  await page.route("**/video/**", (route) =>
+    route.request().method() === "HEAD" ? route.fulfill({ status: 404 }) : route.continue(),
+  );
   await page.goto("./");
   await expect(page.getByRole("img", { name: /video coming soon/ }).first()).toBeVisible();
   await expect(page.locator("video")).toHaveCount(0);
