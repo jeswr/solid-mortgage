@@ -11,11 +11,11 @@ seed and the agents are inputs (design.md §d.2, §d.3, §d.5).
 
 | Import | For |
 |---|---|
-| `@mortgage/pod-runtime` | Apps (browser only). The design.md §d.2 contract: `ready`, `session`, `podFetch`, `podUrl`, `onEvent`, `note`, `resetDemo`. It also exports `configure`, `onReset`, `setDay` and `setTourContext` (the signature `packages/tour`'s `mountDemo({ runtime })` takes; `setTour` is an alias). |
+| `@mortgage/pod-runtime` | Apps (browser only). The design.md §d.2 contract: `ready`, `session`, `podFetch`, `podUrl`, `onEvent`, `note`, `resetDemo`. It also exports `configure`, `onReset`, `setDay` and `setTourContext` (the signature `packages/tour`'s `mountDemo({ runtime })` takes; `setTour` is an alias), and the runtime services: `watch`, `unwatch`, `oneTimeGrant`, `parseChangeNotice`. |
 | `@mortgage/pod-runtime/node` | Headless journeys in Vitest: `createNodePodHost` runs the same host over the same wasm. |
 | `@mortgage/pod-runtime/host` | `createPodHost` (any JS runtime; you provide `loadWasm`), the body guard and the storage. |
 | `@mortgage/pod-runtime/acl` | `grantAccess`, `revokeAccess`, `readAcl` and `aclDocument`: the safe way to change ACLs. |
-| `@mortgage/pod-runtime/agents` | The agent contract (`AgentHandlers`, `defineAgent`), `createAgentRunner` and `runAgentsOnHost`. |
+| `@mortgage/pod-runtime/agents` | The agent contract (`AgentHandlers`, `defineAgent`), `createAgentRunner` and `runAgentsOnHost`; the runtime-service calls over any fetch (`watchResource`, `unwatchResource`, `listSubscriptions`, `makeGrantOneTime`, `listOneTimeGrants`, `parseChangeNotice`). |
 | `@mortgage/pod-runtime/bridge` | Host mode: `startBridge`, `createBridgeClient` and `hostModeIdentity`. |
 | `dist/pods-sw.js` | The single classic script that `tools/build-site.mjs` copies to the site root. |
 
@@ -81,7 +81,11 @@ import { defineAgent } from "@mortgage/pod-runtime/agents";
 export const handlers = defineAgent({
   async inbox(message, ctx) {
     // message: { url, path, from: PodEvent["actor"], event }
-    // ctx: { owner, app, podFetch, podUrl, webid, now, note }
+    // ctx: { owner, app, podFetch, podUrl, webid, now, note, watch, unwatch }
+  },
+  async changed(message, ctx) {
+    // message: { topic, url, activity: "Create" | "Update" | "Delete", note }
+    // Runs for a `notified` note addressed to this app (see "Runtime services").
   },
 });
 ```
@@ -102,6 +106,25 @@ How it runs:
   the agents. In host mode the bridge page starts it, on the pod origin. The holder replays logged inbox writes it has not handled yet, so writes made before
   the worker started, or while another tab held the lock, still get handled.
 - Headless runs use `runAgentsOnHost({ host, agents, identities })`.
+
+### Runtime services: change notification and one-time grants
+
+The 0.1.8 wasm has no Solid Notifications (`test/wasm/09-notifications.test.ts`) and WAC cannot
+say "once". The host provides both as runtime services at `/pods/.runtime/**`, which no pod can
+shadow. The caller is identified exactly as for pod requests, so in host mode only the bridge can
+name it. Anonymous callers get 401. Both are cleared by `resetDemo()` and survive a stopped worker.
+
+| Service | Call | Who may | What happens |
+|---|---|---|---|
+| Subscribe | `watch(topic)` (page), `ctx.watch(topic)` (agent), `watchResource(fetch, topic)` | Anyone the pod server lets read the topic (checked with a HEAD as the caller; 403 otherwise) | After each write or delete the pod server accepted to the topic, or to a member of a container topic, the host emits a `notified` note to each subscriber except the writer. `refs` is `[topic, resource, ActivityStreams Create/Update/Delete]`. The notice carries no data. The app's agent `changed(message, ctx)` handler runs. Its read is an ordinary request, so a subscriber whose grant has gone gets 403. |
+| Unsubscribe | `unwatch(topic)` | The subscriber | 204 |
+| One-time grant | `oneTimeGrant({ resource, agent })` (page), `makeGrantOneTime(fetch, …)` | The pod owner only (403 otherwise) | After `agent`'s first successful read of the resource (or a member of a container), inside the same serialised dispatch, the host emits a `grant-used` note from the holder's wallet app, then runs `revokeAccess` as the owner, marked as a back-office agent. The pod server refuses the next read. If the revoke fails, the host refuses that agent's requests to the resource itself until a reset (fail closed). |
+
+Subscriptions deliver to every subscriber until it unsubscribes. They are not re-checked
+against access on each change. A subscriber whose access was withdrawn is still told that the
+resource changed (some Solid Notifications servers behave the same way), and its follow-up read is
+refused by WAC. The Lens labels every notice "notified by the demo runtime; the Solid
+Notifications Protocol in production".
 
 ### Changing access
 
@@ -298,7 +321,7 @@ matter.
 
 | Directory | What it checks |
 |---|---|
-| `test/host/` | Access (owner, Read, Append, refused, anonymous), the ACL policy and `acl:origin` conditions, grant and revoke events, event kinds, persistence and reset, corrupt snapshots, the guard, and a real trap in a child process with recovery. |
+| `test/host/` | Access (owner, Read, Append, refused, anonymous), the ACL policy and `acl:origin` conditions, grant and revoke events, event kinds, persistence and reset, corrupt snapshots, the guard, a real trap in a child process with recovery, change notification (`notifications.test.ts`) and one-time grants (`one-time.test.ts`). |
 | `test/wasm/` | The characterisation tests above. |
 | `test/agents/`, `test/bridge/` | Agents and the bridge over the real host. |
 | `test/sw/` | The real service-worker role and runtime over the Node wasm, through a fake worker scope. Covers host-mode identity, the client check, hello and note handling, and prototype names. `host-worker.test.ts` runs several fallback "tabs" in one process: the lease election without Web Locks, stepping down, hand-over without double writes, single-flight agents, and no `crypto.randomUUID`. |

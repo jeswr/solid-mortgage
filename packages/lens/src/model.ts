@@ -115,6 +115,10 @@ export class LensModel {
   private readonly recordDrawers: string[];
   private currentStep: string | undefined;
   private lastTaggedStep: string | undefined;
+  /** Organisation → seq of a `grant-used` note whose closing revoke has not arrived yet. */
+  private readonly oneTimeOpen = new Map<string, number>();
+  /** Seq of a revoke event → the organisation whose one-time grant it closed. */
+  private readonly oneTimeClosed = new Map<number, string>();
 
   constructor(config: LensConfig) {
     this.config = config;
@@ -177,6 +181,13 @@ export class LensModel {
       if (e.acl && isOk(e.status)) this.foldAcl(e, rec);
     } else {
       this.meet(e.org, rec.seq);
+      if (e.kind === "grant-used") {
+        const org = this.orgOfAgent(e.refs?.[1] ?? "");
+        if (org !== undefined) {
+          this.meet(org, rec.seq);
+          this.oneTimeOpen.set(org, rec.seq);
+        }
+      }
       const peer = this.peerOf(e);
       if (peer !== undefined) this.meet(peer, rec.seq);
     }
@@ -189,6 +200,10 @@ export class LensModel {
     for (const rule of acl.revoked) {
       const org = this.orgOfAgent(rule.agent);
       if (org === undefined) continue;
+      if (e.actor.viaAgent && this.oneTimeOpen.has(org)) {
+        this.oneTimeOpen.delete(org);
+        this.oneTimeClosed.set(rec.seq, org);
+      }
       const g = this.grantMap.get(org);
       if (!g) continue;
       const k = ruleKey(rule);
@@ -289,6 +304,14 @@ export class LensModel {
   }
 
   // ---- lookups -------------------------------------------------------------------------------
+
+  /**
+   * The organisation whose one-time grant an access change closed: a back-office revoke that
+   * follows a `grant-used` note for the same organisation. Undefined for any other entry.
+   */
+  closedOneTime(seq: number): string | undefined {
+    return this.oneTimeClosed.get(seq);
+  }
 
   /** The organisation node an ACL agent IRI belongs to; undefined for the holder or the public. */
   orgOfAgent(agent: string): string | undefined {

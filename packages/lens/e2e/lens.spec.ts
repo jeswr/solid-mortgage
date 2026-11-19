@@ -380,6 +380,62 @@ test("the journey ledger totals equal counts computed in the test, and export as
   await expect(dialog).toBeHidden();
 });
 
+test("runtime notices, a one-time closure, change history and the examiner view, from the host's log", async ({
+  page,
+}, info) => {
+  await open(page, "?fixture=services");
+  await page.evaluate(() => window.harness.free());
+  await page.evaluate(() => window.harness.through(36));
+  const notice = page.locator('solid-lens button.entry[data-kind="notified"]').first();
+  await expect(notice).toContainText("Runtime said");
+  await expect(notice).toContainText("notified by the demo runtime");
+  const closed = page.locator('solid-lens button.entry[data-kind="expire"]').last();
+  await expect(closed).toContainText("one-time grant, closed by Alex's wallet");
+
+  // The examiner view opens from the API the tour exposes (`__demo.lens("examiner")`).
+  await page.evaluate(() => window.harness.lens.view("examiner"));
+  const dialog = page.locator("solid-lens dialog.ledger-dialog");
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole("tab", { name: "Examiner view" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expect(dialog.locator('[data-obligation="kept-current"]')).toHaveAttribute(
+    "data-met",
+    "true",
+  );
+  await expect(dialog.locator('[data-obligation="never"]')).toHaveAttribute("data-met", "false");
+  await expect(dialog.locator("table.register tbody tr")).toHaveCount(6);
+  await expect(dialog.locator('table.register tr[data-action="refused"]')).toHaveCount(2);
+  await expect(dialog.getByText("one-time grant, closed by Alex's wallet").first()).toBeVisible();
+  await info.attach("examiner view", { body: await dialog.screenshot(), contentType: "image/png" });
+  await axe(page);
+  // Keyboard: arrows move between the ledger's tabs.
+  await dialog.getByRole("tab", { name: "Examiner view" }).focus();
+  await page.keyboard.press("ArrowLeft");
+  await expect(dialog.getByRole("tab", { name: "Journey" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expect(dialog.locator("table.register")).toBeHidden();
+  await dialog.getByRole("button", { name: "Close the ledger" }).click();
+});
+
+test("a resource card shows who wrote each version", async ({ page }) => {
+  await open(page, "?fixture=services");
+  await page.evaluate(() => window.harness.free());
+  await page.evaluate(() => window.harness.through(11));
+  const write = page.locator('solid-lens button.entry[data-kind="write"]').last();
+  await write.click();
+  const history = page.locator("solid-lens ol.history");
+  await expect(history.locator("li")).toHaveCount(1);
+  await expect(history.locator("li").first()).toHaveAttribute("data-change", "changed");
+  await page.evaluate(() => window.harness.through(19));
+  await page.locator('solid-lens button.entry[data-kind="write"]').last().click();
+  await expect(history.locator("li")).toHaveCount(2);
+  await axe(page);
+});
+
 test("the step card emits tour events and reads Skip until the step is done", async ({ page }) => {
   await open(page);
   await step(page, "permit", 3);

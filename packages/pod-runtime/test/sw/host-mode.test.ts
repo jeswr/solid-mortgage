@@ -142,6 +142,36 @@ describe("host mode", () => {
     expect(status(await fromApp("bank", request("GET", "/pods/alex/private/x.txt")))).toBe(403);
   });
 
+  test("runtime services take the caller from the bridge too: no app can act for the holder", async () => {
+    await start();
+    const once = (body: object) =>
+      request("POST", "/pods/.runtime/one-time-grants", JSON.stringify(body), [
+        ["content-type", "application/json"],
+      ]);
+    const grant = {
+      agent: `${ORIGIN}/pods/bank/profile/card#me`,
+      resource: `${ORIGIN}/pods/alex/private/x.txt`,
+    };
+    // Only the pod owner's app (the wallet acts as alex) may mark a grant one-time.
+    expect(status(await fromApp("bank", once(grant)))).toBe(403);
+    expect(status(await fromApp("wallet", once(grant)))).toBe(201);
+    // A stray page on the pod origin cannot name an identity: it is anonymous.
+    const stray = new Request(`${ORIGIN}/pods/.runtime/one-time-grants`, {
+      body: JSON.stringify(grant),
+      headers: { [AGENT_HEADER]: "wallet", "content-type": "application/json" },
+      method: "POST",
+    });
+    expect((await worker.fetch(stray, OTHER_PAGE)).status).toBe(401);
+    // Subscribing needs read access, decided by the pod server for the bridge-vouched caller.
+    const watch = request(
+      "POST",
+      "/pods/.runtime/subscriptions",
+      JSON.stringify({ topic: `${ORIGIN}/pods/alex/private/x.txt` }),
+      [["content-type", "application/json"]],
+    );
+    expect(status(await fromApp("bank", watch))).toBe(403);
+  });
+
   test("prototype names are not identities", async () => {
     await start();
     for (const name of ["constructor", "toString", "__proto__", "hasOwnProperty", "valueOf"]) {

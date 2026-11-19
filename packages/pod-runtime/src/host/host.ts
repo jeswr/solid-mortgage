@@ -28,7 +28,7 @@ import type {
   LensEntry,
   PodEvent,
 } from "@mortgage/demo-kit/contracts";
-import { type PodOwner, webidFor } from "@mortgage/demo-kit/registry";
+import { isOrgSlug, type OrgSlug, type PodOwner, webidFor } from "@mortgage/demo-kit/registry";
 import { DataFactory, type Store } from "n3";
 import {
   aclDocument,
@@ -38,12 +38,19 @@ import {
   matchingAuthorization,
   ownerKeepsControl,
   PUBLIC,
+  revokeAccess,
   rulesOf,
 } from "../acl.js";
 import type { Glue } from "../generated/glue-factory.js";
 import { parseToStore, toTurtle } from "../rdf.js";
 import { describe, labelOf } from "./describe.js";
 import { checkBody } from "./guard.js";
+import {
+  createRuntimeServices,
+  type OneTimeGrant,
+  RUNTIME_PREFIX,
+  type Subscription,
+} from "./services.js";
 import { memoryStorage, type PodStorage } from "./storage.js";
 
 type WasmPod = InstanceType<Glue["SolidServer"]>;
@@ -138,6 +145,10 @@ export interface PodHost {
   info(): Promise<HostInfo>;
   webid(owner: PodOwner): string;
   podUrl(owner: PodOwner, path?: string): string;
+  /** Change subscriptions in force (runtime service; `services.ts`). */
+  subscriptions(): Subscription[];
+  /** One-time grants not yet used (runtime service; `services.ts`). */
+  oneTimeGrants(): OneTimeGrant[];
 }
 
 class TrapError extends Error {}
@@ -618,6 +629,12 @@ export function createPodHost(options: PodHostOptions): PodHost {
 
   async function dispatch(request: BufferedRequest, context: DispatchContext): Promise<Response> {
     const url = new URL(request.url);
+    if (url.origin === origin && url.pathname.startsWith(RUNTIME_PREFIX)) {
+      return services.handle(request.method, url, request.body, {
+        key: context.identity,
+        owner: resolveIdentity(context.identity),
+      });
+    }
     const match = /^\/pods\/([^/]+)(\/.*)?$/.exec(url.pathname);
     const owner = match?.[1] as PodOwner | undefined;
     if (url.origin !== origin || owner === undefined || !pods.has(owner))
@@ -631,6 +648,10 @@ export function createPodHost(options: PodHostOptions): PodHost {
     const agent = actorOwner === undefined ? undefined : webid(actorOwner);
 
     const guard = MUTATING.has(method) ? checkBody(body, contentType, options.limits) : undefined;
+    const refusal =
+      agent === undefined || actorOwner === owner
+        ? undefined
+        : services.blocked(owner, podPath, agent);
     const aclWrite = MUTATING.has(method) && isAclPath(podPath);
 
     const pod = pods.get(owner) as WasmPod;
@@ -641,6 +662,8 @@ export function createPodHost(options: PodHostOptions): PodHost {
     let written: Store | undefined;
     if (guard !== undefined) {
       response = text(guard.status, guard.message);
+    } else if (refusal !== undefined) {
+      response = refusal;
     } else {
       const policy = aclWrite ? await checkAclWrite(owner, method, podPath, body, contentType) : {};
       if (policy.response !== undefined) {
@@ -689,6 +712,7 @@ export function createPodHost(options: PodHostOptions): PodHost {
         written,
       });
       await emit({ source: "pod", ...event });
+      await services.after(event);
     }
     return response;
   }
@@ -821,7 +845,75 @@ export function createPodHost(options: PodHostOptions): PodHost {
     await storage.putMeta("seeded", true);
   }
 
+  // ---- runtime services (change notification, one-time grants) ----
+  /** The organisation app notes for `owner` go to: `key` when it is one, else the first that acts as it. */
+  function appFor(owner: PodOwner, key?: string | null): OrgSlug | undefined {
+    if (key !== undefined && key !== null && isOrgSlug(key) && resolveIdentity(key) === owner)
+      return key;
+    if (isOrgSlug(owner)) return owner;
+    for (const [app, target] of identities) if (target === owner && isOrgSlug(app)) return app;
+    return undefined;
+  }
+
+  /** A fetch that dispatches directly (the caller already holds the queue) as `identity`. */
+  function internalFetch(
+    identity: PodOwner,
+    extra: Omit<DispatchContext, "identity">,
+  ): typeof fetch {
+    return async (input, init) => {
+      const request = new Request(
+        typeof input === "string" || input instanceof URL ? new URL(input, origin) : input,
+        init,
+      );
+      const method = request.method.toUpperCase();
+      return dispatch(
+        {
+          body:
+            method === "GET" || method === "HEAD"
+              ? new Uint8Array()
+              : new Uint8Array(await request.arrayBuffer()),
+          headers: new Headers(request.headers),
+          method,
+          url: request.url,
+        },
+        { ...extra, identity },
+      );
+    };
+  }
+
+  const services = createRuntimeServices({
+    actsAs: (app, owner) => isOrgSlug(app) && resolveIdentity(app) === owner,
+    appFor,
+    async canRead(owner, path, agent) {
+      const pod = pods.get(owner);
+      if (pod === undefined) return false;
+      const result = await call(pod, "HEAD", path, [], new Uint8Array(), agent);
+      return result.status < 400 || result.status === 404;
+    },
+    clock,
+    emitNote: (note) => emit({ ...note, at: clock(), id: nextId++, source: "app" }),
+    origin,
+    owners,
+    podUrl,
+    async revoke(owner, path, agent, tour) {
+      const response = await revokeAccess({
+        agent,
+        fetch: internalFetch(
+          owner,
+          tour === undefined ? { viaAgent: true } : { tour, viaAgent: true },
+        ),
+        owner: webid(owner),
+        podRoot: base(owner),
+        resourceUrl: podUrl(owner, path),
+      });
+      return response.status;
+    },
+    storage,
+    webid,
+  });
+
   async function start(): Promise<void> {
+    await services.load();
     nextId = (await storage.getMeta<number>("nextEventId")) ?? 1;
     identities = new Map([
       ...identityMap(await storage.getMeta<Record<string, unknown>>("identities")),
@@ -896,6 +988,7 @@ export function createPodHost(options: PodHostOptions): PodHost {
         await rebuild("seed");
         for (const owner of owners) await persist(owner, ["current"]);
         await storage.clearEvents();
+        await services.clear();
         nextId = 1;
         await storage.putMeta("nextEventId", nextId);
         gate = Promise.resolve();
@@ -909,6 +1002,8 @@ export function createPodHost(options: PodHostOptions): PodHost {
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
+    oneTimeGrants: () => services.oneTimeGrants(),
+    subscriptions: () => services.subscriptions(),
     webid,
   };
   return host;

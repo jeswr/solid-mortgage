@@ -25,7 +25,7 @@ await mountDemo({
   runtime: { onEvent, resetDemo, setTourContext },   // setTourContext is optional
   tour: { demo: "<demo>", steps: TOUR, sources: SOURCE_IDS },
   lens: { drawers, grants, recordDrawers, revokeCaveat, grantsHref, ledgerHref },
-  ledger: { today, todaySource, callsToAction },
+  ledger: { today, todaySource, callsToAction, compliance }, // compliance: the examiner view's obligations
 });
 ```
 
@@ -83,7 +83,7 @@ silently; new ones animate.
 
 ## `window.__demo`
 
-`goto(stepId)`, `act()`, `lens(view)` (`"step" | "grants" | "not-shared" | "raw" | "ledger"`),
+`goto(stepId)`, `act()`, `lens(view)` (`"step" | "grants" | "not-shared" | "raw" | "ledger" | "examiner"`),
 `present(on)`, `totals()` (the journey ledger totals), `state()`.
 
 ## Tests

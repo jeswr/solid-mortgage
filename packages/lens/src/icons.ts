@@ -18,6 +18,8 @@ const PATHS: Record<string, string> = {
   "org-to-org": "M4 17c3-9 13-9 16 0M4 17h.01M20 17h.01",
   "no-solid": "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM5.6 5.6l12.8 12.8",
   clock: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7v5l3 2",
+  notified: "M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 21h4",
+  "grant-used": "M14 10a4 4 0 1 0-1.2 2.8L20 20M4 20l4-4",
   other: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z",
   cabinet: "M5 3h14v18H5zM5 9h14M5 15h14M10 6h4M10 12h4M10 18h4",
   collapse: "M9 6l6 6-6 6",

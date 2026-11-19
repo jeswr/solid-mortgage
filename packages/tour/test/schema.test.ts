@@ -20,6 +20,15 @@ describe("validateTour", () => {
     expect(validateTour(TRAIL_TOUR, { sources: ["T-1"] })).toHaveLength(3);
   });
 
+  it("accepts the runtime's note kinds in done and expect", () => {
+    const steps = clone();
+    const [a] = steps;
+    if (!a) throw new Error("fixture");
+    a.done = { note: { kind: "notified", org: "payroll" } };
+    a.expect = [{ kind: "grant-used", org: "wallet" }];
+    expect(issues(steps, ["T-1"])).toEqual([]);
+  });
+
   it("counts words on whitespace", () => {
     expect(wordCount("  one two\tthree\nfour ")).toBe(4);
   });

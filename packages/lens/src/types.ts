@@ -97,6 +97,7 @@ export interface TimelineStep {
   day?: number;
 }
 
-export type LensView = "step" | "grants" | "not-shared" | "raw" | "ledger";
+/** Inspector tabs, the journey ledger, or the ledger's examiner view. */
+export type LensView = "step" | "grants" | "not-shared" | "raw" | "ledger" | "examiner";
 export type LensMode = "guided" | "free" | "present";
 export type LensLayout = "dock" | "sheet" | "window";

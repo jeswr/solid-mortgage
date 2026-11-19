@@ -298,6 +298,10 @@ pre.turtle { white-space: pre-wrap; word-break: break-word; background: var(--pa
 .card dl { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 3px 10px; font-size: 0.86em; }
 .card dt { color: var(--ink-3); }
 .card dd { margin: 0; word-break: break-word; }
+.card .history-h { margin: 10px 0 4px; font-size: 0.9em; }
+.card ol.history { margin: 0; padding-left: 20px; font-size: 0.86em; }
+.card ol.history li { margin: 2px 0; }
+.card .history-when { color: var(--ink-3); }
 .card .close { float: right; }
 .pinned { border-color: var(--denied); background: #fff7f6; }
 .pinned h3 { color: var(--denied); }
