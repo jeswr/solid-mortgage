@@ -10,7 +10,7 @@
  */
 import { expect, type Page, test } from "@playwright/test";
 import { appActingAs, podOwners } from "./support/journey.ts";
-import { podRequest } from "./support/pod.ts";
+import { podRequest, waitForSeed } from "./support/pod.ts";
 import {
   type AppSlug,
   actsAs,
@@ -147,6 +147,7 @@ test("3 Enforcement at the seed: reads outside a grant are 403, anonymous reads 
   page,
 }) => {
   await openApp(page, "wallet");
+  await waitForSeed(page);
   await checkEnforcement(page);
 });
 

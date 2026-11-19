@@ -10,7 +10,15 @@
 import { expect, type Page, test } from "@playwright/test";
 import { appActingAs } from "./support/journey.ts";
 import { describeEntry } from "./support/match.ts";
-import { isAclPath, isOk, isPodEntry, podLogSoon, podRelative, podRequest } from "./support/pod.ts";
+import {
+  isAclPath,
+  isOk,
+  isPodEntry,
+  podLogSoon,
+  podRelative,
+  podRequest,
+  waitForSeed,
+} from "./support/pod.ts";
 import { openApp, type PodOwner, siteOrigin, waitForRuntime } from "./support/site.ts";
 import { loadMortgageTour } from "./support/tour-content.ts";
 import { tourState, walkTour } from "./support/walk.ts";
@@ -47,6 +55,7 @@ test("8 Reset: Restart the demo returns the pods to the seed and a second run pa
   if (firstStep === undefined) throw new Error("the tour has no steps");
 
   await openApp(page, "wallet");
+  await waitForSeed(page);
   const seedContainers = await containers(page);
 
   const first = await walkTour(page, tour);
@@ -103,6 +112,7 @@ test("8 Reset: Restart the demo returns the pods to the seed and a second run pa
   const fresh = await browser.newContext({ baseURL: `${siteOrigin()}/` });
   const freshPage = await fresh.newPage();
   await openApp(freshPage, "wallet");
+  await waitForSeed(freshPage);
   const differences: string[] = [];
   for (const { owner, path } of written.values()) {
     const reset = await podRequest(page, appActingAs(owner), owner, path);

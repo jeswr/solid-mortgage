@@ -10,7 +10,7 @@
  *   control message (the same call `onEvent({ replay: true })` makes). That log is what the
  *   Solid Lens and the journey ledger are fed from.
  */
-import type { Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 import type { LensEntry, PodEvent } from "../../packages/demo-kit/src/contracts/index.ts";
 import { type AppSlug, type PodOwner, siteOrigin } from "./site.ts";
 
@@ -45,6 +45,27 @@ export async function podRequest(
   init: { method?: string; accept?: string } = {},
 ): Promise<PodResponse> {
   const url = podUrl(owner, path);
+  const method = init.method ?? "GET";
+  // A read sent while the page navigates (the tour moving it on) is sent again from the new
+  // page; a write is never repeated.
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await sendFromPage(page, url, as, method, init.accept ?? "text/turtle");
+    } catch (error) {
+      const navigated = /Execution context was destroyed|navigat/i.test(String(error));
+      if (!navigated || attempt >= 5 || !["GET", "HEAD"].includes(method)) throw error;
+      await page.waitForLoadState("domcontentloaded").catch(() => undefined);
+    }
+  }
+}
+
+function sendFromPage(
+  page: Page,
+  url: string,
+  as: AppSlug | null,
+  method: string,
+  accept: string,
+): Promise<PodResponse> {
   return page.evaluate(
     async ({ url, as, method, accept }) => {
       const headers: Record<string, string> = { Accept: accept };
@@ -64,7 +85,7 @@ export async function podRequest(
         url,
       };
     },
-    { accept: init.accept ?? "text/turtle", as, method: init.method ?? "GET", url },
+    { accept, as, method, url },
   );
 }
 
@@ -144,3 +165,17 @@ export function podRelative(path: string, owner?: string): string {
 
 export const isAclPath = (path: string) => path.endsWith(".acl");
 export const isOk = (status: number) => status >= 200 && status < 300;
+
+/**
+ * Wait until the seed is in Alex's pod. A controlling service worker is not yet a seeded runtime:
+ * the page's `ready()` applies the seed after the worker takes control, so a request sent at once
+ * can find an empty pod. Alex's inbox is created by the seed.
+ */
+export async function waitForSeed(page: Page, timeout = 60_000): Promise<void> {
+  await expect
+    .poll(async () => (await podRequest(page, "wallet", "alex", "/inbox/")).status, {
+      message: `the seed never reached Alex's pod from ${page.url()}`,
+      timeout,
+    })
+    .toBe(200);
+}
