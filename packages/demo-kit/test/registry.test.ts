@@ -11,9 +11,9 @@ import {
 } from "../src/registry.js";
 
 describe("registry types", () => {
-  it("has the thirteen mortgage apps, the state portal (demo 2) and the front door", () => {
-    expect(ORG_SLUGS).toHaveLength(14);
-    expect(ORG_SLUGS.at(-1)).toBe("state");
+  it("has the thirteen mortgage apps, the later demos' apps and the front door", () => {
+    expect(ORG_SLUGS).toHaveLength(17);
+    expect(ORG_SLUGS.slice(13)).toEqual(["state", "hospital", "pharmacy", "clinic"]);
     expect(APP_SLUGS).toContain("welcome");
     expect(isOrgSlug("welcome")).toBe(false);
     expect(isOrgSlug("lender-desk")).toBe(true);
