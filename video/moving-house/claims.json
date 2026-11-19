@@ -1,0 +1,9 @@
+[
+  { "says": "One record.", "metric": "moving-house.records", "value": 1 },
+  { "says": "Six organisations.", "metric": "moving-house.organisations", "value": 6 },
+  {
+    "says": "Eleven reads. Every one of them is listed here with the grant that allowed it.",
+    "metric": "moving-house.reads",
+    "value": 11
+  }
+]
