@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Marlow County Recorder">
+  <title>Marlow County Recorder</title>
+  <rect width="32" height="32" fill="#2A4D8F" />
+  <path d="M8 24V11h16v13zM6 11l10-5 10 5z" fill="#FFFFFF" />
+  <path d="M11 14v8M16 14v8M21 14v8" stroke="#2A4D8F" stroke-width="2" />
+</svg>
