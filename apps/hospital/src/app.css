@@ -1,0 +1,283 @@
+/* AUTHORED-BY Claude Opus 5.5 */
+@import "./tokens.css";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--rb-panel);
+  color: var(--rb-ink);
+  font-family: var(--rb-font);
+  font-size: 0.975rem;
+  line-height: 1.4;
+}
+
+a {
+  color: var(--rb-blue-deep);
+}
+
+:focus-visible {
+  outline: 3px solid var(--rb-focus);
+  outline-offset: 2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.small {
+  font-size: 0.875rem;
+}
+
+.block {
+  display: block;
+}
+
+h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.15rem;
+}
+
+/* The system's own chrome: a slim blue strip with the ward and the signed-in clinician. */
+.masthead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 1.25rem;
+  padding: 0.5rem var(--rb-space);
+  background: var(--rb-blue-deep);
+  color: var(--rb-paper);
+}
+
+.masthead p {
+  margin: 0;
+}
+
+.masthead-name {
+  font-weight: 700;
+}
+
+.masthead-sub {
+  opacity: 0.9;
+}
+
+.masthead .masthead-user {
+  margin-left: auto;
+  font-size: 0.875rem;
+}
+
+.record {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: var(--rb-space);
+}
+
+/* The patient banner: always on screen, allergy flagged in red. */
+.patient-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.5rem;
+  padding: 0.6rem var(--rb-space);
+  background: var(--rb-paper);
+  border: 1px solid var(--rb-line);
+  border-left: 6px solid var(--rb-blue);
+}
+
+.pb-name {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.pb-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  margin: 0;
+}
+
+.pb-facts div {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.pb-facts dt {
+  color: var(--rb-muted);
+}
+
+.pb-facts dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.pb-allergy {
+  padding: 0 0.4rem;
+  background: var(--rb-red-soft);
+  border: 1px solid var(--rb-red);
+}
+
+.pb-allergy dt,
+.pb-allergy dd {
+  color: var(--rb-red);
+}
+
+/* Dense tabs along the record. */
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-top: var(--rb-space);
+  border-bottom: 2px solid var(--rb-blue);
+}
+
+.tabs a {
+  padding: 0.4rem 0.8rem;
+  background: var(--rb-blue-soft);
+  color: var(--rb-blue-deep);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.tabs a[aria-current="page"] {
+  background: var(--rb-blue);
+  color: var(--rb-paper);
+}
+
+.tab-body {
+  padding: var(--rb-space);
+  background: var(--rb-paper);
+  border: 1px solid var(--rb-line);
+  border-top: 0;
+}
+
+.grid {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.5rem 0;
+}
+
+.grid th,
+.grid td {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--rb-line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.grid thead th {
+  background: var(--rb-blue-soft);
+}
+
+.code {
+  font-variant-numeric: tabular-nums;
+}
+
+.marker {
+  display: inline-block;
+  padding: 0 0.35rem;
+  border: 1px solid var(--rb-line);
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.marker-stopped {
+  background: var(--rb-red-soft);
+  border-color: var(--rb-red);
+  color: var(--rb-red);
+}
+
+.marker-dose-changed {
+  background: var(--rb-amber-soft);
+  border-color: var(--rb-amber);
+  color: var(--rb-amber);
+}
+
+.marker-new {
+  background: var(--rb-green-soft);
+  border-color: var(--rb-green);
+  color: var(--rb-green);
+}
+
+.sign {
+  min-height: 44px;
+  padding: 0.5rem 1.5rem;
+  background: var(--rb-blue);
+  border: 0;
+  color: var(--rb-paper);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sign:disabled {
+  background: var(--rb-muted);
+  cursor: default;
+}
+
+.ok {
+  padding: 0.5rem;
+  background: var(--rb-green-soft);
+  border-left: 4px solid var(--rb-green);
+}
+
+.alert {
+  padding: 0.5rem 0.75rem;
+  background: var(--rb-red-soft);
+  border-left: 4px solid var(--rb-red);
+}
+
+.alert p {
+  margin: 0;
+}
+
+.footnote {
+  color: var(--rb-muted);
+  font-size: 0.85rem;
+}
+
+/* At phone width the tables become stacked rows. */
+@media (max-width: 640px) {
+  .masthead .masthead-user {
+    margin-left: 0;
+  }
+
+  .grid thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .grid,
+  .grid tbody,
+  .grid tr,
+  .grid td {
+    display: block;
+    width: 100%;
+  }
+
+  .grid tr {
+    margin-bottom: 0.5rem;
+    border: 1px solid var(--rb-line);
+  }
+
+  .grid td {
+    border: 0;
+  }
+}
+
+.page-title {
+  margin: var(--rb-space) 0 0;
+  font-size: 1.3rem;
+}
