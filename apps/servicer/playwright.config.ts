@@ -16,6 +16,7 @@ const port = Number(process.env.APP_E2E_PORT);
  */
 export default defineConfig({
   testDir: "./e2e",
+  globalSetup: "./e2e/build-harness.ts",
   forbidOnly: Boolean(process.env.CI),
   reporter: process.env.CI ? [["github"]] : "list",
   timeout: 120_000,
