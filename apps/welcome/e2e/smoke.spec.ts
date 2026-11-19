@@ -152,7 +152,7 @@ test("with a published recording the poster plays in place, preload none, with c
     // The MP4 body itself is never needed here: leave it pending.
   });
   await page.goto("./");
-  const play = page.getByRole("button", { name: /Play the narrated video/ });
+  const play = page.getByRole("button", { name: /Play the narrated video: A mortgage on Solid/ });
   await expect(play).toBeVisible();
   await expect(page.getByRole("button", { name: /Play from chapter: Closing/ })).toBeVisible();
   expect(gets.filter((path) => path.endsWith(".mp4"))).toEqual([]);
