@@ -17,7 +17,7 @@ import {
   verifyReceipts,
   visitorKey,
 } from "../src/server/index.js";
-import { ENV } from "./fixtures.js";
+import { ENV, ID } from "./fixtures.js";
 
 const req = (
   origin: string | null,
@@ -57,10 +57,18 @@ describe("the prompt", () => {
 });
 
 describe("allowedOrigin", () => {
+  it("refuses loopback origins on a production deployment", () => {
+    const production = { VERCEL_ENV: "production" };
+    expect(allowedOrigin(req("http://127.0.0.1:4173"), production)).toBeUndefined();
+    expect(allowedOrigin(req("http://localhost:3000"), production)).toBeUndefined();
+    expect(allowedOrigin(req("https://solid-mortgage.vercel.app"), production)).toBeDefined();
+  });
+
   it("allows the API's own origin, production and loopback, and nothing else by default", () => {
     expect(allowedOrigin(req("https://solid-mortgage-git-x.vercel.app"), {})).toBeDefined();
     expect(allowedOrigin(req("https://solid-mortgage.vercel.app"), {})).toBeDefined();
     expect(allowedOrigin(req("http://127.0.0.1:4173"), {})).toBeDefined();
+    expect(allowedOrigin(req("http://localhost:4173"), { VERCEL_ENV: "preview" })).toBeDefined();
     expect(allowedOrigin(req("https://evil.example"), {})).toBeUndefined();
     expect(allowedOrigin(req("null"), {})).toBeUndefined();
     expect(allowedOrigin(req(null), {})).toBeUndefined();
@@ -132,27 +140,35 @@ describe("receipts", () => {
   const blob = { sha: "c".repeat(40), size: 100, ext: "webm" as const };
 
   it("verifies a receipt it signed", () => {
-    const receipt = signReceipt(blob, ENV, T0);
+    const receipt = signReceipt(blob, ID, ENV, T0);
     expect(receipt.sig).toMatch(/^\d{13}\.[a-f0-9]{64}$/);
-    expect(verifyReceipts([receipt], ENV, T0 + 1_000)).toEqual([receipt]);
+    expect(verifyReceipts([receipt], ID, ENV, T0 + 1_000)).toEqual([receipt]);
   });
 
   it("refuses tampered, expired, duplicated and foreign receipts", () => {
-    const receipt = signReceipt(blob, ENV, T0);
-    expect(() => verifyReceipts([{ ...receipt, size: 101 }], ENV, T0 + 1_000)).toThrow(
+    const receipt = signReceipt(blob, ID, ENV, T0);
+    expect(() => verifyReceipts([{ ...receipt, size: 101 }], ID, ENV, T0 + 1_000)).toThrow(
       FeedbackError,
     );
-    expect(() => verifyReceipts([{ ...receipt, sha: "d".repeat(40) }], ENV, T0 + 1_000)).toThrow();
-    expect(() => verifyReceipts([receipt], ENV, T0 + RECEIPT_LIFETIME)).toThrow();
-    expect(() => verifyReceipts([receipt, receipt], ENV, T0 + 1_000)).toThrow();
     expect(() =>
-      verifyReceipts([receipt], { ...ENV, FEEDBACK_RECEIPT_SECRET: "other" }, 2_000),
+      verifyReceipts([{ ...receipt, sha: "d".repeat(40) }], ID, ENV, T0 + 1_000),
     ).toThrow();
-    expect(() => verifyReceipts([{ ...receipt, extra: 1 }], ENV, T0 + 1_000)).toThrow();
+    expect(() => verifyReceipts([receipt], ID, ENV, T0 + RECEIPT_LIFETIME)).toThrow();
+    expect(() => verifyReceipts([receipt, receipt], ID, ENV, T0 + 1_000)).toThrow();
+    expect(() =>
+      verifyReceipts([receipt], ID, { ...ENV, FEEDBACK_RECEIPT_SECRET: "other" }, T0 + 1_000),
+    ).toThrow();
+    expect(() => verifyReceipts([{ ...receipt, extra: 1 }], ID, ENV, T0 + 1_000)).toThrow();
+  });
+
+  it("binds a receipt to the submission it was uploaded for", () => {
+    const receipt = signReceipt(blob, ID, ENV, T0);
+    const other = "0b6c2d1e-5f4a-4c3b-8d2e-1f0a9b8c7d6e";
+    expect(() => verifyReceipts([receipt], other, ENV, T0 + 1_000)).toThrow(FeedbackError);
   });
 
   it("cannot sign without a secret", () => {
-    expect(() => signReceipt(blob, {}, T0)).toThrow(expect.objectContaining({ status: 503 }));
+    expect(() => signReceipt(blob, ID, {}, T0)).toThrow(expect.objectContaining({ status: 503 }));
   });
 });
 

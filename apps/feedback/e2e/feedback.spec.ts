@@ -219,9 +219,15 @@ test("configured: when the interviewer fails, the answers carry over to the ques
   await page.route("**/api/feedback/turn", (route) =>
     route.fulfill({ status: 502, contentType: "text/plain", body: "RAW_UPSTREAM_ERROR" }),
   );
-  await page.route("**/api/feedback/submit", (route) =>
-    route.fulfill({ status: 413, contentType: "text/html", body: "<h1>RAW_PLATFORM_ERROR</h1>" }),
-  );
+  const ids: unknown[] = [];
+  await page.route("**/api/feedback/submit", (route) => {
+    ids.push(route.request().postDataJSON().record.id);
+    return route.fulfill({
+      status: 413,
+      contentType: "text/html",
+      body: "<h1>RAW_PLATFORM_ERROR</h1>",
+    });
+  });
   await page.goto("./");
   await page.getByRole("button", { name: "Start the interview" }).click();
   await page.getByLabel("Your answer", { exact: true }).fill("Enterprise architect");
@@ -234,7 +240,21 @@ test("configured: when the interviewer fails, the answers carry over to the ques
   const alert = page.getByRole("alert");
   await expect(alert).toContainText("Download my answers");
   await expect(page.getByText(/RAW_(UPSTREAM|PLATFORM)_ERROR/)).toHaveCount(0);
+  // A retry sends the same submission id, so the server can store the feedback only once.
+  await page.getByRole("button", { name: "Send feedback" }).click();
+  await expect.poll(() => ids.length).toBe(2);
+  expect(ids[0]).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+  expect(ids[1]).toBe(ids[0]);
   const downloading = page.waitForEvent("download");
   await page.getByRole("button", { name: "Download my answers" }).click();
   expect((await downloading).suggestedFilename()).toBe("solid-mortgage-feedback.zip");
+});
+
+test("interviewer on, sending off: the page says where interview answers go", async ({ page }) => {
+  await configured(page, { interviewer: true, sending: false });
+  await page.goto("./");
+  const privacy = page.getByRole("complementary", { name: "How your feedback is handled" });
+  await expect(privacy).toContainText("sent to Anthropic's Claude");
+  await expect(privacy).not.toContainText("Nothing is sent anywhere");
+  await expect(page.getByText("Sending feedback is not switched on yet.")).toBeVisible();
 });

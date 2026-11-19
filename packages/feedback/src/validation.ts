@@ -6,6 +6,7 @@
  * Shared by the browser (to keep a draft valid) and the /api/feedback/* handlers (fail closed).
  */
 import { z } from "zod";
+import { FEEDBACK_SOURCES } from "./demos.js";
 import {
   type Answer,
   type Answers,
@@ -68,11 +69,12 @@ export const messageSchema = z
   .strict();
 export type Message = z.infer<typeof messageSchema>;
 
-/** Where the visitor came from: an app slug (lower-case letters, digits, `-`, `_`) or nothing. */
-const fromSlug = z
-  .string()
-  .max(40)
-  .regex(/^[a-z0-9_-]*$/);
+/** Where the visitor came from: an app slug from the registry, or nothing. */
+const fromSlug = z.union([z.literal(""), z.enum(FEEDBACK_SOURCES)]);
+
+/** A submission's id: a UUID the page makes once and reuses on every retry of Send. */
+export const SUBMISSION_ID =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
 export const turnSchema = z
   .object({
@@ -176,6 +178,7 @@ export type TranscriptEntry = z.infer<typeof transcriptEntrySchema>;
 
 export const submissionSchema = z
   .object({
+    id: z.string().regex(SUBMISSION_ID),
     pathway,
     /** `interview` when the LLM interviewer ran, `questionnaire` for the plain form. */
     mode: z.enum(["interview", "questionnaire"]),
@@ -198,6 +201,8 @@ export const submissionSchema = z
   .strict();
 
 export interface Submission {
+  /** Made by the page once and reused on retries, so a retried Send stores one record. */
+  id: string;
   pathway: "guided" | "quick";
   mode: "interview" | "questionnaire";
   answers: Answers;
@@ -210,6 +215,7 @@ export interface Submission {
 export function validateSubmission(input: unknown): Submission {
   const s = submissionSchema.parse(input);
   return {
+    id: s.id,
     pathway: s.pathway,
     mode: s.mode,
     answers: validateAnswers(s.answers),

@@ -7,6 +7,8 @@
  *
  * Either way the visitor can download every answer at any time. Sending is offered only when
  * storage is switched on; otherwise the page says so plainly and points to the community forum.
+ * Recordings stay in the page until the visitor presses Send: only then are they uploaded, each
+ * bound to this visit's submission id, which every retry of Send reuses (one record, one issue).
  */
 
 import { appUrl } from "@mortgage/demo-kit/urls";
@@ -19,6 +21,7 @@ import {
   type FeedbackStatus,
   feedbackArchive,
   isFeedbackDemo,
+  isFeedbackSource,
   localSummary,
   MAX_RECORDINGS,
   OPENING,
@@ -45,7 +48,7 @@ export function readArrival(search: string): { from: string; demos: string[] } {
   const from = params.get("from") ?? "";
   const demo = params.get("demo") ?? "";
   return {
-    from: /^[a-z0-9_-]{1,40}$/.test(from) ? from : "",
+    from: isFeedbackSource(from) ? from : "",
     demos: isFeedbackDemo(demo) ? [demo] : [],
   };
 }
@@ -73,6 +76,8 @@ export function FeedbackPage({ search = window.location.search }: { search?: str
   const [notice, setNotice] = useState("");
   const [downloaded, setDownloaded] = useState(false);
   const [reference, setReference] = useState<number>();
+  // One id per visit: a retried Send reuses it, so the server stores the feedback once.
+  const submissionId = useRef(crypto.randomUUID()).current;
   const clips = useRef<VoiceClip[]>([]);
   const receipts = useRef<(AudioReceipt | undefined)[]>([]);
   const [clipCount, setClipCount] = useState(0);
@@ -113,7 +118,7 @@ export function FeedbackPage({ search = window.location.search }: { search?: str
     try {
       for (let attempt = 0; ; attempt++) {
         try {
-          const receipt = await uploadRecording(clip.blob);
+          const receipt = await uploadRecording(clip.blob, submissionId);
           receipts.current[index] = receipt;
           return receipt;
         } catch (failure) {
@@ -132,14 +137,10 @@ export function FeedbackPage({ search = window.location.search }: { search?: str
       setError(`You can attach up to ${MAX_RECORDINGS} recordings of 3 MB each.`);
       return undefined;
     }
+    // Kept in the page only: nothing is uploaded until the visitor presses Send.
     const index = clips.current.length;
     clips.current = [...clips.current, clip];
     setClipCount(clips.current.length);
-    void upload(clip, index).catch(() =>
-      setError(
-        "We couldn't store that recording yet. It is still on this page: Send tries again, and Download keeps a copy.",
-      ),
-    );
     return index;
   }
 
@@ -181,6 +182,7 @@ export function FeedbackPage({ search = window.location.search }: { search?: str
       current.summary = localSummary(current);
     }
     return {
+      id: submissionId,
       pathway: mode === "interview" ? pathway : "guided",
       mode: messages.length > 0 ? "interview" : "questionnaire",
       answers: current,
@@ -259,6 +261,13 @@ export function FeedbackPage({ search = window.location.search }: { search?: str
                 a private GitHub repository that only the demo team reads. Your name and email are
                 optional and stored with them if you give them. Please don't include anything
                 confidential.
+              </p>
+            ) : status.interviewer ? (
+              <p>
+                Nothing is stored: there is no Send button yet. If you use the interviewer, each
+                answer you give it is sent to Anthropic's Claude, the AI model that runs it, to
+                choose the next question; otherwise your answers stay in this page. Either way you
+                download them and choose what to share.
               </p>
             ) : (
               <p>
@@ -394,7 +403,7 @@ export function FeedbackPage({ search = window.location.search }: { search?: str
               ) : null}
               {savingRecordings > 0 ? (
                 <p role="status" className="hint">
-                  Storing your recording…
+                  Uploading your recordings…
                 </p>
               ) : null}
               {error ? (

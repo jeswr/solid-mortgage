@@ -1,9 +1,10 @@
 // AUTHORED-BY Claude Opus 5.5
 /**
  * Signed receipts for uploaded recordings. A recording is stored as a Git blob when the visitor
- * stops recording; the upload answers with a receipt (blob SHA, size, extension, expiry and an
- * HMAC over all four). Submit accepts only receipts this service signed, unexpired and unique,
- * so a submission can attach only blobs it uploaded, never any other object in the repository.
+ * presses Send, just before the submission; the upload answers with a receipt (blob SHA, size,
+ * extension, expiry and an HMAC over those and the submission's id). Submit accepts only
+ * receipts this service signed for that same submission, unexpired and unique, so a submission
+ * can attach only blobs uploaded for it, never another submission's or any other object.
  */
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
@@ -29,25 +30,35 @@ export type SignedReceipt = z.infer<typeof receiptSchema>;
 type Unsigned = Omit<SignedReceipt, "sig">;
 
 /** The receipt key: `FEEDBACK_RECEIPT_SECRET`, else derived from the GitHub token. */
-function signature(receipt: Unsigned, expiry: number, env: FeedbackEnv): string {
+function signature(
+  receipt: Unsigned,
+  submission: string,
+  expiry: number,
+  env: FeedbackEnv,
+): string {
   const secret = env.FEEDBACK_RECEIPT_SECRET?.trim() || env.FEEDBACK_GITHUB_TOKEN?.trim();
   if (!secret)
     throw new FeedbackError(503, "Sending feedback isn't switched on yet. Download a copy.");
   const key = createHmac("sha256", secret)
-    .update(`solid-mortgage-feedback-receipts:v1:${env.FEEDBACK_GITHUB_REPO?.trim() ?? ""}`)
+    .update(`solid-mortgage-feedback-receipts:v2:${env.FEEDBACK_GITHUB_REPO?.trim() ?? ""}`)
     .digest();
   return createHmac("sha256", key)
-    .update(`${receipt.sha}|${receipt.size}|${receipt.ext}|${expiry}`)
+    .update(`${submission}|${receipt.sha}|${receipt.size}|${receipt.ext}|${expiry}`)
     .digest("hex");
 }
 
-export function signReceipt(receipt: Unsigned, env: FeedbackEnv, now = Date.now()): SignedReceipt {
+export function signReceipt(
+  receipt: Unsigned,
+  submission: string,
+  env: FeedbackEnv,
+  now = Date.now(),
+): SignedReceipt {
   const expiry = now + RECEIPT_LIFETIME;
   return {
     sha: receipt.sha,
     size: receipt.size,
     ext: receipt.ext,
-    sig: `${expiry}.${signature(receipt, expiry, env)}`,
+    sig: `${expiry}.${signature(receipt, submission, expiry, env)}`,
   };
 }
 
@@ -55,6 +66,7 @@ const INVALID = "A recording receipt is invalid or has expired. Download your fe
 
 export function verifyReceipts(
   input: unknown,
+  submission: string,
   env: FeedbackEnv,
   now = Date.now(),
 ): SignedReceipt[] {
@@ -63,7 +75,7 @@ export function verifyReceipts(
   for (const receipt of receipts) {
     const [timestamp = "", digest = ""] = receipt.sig.split(".");
     const expiry = Number(timestamp);
-    const expected = Buffer.from(signature(receipt, expiry, env), "hex");
+    const expected = Buffer.from(signature(receipt, submission, expiry, env), "hex");
     const given = Buffer.from(digest, "hex");
     const valid = expected.length === given.length && timingSafeEqual(expected, given);
     if (!valid || expiry <= now || expiry > now + RECEIPT_LIFETIME || seen.has(receipt.sha)) {

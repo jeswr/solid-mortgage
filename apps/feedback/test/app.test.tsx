@@ -1,5 +1,6 @@
 // AUTHORED-BY Claude Opus 5.5
-import { FEEDBACK_DEMOS } from "@mortgage/feedback";
+import { APP_SLUGS } from "@mortgage/demo-kit/registry";
+import { FEEDBACK_DEMOS, FEEDBACK_SOURCES } from "@mortgage/feedback";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { memoryLocation } from "wouter/memory-location";
@@ -30,6 +31,10 @@ describe("the feedback page", () => {
     expect(FEEDBACK_DEMOS.map((d) => ({ id: d.id, title: d.title }))).toEqual(
       DEMOS.map((d) => ({ id: d.id, title: d.title })),
     );
+  });
+
+  it("accepts arrivals from exactly the registry's apps, the feedback page aside", () => {
+    expect([...FEEDBACK_SOURCES].sort()).toEqual(APP_SLUGS.filter((s) => s !== "feedback").sort());
   });
 
   for (const path of ["/", "/nope"]) {
@@ -76,5 +81,6 @@ describe("the feedback page", () => {
       demos: ["mortgage"],
     });
     expect(readArrival("?from=%3Cscript%3E&demo=nope")).toEqual({ from: "", demos: [] });
+    expect(readArrival("?from=not-an-app")).toEqual({ from: "", demos: [] });
   });
 });

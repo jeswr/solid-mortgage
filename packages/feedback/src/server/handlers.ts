@@ -5,10 +5,13 @@
  * and the rate limiter; every body is size-capped and validated; every error the visitor sees is
  * one of ours (never an upstream body); nothing about a request or a secret is logged.
  *
- * - `GET  /api/feedback/status`  `{ interviewer, sending }`: two booleans, nothing else
+ * - `GET  /api/feedback/status`  `{ interviewer, sending }`: two booleans, nothing else; sending
+ *   is on only after the repository answered as private (checked at most every few minutes)
  * - `POST /api/feedback/turn`    one interviewer turn (needs ANTHROPIC_API_KEY)
- * - `POST /api/feedback/audio`   store a recording, answer a signed receipt (needs storage)
- * - `POST /api/feedback/submit`  store the record and open the issue (needs storage)
+ * - `POST /api/feedback/audio?submission=<id>`  store a recording for that submission, answer a
+ *   signed receipt (needs storage; the page uploads only when the visitor presses Send)
+ * - `POST /api/feedback/submit`  store the record and open the issue (needs storage); idempotent
+ *   on the submission's id
  */
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
@@ -17,6 +20,8 @@ import type { FeedbackStatus } from "../links.js";
 import {
   coerceUpdates,
   MAX_ANSWER,
+  SUBMISSION_ID,
+  type Turn,
   validateAnswers,
   validateSubmission,
   validateTurn,
@@ -49,7 +54,14 @@ export const MAX_SUBMIT_BYTES = 1_000_000;
 export function anthropicClient(apiKey: string): InterviewClient {
   return {
     async complete(request) {
-      const client = new Anthropic({ apiKey, maxRetries: 0, timeout: 60_000, logLevel: "off" });
+      // No logs, no OpenTelemetry spans: interview content never reaches a log or a tracer.
+      const client = new Anthropic({
+        apiKey,
+        maxRetries: 0,
+        timeout: 60_000,
+        logLevel: "off",
+        openTelemetry: false,
+      });
       const response = await client.messages.create(request);
       // A refusal, a cut-off reply or anything but a finished turn: the page carries on without it.
       if (response.stop_reason !== "end_turn") {
@@ -66,10 +78,20 @@ export function anthropicClient(apiKey: string): InterviewClient {
   };
 }
 
-/** What the page may know about the configuration: whether each half is switched on. */
-export function feedbackStatus(env: FeedbackEnv): FeedbackStatus {
-  return { interviewer: Boolean(env.ANTHROPIC_API_KEY?.trim()), sending: storageConfigured(env) };
+/**
+ * What the page may know about the configuration: whether each half is switched on. Sending
+ * counts as on only when `storageReady` (the repository answered as private) says so.
+ */
+export function feedbackStatus(env: FeedbackEnv, storageReady = true): FeedbackStatus {
+  return {
+    interviewer: Boolean(env.ANTHROPIC_API_KEY?.trim()),
+    sending: storageConfigured(env) && storageReady,
+  };
 }
+
+/** How long a storage check stands: a success for ten minutes, a failure for one. */
+export const READY_TTL = 600_000;
+export const NOT_READY_TTL = 60_000;
 
 const replySchema = z
   .object({
@@ -84,11 +106,41 @@ const replySchema = z
 
 const CONFIRMATION = /^(yes|yes[,.]? that'?s right|correct|that'?s right)[.!]?$/i;
 
+const squash = (text: string) => text.replace(/\s+/g, " ").trim();
+
+/** The interviewer's read-back message: its reply when that shows the summary verbatim. */
+function readBack(reply: string, summary: string): string {
+  if (squash(reply).includes(squash(summary))) return reply;
+  const composed = `${summary}\n\nDid I get that right?`;
+  return composed.length <= MAX_ANSWER ? composed : summary;
+}
+
+/**
+ * Whether this turn is the participant confirming the read-back they were shown: the previous
+ * message is the interviewer's, it shows the summary the page holds word for word, and the
+ * participant's answer is a plain yes. Nothing else (the model's say-so, a client's
+ * `confirmed`) counts as a confirmation.
+ */
+function confirmsReadBack(turn: Turn): boolean {
+  const summary = turn.answers.summary;
+  const last = turn.messages[turn.messages.length - 1];
+  const previous = turn.messages[turn.messages.length - 2];
+  return (
+    typeof summary === "string" &&
+    squash(summary) !== "" &&
+    previous?.role === "assistant" &&
+    squash(previous.content).includes(squash(summary)) &&
+    last?.role === "user" &&
+    CONFIRMATION.test(last.content.trim())
+  );
+}
+
 export interface HandlerOptions {
   env: FeedbackEnv;
   client?: InterviewClient;
   store?: FeedbackStore;
   limiter?: Limiter;
+  now?: () => number;
 }
 
 export function createFeedbackHandlers(options: HandlerOptions) {
@@ -96,6 +148,25 @@ export function createFeedbackHandlers(options: HandlerOptions) {
   const limiter = options.limiter ?? createLimiter();
   // A fresh store per write re-checks the repository's privacy and the current credentials.
   const storage = () => options.store ?? createGithubStore(env);
+  const now = options.now ?? Date.now;
+  let readiness: { ready: Promise<boolean>; until: number } | undefined;
+  /** Whether the repository answered as private recently (cached, so status stays cheap). */
+  const storageReady = (): Promise<boolean> => {
+    if (!storageConfigured(env)) return Promise.resolve(false);
+    if (readiness === undefined || readiness.until <= now()) {
+      const entry = {
+        ready: storage()
+          .ready()
+          .catch(() => false),
+        until: now() + NOT_READY_TTL,
+      };
+      void entry.ready.then((ok) => {
+        entry.until = now() + (ok ? READY_TTL : NOT_READY_TTL);
+      });
+      readiness = entry;
+    }
+    return readiness.ready;
+  };
 
   async function protect(
     request: Request,
@@ -157,7 +228,7 @@ export function createFeedbackHandlers(options: HandlerOptions) {
 
   return {
     /** `GET /api/feedback/status`. Same-origin pages need no Origin header for a GET. */
-    status(request: Request): Response {
+    async status(request: Request): Promise<Response> {
       const origin = allowedOrigin(request, env);
       const wait = limiter(visitorOf(request), "status");
       const headers: Record<string, string> =
@@ -168,7 +239,7 @@ export function createFeedbackHandlers(options: HandlerOptions) {
           "Retry-After": String(Math.ceil(wait / 1000)),
         });
       }
-      return json(feedbackStatus(env), 200, headers);
+      return json(feedbackStatus(env, await storageReady()), 200, headers);
     },
 
     options(request: Request): Response {
@@ -226,27 +297,34 @@ export function createFeedbackHandlers(options: HandlerOptions) {
             "The interviewer chose an unknown question. Please use the questionnaire.",
           );
         }
-        // Only the participant confirms the read-back: the model's "confirmed" stands only when
-        // they already confirmed, or their last answer says so in words.
-        const last = turn.messages[turn.messages.length - 1];
-        const confirmation =
-          turn.answers.confirmed === "yes" ||
-          (last?.role === "user" && CONFIRMATION.test(last.content.trim()));
-        if (!confirmation) delete merged.confirmed;
-        const done =
-          reply.done &&
-          confirmation &&
-          Boolean(turn.answers.summary) &&
-          merged.confirmed === "yes" &&
-          Boolean(merged.summary);
+        // Only the participant confirms the read-back, and only the one they were shown: a
+        // confirming turn keeps that summary (the model cannot swap it), every other turn
+        // clears any "confirmed".
+        const confirmed = confirmsReadBack(turn);
+        if (confirmed) {
+          merged.summary = turn.answers.summary as string;
+          merged.confirmed = "yes";
+        } else delete merged.confirmed;
+        const done = reply.done && confirmed;
         if (!done && question === undefined) {
           throw new FeedbackError(
             502,
             "The interviewer couldn't choose a next question. Please use the questionnaire.",
           );
         }
+        // A read-back shows the stored summary word for word, so a "yes" confirms exactly it.
+        let text = reply.reply;
+        if (!done && question?.id === "confirmed") {
+          if (typeof merged.summary !== "string" || squash(merged.summary) === "") {
+            throw new FeedbackError(
+              502,
+              "The interviewer couldn't read back your answers. Please use the questionnaire.",
+            );
+          }
+          text = readBack(reply.reply, merged.summary);
+        }
         return json({
-          reply: reply.reply,
+          reply: text,
           answers: merged,
           ...(question ? { question } : {}),
           done,
@@ -259,9 +337,13 @@ export function createFeedbackHandlers(options: HandlerOptions) {
         if (!storageConfigured(env)) {
           throw new FeedbackError(503, "Sending feedback isn't switched on yet. Download a copy.");
         }
+        const submission = new URL(request.url).searchParams.get("submission") ?? "";
+        if (!SUBMISSION_ID.test(submission)) {
+          throw new FeedbackError(400, "A recording must name the feedback it belongs to.");
+        }
         const bytes = await readBody(request, MAX_AUDIO_BYTES);
         const audio = validateAudio(bytes, request.headers.get("content-type") ?? "");
-        return json(await storage().upload(audio));
+        return json(await storage().upload(audio, submission));
       });
     },
 
@@ -276,7 +358,7 @@ export function createFeedbackHandlers(options: HandlerOptions) {
           .strict()
           .parse(await parseJson(request, MAX_SUBMIT_BYTES));
         const submission = validateSubmission(data.record);
-        const receipts = verifyReceipts(data.receipts ?? [], env);
+        const receipts = verifyReceipts(data.receipts ?? [], submission.id, env);
         if (submission.transcript.some((m) => m.audio?.some((i) => i >= receipts.length))) {
           throw new FeedbackError(400, "A recording is missing from the feedback.");
         }

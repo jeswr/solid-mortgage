@@ -2,7 +2,7 @@
 /** `GET /api/feedback/status` (Vercel Node.js runtime). See packages/feedback/src/server/handlers.ts. */
 import { handlers } from "./_handlers.js";
 
-export function GET(request: Request): Response {
+export function GET(request: Request): Promise<Response> {
   return handlers.status(request);
 }
 

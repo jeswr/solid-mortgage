@@ -1,14 +1,16 @@
 // AUTHORED-BY Claude Opus 5.5
 /**
  * Feedback storage in a private GitHub repository. Each submission is one commit adding
- * `feedback/<date>/<id>/` (`submission.json`, `summary.md`, any recordings) to the default
- * branch, plus one issue that links to it; the issue number is the visitor's reference.
+ * `feedback/<id>/` (`submission.json`, `summary.md`, any recordings) to the default branch, plus
+ * one issue that links to it; the issue number is the visitor's reference. The id is the page's
+ * own submission UUID, reused on every retry: a save first looks for that submission's issue and
+ * record, so a retried Send never stores a second record or opens a second issue.
  *
- * The repository must be private: its visibility is checked before every upload and save, and a
- * public (or unreadable) repository refuses the write. The token never leaves this module, and
+ * The repository must be private (`private` true and `visibility` "private"): it is checked
+ * before every upload and save, and any other (or unreadable) repository refuses the write. The token never leaves this module, and
  * no GitHub response body is ever shown to the visitor or logged.
  */
-import { randomUUID } from "node:crypto";
+import { isFeedbackDemo, isFeedbackSource } from "../demos.js";
 import { plainTitle, renderMarkdown } from "../markdown.js";
 import type { Submission } from "../validation.js";
 import type { AudioFile } from "./audio.js";
@@ -16,14 +18,19 @@ import { type SignedReceipt, signReceipt } from "./receipts.js";
 import { type FeedbackEnv, FeedbackError } from "./security.js";
 
 export interface FeedbackStore {
-  upload(audio: AudioFile): Promise<SignedReceipt>;
+  /** Whether the repository is reachable and private (the check every write makes). */
+  ready(): Promise<boolean>;
+  upload(audio: AudioFile, submission: string): Promise<SignedReceipt>;
   save(submission: Submission, audio: readonly SignedReceipt[]): Promise<{ reference: number }>;
 }
 
-/** `owner/name`, GitHub's allowed characters only. */
-export const REPO_PATTERN = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
+/** `owner/name`, GitHub's allowed characters only, and neither part `.` or `..`. */
+export const REPO_PATTERN = /^(?!\.{1,2}\/)[A-Za-z0-9_.-]+\/(?!\.{1,2}$)[A-Za-z0-9_.-]+$/;
 
-/** Whether sending is configured: a token and a well-formed repository name. */
+/**
+ * Whether sending is configured: a token and a well-formed repository name. The status endpoint
+ * also needs a successful {@link FeedbackStore.ready} check before it reports sending on.
+ */
 export function storageConfigured(env: FeedbackEnv): boolean {
   const repo = env.FEEDBACK_GITHUB_REPO?.trim() ?? "";
   return Boolean(env.FEEDBACK_GITHUB_TOKEN?.trim()) && REPO_PATTERN.test(repo);
@@ -46,7 +53,6 @@ export function createGithubStore(
   env: FeedbackEnv,
   transport: typeof fetch = fetch,
   now: () => Date = () => new Date(),
-  uuid: () => string = randomUUID,
   pause: (ms: number) => Promise<void> = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
 ): FeedbackStore {
   const token = env.FEEDBACK_GITHUB_TOKEN?.trim();
@@ -88,6 +94,7 @@ export function createGithubStore(
       const data = (response.ok ? await response.json() : {}) as Record<string, unknown>;
       if (
         data.private !== true ||
+        data.visibility !== "private" ||
         typeof data.default_branch !== "string" ||
         !data.default_branch
       ) {
@@ -110,72 +117,125 @@ export function createGithubStore(
     );
   const textBlob = (text: string) => blob(new TextEncoder().encode(text));
 
+  const marker = (id: string) => `Submission: ${id}`;
+
+  /** This submission's issue, when an earlier attempt opened one (the newest 100 are searched). */
+  const findIssue = async (id: string): Promise<number | undefined> => {
+    const response = await call(
+      "/issues?state=all&sort=created&direction=desc&per_page=100",
+      "GET",
+    );
+    if (!response.ok) throw failure();
+    const issues: unknown = await response.json();
+    if (!Array.isArray(issues)) throw failure();
+    const found = issues.find(
+      (issue: { body?: unknown; pull_request?: unknown }) =>
+        issue.pull_request === undefined &&
+        typeof issue.body === "string" &&
+        issue.body.startsWith(`${marker(id)}\n`),
+    ) as { number?: unknown } | undefined;
+    return typeof found?.number === "number" ? found.number : undefined;
+  };
+
+  /** The commit that stored this submission's record, when an earlier attempt stored it. */
+  const findRecord = async (directory: string, branch: string): Promise<string | undefined> => {
+    const path = `${directory}/submission.json`;
+    const ref = encodeURIComponent(branch);
+    const response = await call(`/contents/${path}?ref=${ref}`, "GET");
+    if (response.status === 404) return undefined;
+    if (!response.ok) throw failure();
+    const commits: unknown = await read(`/commits?path=${path}&sha=${ref}&per_page=1`);
+    const first = Array.isArray(commits)
+      ? (commits[0] as { sha?: unknown } | undefined)
+      : undefined;
+    return checkedSha(first?.sha);
+  };
+
   return {
-    async upload(audio) {
+    async ready() {
+      try {
+        await metadata();
+        return true;
+      } catch {
+        return false;
+      }
+    },
+
+    async upload(audio, submission) {
       await metadata();
       const sha = await blob(audio.bytes);
-      return signReceipt({ sha, size: audio.bytes.length, ext: audio.ext }, env, now().getTime());
+      return signReceipt(
+        { sha, size: audio.bytes.length, ext: audio.ext },
+        submission,
+        env,
+        now().getTime(),
+      );
     },
 
     async save(submission, audio) {
       const { branch } = await metadata();
-      const id = uuid();
+      const id = submission.id;
+      const existing = await findIssue(id);
+      if (existing !== undefined) return { reference: existing };
       const createdAt = now().toISOString();
-      const directory = `feedback/${createdAt.slice(0, 10)}/${id}`;
+      const directory = `feedback/${id}`;
       const audioNames = audio.map((clip, i) => `audio-${i + 1}.${clip.ext}`);
-      const recordSha = await textBlob(
-        `${JSON.stringify(
-          {
-            ...submission,
-            id,
-            createdAt,
-            audio: audio.map(({ sha, size, ext }, i) => ({ path: audioNames[i], sha, size, ext })),
-          },
-          null,
-          2,
-        )}\n`,
-      );
-      const summarySha = await textBlob(`${renderMarkdown(submission, audioNames)}\n`);
-      const tree = [
-        ...audio.map((clip, i) => ({ path: `${directory}/${audioNames[i]}`, sha: clip.sha })),
-        { path: `${directory}/submission.json`, sha: recordSha },
-        { path: `${directory}/summary.md`, sha: summarySha },
-      ].map((entry) => ({ ...entry, mode: "100644", type: "blob" }));
-      const ref = `heads/${encodeURIComponent(branch)}`;
-      let commitSha = "";
-      // A writer that loses a race rebuilds on the new head; the blobs are reused.
-      for (let attempt = 0; attempt <= 5; attempt++) {
-        const head = checkedSha((await read(`/git/ref/${ref}`)).object?.sha);
-        const baseTree = checkedSha((await read(`/git/commits/${head}`)).tree?.sha);
-        const nextTree = checkedSha(
-          (await read("/git/trees", "POST", { base_tree: baseTree, tree })).sha,
+      const commitRecord = async (): Promise<string> => {
+        const recordSha = await textBlob(
+          `${JSON.stringify(
+            {
+              ...submission,
+              createdAt,
+              audio: audio.map(({ sha, size, ext }, i) => ({
+                path: audioNames[i],
+                sha,
+                size,
+                ext,
+              })),
+            },
+            null,
+            2,
+          )}\n`,
         );
-        const commit = checkedSha(
-          (
-            await read("/git/commits", "POST", {
-              message: `Store demo feedback ${id}`,
-              tree: nextTree,
-              parents: [head],
-            })
-          ).sha,
-        );
-        const update = await call(`/git/refs/${ref}`, "PATCH", { sha: commit, force: false });
-        if (update.ok) {
-          commitSha = commit;
-          break;
+        const summarySha = await textBlob(`${renderMarkdown(submission, audioNames)}\n`);
+        const tree = [
+          ...audio.map((clip, i) => ({ path: `${directory}/${audioNames[i]}`, sha: clip.sha })),
+          { path: `${directory}/submission.json`, sha: recordSha },
+          { path: `${directory}/summary.md`, sha: summarySha },
+        ].map((entry) => ({ ...entry, mode: "100644", type: "blob" }));
+        const ref = `heads/${encodeURIComponent(branch)}`;
+        // A writer that loses a race rebuilds on the new head; the blobs are reused.
+        for (let attempt = 0; attempt <= 5; attempt++) {
+          const head = checkedSha((await read(`/git/ref/${ref}`)).object?.sha);
+          const baseTree = checkedSha((await read(`/git/commits/${head}`)).tree?.sha);
+          const nextTree = checkedSha(
+            (await read("/git/trees", "POST", { base_tree: baseTree, tree })).sha,
+          );
+          const commit = checkedSha(
+            (
+              await read("/git/commits", "POST", {
+                message: `Store demo feedback ${id}`,
+                tree: nextTree,
+                parents: [head],
+              })
+            ).sha,
+          );
+          const update = await call(`/git/refs/${ref}`, "PATCH", { sha: commit, force: false });
+          if (update.ok) return commit;
+          const error = (await update.json().catch(() => ({}))) as { message?: unknown };
+          const message = typeof error.message === "string" ? error.message : "";
+          if (
+            update.status !== 422 ||
+            !/not (?:a )?fast[- ]forward/i.test(message) ||
+            attempt === 5
+          ) {
+            throw failure();
+          }
+          await pause(100 * 2 ** attempt + Math.floor(Math.random() * 150));
         }
-        const error = (await update.json().catch(() => ({}))) as { message?: unknown };
-        const message = typeof error.message === "string" ? error.message : "";
-        if (
-          update.status !== 422 ||
-          !/not (?:a )?fast[- ]forward/i.test(message) ||
-          attempt === 5
-        ) {
-          throw failure();
-        }
-        await pause(100 * 2 ** attempt + Math.floor(Math.random() * 150));
-      }
-      if (!commitSha) throw failure();
+        throw failure();
+      };
+      const commitSha = (await findRecord(directory, branch)) ?? (await commitRecord());
 
       const url = (name: string) =>
         `https://github.com/${repo}/blob/${commitSha}/${directory}/${name}`;
@@ -186,17 +246,18 @@ export function createGithubStore(
           "Demo feedback",
       );
       const title = plainTitle(`${submission.pathway}: ${first}`);
-      const body = renderMarkdown(submission, audioNames.map(url), {
+      const body = `${marker(id)}\n\n${renderMarkdown(submission, audioNames.map(url), {
         maxLength: 59_000,
         recordUrl: url("submission.json"),
-      });
+      })}`;
       const demos = Array.isArray(submission.answers.demos) ? submission.answers.demos : [];
       const labels = [
         "feedback",
         `pathway:${submission.pathway}`,
         `mode:${submission.mode}`,
-        ...demos.map((demo) => `demo:${demo}`),
-        ...(submission.metadata.from ? [`from:${submission.metadata.from}`] : []),
+        // Validation admits only registry demo ids and app slugs here, never free text.
+        ...demos.filter(isFeedbackDemo).map((demo) => `demo:${demo}`),
+        ...(isFeedbackSource(submission.metadata.from) ? [`from:${submission.metadata.from}`] : []),
       ];
       let issue = await call("/issues", "POST", { title, body, labels });
       // A token that may not create labels gets a 422: file the issue without them.

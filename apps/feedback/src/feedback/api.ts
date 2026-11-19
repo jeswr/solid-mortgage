@@ -82,8 +82,9 @@ export async function sendTurn(body: {
   };
 }
 
-export async function uploadRecording(blob: Blob): Promise<AudioReceipt> {
-  const response = await fetch(`${API}/audio`, {
+/** Upload one recording for the submission `submission` (called only when Send is pressed). */
+export async function uploadRecording(blob: Blob, submission: string): Promise<AudioReceipt> {
+  const response = await fetch(`${API}/audio?submission=${encodeURIComponent(submission)}`, {
     method: "POST",
     credentials: "omit",
     signal: AbortSignal.timeout(45_000),

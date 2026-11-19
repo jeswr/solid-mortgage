@@ -28,9 +28,14 @@ export const PRODUCTION_ORIGIN = "https://solid-mortgage.vercel.app";
 
 /**
  * The request's `Origin` when it may use the feedback API, else undefined. Allowed: the API's own
- * origin, the production site, `VERCEL_PROJECT_PRODUCTION_URL`, and loopback for local runs; or,
- * when `FEEDBACK_ALLOWED_ORIGINS` is set, exactly that comma-separated list. A request with no
- * Origin header is refused (browsers send one on every cross-site and same-site POST).
+ * origin, the production site, `VERCEL_PROJECT_PRODUCTION_URL`, and loopback for local runs
+ * (never on a production deployment, `VERCEL_ENV=production`); or, when `FEEDBACK_ALLOWED_ORIGINS`
+ * is set, exactly that comma-separated list. A request with no Origin header is refused (browsers
+ * send one on every cross-site and same-site POST).
+ *
+ * This keeps other websites' pages from using the API through their visitors' browsers. It does
+ * not stop a script that sets its own Origin header: the rate limits and the spend cap on the
+ * Anthropic workspace (see the package README) bound what such a caller can cost.
  */
 export function allowedOrigin(request: Request, env: FeedbackEnv): string | undefined {
   const origin = request.headers.get("origin");
@@ -51,7 +56,7 @@ export function allowedOrigin(request: Request, env: FeedbackEnv): string | unde
     }
   });
   if (matches) return origin;
-  if (list === undefined) {
+  if (list === undefined && env.VERCEL_ENV !== "production") {
     try {
       const url = new URL(origin);
       if (
@@ -129,7 +134,9 @@ export const MAX_VISITORS = 20_000;
 
 /**
  * A per-instance rate limiter (each serverless instance keeps its own counts: a backstop against
- * one visitor running up the interviewer bill, not a global quota). Returns undefined when the
+ * one visitor running up the interviewer bill, not a global quota; scaling out or replacing an
+ * instance starts fresh counts). The deployment-wide bound on model spend is the Anthropic
+ * workspace's spend limit, which the operator must set (package README). Returns undefined when the
  * request may proceed, else the milliseconds to wait. Daily instance caps bound the total spend
  * of one instance; at capacity it refuses rather than evicting active visitors.
  */

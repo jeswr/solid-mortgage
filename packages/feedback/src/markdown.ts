@@ -8,7 +8,11 @@ import { FEEDBACK_DEMOS } from "./demos.js";
 import { displayAnswer, QUESTIONS, questionById } from "./guide.js";
 import type { Submission } from "./validation.js";
 
-/** Neutralise mentions, HTML, links and Markdown structure in participant text. */
+/**
+ * Neutralise mentions, HTML, links and Markdown structure in participant text. Every character
+ * that can open a heading, list, quote or setext underline (`#`, `=`, `-`, `+`, `>`, digits'
+ * `.`) is escaped wherever it appears, so no line of participant text can restructure the record.
+ */
 export function escapeMarkdown(value: unknown): string {
   const plain = Array.isArray(value) ? value.join(", ") : String(value ?? "");
   return plain
@@ -16,7 +20,7 @@ export function escapeMarkdown(value: unknown): string {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/@/g, "@‍")
-    .replace(/[\\`*_{}[\]()#+.!|~-]/g, "\\$&")
+    .replace(/[\\`*_{}[\]()#+.!|~=-]/g, "\\$&")
     .replace(/\r?\n/g, "<br>\n");
 }
 

@@ -75,6 +75,13 @@ describe("markdown", () => {
     expect(plainTitle("guided: hi @all\n\u0007there")).toBe("guided: hi @‍all there");
   });
 
+  it("leaves no line that can become a heading, list or setext underline", () => {
+    const escaped = escapeMarkdown("Title\n===\nOther\n---\n# Heading\n- item\n+ item\n1. item");
+    for (const line of escaped.split("\n")) expect(line).not.toMatch(/^\s*([=#+-]|\d+\.)/);
+    expect(escaped).toContain("\\=\\=\\=");
+    expect(plainTitle("quick: one\r\n# two\u2028three")).toBe("quick: one # two three");
+  });
+
   it("renders ratings, answers and a bounded transcript", () => {
     const record = {
       ...SUBMISSION,

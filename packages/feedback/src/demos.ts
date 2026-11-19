@@ -25,3 +25,40 @@ export const FEEDBACK_DEMOS: readonly FeedbackDemo[] = Object.freeze([
 export function isFeedbackDemo(id: string): boolean {
   return FEEDBACK_DEMOS.some((demo) => demo.id === id);
 }
+
+/**
+ * The apps a visitor can arrive from (the banner link's `from=`): every app slug in demo-kit's
+ * registry except the feedback page itself. A server-safe copy of `APP_SLUGS`; the feedback app's
+ * tests fail when the two drift. Only these become a stored `from` or a `from:` issue label.
+ */
+export const FEEDBACK_SOURCES = Object.freeze([
+  "wallet",
+  "payroll",
+  "bank",
+  "bureau",
+  "lender",
+  "lender-desk",
+  "lender-b",
+  "aus",
+  "appraisal",
+  "title",
+  "insurer",
+  "county",
+  "servicer",
+  "state",
+  "idv",
+  "fintech-lender",
+  "payout",
+  "registry",
+  "business-lender",
+  "hospital",
+  "pharmacy",
+  "clinic",
+  "card-issuer",
+  "repairer",
+  "welcome",
+] as const);
+
+export function isFeedbackSource(slug: string): boolean {
+  return (FEEDBACK_SOURCES as readonly string[]).includes(slug);
+}
