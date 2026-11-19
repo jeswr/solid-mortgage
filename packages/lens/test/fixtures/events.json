@@ -1,0 +1,494 @@
+[
+  {
+    "source": "pod",
+    "id": 1,
+    "at": "2026-08-31T09:00:00.000Z",
+    "tour": { "demo": "trail", "step": "certify" },
+    "actor": {
+      "org": "alex",
+      "webid": "https://trail.example/pods/alex/profile/card#me",
+      "viaAgent": false
+    },
+    "pod": "alex",
+    "path": "/pods/alex/certificates/.acl",
+    "method": "PUT",
+    "status": 205,
+    "kind": "grant",
+    "acl": {
+      "granted": [
+        {
+          "agent": "https://trail.example/pods/payroll/profile/card#me",
+          "modes": ["Append"],
+          "resource": "/certificates/",
+          "inherited": true
+        }
+      ],
+      "revoked": []
+    },
+    "grant": "https://trail.example/pods/alex/policies/t1"
+  },
+  {
+    "source": "pod",
+    "id": 2,
+    "at": "2026-08-31T09:01:00.000Z",
+    "tour": { "demo": "trail", "step": "certify" },
+    "actor": {
+      "org": "payroll",
+      "webid": "https://trail.example/pods/payroll/profile/card#me",
+      "viaAgent": false
+    },
+    "pod": "alex",
+    "path": "/pods/alex/certificates/first-aid",
+    "method": "PUT",
+    "status": 201,
+    "kind": "write",
+    "resource": {
+      "label": "Wilderness first-aid certificate",
+      "drawer": "Certificates",
+      "types": ["https://www.w3.org/2018/credentials#VerifiableCredential"],
+      "credential": {
+        "type": "https://www.w3.org/2018/credentials#VerifiableCredential",
+        "issuer": "https://trail.example/pods/payroll/profile/card#me",
+        "validFrom": "2026-08-31T09:00:00.000Z",
+        "asOf": "2026-08-28T00:00:00.000Z"
+      }
+    },
+    "grant": "https://trail.example/pods/alex/policies/t1"
+  },
+  {
+    "source": "pod",
+    "id": 3,
+    "at": "2026-08-31T10:00:00.000Z",
+    "tour": { "demo": "trail", "step": "itinerary" },
+    "actor": {
+      "org": "alex",
+      "webid": "https://trail.example/pods/alex/profile/card#me",
+      "viaAgent": false
+    },
+    "pod": "alex",
+    "path": "/pods/alex/itinerary/route-plan",
+    "method": "PUT",
+    "status": 201,
+    "kind": "write",
+    "resource": {
+      "label": "Route plan",
+      "drawer": "Itinerary",
+      "types": ["https://schema.org/Trip"]
+    }
+  },
+  {
+    "source": "pod",
+    "id": 4,
+    "at": "2026-09-02T09:00:00.000Z",
+    "tour": { "demo": "trail", "step": "permit" },
+    "actor": {
+      "org": "county",
+      "webid": "https://trail.example/pods/county/profile/card#me",
+      "viaAgent": false
+    },
+    "pod": "alex",
+    "path": "/pods/alex/inbox/permit-request",
+    "method": "POST",
+    "status": 201,
+    "kind": "write",
+    "resource": {
+      "label": "Permit access request",
+      "drawer": "Inbox",
+      "types": ["https://www.w3.org/ns/odrl/2/Request"]
+    }
+  },
+  {
+    "source": "pod",
+    "id": 5,
+    "at": "2026-09-02T09:02:00.000Z",
+    "tour": { "demo": "trail", "step": "permit" },
+    "actor": {
+      "org": "alex",
+      "webid": "https://trail.example/pods/alex/profile/card#me",
+      "viaAgent": false
+    },
+    "pod": "alex",
+    "path": "/pods/alex/.acl",
+    "method": "PUT",
+    "status": 205,
+    "kind": "grant",
+    "acl": {
+      "granted": [
+        {
+          "agent": "https://trail.example/pods/county/profile/card#me",
+          "modes": ["Read"],
+          "resource": "/profile/card",
+          "inherited": false
+        },
+        {
+          "agent": "https://trail.example/pods/county/profile/card#me",
+          "modes": ["Read"],
+          "resource": "/certificates/",
+          "inherited": true
+        },
+        {
+          "agent": "https://trail.example/pods/county/profile/card#me",
+          "modes": ["Read"],
+          "resource": "/itinerary/",
+          "inherited": true
+        },
+        {
+          "agent": "https://trail.example/pods/county/profile/card#me",
+          "modes": ["Write", "Append"],
+          "resource": "/permits/",
+          "inherited": true
+        }
+      ],
+      "revoked": []
+    },
+    "grant": "https://trail.example/pods/alex/policies/t2"
+  },
+  {
+    "source": "pod",
+    "id": 6,
+    "at": "2026-09-02T09:03:00.000Z",
+    "tour": { "demo": "trail", "step": "permit" },
+    "actor": {
+      "org": "county",
+      "webid": "https://trail.example/pods/county/profile/card#me",
+      "viaAgent": false
+    },
+    "pod": "alex",
+    "path": "/pods/alex/profile/card",
+    "method": "GET",
+    "status": 200,
+    "kind": "read",
+    "resource": {
+      "label": "Profile card",
+      "drawer": "Profile",
+      "types": ["https://schema.org/Person"]
+    },
+    "grant": "https://trail.example/pods/alex/policies/t2"
+  },
+  {
+    "source": "pod",
+    "id": 7,
+    "at": "2026-09-02T09:03:10.000Z",
+    "tour": { "demo": "trail", "step": "permit" },
+    "actor": {
+      "org": "county",
+      "webid": "https://trail.example/pods/county/profile/card#me",
+      "viaAgent": false
+    },
+    "pod": "alex",
+    "path": "/pods/alex/certificates/first-aid",
+    "method": "GET",
+    "status": 200,
+    "kind": "read",
+    "resource": {
+      "label": "Wilderness first-aid certificate",
+      "drawer": "Certificates",
+      "types": ["https://www.w3.org/2018/credentials#VerifiableCredential"],
+      "credential": {
+        "type": "https://www.w3.org/2018/credentials#VerifiableCredential",
+        "issuer": "https://trail.example/pods/payroll/profile/card#me",
+        "validFrom": "2026-08-31T09:00:00.000Z",
+        "asOf": "2026-08-28T00:00:00.000Z"
+      }
+    },
+    "grant": "https://trail.example/pods/alex/policies/t2"
+  },
+  {
+    "source": "app",
+    "id": 8,
+    "at": "2026-09-02T09:03:20.000Z",
+    "kind": "verified",
+    "org": "county",
+    "text": "Fernhollow checked the certificate's signature: valid, issued by Tamarack Guides.",
+    "refs": ["/pods/alex/certificates/first-aid"]
+  },
+  {
+    "source": "pod",
+    "id": 9,
+    "at": "2026-09-02T09:04:00.000Z",
+    "tour": { "demo": "trail", "step": "permit" },
+    "actor": {
+      "org": "county",
+      "webid": "https://trail.example/pods/county/profile/card#me",
+      "viaAgent": false
+    },
+    "pod": "alex",
+    "path": "/pods/alex/itinerary/route-plan",
+    "method": "GET",
+    "status": 200,
+    "kind": "read",
+    "resource": {
+      "label": "Route plan",
+      "drawer": "Itinerary",
+      "types": ["https://schema.org/Trip"]
+    },
+    "grant": "https://trail.example/pods/alex/policies/t2"
+  },
+  {
+    "source": "pod",
+    "id": 10,
+    "at": "2026-09-02T09:05:00.000Z",
+    "tour": { "demo": "trail", "step": "permit" },
+    "actor": {
+      "org": "county",
+      "webid": "https://trail.example/pods/county/profile/card#me",
+      "viaAgent": false
+    },
+    "pod": "alex",
+    "path": "/pods/alex/permits/backcountry-permit",
+    "method": "PUT",
+    "status": 201,
+    "kind": "write",
+    "resource": {
+      "label": "Backcountry permit",
+      "drawer": "Permits",
+      "types": ["https://schema.org/DigitalDocument"]
+    },
+    "grant": "https://trail.example/pods/alex/policies/t2"
+  },
+  {
+    "source": "app",
+    "id": 11,
+    "at": "2026-09-02T09:05:30.000Z",
+    "kind": "org-to-org",
+    "org": "county",
+    "text": "Fernhollow sent the trip dates to Kestrel Weather Desk (not through the pod).",
+    "refs": ["https://trail.example/pods/aus/profile/card#me"]
+  },
+  {
+    "source": "pod",
+    "id": 12,
+    "at": "2026-09-02T09:06:00.000Z",
+    "tour": { "demo": "trail", "step": "permit" },
+    "actor": {
+      "org": "aus",
+      "webid": "https://trail.example/pods/aus/profile/card#me",
+      "viaAgent": true
+    },
+    "pod": "county",
+    "path": "/pods/county/inbox/forecast",
+    "method": "POST",
+    "status": 201,
+    "kind": "write",
+    "resource": {
+      "label": "Mountain forecast",
+      "drawer": "Inbox",
+      "types": ["https://schema.org/DigitalDocument"]
+    }
+  },
+  {
+    "source": "app",
+    "id": 13,
+    "at": "2026-09-02T09:06:30.000Z",
+    "kind": "clock",
+    "org": "county",
+    "text": "The permit is valid for 5 days from Day 3."
+  },
+  {
+    "source": "app",
+    "id": 14,
+    "at": "2026-09-03T09:00:00.000Z",
+    "kind": "proof-verified",
+    "org": "insurer",
+    "text": "Ridgeline checked a proof that Alex holds a current first-aid certificate. It saw a yes, not the certificate."
+  },
+  {
+    "source": "pod",
+    "id": 15,
+    "at": "2026-09-03T09:01:00.000Z",
+    "tour": { "demo": "trail", "step": "cover" },
+    "actor": {
+      "org": "alex",
+      "webid": "https://trail.example/pods/alex/profile/card#me",
+      "viaAgent": false
+    },
+    "pod": "alex",
+    "path": "/pods/alex/health/.acl",
+    "method": "PUT",
+    "status": 205,
+    "kind": "grant",
+    "acl": {
+      "granted": [
+        {
+          "agent": "https://trail.example/pods/insurer/profile/card#me",
+          "modes": ["Read"],
+          "resource": "/health/",
+          "inherited": true
+        }
+      ],
+      "revoked": []
+    },
+    "grant": "https://trail.example/pods/alex/policies/t3"
+  },
+  {
+    "source": "pod",
+    "id": 16,
+    "at": "2026-09-03T09:02:00.000Z",
+    "tour": { "demo": "trail", "step": "cover" },
+    "actor": {
+      "org": "insurer",
+      "webid": "https://trail.example/pods/insurer/profile/card#me",
+      "viaAgent": false
+    },
+    "pod": "alex",
+    "path": "/pods/alex/health/allergies",
+    "method": "GET",
+    "status": 200,
+    "kind": "read",
+    "resource": {
+      "label": "Allergies",
+      "drawer": "Health",
+      "types": ["https://schema.org/MedicalCondition"]
+    },
+    "grant": "https://trail.example/pods/alex/policies/t3"
+  },
+  {
+    "source": "pod",
+    "id": 17,
+    "at": "2026-09-03T09:02:30.000Z",
+    "tour": { "demo": "trail", "step": "cover" },
+    "actor": {
+      "org": "insurer",
+      "webid": "https://trail.example/pods/insurer/profile/card#me",
+      "viaAgent": false
+    },
+    "pod": "alex",
+    "path": "/pods/alex/certificates/first-aid",
+    "method": "GET",
+    "status": 403,
+    "kind": "denied"
+  },
+  {
+    "source": "pod",
+    "id": 18,
+    "at": "2026-09-04T00:00:00.000Z",
+    "tour": { "demo": "trail", "step": "cover" },
+    "actor": {
+      "org": "alex",
+      "webid": "https://trail.example/pods/alex/profile/card#me",
+      "viaAgent": true
+    },
+    "pod": "alex",
+    "path": "/pods/alex/health/.acl",
+    "method": "PUT",
+    "status": 205,
+    "kind": "revoke",
+    "acl": {
+      "granted": [],
+      "revoked": [
+        {
+          "agent": "https://trail.example/pods/insurer/profile/card#me",
+          "modes": ["Read"],
+          "resource": "/health/",
+          "inherited": true
+        }
+      ]
+    }
+  },
+  {
+    "source": "app",
+    "id": 19,
+    "at": "2026-09-04T10:00:00.000Z",
+    "kind": "no-solid",
+    "org": "bureau",
+    "text": "No Solid here: the hut register is a public notice board."
+  },
+  {
+    "source": "pod",
+    "id": 20,
+    "at": "2026-09-08T09:00:00.000Z",
+    "tour": { "demo": "trail", "step": "withdraw" },
+    "actor": {
+      "org": "alex",
+      "webid": "https://trail.example/pods/alex/profile/card#me",
+      "viaAgent": false
+    },
+    "pod": "alex",
+    "path": "/pods/alex/.acl",
+    "method": "PUT",
+    "status": 205,
+    "kind": "revoke",
+    "acl": {
+      "granted": [],
+      "revoked": [
+        {
+          "agent": "https://trail.example/pods/county/profile/card#me",
+          "modes": ["Read"],
+          "resource": "/profile/card",
+          "inherited": false
+        },
+        {
+          "agent": "https://trail.example/pods/county/profile/card#me",
+          "modes": ["Read"],
+          "resource": "/certificates/",
+          "inherited": true
+        },
+        {
+          "agent": "https://trail.example/pods/county/profile/card#me",
+          "modes": ["Read"],
+          "resource": "/itinerary/",
+          "inherited": true
+        },
+        {
+          "agent": "https://trail.example/pods/county/profile/card#me",
+          "modes": ["Write", "Append"],
+          "resource": "/permits/",
+          "inherited": true
+        }
+      ]
+    }
+  },
+  {
+    "source": "pod",
+    "id": 21,
+    "at": "2026-09-08T09:00:20.000Z",
+    "tour": { "demo": "trail", "step": "retry" },
+    "actor": {
+      "org": "county",
+      "webid": "https://trail.example/pods/county/profile/card#me",
+      "viaAgent": false
+    },
+    "pod": "alex",
+    "path": "/pods/alex/itinerary/route-plan",
+    "method": "GET",
+    "status": 403,
+    "kind": "denied"
+  },
+  {
+    "source": "pod",
+    "id": 22,
+    "at": "2026-09-08T09:01:00.000Z",
+    "tour": { "demo": "trail", "step": "retry" },
+    "actor": {
+      "org": "alex",
+      "webid": "https://trail.example/pods/alex/profile/card#me",
+      "viaAgent": false
+    },
+    "pod": "alex",
+    "path": "/pods/alex/permits/backcountry-permit",
+    "method": "GET",
+    "status": 200,
+    "kind": "read",
+    "resource": {
+      "label": "Backcountry permit",
+      "drawer": "Permits",
+      "types": ["https://schema.org/DigitalDocument"]
+    }
+  },
+  {
+    "source": "pod",
+    "id": 23,
+    "at": "2026-09-08T09:02:00.000Z",
+    "tour": { "demo": "trail", "step": "retry" },
+    "actor": {
+      "org": "alex",
+      "webid": "https://trail.example/pods/alex/profile/card#me",
+      "viaAgent": false
+    },
+    "pod": "alex",
+    "path": "/pods/alex/itinerary/route-plan-draft",
+    "method": "DELETE",
+    "status": 205,
+    "kind": "delete"
+  }
+]

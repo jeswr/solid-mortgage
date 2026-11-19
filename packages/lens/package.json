@@ -3,7 +3,29 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "The Solid Lens custom element and the journey ledger. Scaffold manifest from lane L0: dependencies are fixed here so the lockfile is complete; lane L2 owns the package and adds scripts and source.",
+  "description": "The Solid Lens custom element and the journey ledger: a visualiser fed only by pod events and app notes.",
+  "sideEffects": [
+    "./dist/element.js",
+    "./dist/ledger-element.js",
+    "./dist/index.js"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./model": {
+      "types": "./dist/model-index.d.ts",
+      "import": "./dist/model-index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "lint": "biome check src test e2e package.json tsconfig.json tsconfig.test.json playwright.config.ts",
+    "test": "vitest run --root . --config ../../vitest.config.ts",
+    "test:e2e": "playwright test",
+    "typecheck": "tsc --project tsconfig.json --noEmit && tsc --project tsconfig.test.json"
+  },
   "dependencies": {
     "@mortgage/demo-kit": "workspace:*"
   },
