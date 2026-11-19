@@ -1,89 +1,89 @@
 WEBVTT
 
 1
-00:00:00.350 --> 00:00:02.751
+00:00:00.350 --> 00:00:02.752
 Someone has reversed into Alex's car.
 
 2
-00:00:02.751 --> 00:00:08.657
+00:00:02.752 --> 00:00:08.657
 A claim involves a driver, an insurer and a repairer, and usually a lot of forwarded email.
 
 3
-00:00:09.507 --> 00:00:15.306
+00:00:09.507 --> 00:00:15.307
 Alex starts the claim in their own pod: what happened, photos, and the other driver's details.
 
 4
-00:00:16.642 --> 00:00:23.800
+00:00:16.157 --> 00:00:23.314
 Alex reports it to the insurer and grants access to three things: the driving licence, the policy, and this claim.
 
 5
-00:00:24.650 --> 00:00:27.769
+00:00:24.164 --> 00:00:27.284
 The claims handler checks the licence and the cover.
 
 6
-00:00:27.769 --> 00:00:31.129
+00:00:27.284 --> 00:00:30.644
 Both are signed credentials, so there is nobody to ring.
 
 7
-00:00:31.129 --> 00:00:33.949
+00:00:30.644 --> 00:00:33.464
 Then they write a damage report into the claim.
 
 8
-00:00:34.801 --> 00:00:36.394
+00:00:34.314 --> 00:00:35.908
 The car needs a body shop.
 
 9
-00:00:38.303 --> 00:00:43.763
+00:00:36.758 --> 00:00:42.217
 Alex gives the repairer the damage report and the photos, and nothing more, until the job is done.
 
 10
-00:00:44.613 --> 00:00:49.393
+00:00:43.067 --> 00:00:47.847
 The workshop opens the job, reads those two things, and writes its estimate back.
 
 11
-00:00:50.377 --> 00:00:55.246
+00:00:48.706 --> 00:00:53.575
 The repairer did not see the licence, the policy, or the other driver's details.
 
 12
-00:00:55.246 --> 00:00:56.463
+00:00:53.575 --> 00:00:54.793
 It had no reason to.
 
 13
-00:00:57.314 --> 00:01:01.363
+00:00:55.643 --> 00:00:59.692
 The insurer reads the estimate where the repairer wrote it, and approves it.
 
 14
-00:01:03.478 --> 00:01:06.351
+00:01:00.542 --> 00:01:03.415
 The repair is finished and the invoice is filed.
 
 15
-00:01:06.351 --> 00:01:09.643
+00:01:03.415 --> 00:01:06.707
 The repairer's grant was for this job, so it ends here.
 
 16
-00:01:10.492 --> 00:01:13.941
+00:01:07.556 --> 00:01:11.004
 If the workshop opens the photos again, the pod refuses.
 
 17
-00:01:14.791 --> 00:01:18.575
+00:01:11.855 --> 00:01:15.639
 Alex closes the claim and withdraws the insurer's access to it.
 
 18
-00:01:18.575 --> 00:01:20.677
+00:01:15.639 --> 00:01:17.741
 The insurer still reads the policy.
 
 19
-00:01:20.677 --> 00:01:22.419
+00:01:17.741 --> 00:01:19.483
 It no longer reads the claim.
 
 20
-00:01:23.269 --> 00:01:26.900
+00:01:20.332 --> 00:01:23.963
 Three parties, two grants, each scoped to one job.
 
 21
-00:01:27.753 --> 00:01:31.513
+00:01:24.812 --> 00:01:28.572
 We are looking for insurers to help shape this model.
 
 22
-00:01:31.513 --> 00:01:34.493
+00:01:28.572 --> 00:01:31.552
 Join the EDMA Solid Community of Practice.

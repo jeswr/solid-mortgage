@@ -13,229 +13,229 @@ Twelve organisations take part.
 All of them are fictional, and each has its own application.
 
 4
-00:00:12.514 --> 00:00:17.365
+00:00:12.511 --> 00:00:17.362
 Today, each of those organisations collects its own copy of the borrower's documents.
 
 5
-00:00:17.365 --> 00:00:23.016
+00:00:17.362 --> 00:00:23.012
 Here the borrower, Alex, keeps the data in a pod, and each organisation asks for the part it needs.
 
 6
-00:00:23.866 --> 00:00:26.293
+00:00:23.863 --> 00:00:26.290
 The panel on the right is the Solid Lens.
 
 7
-00:00:26.293 --> 00:00:30.318
+00:00:26.290 --> 00:00:30.315
 It shows every read, every write and every permission as it happens.
 
 8
-00:00:31.172 --> 00:00:34.516
+00:00:31.165 --> 00:00:34.509
 Alex starts with the payroll provider their employer uses.
 
 9
-00:00:35.366 --> 00:00:40.825
+00:00:35.359 --> 00:00:40.818
 It signs a statement of employment and income, and writes it to the pod as a verifiable credential.
 
 10
-00:00:41.676 --> 00:00:43.661
+00:00:41.669 --> 00:00:43.654
 The bank does the same for savings.
 
 11
-00:00:48.733 --> 00:00:51.366
+00:00:44.504 --> 00:00:47.138
 And the credit bureau, for a credit summary.
 
 12
-00:00:51.366 --> 00:00:56.752
+00:00:47.138 --> 00:00:52.524
 Three issuers, one place, and each record can be checked later without calling the issuer.
 
 13
-00:00:57.605 --> 00:00:58.861
+00:00:53.374 --> 00:00:54.631
 Now Alex shops around.
 
 14
-00:00:58.861 --> 00:01:06.800
+00:00:54.631 --> 00:01:02.569
 Two lenders ask the same thing: is income at least seven thousand dollars a month, and is the credit score at least six hundred and twenty?
 
 15
-00:01:07.649 --> 00:01:09.660
+00:01:03.421 --> 00:01:05.431
 The wallet answers with a proof.
 
 16
-00:01:09.660 --> 00:01:12.613
+00:01:05.431 --> 00:01:08.384
 Each lender learns yes or no, and nothing else.
 
 17
-00:01:35.946 --> 00:01:40.518
+00:01:09.234 --> 00:01:13.806
 This is everything the second lender holds: an answer, and who vouches for it.
 
 18
-00:01:41.368 --> 00:01:45.310
+00:01:14.656 --> 00:01:18.597
 Alex's offer on a house is accepted, so it is time to apply.
 
 19
-00:01:45.310 --> 00:01:54.638
+00:01:18.597 --> 00:01:27.926
 The lender asks for access, and the wallet shows what is being asked: which records, for what purpose, until when, and who else will see them.
 
 20
-00:01:55.489 --> 00:01:57.097
+00:01:28.776 --> 00:01:30.384
 Approving creates a grant.
 
 21
-00:01:57.097 --> 00:01:59.199
+00:01:30.384 --> 00:01:32.486
 You can see it appear in the Lens.
 
 22
-00:02:03.755 --> 00:02:06.307
+00:01:33.336 --> 00:01:35.888
 The application fills itself in from the pod.
 
 23
-00:02:06.307 --> 00:02:08.405
+00:01:35.888 --> 00:01:37.986
 Every field shows where it came from.
 
 24
-00:02:09.255 --> 00:02:15.028
+00:01:38.835 --> 00:01:44.608
 Once the lender has six key items, US rules give it three business days to send a Loan Estimate.
 
 25
-00:02:15.880 --> 00:02:21.244
+00:01:45.459 --> 00:01:50.823
 On the lender's side, the loan officer pulls a credit report and runs automated underwriting.
 
 26
-00:02:21.244 --> 00:02:25.858
+00:01:50.823 --> 00:01:55.437
 The lender's own credit report does not come from the pod, and the Lens says so.
 
 27
-00:02:26.720 --> 00:02:31.579
+00:01:56.288 --> 00:02:01.147
 The underwriting service reads three credentials at source, and checks each signature.
 
 28
-00:02:32.429 --> 00:02:37.496
+00:02:01.997 --> 00:02:07.065
 The Loan Estimate arrives in the pod the next day, and Alex confirms they want to go ahead.
 
 29
-00:02:40.028 --> 00:02:44.730
+00:02:07.957 --> 00:02:12.659
 The processor orders an appraisal, a title search, a flood check and tax transcripts.
 
 30
-00:02:55.207 --> 00:02:58.645
+00:02:13.509 --> 00:02:16.947
 The appraiser is assigned independently of the lender's sales staff.
 
 31
-00:02:58.645 --> 00:03:01.477
+00:02:16.947 --> 00:02:19.778
 They read the property record and the purchase contract.
 
 32
-00:03:12.018 --> 00:03:15.022
+00:02:20.628 --> 00:02:23.632
 They never see Alex's income, savings or credit.
 
 33
-00:03:15.872 --> 00:03:20.391
+00:02:24.483 --> 00:02:29.002
 The title company reads a name and a contract, and writes its commitment to the pod.
 
 34
-00:03:23.316 --> 00:03:29.925
+00:02:29.852 --> 00:02:36.461
 The insurer quotes from property facts already in the pod, and writes evidence of insurance once, for the lender to read.
 
 35
-00:03:32.166 --> 00:03:36.920
+00:02:37.310 --> 00:02:42.065
 A month on, the lender must check employment again, within ten business days of closing.
 
 36
-00:03:37.771 --> 00:03:42.010
+00:02:42.915 --> 00:02:47.155
 That is a fresh credential from the payroll provider, not a phone call.
 
 37
-00:03:42.010 --> 00:03:43.622
+00:02:47.155 --> 00:02:48.767
 The loan is clear to close.
 
 38
-00:03:44.472 --> 00:03:46.746
+00:02:49.618 --> 00:02:51.892
 The Closing Disclosure lands in the pod.
 
 39
-00:03:46.746 --> 00:03:49.305
+00:02:51.892 --> 00:02:54.451
 Three business days must pass before signing.
 
 40
-00:03:52.386 --> 00:03:54.619
+00:02:55.301 --> 00:02:57.533
 At the title company, Alex signs.
 
 41
-00:03:54.619 --> 00:03:56.513
+00:02:57.533 --> 00:02:59.428
 Signed copies go to the pod.
 
 42
-00:04:02.749 --> 00:04:05.124
+00:03:00.278 --> 00:03:02.653
 The deed is recorded with the county.
 
 43
-00:04:05.124 --> 00:04:08.848
+00:03:02.653 --> 00:03:06.377
 Solid plays no part here, because land records are public.
 
 44
-00:04:08.848 --> 00:04:10.324
+00:03:06.377 --> 00:03:07.853
 The Lens says that too.
 
 45
-00:04:11.175 --> 00:04:12.781
+00:03:08.703 --> 00:03:10.309
 The lender sells the loan.
 
 46
-00:04:12.781 --> 00:04:17.288
+00:03:10.309 --> 00:03:14.816
 That is between organisations, but the notice to Alex arrives in the pod.
 
 47
-00:04:24.974 --> 00:04:27.376
+00:03:15.666 --> 00:03:18.068
 A new company will collect the payments.
 
 48
-00:04:27.376 --> 00:04:32.601
+00:03:18.068 --> 00:03:23.294
 It asks for three things: contact details, the insurance policy, and a payment account.
 
 49
-00:04:53.718 --> 00:04:56.879
+00:03:24.144 --> 00:03:27.305
 The original lender no longer needs Alex's live data.
 
 50
-00:05:02.417 --> 00:05:04.350
+00:03:28.155 --> 00:03:30.088
 So Alex withdraws its access.
 
 51
-00:05:10.590 --> 00:05:14.654
+00:03:30.938 --> 00:03:35.002
 When the lender tries to read the bank data again, the pod refuses.
 
 52
-00:05:14.654 --> 00:05:18.234
+00:03:35.002 --> 00:03:38.581
 The lender keeps the loan file the law requires it to keep.
 
 53
-00:05:18.234 --> 00:05:21.509
+00:03:38.581 --> 00:03:41.857
 What has ended is its access to Alex's data at source.
 
 54
-00:05:22.360 --> 00:05:30.093
+00:03:42.709 --> 00:03:50.441
 This is the whole journey on one page: every organisation, every record, every grant, and what each one never saw.
 
 55
-00:05:30.943 --> 00:05:32.790
+00:03:51.292 --> 00:03:53.140
 Thirteen applications.
 
 56
-00:05:32.790 --> 00:05:33.798
+00:03:53.140 --> 00:03:54.147
 Nine grants.
 
 57
-00:05:33.798 --> 00:05:35.645
+00:03:54.147 --> 00:03:55.994
 No documents uploaded.
 
 58
-00:05:36.496 --> 00:05:40.524
+00:03:56.845 --> 00:04:00.873
 Everything you saw ran in a browser, on open standards.
 
 59
-00:05:40.524 --> 00:05:46.677
+00:04:00.873 --> 00:04:07.025
 Try it yourself from the welcome page, or join the EDMA Solid Community of Practice.
 
 60
-00:05:46.677 --> 00:05:48.068
+00:04:07.025 --> 00:04:08.417
 We meet every week.

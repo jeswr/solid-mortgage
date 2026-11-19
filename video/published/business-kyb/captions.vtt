@@ -13,121 +13,121 @@ It wants a bank account and a credit line.
 Both banks must know who the business is, and who owns it.
 
 4
-00:00:10.475 --> 00:00:17.684
+00:00:10.473 --> 00:00:17.683
 Today that means sending the same formation documents and ownership chart to each bank, and sending them again when anything changes.
 
 5
-00:00:18.534 --> 00:00:20.717
+00:00:18.533 --> 00:00:20.716
 Here, Northwind has a pod.
 
 6
-00:00:20.717 --> 00:00:22.061
+00:00:20.716 --> 00:00:22.060
 It starts empty.
 
 7
-00:00:22.911 --> 00:00:27.699
+00:00:22.909 --> 00:00:27.697
 A registry issues the company's identity, with its legal entity identifier.
 
 8
-00:00:27.699 --> 00:00:31.976
+00:00:27.697 --> 00:00:31.974
 The identifier in this demo is illustrative, and is not a real one.
 
 9
-00:00:32.827 --> 00:00:34.838
+00:00:32.825 --> 00:00:34.836
 It states who may act for the company.
 
 10
-00:00:38.487 --> 00:00:41.511
+00:00:35.686 --> 00:00:38.710
 And it records the four owners and their shares.
 
 11
-00:00:41.511 --> 00:00:45.984
+00:00:38.710 --> 00:00:43.183
 The full ownership table now sits in Northwind's pod, and nowhere else.
 
 12
-00:00:46.834 --> 00:00:52.701
+00:00:44.034 --> 00:00:49.901
 The first bank asks to read the identity and the ownership record, for customer due diligence.
 
 13
-00:00:52.701 --> 00:00:55.010
+00:00:49.901 --> 00:00:52.210
 Northwind's managing member approves.
 
 14
-00:00:55.861 --> 00:01:02.495
+00:00:53.060 --> 00:00:59.694
 The bank runs the check the rule requires: every owner with a quarter or more, and the person in control.
 
 15
-00:01:02.495 --> 00:01:06.728
+00:00:59.694 --> 00:01:03.927
 It reads signed data, checks each signature, and opens the account.
 
 16
-00:01:07.578 --> 00:01:10.647
+00:01:04.778 --> 00:01:07.848
 The second bank is only quoting for a credit line.
 
 17
-00:01:10.647 --> 00:01:13.164
+00:01:07.848 --> 00:01:10.365
 It does not need the ownership table yet.
 
 18
-00:01:13.164 --> 00:01:18.627
+00:01:10.365 --> 00:01:15.828
 It needs one answer: is there any owner above a quarter that we have not been told about?
 
 19
-00:01:19.478 --> 00:01:21.419
+00:01:16.678 --> 00:01:18.619
 Northwind answers with a proof.
 
 20
-00:01:21.419 --> 00:01:24.363
+00:01:18.619 --> 00:01:21.562
 The bank learns the answer, and not the shares.
 
 21
-00:01:35.623 --> 00:01:39.436
+00:01:22.412 --> 00:01:26.225
 Once the bank decides to lend, the rule needs the real values.
 
 22
-00:01:39.436 --> 00:01:41.527
+00:01:26.225 --> 00:01:28.316
 So the proof gives way to a grant.
 
 23
-00:01:44.598 --> 00:01:46.092
+00:01:29.167 --> 00:01:30.662
 One owner sells his stake.
 
 24
-00:01:46.092 --> 00:01:50.057
+00:01:30.662 --> 00:01:34.627
 The registry issues a new ownership record and withdraws the old one.
 
 25
-00:01:52.341 --> 00:01:56.629
+00:01:35.477 --> 00:01:39.765
 Both banks read the new record through the grants they already have.
 
 26
-00:01:56.629 --> 00:01:58.584
+00:01:39.765 --> 00:01:41.720
 Nobody starts onboarding again.
 
 27
-00:01:59.434 --> 00:02:04.123
+00:01:42.571 --> 00:01:47.260
 Northwind closes its account at the first bank and withdraws the grant.
 
 28
-00:02:04.123 --> 00:02:06.236
+00:01:47.260 --> 00:01:49.373
 The bank's next read is refused.
 
 29
-00:02:06.236 --> 00:02:09.340
+00:01:49.373 --> 00:01:52.477
 It keeps the due diligence record it must keep.
 
 30
-00:02:09.340 --> 00:02:11.189
+00:01:52.477 --> 00:01:54.326
 It can no longer refresh it.
 
 31
-00:02:12.040 --> 00:02:18.387
+00:01:55.177 --> 00:02:01.524
 For a supervisor, the ledger lists each due diligence obligation beside the grant and the reads that met it.
 
 32
-00:02:19.236 --> 00:02:22.611
+00:02:02.374 --> 00:02:05.748
 One set of credentials, two banks, no document packs.
 
 33
-00:02:22.611 --> 00:02:29.424
+00:02:05.748 --> 00:02:12.561
 If your organisation issues or relies on business identity, we would like you in the Community of Practice.

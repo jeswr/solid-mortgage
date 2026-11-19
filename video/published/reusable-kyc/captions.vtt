@@ -13,23 +13,23 @@ Now Alex wants a credit card from another company, which must run its own checks
 Usually that means the same passport, the same proof of address, and another copy of both.
 
 4
-00:00:16.391 --> 00:00:22.448
+00:00:16.392 --> 00:00:22.449
 Alex asks the bank for a statement of what it verified: which checks, by what method, and when.
 
 5
-00:00:22.448 --> 00:00:26.146
+00:00:22.449 --> 00:00:26.147
 The statement is signed, and holds no images of documents.
 
 6
-00:00:26.146 --> 00:00:27.676
+00:00:26.147 --> 00:00:27.677
 It goes into Alex's pod.
 
 7
-00:00:28.526 --> 00:00:33.516
+00:00:28.526 --> 00:00:33.515
 The card company offers a choice: fill in the form, or use a verified identity.
 
 8
-00:00:34.366 --> 00:00:37.950
+00:00:34.365 --> 00:00:37.950
 Alex grants it one record, to be read once, within the hour.
 
 9
@@ -41,45 +41,45 @@ It is the narrowest grant in these demos.
 The card company reads the statement and checks three things: the signature, that the statement has not been withdrawn, and that the bank is on its list of issuers it has an agreement with.
 
 11
-00:00:52.314 --> 00:00:53.747
+00:00:52.314 --> 00:00:53.748
 That agreement matters.
 
 12
-00:00:53.747 --> 00:01:00.542
+00:00:53.748 --> 00:01:00.543
 One institution may rely on another's checks only under conditions, and the list stands for those conditions.
 
 13
-00:01:01.391 --> 00:01:06.982
+00:01:01.393 --> 00:01:06.984
 The card company did not see the identity document, the bank account, or anything else in the pod.
 
 14
-00:01:07.831 --> 00:01:10.396
+00:01:07.835 --> 00:01:10.400
 If it asks again, the pod refuses.
 
 15
-00:01:10.396 --> 00:01:12.507
+00:01:10.400 --> 00:01:12.511
 A one-time grant is used up.
 
 16
-00:01:13.357 --> 00:01:15.996
+00:01:13.361 --> 00:01:15.999
 Later, Alex loses the identity document.
 
 17
-00:01:16.845 --> 00:01:20.013
+00:01:16.849 --> 00:01:20.017
 The bank withdraws its statement and issues a new one.
 
 18
-00:01:20.013 --> 00:01:24.003
+00:01:20.017 --> 00:01:24.007
 Anyone checking the old statement will see that it no longer stands.
 
 19
-00:01:24.852 --> 00:01:27.777
+00:01:24.857 --> 00:01:27.782
 One set of checks, two institutions, one read.
 
 20
-00:01:27.777 --> 00:01:34.073
+00:01:27.782 --> 00:01:34.078
 And two ways to take something back: the owner withdraws access, and the issuer withdraws its word.
 
 21
-00:01:34.923 --> 00:01:41.846
+00:01:34.929 --> 00:01:41.851
 To work on reusable identity with other EDMA members, join the Solid Community of Practice.
