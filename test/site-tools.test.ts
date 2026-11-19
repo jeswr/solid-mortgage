@@ -32,6 +32,23 @@ describe("site routes", () => {
     for (const slug of SITE_SLUGS) expect(config.rewrites[0].source).toContain(slug);
   });
 
+  it("deploys the feedback API as functions that no rewrite or fallback touches", () => {
+    const config = JSON.parse(renderVercelJson());
+    expect(config.functions).toEqual({ "api/feedback/*.ts": { maxDuration: 90 } });
+    // Rewrites and redirects only match app slugs (and "/"), and "api" is not one.
+    expect(SITE_SLUGS).not.toContain("api");
+    for (const rule of [...config.rewrites, ...config.redirects]) {
+      expect(rule.source === "/" || rule.source.startsWith("/:app(")).toBe(true);
+    }
+    expect(headersFor("/api/feedback/status")["Cache-Control"]).toBe("no-store");
+    expect(headersFor("/api/feedback/status")["X-Robots-Tag"]).toBe("noindex, nofollow");
+    expect(resolveRequest("/api/feedback/status", () => false)).toEqual({
+      fallback: false,
+      file: null,
+    });
+    expect(resolveRequest("/feedback", () => false)).toEqual({ redirect: "/feedback/" });
+  });
+
   it("resolves redirects, files and per-app fallbacks", () => {
     const files = new Set(["wallet/index.html", "wallet/assets/a.js", "pods-sw.js"]);
     const exists = (path: string) => files.has(path);

@@ -39,8 +39,11 @@ export const ORG_SLUGS = [
 
 export type OrgSlug = (typeof ORG_SLUGS)[number];
 
-/** Every app served by the site: the organisation apps plus the front door. */
-export const APP_SLUGS = [...ORG_SLUGS, "welcome"] as const;
+/**
+ * Every app served by the site: the organisation apps, the front door, and the feedback page (the
+ * convener's, like the front door: it has no pod and acts as no organisation).
+ */
+export const APP_SLUGS = [...ORG_SLUGS, "welcome", "feedback"] as const;
 export type AppSlug = (typeof APP_SLUGS)[number];
 
 /** Whose pod a request is addressed to or made as: an organisation's, or a registered holder's. */
