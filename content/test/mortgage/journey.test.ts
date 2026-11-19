@@ -225,6 +225,12 @@ const AFTER: Record<string, () => Promise<void>> = {
       "lender",
       alex("credentials/assets"),
     );
+    await probe(
+      "lender reads back its own Loan Estimate",
+      "lender",
+      alex("mortgage/juniper/loan-estimate"),
+    );
+    await probe("lender lists its drawer", "lender", alex("mortgage/juniper/"));
   },
   "revoke-juniper": async () => {
     for (const path of [
@@ -461,6 +467,8 @@ describe("grants are enforced by the pod", () => {
     "servicer reads the property": 403,
     "servicer reads Juniper's drawer": 403,
     "lender still reads assets before the revoke": 200,
+    "lender reads back its own Loan Estimate": 200,
+    "lender lists its drawer": 200,
     "lender reads profile/card after the revoke": 403,
     "lender reads profile/contact after the revoke": 403,
     "lender reads identity/identity-credential after the revoke": 403,
