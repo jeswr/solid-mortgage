@@ -17,6 +17,8 @@ let server: Server | undefined;
 let origin = "";
 let out = "";
 let skipReason: string | undefined;
+/** Pod owners in the padded cold-start test (`POD_RUNTIME_PAD` overrides it, to measure). */
+const PADDED_OWNERS = Number(process.env.POD_RUNTIME_PAD ?? 30);
 
 beforeAll(async () => {
   if (!existsSync(SW)) {
@@ -75,6 +77,7 @@ describe("pod runtime in Chrome", () => {
       // performance.now() counts from navigation start: page load, install, wasm compile, seed.
       return { elapsed: performance.now(), info };
     });
+    console.log(`cold start, ${info.owners.length} pod owners: ${Math.round(elapsed)} ms`);
     expect(info.mode).toBe("service-worker");
     expect(info.seeded).toBe(true);
     expect(elapsed).toBeLessThan(3000);
@@ -85,6 +88,64 @@ describe("pod runtime in Chrome", () => {
       async () => (await fetch("/pods/bank/documents/seeded.txt")).status,
     );
     expect(anonymous).toBe(401);
+    await context.close();
+  });
+
+  it("starts cold within 3 s with 30 pod owners, and every pod is there", async (ctx) => {
+    if (skipReason) return ctx.skip(skipReason);
+    const context = await (browser as Browser).newContext();
+    // The registry grows with every demo; hold the budget at a size it has not reached yet.
+    const page = await open(context, `?pad=${PADDED_OWNERS}`);
+    const { elapsed, info } = await page.evaluate(async () => {
+      const info = await rt.ready();
+      return { elapsed: performance.now(), info };
+    });
+    console.log(`cold start, ${info.owners.length} pod owners: ${Math.round(elapsed)} ms`);
+    expect(info.owners).toHaveLength(PADDED_OWNERS);
+    expect(info.owners).toContain("extra-01");
+    expect(info.mode).toBe("service-worker");
+    expect(info.seeded).toBe(true);
+    expect(elapsed).toBeLessThan(3000);
+    // The seed is in place, and a pod the seed never touched has its baseline: an owner-only
+    // root and a public profile.
+    expect(await call(page, "GET", "/pods/bank/documents/seeded.txt")).toEqual({
+      body: "seeded text",
+      status: 200,
+    });
+    const last = info.owners.at(-1) as string;
+    expect(last).toMatch(/^extra-\d\d$/);
+    const profile = await page.evaluate(async (owner) => {
+      const response = await fetch(`/pods/${owner}/profile/card`);
+      return { body: await response.text(), status: response.status };
+    }, last);
+    expect(profile.status).toBe(200);
+    expect(profile.body).toContain(`/pods/${last}/`);
+    expect(
+      await page.evaluate(async (owner) => (await fetch(`/pods/${owner}/`)).status, last),
+    ).toBe(401);
+    // A write to a pod made after the start is saved like any other: it survives a reload.
+    // (As the pod's owner: a plain fetch with the path-mode identity header.)
+    const created = await page.evaluate(
+      async (owner) =>
+        (
+          await fetch(`/pods/${owner}/notes/a.txt`, {
+            body: "kept",
+            headers: { "content-type": "text/plain", "x-demo-agent": owner },
+            method: "PUT",
+          })
+        ).status,
+      last,
+    );
+    expect(created).toBe(201);
+    await page.reload();
+    await page.waitForFunction(() => "rt" in globalThis);
+    const kept = await page.evaluate(async (owner) => {
+      const response = await fetch(`/pods/${owner}/notes/a.txt`, {
+        headers: { "x-demo-agent": owner },
+      });
+      return { body: await response.text(), status: response.status };
+    }, last);
+    expect(kept).toEqual({ body: "kept", status: 200 });
     await context.close();
   });
 
