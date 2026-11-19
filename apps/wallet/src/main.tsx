@@ -7,6 +7,12 @@ import "@fontsource/nunito-sans/800.css";
 import "./app.css";
 import { mortgageSeed, trackTourContext } from "@mortgage/content/mortgage/browser";
 import { MORTGAGE_HOLDER, mortgageLens, mortgageTour } from "@mortgage/content/mortgage/mount";
+import {
+  isMovingHousePage,
+  MOVING_HOUSE_HOLDER,
+  movingHouseLens,
+  movingHouseTour,
+} from "@mortgage/content/moving-house/mount";
 import { ORGS } from "@mortgage/content/orgs";
 import { configure, onEvent, ready, resetDemo, setTourContext } from "@mortgage/pod-runtime";
 import { mountDemo } from "@mortgage/tour/mount";
@@ -24,13 +30,16 @@ const started = ready().then((info) => {
   return info;
 });
 
+// A page under moving/ belongs to the moving-house demo (src/sections/moving-house/).
+const movingHouse = isMovingHousePage(location.pathname, "wallet", location.search);
+
 void mountDemo({
   app: "wallet",
-  holder: MORTGAGE_HOLDER,
-  lens: mortgageLens(),
+  holder: movingHouse ? MOVING_HOUSE_HOLDER : MORTGAGE_HOLDER,
+  lens: movingHouse ? movingHouseLens() : mortgageLens(),
   registry: ORGS,
   runtime: { onEvent, resetDemo, setTourContext: trackTourContext(setTourContext) },
-  tour: mortgageTour(),
+  tour: movingHouse ? movingHouseTour() : mortgageTour(),
 }).then(({ tour }) => {
   if (tour === undefined) return;
   linkTour(tour);
