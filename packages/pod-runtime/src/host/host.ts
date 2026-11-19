@@ -98,10 +98,20 @@ export interface PodHostOptions {
   watchUncaught?: (listener: (error: unknown) => boolean) => () => void;
 }
 
+/** A pod whose snapshot could not be restored, and what it was restored from instead. */
+export interface RestoreIssue {
+  owner: PodOwner;
+  snapshot: "current" | "seed";
+  fellBackTo: "seed" | "baseline";
+  error: string;
+}
+
 export interface HostInfo {
   origin: string;
   owners: PodOwner[];
   seeded: boolean;
+  /** Snapshots that failed at the last start, recovery or reset (empty when all restored). */
+  restoreIssues: RestoreIssue[];
   /** How many times the wasm module was replaced after a trap. */
   recoveries: number;
 }
@@ -131,6 +141,8 @@ export interface PodHost {
 }
 
 class TrapError extends Error {}
+/** The wasm module trapped while restoring; it must be replaced before anything else runs. */
+class PoisonedModule extends Error {}
 
 interface BufferedRequest {
   method: string;
@@ -276,6 +288,7 @@ export function createPodHost(options: PodHostOptions): PodHost {
   let glue: Glue | undefined;
   const pods = new Map<PodOwner, WasmPod>();
   let recoveries = 0;
+  let restoreIssues: RestoreIssue[] = [];
   let seeded = false;
   let nextId = 1;
 
@@ -395,19 +408,77 @@ export function createPodHost(options: PodHostOptions): PodHost {
     }
   }
 
-  /** Fresh module and pods; restore from snapshots when `restore`, else empty baseline pods. */
+  /**
+   * Fresh module and pods. `current` restores each pod from its current snapshot, `seed` from its
+   * seed snapshot, `none` builds empty baseline pods. A snapshot that cannot be restored (corrupt,
+   * truncated, from an incompatible server version, or failing the health check) falls back to
+   * the pod's seed snapshot, then to a baseline pod; each fallback is recorded in `restoreIssues`
+   * and the repaired pod is saved as its new current snapshot. A trap during restore replaces the
+   * module and starts again without the snapshot that caused it.
+   */
   async function rebuild(source: "current" | "seed" | "none"): Promise<void> {
-    glue = options.loadWasm();
-    pods.clear();
-    for (const owner of owners) {
-      const bytes = source === "none" ? undefined : await storage.getSnapshot(owner, source);
-      if (bytes !== undefined) {
-        pods.set(owner, glue.SolidServer.withSnapshot(base(owner), webid(owner), bytes));
-      } else {
-        pods.set(owner, glue.SolidServer.withSnapshot(base(owner), webid(owner), new Uint8Array()));
-        await baseline(owner);
+    const chain: Array<"current" | "seed"> =
+      source === "current" ? ["current", "seed"] : source === "seed" ? ["seed"] : [];
+    const bad = new Set<string>();
+    const issues: RestoreIssue[] = [];
+    for (let attempt = 0; ; attempt += 1) {
+      glue = options.loadWasm();
+      pods.clear();
+      const repaired: PodOwner[] = [];
+      try {
+        for (const owner of owners) {
+          if (!(await restoreOwner(owner, chain, bad, issues))) repaired.push(owner);
+        }
+      } catch (error) {
+        if (error instanceof PoisonedModule && attempt <= owners.length * 2) continue;
+        throw error;
+      }
+      restoreIssues = issues;
+      for (const owner of repaired) {
+        if (issues.some((issue) => issue.owner === owner)) await persist(owner, ["current"]);
+      }
+      return;
+    }
+  }
+
+  /** Restore one pod; false when it did not come from the first snapshot in `chain`. */
+  async function restoreOwner(
+    owner: PodOwner,
+    chain: Array<"current" | "seed">,
+    bad: Set<string>,
+    issues: RestoreIssue[],
+  ): Promise<boolean> {
+    const candidates: Array<{ kind: "current" | "seed"; bytes: Uint8Array }> = [];
+    for (const kind of chain) {
+      const bytes = await storage.getSnapshot(owner, kind);
+      if (bytes !== undefined && !bad.has(`${owner}:${kind}`)) candidates.push({ bytes, kind });
+    }
+    for (const [index, { bytes, kind }] of candidates.entries()) {
+      try {
+        pods.set(owner, (glue as Glue).SolidServer.withSnapshot(base(owner), webid(owner), bytes));
+        // Every pod the host made has a root ACL its owner can read; a restored one must too.
+        const check = await asOwner(owner, "GET", "/.acl");
+        if (check.status !== 200)
+          throw new Error(`restored pod fails its health check (HTTP ${check.status})`);
+        return kind === chain[0];
+      } catch (error) {
+        pods.delete(owner);
+        bad.add(`${owner}:${kind}`);
+        issues.push({
+          error: String((error as Error)?.message ?? error),
+          fellBackTo: candidates[index + 1]?.kind === "seed" ? "seed" : "baseline",
+          owner,
+          snapshot: kind,
+        });
+        if (isTrap(error)) throw new PoisonedModule(`restoring ${owner} trapped`);
       }
     }
+    pods.set(
+      owner,
+      (glue as Glue).SolidServer.withSnapshot(base(owner), webid(owner), new Uint8Array()),
+    );
+    await baseline(owner);
+    return chain.length === 0;
   }
 
   // ---- ACL policy ----
@@ -757,11 +828,13 @@ export function createPodHost(options: PodHostOptions): PodHost {
   }
 
   const ready = serial(start);
+  /** What every operation waits for: the start, or, after a failed start, a successful reset. */
+  let gate: Promise<void> = ready;
 
   const host: PodHost = {
     applySeed: (seed) =>
       serial(async () => {
-        await ready;
+        await gate;
         if (seeded) return false;
         await runSeed(seed);
         return true;
@@ -777,7 +850,7 @@ export function createPodHost(options: PodHostOptions): PodHost {
       };
     },
     async handle(request, context = {}) {
-      await ready;
+      await gate;
       // Read the body before taking the queue so a slow upload never blocks other pods. A plain
       // Headers copy keeps `Origin` (a Request would drop it), which acl:origin rules need.
       const method = request.method.toUpperCase();
@@ -793,12 +866,12 @@ export function createPodHost(options: PodHostOptions): PodHost {
       return serial(() => dispatch(buffered, context));
     },
     info: async () => {
-      await ready;
-      return { origin, owners: [...owners], recoveries, seeded };
+      await gate;
+      return { origin, owners: [...owners], recoveries, restoreIssues: [...restoreIssues], seeded };
     },
     note: (note) =>
       serial(async () => {
-        await ready;
+        await gate;
         const entry: LensEntry = { ...note, at: clock(), id: nextId++, source: "app" };
         await emit(entry);
         return entry;
@@ -807,13 +880,14 @@ export function createPodHost(options: PodHostOptions): PodHost {
     ready,
     reset: () =>
       serial(async () => {
-        await ready;
-        const hasSeed = (await storage.getSnapshot(owners[0] as PodOwner, "seed")) !== undefined;
-        await rebuild(hasSeed ? "seed" : "none");
+        // Works whatever state the host is in, including after a failed start.
+        await gate.catch(() => undefined);
+        await rebuild("seed");
         for (const owner of owners) await persist(owner, ["current"]);
         await storage.clearEvents();
         nextId = 1;
         await storage.putMeta("nextEventId", nextId);
+        gate = Promise.resolve();
         for (const listener of listeners) listener({ type: "reset" });
       }),
     setIdentities: async (map) => {
