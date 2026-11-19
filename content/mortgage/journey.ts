@@ -52,7 +52,6 @@ import {
   loanEstimateDeadline,
 } from "@mortgage/demo-kit/calendar";
 import type { PodOwner } from "@mortgage/demo-kit/registry";
-import { deriveStatusIndex, mintCapturedOperandAnchor, validityOn } from "@mortgage/vc-kit";
 import { DataFactory } from "n3";
 import {
   ACCOUNTS,
@@ -102,6 +101,7 @@ import {
   verifyPresentation,
 } from "./prequalification.js";
 import { identityCredentialUrl } from "./seed.js";
+import { vcKit } from "./vc.js";
 import {
   at,
   dateOf,
@@ -229,6 +229,7 @@ async function shareCredential(
   // The same issuer signs the encoding of the hidden value, so a later proof can be checked
   // against the issuer without showing the value.
   const anchorId = alexUrl(world, `${entry.path}-anchor`);
+  const { deriveStatusIndex, mintCapturedOperandAnchor, validityOn } = await vcKit();
   const anchor = await mintCapturedOperandAnchor({
     anchorId,
     credential,
@@ -579,6 +580,7 @@ export const agents = {
         throw new Error("only Juniper may ask for a refresh of this verification");
       }
       const list = await statusListOf(world, "payroll");
+      const { deriveStatusIndex } = await vcKit();
       const newIndex = deriveStatusIndex(`${credentialId}#refresh-day-${world.day}`);
       const refreshed = await sign(world, {
         claims: {
