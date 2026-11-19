@@ -159,3 +159,21 @@ test("the business KYB tour, all twelve steps, with the pods read back", async (
   await expectAccessible(page, OUTSIDE_LENS);
   await expectNoSideScroll(page);
 });
+
+test("before Northwind grants K1, Alder Bank's due diligence is refused by the pod", async ({
+  page,
+}) => {
+  await startTour(page);
+  await page.goto("/bank/kyb/due-diligence?tour=off");
+  // The bank's pages re-render once the pods are up; press after that.
+  await expect(page.getByRole("status").filter({ hasText: "Connecting" })).toHaveCount(0, {
+    timeout: 60_000,
+  });
+  await page.getByRole("button", { name: "Run due diligence" }).click();
+  await expect(page.getByRole("alert")).toContainText(/Refused by the pod \(40[13]\)/, {
+    timeout: 60_000,
+  });
+  await expect(page.getByTestId("bank-cdd-record")).toHaveCount(0);
+  expect((await readAs(page, "bank", "bank/kyb/cdd/northwind")).status).toBe(404);
+  await checkPage(page);
+});
