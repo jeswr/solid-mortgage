@@ -21,7 +21,7 @@
 | Guided path | 24 steps in 7 chapters, about 12 minutes; every step is a real action in a real app |
 | Engine | New domain-generic packages (`pod-runtime`, `tour`, `lens`) built here, upstreamed to `jeswr/solid-sdk` once two demos run on them |
 | Kept | `data-model` (extended), `vc-kit` (issue, verify, status, re-issue, live threshold proof), `vocab/mort.ttl`, the lint scripts (now in `tools/`), research docs |
-| Deleted | All Next.js apps (moved to `legacy/` by lane L0, deleted by lane L4), `scripts/demo/*`, `deploy/hosted`, the dev OIDC issuer and DPoP service identities, the vendored solid-server tarball and its patch |
+| Deleted | All Next.js apps (moved to `legacy/` by lane L0, removed on 19 Nov 2026 once the static site was live and the old per-app Vercel projects redirected to it; their code is in the git history before the removal commit), `scripts/demo/*`, `deploy/hosted`, the dev OIDC issuer and DPoP service identities, the vendored solid-server tarball and its patch |
 
 Stack: TypeScript, React 19, Vite (one build per app, `base: "/<slug>/"`), pnpm workspaces,
 Turbo, Biome, Vitest, Playwright. No Next.js: no server routes remain.
