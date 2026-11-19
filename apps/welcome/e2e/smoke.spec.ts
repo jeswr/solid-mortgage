@@ -63,7 +63,8 @@ test("home: title, order, demos, launcher and join-in links", async ({ page }) =
   }
 
   const tiles = page.getByRole("list", { name: "Organisation apps" }).getByRole("link");
-  await expect(tiles).toHaveCount(13);
+  // The thirteen mortgage apps and the state app (moving house).
+  await expect(tiles).toHaveCount(14);
 
   await expect(page.getByRole("link", { name: /Register for the weekly meeting/ })).toHaveAttribute(
     "href",
