@@ -51,7 +51,7 @@ import {
   earliestConsummationAfterClosingDisclosure,
   loanEstimateDeadline,
 } from "@mortgage/demo-kit/calendar";
-import type { PodOwner } from "@mortgage/demo-kit/registry";
+import type { OrgSlug } from "@mortgage/demo-kit/registry";
 import { DataFactory } from "n3";
 import {
   ACCOUNTS,
@@ -165,7 +165,7 @@ export type CredentialName = keyof typeof CREDENTIALS;
 /** A pointer the reader keeps in its own store after checking a credential at source. */
 async function keepPointer(
   world: World,
-  reader: Exclude<PodOwner, "alex">,
+  reader: OrgSlug,
   iri: string,
   name: CredentialName,
   time: string,

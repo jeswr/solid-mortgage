@@ -11,7 +11,7 @@ import {
   type MortgageResourceKind,
   RESOURCE_TARGET_CLASSES,
 } from "@mortgage/data-model";
-import type { PodOwner } from "@mortgage/demo-kit/registry";
+import { HOLDERS, isHolderId, type PodOwner } from "@mortgage/demo-kit/registry";
 import type {
   CredentialClaims,
   CredentialKind,
@@ -54,7 +54,7 @@ export async function statusListOf(world: World, issuer: Issuer): Promise<Status
 }
 
 function organisationName(owner: PodOwner): string {
-  if (owner === "alex") return "Alex Rivera";
+  if (isHolderId(owner)) return HOLDERS[owner].name;
   return ORGS[owner].organisation;
 }
 

@@ -61,7 +61,8 @@ const REGISTERED = {
 export type HolderId = keyof typeof REGISTERED;
 
 /** The registry. Order is the wallet switcher's order; the first is the default holder. */
-export const HOLDERS: Readonly<Record<HolderId, HolderRecord>> = Object.freeze(REGISTERED);
+export const HOLDERS: { readonly [K in HolderId]: HolderRecord & { readonly id: K } } =
+  Object.freeze(REGISTERED);
 
 /** Every registered holder id, in registry order. */
 export const HOLDER_IDS: readonly HolderId[] = Object.freeze(Object.keys(HOLDERS) as HolderId[]);
