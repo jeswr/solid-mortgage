@@ -1,4 +1,5 @@
 // AUTHORED-BY Claude Opus 5.5
+import { smallDollarPersona } from "@mortgage/content/small-dollar-lending/mount";
 import { applyDocumentMeta, DemoTrust, TrustBanner } from "@mortgage/demo-kit/trust";
 import { appUrl } from "@mortgage/demo-kit/urls";
 import { useEffect } from "react";
@@ -8,6 +9,7 @@ import { usePods } from "./pods.tsx";
 import { Inquiries } from "./screens/Inquiries.tsx";
 import { Orders } from "./screens/Orders.tsx";
 import { Summary } from "./screens/Summary.tsx";
+import { sections } from "./sections/index.ts";
 
 /** The router base: Vite's `base` without its trailing slash ("/bureau"). */
 export const ROUTER_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -57,7 +59,13 @@ function Connecting() {
 /** The orders view is the clerk's; every other page is the consumer's (the registry persona). */
 function Banner() {
   const [location] = useLocation();
-  return location.startsWith("/orders") ? <TrustBanner signedInAs={CLERK} /> : <TrustBanner />;
+  if (location.startsWith("/orders")) return <TrustBanner signedInAs={CLERK} />;
+  // On a lending page the consumer is Maya, not the mortgage's Alex.
+  return location.startsWith("/lending") ? (
+    <TrustBanner signedInAs={smallDollarPersona("consumer view")} />
+  ) : (
+    <TrustBanner />
+  );
 }
 
 function Header() {
@@ -100,6 +108,9 @@ export function App({ hook }: { hook?: BaseLocationHook }) {
               <Route path="/summary" component={Summary} />
               <Route path="/orders" component={Orders} />
               <Route path="/inquiries" component={Inquiries} />
+              {sections.map((section) => (
+                <Route key={section.path} path={`/${section.path}`} component={section.Component} />
+              ))}
               <Route component={NotFound} />
             </Switch>
           </main>

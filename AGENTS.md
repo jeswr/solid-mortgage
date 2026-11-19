@@ -85,8 +85,8 @@ video/                recorder and narration (lane V1)
 - `pnpm run gate` = lint, vocab and shape checks, build, insignia check, typecheck, tests.
   `pnpm run test:e2e` adds the Playwright suites (root `e2e/` and each app's `e2e/`).
 - Cross-app links always go through `appUrl(slug, path, params)`; never write `/lender/…` by hand.
-- `/wallet/prove` is the only route with cross-origin isolation headers; reach it with a full
-  navigation, not a client-side route change.
+- `/wallet/prove` and `/wallet/lending/prove` are the only routes with cross-origin isolation
+  headers; reach them with a full navigation, not a client-side route change.
 
 ## Lanes
 

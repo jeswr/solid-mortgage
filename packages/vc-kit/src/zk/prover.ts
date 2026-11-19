@@ -34,8 +34,11 @@ import {
 } from "./backend.js";
 import { type FilterIntMember, memberForDigits } from "./circuits/registry.js";
 
-/** sparq `filter_int` comparison-operator codes (zk/compose ABI). */
-export const OP_CODES = Object.freeze({ ge: 3 });
+/**
+ * sparq `filter_int` comparison-operator codes (zk/compose ABI). `eq` is the small-dollar lending
+ * demo's "no returned payments" statement (nsf90Count = 0), ported from jeswr/solid-lending.
+ */
+export const OP_CODES = Object.freeze({ ge: 3, eq: 4 });
 
 /** Bounds on an untrusted wire proof payload (the evm transcript is 8 384 B). */
 const MAX_WIRE_PROOF_BYTES = 131_072;
@@ -45,7 +48,7 @@ const MAX_WIRE_PUBLIC_INPUTS = 4_096;
 export interface TierAStatement {
   /** The proved field's mort IRI - must be one of decision 0005's ZK budgets. */
   readonly field: string;
-  /** The comparison operator. The shipped statements are all `>=`. */
+  /** The comparison operator: `>=` for every threshold, `=` for the zero-count statement. */
   readonly op: keyof typeof OP_CODES;
   /** The public threshold, in the field's decision-0005 scaled unit. */
   readonly bound: number;
@@ -162,7 +165,8 @@ export function prewarmProver(members?: readonly FilterIntMember[]): Promise<unk
  *  2. `value` AND `bound` must fit that budget ({@link fitsZkBudget} - M5);
  *  3. the value's exact digit count must have a committed circuit member
  *     (sparq derivation discipline: exact-width match, out-of-family is a
- *     clean error, never a silently-wrong member);
+ *     clean error, never a silently-wrong member) within the field's
+ *     [minDigits, digits] member range;
  *  4. `operandEnc` must be field-shaped hex.
  *
  * A below-threshold value makes the circuit UNSATISFIABLE: noir_js throws
@@ -191,7 +195,7 @@ export async function proveTierA(options: ProveTierAOptions): Promise<TierAProof
     );
   }
   const digits = String(value);
-  const member = memberForDigits(digits.length);
+  const member = digits.length < budget.minDigits ? undefined : memberForDigits(digits.length);
   if (member === undefined) {
     throw new ZkError(
       "NO_COMMITTED_MEMBER",

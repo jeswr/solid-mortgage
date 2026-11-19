@@ -20,6 +20,12 @@ import {
   movingHouseTour,
 } from "@mortgage/content/moving-house/mount";
 import { ORGS } from "@mortgage/content/orgs";
+import {
+  isSmallDollarPage,
+  SMALL_DOLLAR_HOLDER,
+  smallDollarLens,
+  smallDollarTour,
+} from "@mortgage/content/small-dollar-lending/mount";
 import { onEvent, resetDemo, setTourContext } from "@mortgage/pod-runtime";
 import { mountDemo } from "@mortgage/tour/mount";
 import { StrictMode } from "react";
@@ -30,6 +36,8 @@ import { PodsProvider, startPods } from "./pods.tsx";
 const APP = "bank";
 // A page under moving/ belongs to the moving-house demo (src/sections/moving-house/).
 const movingHouse = isMovingHousePage(location.pathname, "bank", location.search);
+// A page under lending/ belongs to the small-dollar lending demo (src/sections/small-dollar-lending/).
+const lending = isSmallDollarPage(location.pathname, "bank", location.search);
 // A page under kyb/ belongs to the business KYB demo (src/sections/business-kyb/).
 const kyb = isBusinessKybPage(location.pathname, "bank", location.search);
 const root = document.getElementById("root");
@@ -64,11 +72,15 @@ startPods(APP).then(
           }
         : {
             app: APP,
-            holder: movingHouse ? MOVING_HOUSE_HOLDER : MORTGAGE_HOLDER,
-            lens: movingHouse ? movingHouseLens() : mortgageLens(),
+            holder: lending
+              ? SMALL_DOLLAR_HOLDER
+              : movingHouse
+                ? MOVING_HOUSE_HOLDER
+                : MORTGAGE_HOLDER,
+            lens: lending ? smallDollarLens() : movingHouse ? movingHouseLens() : mortgageLens(),
             registry: ORGS,
             runtime,
-            tour: movingHouse ? movingHouseTour() : mortgageTour(),
+            tour: lending ? smallDollarTour() : movingHouse ? movingHouseTour() : mortgageTour(),
           },
     );
   },

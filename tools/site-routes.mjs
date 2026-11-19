@@ -8,7 +8,8 @@
  * - Every app lives under `/<slug>/` with a single-page fallback to its own `index.html`.
  * - `/` redirects to the front door; `/<slug>` redirects to `/<slug>/`.
  * - `noindex` on everything; hashed assets cached for a year; `pods-sw.js` may control `/`.
- * - Cross-origin isolation only on `/wallet/prove` (multithreaded proving).
+ * - Cross-origin isolation only on the wallet's two prove screens, `/wallet/prove` and
+ *   `/wallet/lending/prove` (multithreaded proving).
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
@@ -17,14 +18,14 @@ import { APP_SLUGS } from "../packages/demo-kit/src/registry.ts";
 
 export const ROOT = resolve(import.meta.dirname, "..");
 
-/** Every URL segment the site serves an app under: the 14 demo apps plus the template. */
+/** Every URL segment the site serves an app under: the demo apps, the front door and the template. */
 export const SITE_SLUGS = Object.freeze([...APP_SLUGS, "_template"]);
 
 /** The front door. */
 export const HOME_SLUG = "welcome";
 
 /** Routes that get cross-origin isolation headers (SharedArrayBuffer for the prover). */
-export const ISOLATED_PATHS = Object.freeze(["/wallet/prove"]);
+export const ISOLATED_PATHS = Object.freeze(["/wallet/prove", "/wallet/lending/prove"]);
 
 const SLUG_ALTERNATION = SITE_SLUGS.join("|");
 
