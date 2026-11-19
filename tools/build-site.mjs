@@ -7,6 +7,7 @@
  *                     vite.config.ts; apps/vocab is a separate Vercel project and is skipped)
  *   dist/pods-sw.js   the pod runtime's service worker, from packages/pod-runtime/dist/
  *   dist/agents/      one bundle per app that has src/agent.ts (organisation back offices)
+ *   dist/crs/         the prover's CRS files, from packages/vc-kit/crs/ (pinned in vc-kit's zk/crs.ts)
  *   dist/video/       recorded demo videos, from video/dist/ when present
  *   dist/site.json    what was assembled, for tests
  *
@@ -226,6 +227,15 @@ async function main() {
     );
   }
 
+  // The prover loads its CRS from the site, never from a CDN; vc-kit checks each file's SHA-256.
+  const crsSource = join(ROOT, "packages", "vc-kit", "crs");
+  const crs = existsSync(crsSource)
+    ? readdirSync(crsSource).filter((name) => name.endsWith(".dat"))
+    : [];
+  if (crs.length === 0) throw new Error("packages/vc-kit/crs/ has no CRS files for the prover");
+  mkdirSync(join(DIST, "crs"), { recursive: true });
+  for (const name of crs) cpSync(join(crsSource, name), join(DIST, "crs", name));
+
   const agents = await bundleAgents(apps);
 
   const video = join(ROOT, "video", "dist");
@@ -236,6 +246,7 @@ async function main() {
   const site = {
     agents,
     apps: apps.map((app) => app.slug),
+    crs,
     firstLoadGzip: Object.fromEntries(budgets.rows.map((row) => [row.slug, row.gzip])),
     podServiceWorker: hasServiceWorker,
     video: hasVideo,

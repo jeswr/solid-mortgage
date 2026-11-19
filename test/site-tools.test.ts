@@ -68,6 +68,22 @@ describe("site routes", () => {
     expect(headersFor("/lender/assets/x.js")["Cross-Origin-Embedder-Policy"]).toBeUndefined();
     expect(headersFor("/bank/assets/x.js")["Cache-Control"]).toContain("immutable");
   });
+
+  it("serves the prover's CRS from the site, same-origin only and cached by its hashed name", () => {
+    const crs = headersFor("/crs/bn254-g1-32768-50d2f4e9567be2b8.dat");
+    expect(crs["Cross-Origin-Resource-Policy"]).toBe("same-origin");
+    expect(crs["Cache-Control"]).toContain("immutable");
+    expect(crs["X-Robots-Tag"]).toBe("noindex, nofollow");
+    expect(resolveRequest("/crs/bn254-g2-01797bfc4de5a96f.dat", () => true)).toEqual({
+      fallback: false,
+      file: "crs/bn254-g2-01797bfc4de5a96f.dat",
+    });
+    // A CRS file the site lacks is a 404, never an app's page.
+    expect(resolveRequest("/crs/missing.dat", () => false)).toEqual({
+      fallback: false,
+      file: null,
+    });
+  });
 });
 
 describe("serve-dist", () => {
