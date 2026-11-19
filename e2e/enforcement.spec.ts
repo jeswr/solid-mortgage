@@ -24,9 +24,10 @@ import { walkTour } from "./support/walk.ts";
 
 /**
  * Resources on Alex's pod outside each organisation's grant (design.md §b.4), most telling
- * first. The first one that exists is used.
+ * first. The first one that exists is used. The mortgage's organisations only: the other demos'
+ * organisations are outside acceptance test 3.
  */
-const OUTSIDE_GRANT: Readonly<Record<Exclude<OrgSlug, "wallet">, string[]>> = {
+const OUTSIDE_GRANT: Readonly<Partial<Record<Exclude<OrgSlug, "wallet">, string[]>>> = {
   payroll: ["/credentials/", "/inbox/"], // G1 is Append: it can deliver, never read
   bank: ["/credentials/", "/inbox/"], // G2 Append
   bureau: ["/credentials/", "/inbox/"], // G3 Append

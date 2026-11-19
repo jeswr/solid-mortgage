@@ -50,6 +50,12 @@ export const APP_LANE: Readonly<Record<AppSlug, string>> = Object.freeze({
   insurer: "A6",
   servicer: "A6",
   welcome: "A7",
+  state: "F2",
+  registry: "F3",
+  "business-lender": "F3",
+  hospital: "F5",
+  pharmacy: "F5",
+  clinic: "F5",
 });
 
 interface SiteJson {
