@@ -12,6 +12,13 @@ import {
   KybSharing,
 } from "./business-kyb/BusinessKyb.tsx";
 import {
+  MedHealth,
+  MedLedger,
+  MedRequests,
+  MedSharedWithMe,
+  MedSharing,
+} from "./medication-handover/Medication.tsx";
+import {
   MovingAddress,
   MovingHome,
   MovingLedger,
@@ -62,6 +69,31 @@ export const sections: readonly AppSection[] = [
   { Component: KybProve, demo: "business-kyb", path: "prove/kyb", title: "Prove ownership" },
   { Component: KybSharing, demo: "business-kyb", path: "kyb/sharing", title: "Grants" },
   { Component: KybLedger, demo: "business-kyb", path: "kyb/ledger", title: "Journey ledger" },
+  { Component: MedHealth, demo: "medication-handover", path: "health", title: "Health" },
+  {
+    Component: MedRequests,
+    demo: "medication-handover",
+    path: "health/requests",
+    title: "Health requests",
+  },
+  {
+    Component: MedSharing,
+    demo: "medication-handover",
+    path: "health/sharing",
+    title: "Who can see it",
+  },
+  {
+    Component: MedSharedWithMe,
+    demo: "medication-handover",
+    path: "health/shared",
+    title: "Shared with me",
+  },
+  {
+    Component: MedLedger,
+    demo: "medication-handover",
+    path: "health/ledger",
+    title: "Journey ledger",
+  },
   { Component: LoanHome, demo: "small-business-loan", path: "loan", title: "Northwind's loan" },
   {
     Component: LoanRequests,

@@ -22,6 +22,10 @@
       "types": "./dist/business-kyb/*.d.ts",
       "import": "./dist/business-kyb/*.js"
     },
+    "./medication-handover/*": {
+      "types": "./dist/medication-handover/*.d.ts",
+      "import": "./dist/medication-handover/*.js"
+    },
     "./small-business-loan/*": {
       "types": "./dist/small-business-loan/*.d.ts",
       "import": "./dist/small-business-loan/*.js"
@@ -33,7 +37,7 @@
   },
   "scripts": {
     "build": "tsc --project tsconfig.json",
-    "lint": "biome check orgs.ts vite.ts mortgage moving-house business-kyb small-business-loan test package.json tsconfig.json",
+    "lint": "biome check orgs.ts vite.ts mortgage moving-house business-kyb medication-handover small-business-loan test package.json tsconfig.json",
     "test": "vitest run --root . --config ../vitest.config.ts",
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },

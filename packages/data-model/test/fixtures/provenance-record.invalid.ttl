@@ -1,0 +1,9 @@
+@prefix fhir: <http://hl7.org/fhir/>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+# No reason (fhir:why) and no agent: a change nobody can be held to.
+<https://pods.example/pods/rosa/medications/provenance/lisinopril-day-53> a fhir:Provenance;
+  fhir:id [ fhir:v "lisinopril-day-53" ];
+  fhir:target ( [ fhir:reference [ fhir:v "https://pods.example/pods/rosa/medications/lisinopril" ]; fhir:link <https://pods.example/pods/rosa/medications/lisinopril>; fhir:display [ fhir:v "Lisinopril" ] ] );
+  fhir:recorded [ fhir:v "2026-09-10T11:00:00Z"^^xsd:dateTime ];
+  fhir:activity [ fhir:coding ( [ fhir:system [ fhir:v "http://terminology.hl7.org/CodeSystem/v3-DataOperation"^^xsd:anyURI ]; fhir:code [ fhir:v "UPDATE" ] ] ) ];
+  fhir:patient [ fhir:reference [ fhir:v "https://pods.example/pods/rosa/profile/card#me" ]; fhir:link <https://pods.example/pods/rosa/profile/card#me>; fhir:display [ fhir:v "Rosa Rivera" ] ].

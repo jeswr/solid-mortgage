@@ -1,0 +1,13 @@
+@prefix fhir: <http://hl7.org/fhir/>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+<https://pods.example/pods/rosa/allergies/amoxicillin> a fhir:AllergyIntolerance;
+  fhir:nodeRole fhir:treeRoot;
+  fhir:id [ fhir:v "amoxicillin" ];
+  fhir:clinicalStatus [ fhir:coding ( [ fhir:system [ fhir:v "http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical"^^xsd:anyURI ]; fhir:code [ fhir:v "active" ] ] ) ];
+  fhir:verificationStatus [ fhir:coding ( [ fhir:system [ fhir:v "http://terminology.hl7.org/CodeSystem/allergyintolerance-verification"^^xsd:anyURI ]; fhir:code [ fhir:v "confirmed" ] ] ) ];
+  fhir:category ( [ fhir:v "medication" ] );
+  fhir:criticality [ fhir:v "low" ];
+  fhir:code [ fhir:coding ( [ fhir:system [ fhir:v "http://www.nlm.nih.gov/research/umls/rxnorm"^^xsd:anyURI ]; fhir:code [ fhir:v "723" ]; fhir:display [ fhir:v "amoxicillin" ] ] ); fhir:text [ fhir:v "Amoxicillin" ] ];
+  fhir:patient [ fhir:reference [ fhir:v "https://pods.example/pods/rosa/profile/card#me" ]; fhir:link <https://pods.example/pods/rosa/profile/card#me>; fhir:display [ fhir:v "Rosa Rivera" ] ];
+  fhir:recordedDate [ fhir:v "2026-09-07T10:00:00Z"^^xsd:dateTime ];
+  fhir:note ( [ fhir:text [ fhir:v "Rash after a course in 2019." ] ] ).

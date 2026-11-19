@@ -1,0 +1,12 @@
+@prefix fhir: <http://hl7.org/fhir/>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+# No performer, and a negative quantity.
+<https://pods.example/pods/rosa/medications/dispenses/atorvastatin-day-53> a fhir:MedicationDispense;
+  fhir:id [ fhir:v "atorvastatin-day-53" ];
+  fhir:status [ fhir:v "completed" ];
+  fhir:medication [ fhir:concept [
+    fhir:coding ( [ fhir:system [ fhir:v "http://www.nlm.nih.gov/research/umls/rxnorm"^^xsd:anyURI ]; fhir:code [ fhir:v "83367" ] ] );
+    fhir:text [ fhir:v "Atorvastatin 40 mg tablet" ] ] ];
+  fhir:subject [ fhir:reference [ fhir:v "https://pods.example/pods/rosa/profile/card#me" ]; fhir:link <https://pods.example/pods/rosa/profile/card#me>; fhir:display [ fhir:v "Rosa Rivera" ] ];
+  fhir:quantity [ fhir:value [ fhir:v "-28"^^xsd:decimal ] ];
+  fhir:whenHandedOver [ fhir:v "2026-09-10T16:00:00Z"^^xsd:dateTime ].
