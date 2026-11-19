@@ -6,12 +6,7 @@ import "@fontsource/inter/latin-600.css";
 import "./app.css";
 import { trackTourContext } from "@mortgage/content/mortgage/browser";
 import { MORTGAGE_HOLDER, mortgageLens, mortgageTour } from "@mortgage/content/mortgage/mount";
-import {
-  isMovingHousePage,
-  MOVING_HOUSE_HOLDER,
-  movingHouseLens,
-  movingHouseTour,
-} from "@mortgage/content/moving-house/mount";
+import { isMovingHousePage } from "@mortgage/content/moving-house/pages";
 import { ORGS } from "@mortgage/content/orgs";
 import { onEvent, resetDemo, setTourContext } from "@mortgage/pod-runtime";
 import { mountDemo } from "@mortgage/tour/mount";
@@ -32,8 +27,21 @@ view.render(
   </StrictMode>,
 );
 
+/** The demo this page belongs to. The moving-house demo loads only on its own pages. */
+async function demoOptions() {
+  if (!movingHouse) {
+    return { holder: MORTGAGE_HOLDER, lens: mortgageLens(), tour: mortgageTour() };
+  }
+  const moving = await import("@mortgage/content/moving-house/mount");
+  return {
+    holder: moving.MOVING_HOUSE_HOLDER,
+    lens: moving.movingHouseLens(),
+    tour: moving.movingHouseTour(),
+  };
+}
+
 startPods(APP).then(
-  (info) => {
+  async (info) => {
     view.render(
       <StrictMode>
         <PodsProvider app={APP} info={info}>
@@ -43,11 +51,9 @@ startPods(APP).then(
     );
     void mountDemo({
       app: APP,
-      holder: movingHouse ? MOVING_HOUSE_HOLDER : MORTGAGE_HOLDER,
-      lens: movingHouse ? movingHouseLens() : mortgageLens(),
+      ...(await demoOptions()),
       registry: ORGS,
       runtime: { onEvent, resetDemo, setTourContext: trackTourContext(setTourContext) },
-      tour: movingHouse ? movingHouseTour() : mortgageTour(),
     });
   },
   (error: unknown) => console.error("bank: the pods did not start", error),

@@ -1,11 +1,15 @@
 // AUTHORED-BY Claude Opus 5.5
 // The acceptance suite's expect matcher (e2e/support/match.ts): a POST to a container.
 import { describe, expect, it } from "vitest";
-import type { LensEntry } from "../packages/demo-kit/src/contracts/index.ts";
 import { matchesExpectation } from "../e2e/support/match.ts";
+import type { LensEntry } from "../packages/demo-kit/src/contracts/index.ts";
 
 const entry = (path: string, method = "POST"): LensEntry => ({
-  actor: { org: "payroll", viaAgent: false, webid: "https://site.test/pods/payroll/profile/card#me" },
+  actor: {
+    org: "payroll",
+    viaAgent: false,
+    webid: "https://site.test/pods/payroll/profile/card#me",
+  },
   at: "2026-08-31T09:00:00.000Z",
   id: 1,
   kind: "write",

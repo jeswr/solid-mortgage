@@ -11,7 +11,6 @@
 
 import type { TourStep } from "@mortgage/demo-kit/contracts";
 import { HOLDERS, type HolderId } from "@mortgage/demo-kit/holders";
-import type { AppSlug } from "@mortgage/demo-kit/registry";
 import { appUrl } from "@mortgage/demo-kit/urls";
 import { DEMO } from "./facts.js";
 import { HOLDER_CODES, HOLDER_GRANTS, PURPOSE_TEXT, UNTIL_LABEL } from "./grants.js";
@@ -69,32 +68,8 @@ export function movingHouseTour(): { demo: string; holder: HolderId; steps: Tour
   return { demo: DEMO, holder: MOVING_HOUSE_HOLDER.id, steps: [...TOUR] };
 }
 
-/** The apps with pages in this demo, and the path prefix those pages live under. */
-export const MOVING_HOUSE_PAGES: Readonly<Partial<Record<AppSlug, string>>> = Object.freeze({
-  bank: "moving",
-  county: "moving",
-  insurer: "moving",
-  payroll: "moving",
-  servicer: "moving",
-  state: "",
-  wallet: "moving",
-});
-
-/**
- * Does this page belong to the moving-house demo? `pathname` is the full path (`/county/moving/…`).
- * Every page of the state app does; in the other apps, the pages under `moving/`. A `?tour=`
- * parameter naming this demo also counts.
- */
-export function isMovingHousePage(pathname: string, app: AppSlug, search = ""): boolean {
-  const tour = new URLSearchParams(search).get("tour");
-  if (tour === DEMO) return true;
-  if (tour !== null && tour !== "off") return false;
-  const prefix = MOVING_HOUSE_PAGES[app];
-  if (prefix === undefined) return false;
-  if (prefix === "") return true;
-  const inApp = pathname.replace(/^\/[^/]+\/?/, "");
-  return inApp === prefix || inApp.startsWith(`${prefix}/`);
-}
+// Which pages belong to this demo lives in pages.ts, which an app can import without the tour.
+export { isMovingHousePage, MOVING_HOUSE_PAGES } from "./pages.js";
 
 /** The simulated day of a tour step (pages follow it in the guided tour). */
 export function dayOfStep(stepId: string | undefined): number | undefined {
