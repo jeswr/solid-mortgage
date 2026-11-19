@@ -86,6 +86,20 @@ async function focusIs(page: Page, kind: "target" | "next", target?: string): Pr
   );
 }
 
+/**
+ * Wait, as a visitor would, until the page shows a step's `data-tour` target (a page may render
+ * it only once its pod data has loaded, like the AUS source-checks table), before tabbing to it.
+ * The same 30 s wait `lookAt` (support/walk.ts) gives a mouse visitor; reaching it with Tab is
+ * still required.
+ */
+async function targetShown(page: Page, target: string): Promise<void> {
+  await page
+    .locator(`[data-tour="${target}"]`)
+    .first()
+    .waitFor({ state: "visible", timeout: 30_000 })
+    .catch(() => undefined);
+}
+
 /** Press Tab until `predicate` holds; false after `max` presses. */
 async function tabTo(page: Page, predicate: () => Promise<boolean>, max = 200): Promise<boolean> {
   for (let i = 0; i < max; i++) {
@@ -117,6 +131,7 @@ test("2 Accessibility: chapters 1 to 3 run with the keyboard alone", async ({ pa
         if (settled) return;
         if ((await page.locator(`[data-tour="${target}"]:enabled`).count()) === 0) return;
       }
+      await targetShown(page, target);
       const reached = await tabTo(page, () => focusIs(page, "target", target));
       if (!reached)
         throw new Error(`[data-tour="${target}"] cannot be reached with Tab on ${page.url()}`);
@@ -142,6 +157,7 @@ test("2 Accessibility: chapters 1 to 3 run with the keyboard alone", async ({ pa
     // A "Look" step: Tab until focus is in the region (the tour completes it on focus).
     look: async (step) => {
       const target = step.done.target as string;
+      await targetShown(page, target);
       if (!(await tabTo(page, () => focusIs(page, "target", target))))
         throw new Error(`[data-tour="${target}"] cannot be reached with Tab on ${page.url()}`);
     },
