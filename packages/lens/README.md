@@ -33,6 +33,9 @@ const stop = onEvent((entry) => lens.push(entry), { replay: true });
   (`label(day)`, `dayOf(date)`), `grantsHref`, `ledgerHref`, `loadTurtle`.
 - `push(entry, { replayed })`: replayed entries rebuild state silently; live ones animate and
   are announced in the polite live region. Duplicates (same `source` and `id`) are ignored.
+  The model takes each entry at once; the drawing (map, announcement, motion, panels) happens
+  once per animation frame for everything pushed since the last one, or on a short timer while
+  the page is hidden. `flush()` draws what is pending now.
 - `setStep(step | null)`, `setSteps(outline)`, `setMode("guided" | "free" | "present")`,
   `view("step" | "grants" | "not-shared" | "raw" | "ledger" | "examiner")`, `collapsed`,
   `totals()`, `flush()`; `ledgerOptions` (illustrative comparison, calls to action, restart,
