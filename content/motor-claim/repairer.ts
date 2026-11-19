@@ -223,18 +223,19 @@ export async function completeJob(world: World): Promise<Completion> {
           status: CLAIM_SCHEMA.CompletedActionStatus,
           time: "16:02",
         });
-  // Alex's wallet applies the end: the invoice is the evidence that the job is complete.
-  const expired = await withAlexGrantLock(() => applyMotorClaimExpiries(world, "16:05"));
   if (before?.completed !== true) {
     await send(world, {
       from: "repairer",
       kind: MORT.MessageKind_RepairCompletion,
       objects: [url],
       summary: `Repair on claim ${CLAIM_NUMBER} complete. Invoice ${ESTIMATE.invoiceNumber} is in the policyholder's claim folder.`,
-      time: "16:10",
+      time: "16:03",
       to: "insurer",
     });
   }
+  // Alex's wallet applies the end: the invoice is the evidence that the job is complete. This is
+  // the step's last write, so leaving the page once the tour marks it done cuts nothing short.
+  const expired = await withAlexGrantLock(() => applyMotorClaimExpiries(world, "16:05"));
   return { expired, invoice, job };
 }
 

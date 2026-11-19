@@ -47,6 +47,13 @@ const revoke = (path: string): Partial<PodEvent> => ({
   pod: "alex",
 });
 
+/** Any rewrite of a resource's rules, whatever it changes. */
+const rulesRewritten = (path: string): Partial<PodEvent> => ({
+  method: "PUT",
+  path: `${path}.acl`,
+  pod: "alex",
+});
+
 const CLAIM = "/claims/CLM-1/";
 const PHOTO = `${CLAIM}photos/rear-bumper.svg`;
 
@@ -92,7 +99,8 @@ export const TOUR: readonly TourStep[] = Object.freeze([
     body: "On Wrenfield Mutual's claims page Alex reports the claim. Wrenfield asks for three things, the driving licence, the motor policy and this claim's folder, until the claim closes. Alex approves grant C1 there and then. Press Report claim.",
     chapter: "2 The insurer",
     clock: { day: DAY.incident },
-    done: { event: grant(CLAIM) },
+    // The case record is reportClaim's last write: the step is done only once nothing is in flight.
+    done: { event: write("insurer", "/claims/CLM-1", "insurer") },
     expect: [
       write("alex", "/policies/c1"),
       write("alex", "/consents/c1-given"),
@@ -118,7 +126,7 @@ export const TOUR: readonly TourStep[] = Object.freeze([
     body: "The claims handler checks the licence and the policy at source. Both are signed credentials, so nobody has to phone anyone. Then the handler reads the claim file and writes a damage report into it. Press Check and assess.",
     chapter: "2 The insurer",
     clock: { day: DAY.desk },
-    done: { event: write("alex", `${CLAIM}damage-report`, "insurer") },
+    done: { event: write("insurer", "/claims/CLM-1", "insurer") },
     expect: [
       read("alex", "/identity/driver-licence", "insurer"),
       read("alex", "/insurance/motor-policy", "insurer"),
@@ -127,6 +135,7 @@ export const TOUR: readonly TourStep[] = Object.freeze([
       read("alex", PHOTO, "insurer"),
       { kind: "verified", org: "insurer" },
       write("alex", `${CLAIM}damage-report`, "insurer"),
+      write("insurer", "/claims/CLM-1", "insurer"),
     ],
     id: "claims-desk",
     lens: {
@@ -150,12 +159,14 @@ export const TOUR: readonly TourStep[] = Object.freeze([
     body: "Wrenfield referred the job to Anvil Collision Repair, and Anvil asked Alex for access. Grant C2 covers the damage report and the photos, and lets Anvil add its estimate and invoice, until the job is complete. Press Approve.",
     chapter: "3 The repairer",
     clock: { day: DAY.desk },
-    done: { event: grant(`${CLAIM}photos/`) },
+    // Anvil's job record is the last write the approval leads to (the grant notice opens it).
+    done: { event: write("repairer", "/jobs/CLM-1", "repairer") },
     expect: [
       write("alex", "/policies/c2"),
       write("alex", "/consents/c2-given"),
       grant(`${CLAIM}damage-report`),
       grant(`${CLAIM}photos/`),
+      write("repairer", "/jobs/CLM-1", "repairer"),
     ],
     id: "repairer-consent",
     lens: {
@@ -294,7 +305,9 @@ export const TOUR: readonly TourStep[] = Object.freeze([
     body: "Wrenfield has paid the invoice. Press Close claim: Alex withdraws C1, so Wrenfield no longer reads the licence or the claim folder. Grant P1 stays, and Wrenfield still keeps the motor policy current. The ledger below counts it all.",
     chapter: "4 When the job ends",
     clock: { day: DAY.close },
-    done: { event: revoke(CLAIM) },
+    // The wallet rewrites the policy's rules last (Wrenfield keeps its read there under P1, so the
+    // Lens shows no change): that rewrite, not the claim's revoke, is the withdrawal's end.
+    done: { event: rulesRewritten("/insurance/motor-policy") },
     expect: [write("alex", "/consents/c1-withdrawn"), revoke(CLAIM)],
     id: "close",
     lens: {

@@ -248,15 +248,20 @@ export async function checkClaim(world: World): Promise<DeskReview> {
       },
     }),
   );
+  // The referral, and Anvil's request to Alex, come before the case is updated: the case write is
+  // the step's last event, so the request is in Alex's wallet by the time the step is done.
+  const repairerRequest =
+    (await findClaimRequest(world, "C2")) ?? (await referToRepairer(world, damageReport));
   await writeCase(world, {
     description:
       "Licence and policy verified at source. Damage report written. Referred to Anvil Collision Repair.",
-    time: "10:22",
+    time: "10:30",
   });
-  const asked = await findClaimRequest(world, "C2");
-  if (asked !== undefined) {
-    return { checks, damageReport, incident, otherParty, photos, repairerRequest: asked };
-  }
+  return { checks, damageReport, incident, otherParty, photos, repairerRequest };
+}
+
+/** Refer the job to Anvil; resolves once Anvil has asked Alex for grant C2. */
+async function referToRepairer(world: World, damageReport: string): Promise<string> {
   const referral = await send(world, {
     from: "insurer",
     kind: MORT.MessageKind_RepairReferral,
@@ -265,13 +270,12 @@ export async function checkClaim(world: World): Promise<DeskReview> {
     time: "10:25",
     to: "repairer",
   });
-  const repairerRequest = await answerOrAwait(world, {
+  return answerOrAwait(world, {
     answer: () => takeReferral(world, referral),
     claimant: "repairer",
     look: () => findClaimRequest(world, "C2"),
     messageUrl: referral,
   });
-  return { checks, damageReport, incident, otherParty, photos, repairerRequest };
 }
 
 /**

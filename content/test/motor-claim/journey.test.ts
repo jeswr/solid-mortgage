@@ -316,6 +316,27 @@ describe("motor claim, step by step", () => {
     expect(totals.denied).toBe(1);
   });
 
+  test("each step's done event is the last change its action makes, so leaving then cuts nothing short", () => {
+    for (const s of TOUR) {
+      if (s.done.event === undefined || s.done.event.kind === "denied") continue;
+      const [first, end] = slices.get(s.id) as [number, number];
+      // Answered-once markers are bookkeeping in the organisation's own pod.
+      const changes = h.log
+        .slice(first, end)
+        .filter(
+          (entry) =>
+            entry.source === "pod" &&
+            ["write", "grant", "revoke"].includes(entry.kind) &&
+            !entry.path.includes("/handled/"),
+        );
+      const last = changes.at(-1);
+      expect(
+        last !== undefined && completesStep(s, last),
+        `${s.id} ends on ${last?.kind} ${last?.path}`,
+      ).toBe(true);
+    }
+  });
+
   test("the tour's done and expect patterns match what each step really produced", () => {
     for (const s of TOUR) {
       const slice = slices.get(s.id);
