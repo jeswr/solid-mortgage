@@ -66,8 +66,16 @@ test("1 Guided path: all 24 steps complete in order with every expect item in th
   expect(missing, "expect items absent from the Lens log during their step").toEqual([]);
 });
 
+/**
+ * Build-plan §4 names "step 9" for the earlier success. In the tour as written, Juniper's read of
+ * the asset credential is part of submitting the application (step 8, "apply-submit"); step 9
+ * runs on the same application day, and step 23's copy asks for "the same read as on application
+ * day". So the earlier 200 is looked for across application day: steps 8 and 9.
+ */
+const APPLICATION_DAY = [8, 9] as const;
+
 test("4 Revoke: step 23 is refused for the same request that succeeded at step 9", () => {
-  requireStep(record, 9);
+  for (const step of APPLICATION_DAY) requireStep(record, step);
   requireStep(record, 23);
   const lender = webidOf("lender");
   const refused = entriesAt(record, 23)
@@ -83,7 +91,7 @@ test("4 Revoke: step 23 is refused for the same request that succeeded at step 9
   if (refused === undefined) return;
   expect(refused.status, "the pod's answer at step 23").toBe(403);
   const path = podRelative(refused.path, "alex");
-  const earlier = entriesAt(record, 9)
+  const earlier = APPLICATION_DAY.flatMap((step) => entriesAt(record, step))
     .filter(isPodEntry)
     .find(
       (e) =>
@@ -92,8 +100,8 @@ test("4 Revoke: step 23 is refused for the same request that succeeded at step 9
         e.method === refused.method &&
         podRelative(e.path, "alex") === path,
     );
-  expect(earlier, `step 9 has no Juniper ${refused.method} of ${path}`).toBeDefined();
-  expect(earlier?.status, `step 9 ${refused.method} ${path}`).toBe(200);
+  expect(earlier, `application day has no Juniper ${refused.method} of ${path}`).toBeDefined();
+  expect(earlier?.status, `application day ${refused.method} ${path}`).toBe(200);
 
   // The browser really sent both, and the pod answered 200 then 403.
   const observed = record.podRequests.filter(
@@ -182,6 +190,19 @@ test("9 Lens honesty: every 'pod saw' entry matches a request the test observed"
   requireWholeRun();
 });
 
+/**
+ * What may be stored as something other than RDF, and nothing else: an issuer's Bitstring Status
+ * List credential (a JSON-LD VC) and a pre-qualification proof presentation delivered to an
+ * inbox (JSON). These are the only exceptions the headless journey allows.
+ */
+function documentedNonRdf(resource: { path: string; contentType?: string | null }): boolean {
+  const type = (resource.contentType ?? "").split(";")[0]?.trim();
+  return (
+    (type === "application/vc+ld+json" && resource.path.endsWith("/status/list")) ||
+    (type === "application/json" && /\/inbox\/prequalification-/.test(resource.path))
+  );
+}
+
 test("11 Data: every resource in every pod validates against its SHACL shape", async () => {
   requireWholeRun();
   if (record.resources === undefined) throw new Error(record.liveError ?? "pods were not crawled");
@@ -191,12 +212,23 @@ test("11 Data: every resource in every pod validates against its SHACL shape", a
   );
   const problems: string[] = [];
   const unshaped: string[] = [];
+  const nonRdf: string[] = [];
   let validated = 0;
   for (const resource of record.resources) {
     const where = `${resource.owner}:${resource.path}`;
     if (resource.path.endsWith("/") || isAclPath(resource.path)) continue;
     if (!isOk(resource.status)) {
       problems.push(`${where}: listed in its container but answered ${resource.status}`);
+      continue;
+    }
+    if (documentedNonRdf(resource)) {
+      // Same exceptions, same shape, as the headless journey (content/test/mortgage/journey.test.ts).
+      try {
+        JSON.parse(resource.body);
+        nonRdf.push(`${where} (${resource.contentType})`);
+      } catch {
+        problems.push(`${where}: served as ${resource.contentType} but is not JSON`);
+      }
       continue;
     }
     if (!/turtle|n-triples|n3/.test(resource.contentType ?? "")) {
@@ -244,6 +276,9 @@ test("11 Data: every resource in every pod validates against its SHACL shape", a
   await test
     .info()
     .attach("unshaped-resources.txt", { body: unshaped.join("\n"), contentType: "text/plain" });
+  await test
+    .info()
+    .attach("non-rdf-resources.txt", { body: nonRdf.join("\n"), contentType: "text/plain" });
   expect(problems, "resources that do not validate").toEqual([]);
   expect(validated, "resources validated against a target shape").toBeGreaterThan(0);
 });
@@ -409,21 +444,46 @@ test("13 Ledger: the journey ledger page at the end agrees with the log, the Len
     "the Lens totals vs the journey ledger tiles",
   ).toEqual(end.tiles);
 
-  // Content: every grant the journey defines was given (the narration's "Eight grants"), only
-  // Juniper's G4 was withdrawn, and Alex uploaded nothing.
-  const { GRANT_CODES } = (await import(
+  // Content. The ledger counts grants the Lens way: one per grantee organisation, by its final
+  // state (packages/lens/README.md). Content's eight agreements name nine organisations, since
+  // G4 passes three credentials on to Castellan and the credit-report authorisation to Quillon.
+  const { GRANT_CODES, GRANTS } = (await import(
     pathToFileURL(join(REPO_ROOT, "content", "dist", "mortgage", "grants.js")).href
-  )) as { GRANT_CODES: readonly string[] };
-  expect(end.tiles.grants, "grants on the ledger vs content/mortgage/grants.ts").toBe(
-    GRANT_CODES.length,
-  );
+  )) as {
+    GRANT_CODES: readonly string[];
+    GRANTS: Record<string, { to: string; permissions: ReadonlyArray<{ to?: string }> }>;
+  };
+  const granteesOf = (code: string) => {
+    const spec = GRANTS[code];
+    if (spec === undefined) throw new Error(`content has no grant ${code}`);
+    return new Set([spec.to, ...spec.permissions.map((p) => p.to ?? spec.to)]);
+  };
   expect(end.tiles.uploads, "documents uploaded by Alex").toBe(0);
-  expect(computed.grants.revoked, "grants withdrawn (only G4)").toBe(1);
 
-  // The grants on record in Alex's pod (policies/ and consents/, read by the page) say the same.
+  // The grants on record in Alex's pod (policies/ and consents/, read by the page): all eight,
+  // and only Juniper's G4 withdrawn; the servicer's and the insurer's still active.
   expect(end.grantsOnRecord.map((g) => g.code).sort()).toEqual([...GRANT_CODES].sort());
-  expect(end.grantsOnRecord.find((g) => g.code === "G4")?.state).toBe("revoked");
-  const states = { active: 0, expired: 0, revoked: 0 } as Record<string, number>;
-  for (const grant of end.grantsOnRecord) states[grant.state] = (states[grant.state] ?? 0) + 1;
-  expect(states, "grant states on record vs the ledger's grant states").toEqual(computed.grants);
+  const stateOf = new Map(end.grantsOnRecord.map((g) => [g.code, g.state]));
+  expect(
+    GRANT_CODES.filter((code) => stateOf.get(code) === "revoked"),
+    "grants withdrawn",
+  ).toEqual(["G4"]);
+  expect(
+    GRANT_CODES.filter((code) => stateOf.get(code) === "active"),
+    "grants still active",
+  ).toEqual(["G7", "G8"]);
+
+  // Per organisation, the state the ledger should show follows from those records: active while
+  // any of its grants is, otherwise the state of the later grant naming it (Quillon: G3, then
+  // G4's onward authorisation).
+  const orgState = new Map<string, string>();
+  for (const code of GRANT_CODES) {
+    for (const org of granteesOf(code)) {
+      if (orgState.get(org) !== "active") orgState.set(org, stateOf.get(code) as string);
+    }
+  }
+  const expected = { active: 0, expired: 0, revoked: 0 } as Record<string, number>;
+  for (const state of orgState.values()) expected[state] = (expected[state] ?? 0) + 1;
+  expect(end.tiles.grants, "grantee organisations on the ledger vs content").toBe(orgState.size);
+  expect(computed.grants, "grant states on the ledger vs the grants on record").toEqual(expected);
 });
