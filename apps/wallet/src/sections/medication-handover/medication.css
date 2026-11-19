@@ -1,0 +1,59 @@
+/* AUTHORED-BY Claude Opus 5.5
+ * Cairn's medication-handover screens: the wallet's own tokens (tokens.css) and the moving-house
+ * section's list and totals layouts (mh-*), plus a few of their own. */
+.med-h2 {
+  font-size: 1rem;
+  margin: 18px 4px 0;
+}
+
+.med-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.med-head p {
+  margin: 0;
+  min-width: 0;
+}
+
+.med-card p {
+  margin: 4px 0 0;
+}
+
+.med-state {
+  flex: none;
+  font-weight: 800;
+  font-size: 0.875rem;
+  color: var(--teal);
+}
+
+.med-state.stopped {
+  color: var(--coral-ink);
+}
+
+.med-history {
+  margin: 8px 0 0;
+  padding: 8px 0 0 18px;
+  border-top: 1px solid var(--line);
+  font-size: 0.875rem;
+  display: grid;
+  gap: 4px;
+}
+
+.med-request .card-head > div {
+  min-width: 0;
+}
+
+.med-carer {
+  margin: 14px 0;
+  align-items: flex-start;
+}
+
+.med-line {
+  display: grid;
+  gap: 2px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}

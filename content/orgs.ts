@@ -197,16 +197,57 @@ export const ORGS: OrgRegistry = Object.freeze({
     themeColor: "#7A2335",
     title: "Brackenridge Bank Commercial Credit",
   },
+  // Demo 5, medication handover (flows.md §1 and §5): a ward system, a dispensing workstation and
+  // a consultation screen. Every clinician named here is fictional.
+  hospital: {
+    actsAs: "hospital",
+    organisation: "Riverbend General Hospital",
+    persona: { name: "Imani Brooks", role: "ward pharmacist" },
+    product: "ward system",
+    role: "Hospital: inpatient care, medicines reconciliation and discharge",
+    short: "Riverbend",
+    slug: "hospital",
+    themeColor: "#14558F",
+    title: "Riverbend General Hospital",
+  },
+  pharmacy: {
+    actsAs: "pharmacy",
+    organisation: "Corner Dispensary",
+    persona: { name: "Grace Liu", role: "pharmacist" },
+    role: "Community pharmacy: dispensing",
+    short: "Corner",
+    slug: "pharmacy",
+    themeColor: "#006B3C",
+    title: "Corner Dispensary",
+  },
+  clinic: {
+    actsAs: "clinic",
+    organisation: "Larch Lane Family Practice",
+    persona: { name: "Dr Lena Marsh", role: "family physician" },
+    role: "Primary care practice",
+    short: "Larch Lane",
+    slug: "clinic",
+    themeColor: "#5B4F7C",
+    title: "Larch Lane Family Practice",
+  },
 });
 
 /**
  * The apps each demo uses. The registry grows as demos are added, so a demo's own count (the
  * mortgage video's "Thirteen applications.") is taken from its list here, never from `ORGS`.
  */
+const LATER_DEMO_APPS: readonly OrgSlug[] = [
+  "state",
+  "registry",
+  "business-lender",
+  "hospital",
+  "pharmacy",
+  "clinic",
+];
+
 export const DEMO_APPS = Object.freeze({
-  mortgage: ORG_SLUGS.filter(
-    (slug) => slug !== "state" && slug !== "registry" && slug !== "business-lender",
-  ),
+  mortgage: ORG_SLUGS.filter((slug) => !LATER_DEMO_APPS.includes(slug)),
   "moving-house": ["wallet", "state", "county", "bank", "insurer", "payroll", "servicer"],
   "business-kyb": ["wallet", "registry", "bank", "business-lender"],
+  "medication-handover": ["wallet", "hospital", "pharmacy", "clinic"],
 } satisfies Record<string, readonly OrgSlug[]>);

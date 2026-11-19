@@ -1,0 +1,230 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix fhir: <http://hl7.org/fhir/> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+
+# AUTHORED-BY Claude Opus 5.5
+# Shared FHIR R5 RDF data-type shapes for the medication handover (flows.md section 5). None
+# declares a target: each validates only where a resource shape points at it with sh:node.
+#
+# FHIR R5 in RDF (https://hl7.org/fhir/R5/rdf.html): a primitive is a node carrying fhir:v; a
+# repeating element is an RDF collection, so its members are reached by the path
+# ( <element> [ sh:zeroOrMorePath rdf:rest ] rdf:first ); a Reference carries fhir:link to the
+# resolved resource beside its fhir:reference string. Medicines are coded in RxNorm (open
+# question 6: SNOMED CT only with a licence and a healthcare member co-owning the model).
+
+mshape:FhirStringShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:property [
+    sh:path fhir:v ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] .
+
+mshape:FhirIdShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:property [
+    sh:path fhir:v ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:pattern "^[A-Za-z0-9.-]{1,64}$" ;
+  ] .
+
+mshape:FhirDateTimeShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:property [
+    sh:path fhir:v ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dateTime ;
+  ] .
+
+mshape:FhirUriShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:property [
+    sh:path fhir:v ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:anyURI ;
+  ] .
+
+mshape:FhirDecimalShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:property [
+    sh:path fhir:v ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive 0 ;
+  ] .
+
+# Coding: a code from a code system, with its display text.
+mshape:FhirCodingShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:property [
+    sh:path fhir:system ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:node mshape:FhirUriShape ;
+  ] ;
+  sh:property [
+    sh:path fhir:code ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:node mshape:FhirStringShape ;
+  ] ;
+  sh:property [
+    sh:path fhir:display ;
+    sh:maxCount 1 ;
+    sh:node mshape:FhirStringShape ;
+  ] .
+
+# CodeableConcept: zero or more codings and an optional text.
+mshape:FhirCodeableConceptShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:property [
+    sh:path fhir:coding ;
+    sh:maxCount 1 ;
+  ] ;
+  sh:property [
+    sh:path ( fhir:coding [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+    sh:node mshape:FhirCodingShape ;
+  ] ;
+  sh:property [
+    sh:path fhir:text ;
+    sh:maxCount 1 ;
+    sh:node mshape:FhirStringShape ;
+  ] .
+
+# A medicine: a CodeableConcept with at least one coding, every one of them RxNorm.
+mshape:FhirRxNormConceptShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:property [
+    sh:path fhir:coding ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+  ] ;
+  sh:property [
+    sh:path ( fhir:coding [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+    sh:minCount 1 ;
+    sh:node mshape:FhirCodingShape ;
+  ] ;
+  sh:property [
+    sh:path ( fhir:coding [ sh:zeroOrMorePath rdf:rest ] rdf:first fhir:system fhir:v ) ;
+    sh:in ( "http://www.nlm.nih.gov/research/umls/rxnorm"^^xsd:anyURI ) ;
+  ] ;
+  sh:property [
+    sh:path fhir:text ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:node mshape:FhirStringShape ;
+  ] .
+
+# Reference: who or what, by display name, and when it resolves, by its IRI (fhir:link).
+mshape:FhirReferenceShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:property [
+    sh:path fhir:reference ;
+    sh:maxCount 1 ;
+    sh:node mshape:FhirStringShape ;
+  ] ;
+  sh:property [
+    sh:path fhir:link ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path fhir:display ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:node mshape:FhirStringShape ;
+  ] .
+
+# A Reference that resolves: a pod resource or a WebID.
+mshape:FhirLinkedReferenceShape
+  a sh:NodeShape ;
+  sh:node mshape:FhirReferenceShape ;
+  sh:property [
+    sh:path fhir:link ;
+    sh:minCount 1 ;
+  ] ;
+  sh:property [
+    sh:path fhir:reference ;
+    sh:minCount 1 ;
+  ] .
+
+# CodeableReference (R5): a medicine is named by a concept here, never by a Medication resource.
+mshape:FhirMedicineShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:property [
+    sh:path fhir:concept ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:node mshape:FhirRxNormConceptShape ;
+  ] .
+
+# Dosage and dosage instructions: the instruction as text.
+mshape:FhirDosageShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:property [
+    sh:path fhir:text ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:node mshape:FhirStringShape ;
+  ] .
+
+# Annotation: a note in words.
+mshape:FhirAnnotationShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:property [
+    sh:path fhir:text ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:node mshape:FhirStringShape ;
+  ] .
+
+mshape:FhirQuantityShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:property [
+    sh:path fhir:value ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:node mshape:FhirDecimalShape ;
+  ] ;
+  sh:property [
+    sh:path fhir:unit ;
+    sh:maxCount 1 ;
+    sh:node mshape:FhirStringShape ;
+  ] .
+
+mshape:FhirPeriodShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:property [
+    sh:path fhir:start ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:node mshape:FhirDateTimeShape ;
+  ] ;
+  sh:property [
+    sh:path fhir:end ;
+    sh:maxCount 1 ;
+    sh:node mshape:FhirDateTimeShape ;
+  ] .

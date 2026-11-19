@@ -1,0 +1,44 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix fhir: <http://hl7.org/fhir/> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+
+# AUTHORED-BY Claude Opus 5.5
+# A supply (medication handover, flows.md section 5): a FHIR R5 MedicationDispense. The pharmacy
+# writes one into rosa:/medications/dispenses/ and keeps its own in its pod (dispensing/), which
+# stays with it after Rosa withdraws its access.
+mshape:MedicationDispenseShape
+  a sh:NodeShape ;
+  sh:targetClass fhir:MedicationDispense ;
+  sh:closed true ;
+  sh:property [ sh:path rdf:type ; sh:in ( fhir:MedicationDispense ) ] ;
+  sh:property [ sh:path fhir:nodeRole ; sh:maxCount 1 ; sh:in ( fhir:treeRoot ) ] ;
+  sh:property [ sh:path fhir:id ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirIdShape ] ;
+  sh:property [ sh:path fhir:status ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirStringShape ] ;
+  sh:property [ sh:path ( fhir:status fhir:v ) ; sh:in ( "completed" "in-progress" "declined" ) ] ;
+  sh:property [ sh:path fhir:medication ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirMedicineShape ] ;
+  sh:property [ sh:path fhir:subject ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirLinkedReferenceShape ] ;
+  sh:property [ sh:path fhir:performer ; sh:minCount 1 ; sh:maxCount 1 ] ;
+  sh:property [
+    sh:path ( fhir:performer [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+    sh:minCount 1 ;
+    sh:node mshape:DispensePerformerShape ;
+  ] ;
+  sh:property [ sh:path fhir:authorizingPrescription ; sh:maxCount 1 ] ;
+  sh:property [
+    sh:path ( fhir:authorizingPrescription [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+    sh:node mshape:FhirLinkedReferenceShape ;
+  ] ;
+  sh:property [ sh:path fhir:quantity ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirQuantityShape ] ;
+  sh:property [ sh:path fhir:whenHandedOver ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirDateTimeShape ] ;
+  sh:property [ sh:path fhir:dosageInstruction ; sh:maxCount 1 ] ;
+  sh:property [
+    sh:path ( fhir:dosageInstruction [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+    sh:node mshape:FhirDosageShape ;
+  ] .
+
+mshape:DispensePerformerShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:property [ sh:path fhir:actor ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirLinkedReferenceShape ] .
