@@ -1,0 +1,43 @@
+{
+  "name": "@mortgage/app-pharmacy",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Corner Dispensary's dispensing workstation: reads a patient's medicines and allergies from her pod under a grant, and records each supply (fictional pharmacy; medication-handover demo).",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "biome check src test e2e package.json tsconfig.json vite.config.ts playwright.config.ts",
+    "typecheck": "tsc --project tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@fontsource/atkinson-hyperlegible": "^5.3.0",
+    "@fontsource/ibm-plex-mono": "^5.3.0",
+    "@mortgage/content": "workspace:*",
+    "@mortgage/data-model": "workspace:*",
+    "@mortgage/demo-kit": "workspace:*",
+    "@mortgage/lens": "workspace:*",
+    "@mortgage/pod-runtime": "workspace:*",
+    "@mortgage/tour": "workspace:*",
+    "@mortgage/vc-kit": "workspace:*",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "wouter": "^3.13.0"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
+    "@playwright/test": "~1.63.0",
+    "@testing-library/react": "^16.3.3",
+    "@types/node": "^25.9.2",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.3.0",
+    "jsdom": "^29.1.1",
+    "typescript": "^6.0.3",
+    "vite": "^8.3.0",
+    "vitest": "^4.1.9"
+  }
+}
