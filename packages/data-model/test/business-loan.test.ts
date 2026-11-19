@@ -299,4 +299,13 @@ describe("a standing grant's ODRL timeInterval", { timeout: 60_000 }, () => {
     expect(request.permissions[0]?.interval).toBeUndefined();
     expect(permissionInits(request)[0]).not.toHaveProperty("interval");
   });
+
+  test("an interval and a use count on one permission keep two constraints", async () => {
+    const both = { ...init.permissions[0], maxUses: 4 };
+    const turtle = await resourceToTurtle(buildAccessRequest({ ...init, permissions: [both] }));
+    const request = new AccessRequest(init.iri, reparse(turtle), DataFactory);
+    expect(request.permissions[0]?.interval).toBe("P3M");
+    expect(request.permissions[0]?.maxUses).toBe(4);
+    expect(permissionInits(request)[0]).toMatchObject({ interval: "P3M", maxUses: 4 });
+  });
 });
