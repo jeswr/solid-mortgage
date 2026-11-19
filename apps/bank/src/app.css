@@ -1,0 +1,499 @@
+/* AUTHORED-BY Claude Opus 5.5 */
+@import "./tokens.css";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--ab-cream);
+  color: var(--ab-ink);
+  font-family: var(--ab-sans);
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--ab-serif);
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--ab-forest-deep);
+}
+
+h1 {
+  font-size: 2.1rem;
+  margin: 0 0 0.75rem;
+}
+
+h2 {
+  font-size: 1.3rem;
+  margin: 0 0 0.75rem;
+}
+
+h3 {
+  font-size: 1.1rem;
+  margin: 0 0 0.5rem;
+}
+
+a {
+  color: var(--ab-forest);
+  text-underline-offset: 3px;
+}
+
+:focus-visible {
+  outline: 3px solid var(--ab-focus);
+  outline-offset: 2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Top navigation */
+.masthead {
+  background: var(--ab-forest);
+  color: var(--ab-cream);
+}
+
+.masthead-inner {
+  max-width: var(--ab-width);
+  margin: 0 auto;
+  padding: 0 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 2rem;
+  min-height: 4rem;
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--ab-serif);
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--ab-cream);
+  text-decoration: none;
+}
+
+.masthead nav ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.masthead nav a {
+  display: inline-block;
+  padding: 1.15rem 0 1rem;
+  color: var(--ab-cream);
+  text-decoration: none;
+  border-bottom: 3px solid transparent;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.masthead nav a[aria-current="page"] {
+  border-bottom-color: var(--ab-gold);
+}
+
+.masthead nav a:hover {
+  border-bottom-color: var(--ab-cream);
+}
+
+.signed-in {
+  margin: 0 0 0 auto;
+  font-size: 0.9rem;
+}
+
+main {
+  max-width: var(--ab-width);
+  margin: 0 auto;
+  padding: 2rem 1rem 3rem;
+}
+
+.page.narrow {
+  max-width: 44rem;
+}
+
+.connecting {
+  background: var(--ab-forest-soft);
+  padding: 0.75rem 1rem;
+  border-left: 4px solid var(--ab-forest);
+}
+
+.eyebrow,
+.caption {
+  margin: 0;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ab-muted);
+}
+
+.lede {
+  font-size: 1.05rem;
+  max-width: 40rem;
+}
+
+.small {
+  font-size: 0.875rem;
+  color: var(--ab-muted);
+}
+
+.figure-tag {
+  margin: 0.25rem 0 0;
+  font-size: 0.75rem;
+  font-style: italic;
+  color: var(--ab-muted);
+}
+
+.crumbs {
+  font-size: 0.875rem;
+  color: var(--ab-muted);
+  margin: 0 0 1rem;
+}
+
+.digits {
+  font-family: var(--ab-sans);
+  font-weight: 400;
+  font-size: 0.75em;
+  color: var(--ab-muted);
+}
+
+/* Large serif numerals */
+.balance {
+  margin: 0.15rem 0 0;
+  font-family: var(--ab-serif);
+  font-size: 2.6rem;
+  font-weight: 400;
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--ab-forest-deep);
+  line-height: 1.1;
+}
+
+.balance .cents {
+  font-size: 0.5em;
+  vertical-align: 0.8em;
+  margin-left: 0.05em;
+}
+
+.accounts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
+  gap: 1.25rem;
+  margin: 1.5rem 0;
+}
+
+.account-card {
+  background: var(--ab-paper);
+  border: 1px solid var(--ab-rule);
+  border-top: 5px solid var(--ab-forest);
+  padding: 1.25rem 1.5rem 1.5rem;
+}
+
+.account-card header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.account-card h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.account-card h2 a {
+  color: var(--ab-forest-deep);
+}
+
+.account-card .kind {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--ab-muted);
+}
+
+.total {
+  border-top: 1px solid var(--ab-rule);
+  padding-top: 1.25rem;
+}
+
+.total h2 {
+  font-family: var(--ab-sans);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ab-muted);
+  margin: 0;
+}
+
+.offer {
+  margin-top: 2rem;
+  background: var(--ab-forest-soft);
+  padding: 1.5rem;
+  border-left: 5px solid var(--ab-gold);
+  max-width: 44rem;
+}
+
+.button,
+button.primary {
+  display: inline-block;
+  background: var(--ab-forest);
+  color: var(--ab-cream);
+  border: 0;
+  border-radius: 2px;
+  padding: 0.75rem 1.5rem;
+  font: 600 1rem var(--ab-sans);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+button.primary:hover:not(:disabled),
+.button:hover {
+  background: var(--ab-forest-deep);
+}
+
+button:disabled {
+  background: #cfcabb;
+  color: #3d3f38;
+  cursor: not-allowed;
+}
+
+button.quiet {
+  background: transparent;
+  color: var(--ab-forest);
+  border: 1px solid var(--ab-forest);
+  border-radius: 2px;
+  padding: 0.5rem 1rem;
+  font: 600 0.9rem var(--ab-sans);
+  cursor: pointer;
+}
+
+button.quiet:disabled {
+  border-color: #cfcabb;
+}
+
+/* Account detail */
+.account-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1.5rem;
+  background: var(--ab-paper);
+  border: 1px solid var(--ab-rule);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.account-head h1 {
+  font-size: 1.6rem;
+}
+
+.facts {
+  margin: 0;
+  display: grid;
+  gap: 0.75rem;
+  align-content: start;
+}
+
+.facts dt {
+  font-size: 0.8rem;
+  color: var(--ab-muted);
+}
+
+.facts dd {
+  margin: 0;
+  font-family: var(--ab-serif);
+  font-size: 1.2rem;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--ab-paper);
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid var(--ab-rule);
+  vertical-align: top;
+}
+
+thead th {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ab-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid var(--ab-forest);
+}
+
+tbody th {
+  font-weight: 400;
+}
+
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.credit {
+  color: var(--ab-credit);
+  font-weight: 600;
+}
+
+.sub {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--ab-muted);
+}
+
+/* Share */
+.panel {
+  background: var(--ab-paper);
+  border: 1px solid var(--ab-rule);
+  padding: 1.25rem 1.5rem;
+  margin: 1.25rem 0;
+}
+
+.panel.muted {
+  background: transparent;
+}
+
+.panel-list {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.panel.send {
+  border-color: var(--ab-forest);
+  border-width: 2px;
+}
+
+.receipt {
+  margin-top: 2rem;
+}
+
+/* Issued credentials */
+.issued-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  gap: 1.25rem;
+}
+
+.issued-card {
+  background: var(--ab-paper);
+  border: 1px solid var(--ab-rule);
+  border-left: 5px solid var(--ab-forest);
+  padding: 1.25rem 1.5rem;
+}
+
+.issued-card dl {
+  margin: 0 0 1rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.issued-card dt {
+  font-size: 0.8rem;
+  color: var(--ab-muted);
+}
+
+.issued-card dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.mono {
+  font-family: var(--ab-mono);
+  font-size: 0.85rem;
+}
+
+.status {
+  font-weight: 600;
+  color: var(--ab-forest);
+}
+
+.status-revoked {
+  color: var(--ab-red);
+}
+
+.readback {
+  border-top: 1px dashed var(--ab-rule);
+  padding-top: 0.75rem;
+}
+
+.readback p {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+}
+
+.refusal {
+  margin-top: 0.75rem;
+  background: var(--ab-red-soft);
+  border-left: 4px solid var(--ab-red);
+  padding: 0.75rem 1rem;
+  color: #5e1a14;
+}
+
+.error {
+  color: var(--ab-red);
+}
+
+.footer {
+  border-top: 1px solid var(--ab-rule);
+  max-width: var(--ab-width);
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.85rem;
+  color: var(--ab-muted);
+}
+
+.footer p {
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  h1 {
+    font-size: 1.7rem;
+  }
+
+  .balance {
+    font-size: 2.1rem;
+  }
+
+  .signed-in {
+    display: none;
+  }
+
+  .masthead nav a {
+    padding: 0.6rem 0;
+  }
+}
