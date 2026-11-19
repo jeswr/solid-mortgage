@@ -18,6 +18,13 @@ import { podOrigin, urlMode } from "@mortgage/demo-kit/urls";
 import { createBridgeClient } from "../bridge/client.js";
 import type { HostInfo, HostMessage, Seed, SeedContext } from "../host/host.js";
 import { AGENT_HEADER, EVENTS_CHANNEL, HOST_WORKER_NAME, TOUR_HEADER } from "../protocol.js";
+import {
+  makeGrantOneTime,
+  type OneTimeGrantRecord,
+  type SubscriptionRecord,
+  unwatchResource,
+  watchResource,
+} from "../runtime-api.js";
 import { siteAgents, spawnAgentWorker } from "./agents.js";
 import { serviceWorkerTransport, type Transport, workerTransport } from "./transport.js";
 
@@ -285,4 +292,31 @@ export function setTourContext(ctx: { demo: string; step: string } | null): void
 /** The same as `setTourContext`; `undefined` also clears it. */
 export function setTour(step: { demo: string; step: string } | undefined | null): void {
   setTourContext(step ?? null);
+}
+
+/**
+ * Subscribe this app to changes of `topic` (a resource, or a container's members). The runtime,
+ * not the pod server, sends the notices: they arrive as `notified` Lens entries (and run the
+ * app's agent `changed` handler). This app's organisation must be able to read the topic.
+ */
+export async function watch(topic: string): Promise<SubscriptionRecord> {
+  const { app } = requireConfig();
+  return watchResource(podFetch, topic, isOrgSlug(app) ? { app } : {});
+}
+
+/** Stop this app's subscription to `topic`. */
+export async function unwatch(topic: string): Promise<void> {
+  const { app } = requireConfig();
+  await unwatchResource(podFetch, topic, isOrgSlug(app) ? { app } : {});
+}
+
+/**
+ * Mark access granted to `agent` on `resource` as one-time: the runtime revokes it, as the
+ * holder's wallet, after the agent's first successful read. Only the pod owner's app may call it.
+ */
+export async function oneTimeGrant(input: {
+  resource: string;
+  agent: string;
+}): Promise<OneTimeGrantRecord> {
+  return makeGrantOneTime(podFetch, input);
 }

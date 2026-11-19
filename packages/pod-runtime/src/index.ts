@@ -7,6 +7,7 @@ export {
   configure,
   note,
   onEvent,
+  oneTimeGrant,
   onReset,
   podFetch,
   podUrl,
@@ -18,5 +19,14 @@ export {
   setDay,
   setTour,
   setTourContext,
+  unwatch,
+  watch,
 } from "./client/index.js";
 export type { Seed, SeedContext, SeedRequest } from "./host/host.js";
+export {
+  type ChangeActivity,
+  type ChangeNotice,
+  type OneTimeGrantRecord,
+  parseChangeNotice,
+  type SubscriptionRecord,
+} from "./runtime-api.js";
