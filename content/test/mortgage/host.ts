@@ -12,7 +12,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createDemoCalendar, type DemoCalendar } from "@mortgage/demo-kit/calendar";
 import type { AppNote } from "@mortgage/demo-kit/contracts";
-import { type PodOwner, podOwners, webidFor } from "@mortgage/demo-kit/registry";
+import { isHolderId, type PodOwner, podOwners, webidFor } from "@mortgage/demo-kit/registry";
 import { generateKeyPairForSuite, type KeyPair } from "@mortgage/vc-kit";
 import { Authorization } from "@solid/object";
 import { DataFactory, Parser, Store } from "n3";
@@ -97,7 +97,9 @@ export class TestHost {
 
   private constructor(wasm: WasmModule, calendar: DemoCalendar) {
     this.calendar = calendar;
+    // The mortgage's pods: Alex's and the organisations'. Other registered holders are not in it.
     for (const owner of podOwners(ORGS)) {
+      if (isHolderId(owner) && owner !== "alex") continue;
       const base = `${POD_ORIGIN}/pods/${owner}/`;
       this.pods.set(owner, new wasm.SolidServer(base, webidFor(owner, POD_ORIGIN)));
     }
