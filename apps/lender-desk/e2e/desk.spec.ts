@@ -14,7 +14,8 @@ import {
   press,
   read,
   UP_TO_APPLICATION,
-} from "./support.ts";
+  WCAG_21,
+} from "../../../test-support/e2e.ts";
 
 const LOAN = "loans/JHL-1001";
 const TABS = [
@@ -138,7 +139,7 @@ test("the desk's five steps write to the pods, and the revoke ends in a 403 on s
     await expect(kept.getByRole("row", { name: /Loan application/ })).toContainText("200");
     await expect(kept.getByRole("row", { name: /Underwriting decision/ })).toBeVisible();
     await expect(kept.getByRole("row", { name: /Closing record/ })).toBeVisible();
-    await expectAccessible(page);
+    await expectAccessible(page, WCAG_21);
   });
 
   await test.step("every route, with the whole file on record: axe and 390 px", async () => {
@@ -148,7 +149,7 @@ test("the desk's five steps write to the pods, and the revoke ends in a 403 on s
       await open(page, route);
       await expect(page.locator("main h1")).toBeVisible();
       await expect(page.getByText(/^Loading /)).toHaveCount(0);
-      await expectAccessible(page);
+      await expectAccessible(page, WCAG_21);
       await page.setViewportSize({ height: 844, width: 390 });
       await expectNoHorizontalScroll(page);
     }
@@ -172,5 +173,5 @@ test("free play on fresh pods: every action waits for its prerequisite", async (
     await open(page, `${LOAN}/${tab}`);
     await expect(page.locator(`[data-tour="${target}"]`)).toBeDisabled();
   }
-  await expectAccessible(page);
+  await expectAccessible(page, WCAG_21);
 });

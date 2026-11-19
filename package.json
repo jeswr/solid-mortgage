@@ -26,7 +26,7 @@
     "build:packages": "turbo run build --concurrency=4",
     "preview": "node tools/serve-dist.mjs",
     "lint": "pnpm run lint:root && pnpm run check:packages && turbo run lint --concurrency=4",
-    "lint:root": "biome check package.json turbo.json biome.json vercel.json vitest.config.ts playwright.config.ts tools guardrails test e2e",
+    "lint:root": "biome check package.json turbo.json biome.json vercel.json vitest.config.ts playwright.config.ts tools guardrails test test-support e2e",
     "lint:fix": "biome check --write .",
     "lint:iris": "node tools/lint-iris.mjs",
     "check:vocab": "node tools/check-mort-terms.mjs",

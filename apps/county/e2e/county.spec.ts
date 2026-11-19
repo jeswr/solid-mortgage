@@ -1,6 +1,13 @@
 // AUTHORED-BY Claude Opus 5.5
 import { expect, test } from "@playwright/test";
-import { catchUp, expectAccessible, expectNoSideScroll, open, readAs } from "./helpers.ts";
+import {
+  catchUp,
+  expectAccessible,
+  expectNoSideScroll,
+  OUTSIDE_LENS,
+  open,
+  readAs,
+} from "../../../test-support/e2e.ts";
 
 test("the Recorder's home renders with the trust banner and its own metadata", async ({ page }) => {
   await open(page, "./");
@@ -9,7 +16,7 @@ test("the Recorder's home renders with the trust banner and its own metadata", a
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "noindex, nofollow");
   await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute("content", "#2A4D8F");
   await expect(page.getByRole("heading", { level: 1, name: "Recorder's Office" })).toBeVisible();
-  await expectAccessible(page);
+  await expectAccessible(page, OUTSIDE_LENS);
   await expectNoSideScroll(page);
 });
 
@@ -17,7 +24,7 @@ test("not-found keeps the banner", async ({ page }) => {
   await open(page, "./no-such-page");
   await expect(page.getByRole("heading", { name: "Page not found" })).toBeVisible();
   await expect(page.getByRole("note", { name: "Concept demonstration notice" })).toBeVisible();
-  await expectAccessible(page);
+  await expectAccessible(page, OUTSIDE_LENS);
 });
 
 test("the search reads the register anonymously; the queue refuses an anonymous reader", async ({
@@ -31,7 +38,7 @@ test("the search reads the register anonymously; the queue refuses an anonymous 
   await expect(page.getByRole("main").getByRole("alert")).toContainText(
     /Refused by the pod \(40[13]\)/,
   );
-  await expectAccessible(page);
+  await expectAccessible(page, OUTSIDE_LENS);
   await expectNoSideScroll(page);
 });
 
@@ -42,7 +49,7 @@ test("step 19: the county records the deed and mortgage, and anyone can find the
   await catchUp(page);
   const record = page.locator('[data-tour="county-record"]');
   await expect(record).toBeEnabled();
-  await expectAccessible(page);
+  await expectAccessible(page, OUTSIDE_LENS);
   await expectNoSideScroll(page);
   await record.click();
   await expect(page.getByRole("heading", { name: "Instruments recorded" })).toBeVisible({
@@ -52,7 +59,7 @@ test("step 19: the county records the deed and mortgage, and anyone can find the
   await expect(
     page.getByRole("main").getByRole("cell", { name: "Sextant Title & Escrow" }).first(),
   ).toBeVisible();
-  await expectAccessible(page);
+  await expectAccessible(page, OUTSIDE_LENS);
   await expectNoSideScroll(page);
 
   // Read back as the county, and as nobody: the register is public, the inbox is not.
@@ -73,7 +80,7 @@ test("step 19: the county records the deed and mortgage, and anyone can find the
   await page.getByLabel("Search in", { exact: true }).selectOption("name");
   await page.getByRole("main").getByRole("button", { exact: true, name: "Search" }).click();
   await expect(page.getByRole("status").filter({ hasText: "2 documents found" })).toBeVisible();
-  await expectAccessible(page);
+  await expectAccessible(page, OUTSIDE_LENS);
   await expectNoSideScroll(page);
 
   await page.getByRole("main").getByRole("link", { name: "2026-0048114" }).click();
@@ -83,6 +90,6 @@ test("step 19: the county records the deed and mortgage, and anyone can find the
   await expect(
     page.getByRole("main").getByRole("cell", { name: "Juniper Home Loans" }),
   ).toBeVisible();
-  await expectAccessible(page);
+  await expectAccessible(page, OUTSIDE_LENS);
   await expectNoSideScroll(page);
 });

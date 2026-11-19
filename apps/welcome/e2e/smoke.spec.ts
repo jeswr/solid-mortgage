@@ -1,20 +1,6 @@
 // AUTHORED-BY Claude Opus 5.5
-import AxeBuilder from "@axe-core/playwright";
-import { expect, type Page, test } from "@playwright/test";
-
-const WCAG = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];
-
-async function expectNoAxeViolations(page: Page) {
-  const results = await new AxeBuilder({ page }).withTags(WCAG).analyze();
-  expect(results.violations.map((v) => `${v.id}: ${v.nodes.length}`)).toEqual([]);
-}
-
-async function expectNoHorizontalScroll(page: Page) {
-  const overflow = await page.evaluate(
-    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
-  );
-  expect(overflow).toBeLessThanOrEqual(0);
-}
+import { expect, test } from "@playwright/test";
+import { expectAccessible, expectNoHorizontalScroll, WCAG_21 } from "../../../test-support/e2e.ts";
 
 const ROUTES = [
   "./",
@@ -43,7 +29,7 @@ test.describe("every route", () => {
       await expect(page.getByRole("contentinfo")).toContainText(
         "All organisations and people are fictional.",
       );
-      await expectNoAxeViolations(page);
+      await expectAccessible(page, WCAG_21);
     });
   }
 });
@@ -162,7 +148,7 @@ test("with a published recording the poster plays in place, preload none, with c
     "/video/mortgage/captions.vtt",
   );
   await expect(video.locator("source")).toHaveAttribute("src", "/video/mortgage/video.mp4");
-  await expectNoAxeViolations(page);
+  await expectAccessible(page, WCAG_21);
 });
 
 test("watch page carries the full transcript", async ({ page }) => {
@@ -195,7 +181,7 @@ test.describe("at 390 px", () => {
     test(`${route} fits without horizontal scrolling and passes axe`, async ({ page }) => {
       await page.goto(route);
       await expectNoHorizontalScroll(page);
-      await expectNoAxeViolations(page);
+      await expectAccessible(page, WCAG_21);
     });
   }
 });

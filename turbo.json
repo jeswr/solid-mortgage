@@ -1,6 +1,6 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
-  "globalDependencies": ["biome.json", "tsconfig.base.json"],
+  "globalDependencies": ["biome.json", "tsconfig.base.json", "test-support/**"],
   "tasks": {
     "dev": {
       "cache": false,

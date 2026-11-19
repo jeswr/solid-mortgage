@@ -13,53 +13,23 @@
  * signs: its `keyFor` throws.
  */
 
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
-
 import type { World } from "@mortgage/content/mortgage/world";
 import { createDemoCalendar, type DemoCalendar } from "@mortgage/demo-kit/calendar";
 import type { AppNote } from "@mortgage/demo-kit/contracts";
 import type { PodOwner } from "@mortgage/demo-kit/registry";
 import type { Page } from "@playwright/test";
+import {
+  fetchAs as fetchInPage,
+  injectHarness as injectHarnessBundle,
+} from "../../../test-support/e2e.ts";
 import { HARNESS_DIR } from "./build-harness.ts";
-
-interface Wire {
-  status: number;
-  headers: [string, string][];
-  body: string;
-}
 
 /** The app slug whose `actsAs` is `owner`. */
 const appOf = (owner: PodOwner): string => (owner === "alex" ? "wallet" : owner);
 
+/** A `fetch` run inside the page as `owner`'s app, so the page's pod service worker answers. */
 export function fetchAs(page: Page, owner: PodOwner): typeof fetch {
-  return async (input, init) => {
-    const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
-    const method = (init?.method ?? "GET").toUpperCase();
-    const headers: Record<string, string> = {};
-    new Headers(init?.headers).forEach((value, name) => {
-      headers[name] = value;
-    });
-    headers["x-demo-agent"] = appOf(owner);
-    const body = init?.body === undefined || init.body === null ? undefined : String(init.body);
-    const wire = await page.evaluate(
-      async (request): Promise<Wire> => {
-        const response = await fetch(request.url, {
-          body: request.body,
-          headers: request.headers,
-          method: request.method,
-        });
-        return {
-          body: await response.text(),
-          headers: [...response.headers],
-          status: response.status,
-        };
-      },
-      { body, headers, method, url },
-    );
-    const empty = wire.status === 204 || wire.status === 304 || method === "HEAD";
-    return new Response(empty ? null : wire.body, { headers: wire.headers, status: wire.status });
-  };
+  return fetchInPage(page, appOf(owner));
 }
 
 export interface TestWorld extends World {
@@ -104,10 +74,8 @@ export async function statusAs(page: Page, owner: PodOwner, url: string): Promis
 }
 
 /** Put the harness in the page; it acts on the page's service worker with the shared keys. */
-export async function injectHarness(page: Page): Promise<void> {
-  const content = readFileSync(join(HARNESS_DIR, "harness.js"), "utf8");
-  await page.addScriptTag({ content, type: "module" });
-  await page.waitForFunction(() => window.__harness !== undefined);
+export function injectHarness(page: Page): Promise<void> {
+  return injectHarnessBundle(page, HARNESS_DIR);
 }
 
 /** Run journey beats (by name) inside the page, as their owners' apps would. */
