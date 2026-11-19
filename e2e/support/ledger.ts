@@ -80,7 +80,14 @@ export function computeTotals(log: LensEntry[], recordDrawers = RECORD_DRAWERS):
     meet(entry.actor.org);
     if (entry.pod !== HOLDER) meet(entry.pod);
 
-    if (entry.acl && isOk(entry.status)) {
+    // An organisation sharing its own files (an ACL write on its own pod) brings the agent into
+    // the journey but is not one of the holder's grants (packages/lens/README.md).
+    if (entry.acl && isOk(entry.status) && entry.pod !== HOLDER) {
+      for (const rule of entry.acl.granted) {
+        const org = orgOfAgent(rule.agent);
+        if (org !== undefined) orgs.add(org);
+      }
+    } else if (entry.acl && isOk(entry.status)) {
       const key = (r: { agent: string; resource: string; inherited: boolean }) =>
         `${r.agent} ${r.resource} ${r.inherited}`;
       const touched = new Set<string>();
