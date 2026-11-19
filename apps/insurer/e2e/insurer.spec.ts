@@ -3,11 +3,22 @@
  * Wrenfield against the real pods: the built site, the real service worker, the real wasm
  * server. Every test gets a fresh browser context, so fresh pods.
  */
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 import { expectAccessible, OUTSIDE_LENS } from "../../../test-support/e2e.ts";
 import { injectHarness, noHorizontalScroll, podsReady, readAs, runUntil } from "./pods.ts";
 
 const ROUTES = ["./", "./property", "./quote", "./evidence", "./no-such-page"];
+
+/**
+ * "You are covered." shows as soon as the evidence is in Alex's pod (the screen reads the pod
+ * log), but the bind goes on: Wrenfield records what it issued, then Juniper checks the evidence
+ * at source and keeps its pointer. The button leaves "Binding…" only when all of that is done.
+ */
+async function bindSettled(page: Page): Promise<void> {
+  const bind = page.locator('[data-tour="insurer-bind"]');
+  await expect(bind).toHaveText("Coverage bound", { timeout: 60_000 });
+  await expect(page.getByRole("alert").filter({ hasText: "Binding stopped" })).toHaveCount(0);
+}
 
 test("every route has the trust banner, noindex and its own metadata", async ({ page }) => {
   for (const route of ROUTES) {
@@ -37,6 +48,7 @@ test("step 15: Bind reads the property facts and writes the evidence into Alex's
   await expect(bind).toBeEnabled({ timeout: 20_000 });
   await bind.click();
   await expect(page.getByText("You are covered.")).toBeVisible({ timeout: 60_000 });
+  await bindSettled(page);
 
   // The evidence exists in Alex's pod, read back as Alex, the owner.
   const evidence = await readAs(page, "alex", "insurance/evidence-of-insurance");
@@ -67,6 +79,8 @@ test("the evidence is write-only for Wrenfield: reading it back is refused", asy
   await page.goto("./quote");
   await page.locator('[data-tour="insurer-bind"]').click({ timeout: 20_000 });
   await expect(page.getByText("You are covered.")).toBeVisible({ timeout: 60_000 });
+  // Leaving the page now would end the bind before Wrenfield records what it issued.
+  await bindSettled(page);
 
   await page.goto("./evidence");
   await expect(page.getByText("Fingerprint (SHA-256)")).toBeVisible({ timeout: 20_000 });

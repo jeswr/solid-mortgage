@@ -56,6 +56,10 @@ test("step 19: the county records the deed and mortgage, and anyone can find the
     timeout: 60_000,
   });
   await expect(record).toBeDisabled();
+  // The heading shows once the first instrument is on the register; the run goes on to record
+  // the mortgage and send Sextant its receipt. "Recorded" replaces "Recording…" when it is over.
+  await expect(record).toHaveText("Recorded", { timeout: 60_000 });
+  await expect(page.getByRole("main").getByRole("alert")).toHaveCount(0);
   await expect(
     page.getByRole("main").getByRole("cell", { name: "Sextant Title & Escrow" }).first(),
   ).toBeVisible();
