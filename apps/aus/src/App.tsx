@@ -276,7 +276,9 @@ function SourceChecks({ day }: { day: number }) {
       <Missing loaded={rows} what="source checks" />
       {isOk(rows) && (
         <div className="table-wrap">
-          <table className="checks" data-tour="aus-source-checks">
+          {/* Focusable so a keyboard visitor can reach the tour's "Look" step (it has no button). */}
+          {/* biome-ignore lint/a11y/noNoninteractiveTabindex: the tour completes this step on focus */}
+          <table className="checks" data-tour="aus-source-checks" tabIndex={0}>
             <caption className="visually-hidden">Credentials checked at source</caption>
             <thead>
               <tr>

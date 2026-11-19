@@ -3,7 +3,8 @@
  * The tour engine (design.md §d.6). Holds the current step and the done set, persists them,
  * follows deep links, completes steps from Lens entries first and `data-tour` clicks second,
  * and drives "Do it for me". It never fakes an outcome: a step is done only when the pod (or the
- * app, for an app note) reports what the step names, or the visitor clicks its target.
+ * app, for an app note) reports what the step names, or the visitor clicks its target (or, with
+ * the keyboard, moves focus into it: a "Look" step has no button to press).
  */
 import type { LensEntry, TourStep } from "@mortgage/demo-kit/contracts";
 import type { AppSlug } from "@mortgage/demo-kit/registry";
@@ -161,17 +162,24 @@ export class TourEngine extends EventTarget {
     return true;
   }
 
-  /** Listen for clicks on `data-tour` targets (the second completion signal). */
+  /**
+   * Listen for clicks on `data-tour` targets (the second completion signal), and, for a step with
+   * no action, for keyboard focus moving into its target, so a step whose target is a region to
+   * look at can be done without a mouse (design.md §c.6: everything is keyboard reachable).
+   */
   watchTargets(): void {
     if (this.clickListener) return;
     this.clickListener = (ev: Event) => {
       const step = this.current;
       if (!step || this.isDone(step.id) || completesByEntry(step) || !step.done.target) return;
+      // Focus completes only a step with nothing to press; focusing a button is not pressing it.
+      if (ev.type === "focusin" && step.action) return;
       const el = ev.target instanceof Element ? ev.target.closest("[data-tour]") : null;
       if (el?.getAttribute("data-tour") === step.done.target && this.onStepPage(step))
         void this.markDone(step.id);
     };
     this.doc.addEventListener("click", this.clickListener, true);
+    this.doc.addEventListener("focusin", this.clickListener, true);
   }
 
   /**
@@ -269,7 +277,10 @@ export class TourEngine extends EventTarget {
   }
 
   dispose(): void {
-    if (this.clickListener) this.doc.removeEventListener("click", this.clickListener, true);
+    if (this.clickListener) {
+      this.doc.removeEventListener("click", this.clickListener, true);
+      this.doc.removeEventListener("focusin", this.clickListener, true);
+    }
     this.clickListener = undefined;
     this.cursor.remove();
   }
