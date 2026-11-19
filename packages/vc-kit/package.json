@@ -57,7 +57,7 @@
     "smol-toml": "^1.7.0"
   },
   "devDependencies": {
-    "@mortgage/solid-kit": "workspace:*",
+    "@sparq-org/solid-server": "0.1.8",
     "@types/n3": "^1.26.1",
     "@types/node": "^25.9.2",
     "typescript": "^6.0.3"

@@ -6,7 +6,7 @@
  * scenario in which all OTHER gates pass - no test is vacuous.
  */
 
-import { createNonceStore } from "@mortgage/solid-kit/auth/api";
+import { randomBytes } from "node:crypto";
 import { beforeAll, describe, expect, it } from "vitest";
 import type { IssuedCredential, TierAProof, VerifyTierAOptions } from "../src/index.js";
 import { verifyTierA } from "../src/index.js";
@@ -100,12 +100,13 @@ describe("verifyTierA - acceptance", () => {
   );
 
   it(
-    "works against the real solid-kit NonceStore seam",
+    "accepts a freshly minted random challenge once, then rejects its replay",
     async () => {
-      // The real store mints its own nonce, so the proof must be produced for
-      // it - this is the one test that pays a fresh prove against a live mint.
-      const store = createNonceStore({ now: () => NOW.getTime() });
-      const nonce = store.mint(SESSION);
+      // A fresh 32-byte base64url challenge (the shape the lender's pod-held
+      // challenge carries), so the proof must be produced for it - this is the
+      // one test that pays a fresh prove against a live mint.
+      const nonce = randomBytes(32).toString("base64url");
+      const store = oneShotNonce(SESSION, nonce);
       const { proveTierA } = await import("../src/index.js");
       const proof = await proveTierA({
         statement: INCOME_STATEMENT,
