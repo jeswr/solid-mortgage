@@ -49,7 +49,13 @@ export async function podRequest(
     async ({ url, as, method, accept }) => {
       const headers: Record<string, string> = { Accept: accept };
       if (as !== null) headers["X-Demo-Agent"] = as;
-      const response = await fetch(url, { cache: "no-store", headers, method });
+      // A pod that never answers fails the request (and names it) instead of hanging the suite.
+      const response = await fetch(url, {
+        cache: "no-store",
+        headers,
+        method,
+        signal: AbortSignal.timeout(30_000),
+      });
       const body = method === "HEAD" ? "" : await response.text();
       return {
         body,

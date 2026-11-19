@@ -202,6 +202,7 @@ async function liveChecks(page: Page, record: JourneyRecord): Promise<void> {
     }
   }
 
+  console.log("  revoke rechecked");
   // Test 5: G5 (appraisal) and G6 (title) after their end events.
   record.expiry = [];
   for (const org of ["appraisal", "title"] as const) {
@@ -247,7 +248,10 @@ async function liveChecks(page: Page, record: JourneyRecord): Promise<void> {
 
   // Test 11: every resource in every pod, read as its owner.
   record.resources = [];
-  for (const owner of podOwners()) record.resources.push(...(await crawlPod(page, owner)));
+  for (const owner of podOwners()) {
+    record.resources.push(...(await crawlPod(page, owner)));
+    console.log(`  crawled ${owner}: ${record.resources.length} resources so far`);
+  }
 
   // Test 13: the ledger totals the visitor sees, and the log they were computed from.
   record.totalsLog = await settledLog(page);
@@ -339,13 +343,18 @@ export async function journey(browser: Browser): Promise<JourneyRecord> {
       };
       return record;
     }
+    const started = Date.now();
     record.walk = await walkTour(page, tour, {
       open: false,
       // A visitor reads each step before pressing Next; the pages finish their requests first.
-      settle: async () => {
-        await recorder.podIdle();
+      settle: async (step) => {
+        if (!(await recorder.podIdle()))
+          console.log(`  ${step.id}: pod requests still busy, moving on`);
       },
-      onDone: async (_step, index) => {
+      onDone: async (step, index) => {
+        console.log(
+          `  step ${index + 1} ${step.id} done at ${Math.round((Date.now() - started) / 1000)} s`,
+        );
         if (index === 22) {
           const text = revokeCaveat();
           const locator = page.getByText(text, { exact: false }).first();
@@ -358,11 +367,15 @@ export async function journey(browser: Browser): Promise<JourneyRecord> {
       },
     });
     record.walk.error = explain(record.walk.error, tour);
+    const phase = (name: string) =>
+      console.log(`  ${name} at ${Math.round((Date.now() - started) / 1000)} s`);
+    phase("walk ended");
     try {
       record.log = await settledLog(page);
     } catch (error) {
       record.liveError = `could not read the pod log: ${error instanceof Error ? error.message : String(error)}`;
     }
+    phase("log read");
     if (walkCompleted(record)) {
       try {
         record.end = await readEnd(page);
@@ -370,6 +383,7 @@ export async function journey(browser: Browser): Promise<JourneyRecord> {
         record.liveError = `could not read the journey ledger page: ${error instanceof Error ? error.message : String(error)}`;
       }
     }
+    phase("journey ledger read");
     if (record.log.length > 0) {
       try {
         await liveChecks(page, record);

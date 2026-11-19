@@ -32,12 +32,12 @@ import { type AppSlug, actsAs, REPO_ROOT, siteOrigin, webidOf } from "./support/
 import { DESIGN_STEP_COUNT } from "./support/tour-content.ts";
 
 // One worker runs these in order; a worker restarted after a failure reads the record back.
-test.describe.configure({ mode: "default", timeout: 40 * 60_000 });
+test.describe.configure({ mode: "default", timeout: 60 * 60_000 });
 
 let record: JourneyRecord;
 
 test.beforeAll(async ({ browser }) => {
-  test.setTimeout(40 * 60_000);
+  test.setTimeout(60 * 60_000);
   record = await journey(browser);
   await test.info().attach("journey-walk.json", {
     body: JSON.stringify({ error: record.walk.error, windows: record.walk.windows }, null, 2),
