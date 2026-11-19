@@ -1,6 +1,7 @@
 // AUTHORED-BY Claude Opus 5.5
 
 import { TOUR } from "@mortgage/content/mortgage/tour";
+import { TOUR as MOTOR_CLAIM_TOUR } from "@mortgage/content/motor-claim/tour";
 import { TOUR as MOVING_HOUSE_TOUR } from "@mortgage/content/moving-house/tour";
 import { ORGS } from "@mortgage/content/orgs";
 import { isAppSlug, ORG_SLUGS } from "@mortgage/demo-kit/registry";
@@ -70,6 +71,21 @@ describe("the demo list", () => {
     });
     expect(tour === undefined ? "" : tourUrl(tour)).toBe(
       "/wallet/moving?tour=moving-house&step=address",
+    );
+  });
+
+  it("starts the motor-claim tour at its first step, in Alex's wallet", () => {
+    const tour = demoById("motor-claim")?.tour;
+    const first = MOTOR_CLAIM_TOUR[0];
+    expect(demoById("motor-claim")?.status).toBe("live");
+    expect(tour).toEqual({
+      demo: "motor-claim",
+      app: first?.app,
+      path: first?.path,
+      step: first?.id,
+    });
+    expect(tour === undefined ? "" : tourUrl(tour)).toBe(
+      "/wallet/claim?tour=motor-claim&step=new-claim",
     );
   });
 

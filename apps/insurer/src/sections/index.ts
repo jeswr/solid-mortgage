@@ -4,6 +4,7 @@
  * src/sections/<demo>/ and registers them here (build-plan.md §2).
  */
 import type { ComponentType } from "react";
+import { MotorClaims, MotorClaimsDesk } from "./motor-claim/MotorClaim.tsx";
 import { MovingPolicies } from "./moving-house/MovingHouse.tsx";
 
 export interface AppSection {
@@ -22,4 +23,6 @@ export const sections: readonly AppSection[] = [
     path: "moving/policies",
     title: "Car policy: garaging address",
   },
+  { Component: MotorClaims, demo: "motor-claim", path: "claims", title: "Report a car claim" },
+  { Component: MotorClaimsDesk, demo: "motor-claim", path: "claims/desk", title: "Claims desk" },
 ];

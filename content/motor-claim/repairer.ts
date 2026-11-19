@@ -33,7 +33,7 @@ import {
   webid,
 } from "../mortgage/world.js";
 import { alexUrl } from "./claim.js";
-import { CLAIM_NUMBER, ESTIMATE, ORG_PATHS, PATHS } from "./facts.js";
+import { CLAIM_NUMBER, ESTIMATE, ORG_PATHS, PATHS, PHOTOS } from "./facts.js";
 import {
   applyMotorClaimExpiries,
   findClaimRequest,
@@ -240,10 +240,13 @@ export async function completeJob(world: World): Promise<Completion> {
 
 /**
  * Step 9. The workshop opens the photos again. The answer is the pod's: after the job, 403.
- * Returns the status of each attempt, without throwing.
+ * Returns the status and, when the pod allowed the read, the photo; never throws on a refusal.
  */
-export async function openPhotosAgain(world: World): Promise<{ url: string; status: number }> {
-  const url = alexUrl(world, `${PATHS.photos}rear-bumper.svg`);
+export async function openPhotosAgain(
+  world: World,
+): Promise<{ url: string; status: number; svg?: string }> {
+  const url = alexUrl(world, `${PATHS.photos}${PHOTOS[0].file}`);
   const response = await world.fetchAs("repairer")(url, { headers: { accept: PHOTO_TYPE } });
-  return { status: response.status, url };
+  if (!response.ok) return { status: response.status, url };
+  return { status: response.status, svg: await response.text(), url };
 }

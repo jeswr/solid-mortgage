@@ -8,6 +8,12 @@ import "./app.css";
 import { mortgageSeed, trackTourContext } from "@mortgage/content/mortgage/browser";
 import { MORTGAGE_HOLDER, mortgageLens, mortgageTour } from "@mortgage/content/mortgage/mount";
 import {
+  isMotorClaimPage,
+  MOTOR_CLAIM_HOLDER,
+  motorClaimLens,
+  motorClaimTour,
+} from "@mortgage/content/motor-claim/mount";
+import {
   isMovingHousePage,
   MOVING_HOUSE_HOLDER,
   movingHouseLens,
@@ -23,11 +29,13 @@ import { initialHolder } from "./holder.ts";
 import { setDayOne, setWalletDay } from "./runtime.tsx";
 import { linkTour } from "./tour-link.ts";
 
-// A page under moving/ belongs to the moving-house demo (src/sections/moving-house/).
+// A page under moving/ belongs to the moving-house demo (src/sections/moving-house/), one under
+// claim/ to the motor claim (src/sections/motor-claim/).
 const movingHouse = isMovingHousePage(location.pathname, "wallet", location.search);
+const motorClaim = !movingHouse && isMotorClaimPage(location.pathname, "wallet", location.search);
 
 // The demo the wallet is mounted for, and the holder it shows first (src/holder.ts).
-const demo = movingHouse ? movingHouseTour() : mortgageTour();
+const demo = movingHouse ? movingHouseTour() : motorClaim ? motorClaimTour() : mortgageTour();
 const holder = initialHolder(window.location.href, demo.holder);
 
 configure({ app: "wallet", holder, registry: ORGS, seed: mortgageSeed() });
@@ -40,8 +48,8 @@ const started = ready().then((info) => {
 
 void mountDemo({
   app: "wallet",
-  holder: movingHouse ? MOVING_HOUSE_HOLDER : MORTGAGE_HOLDER,
-  lens: movingHouse ? movingHouseLens() : mortgageLens(),
+  holder: movingHouse ? MOVING_HOUSE_HOLDER : motorClaim ? MOTOR_CLAIM_HOLDER : MORTGAGE_HOLDER,
+  lens: movingHouse ? movingHouseLens() : motorClaim ? motorClaimLens() : mortgageLens(),
   registry: ORGS,
   runtime: { onEvent, resetDemo, setTourContext: trackTourContext(setTourContext) },
   tour: demo,

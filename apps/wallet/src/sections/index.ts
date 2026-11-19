@@ -5,6 +5,12 @@
  */
 import type { ComponentType } from "react";
 import {
+  MotorClaimFile,
+  MotorClaimRequests,
+  MotorClaimSeen,
+  MotorClaimSharing,
+} from "./motor-claim/MotorClaim.tsx";
+import {
   MovingAddress,
   MovingHome,
   MovingLedger,
@@ -44,4 +50,13 @@ export const sections: readonly AppSection[] = [
     title: "Standing grants",
   },
   { Component: MovingLedger, demo: "moving-house", path: "moving/ledger", title: "Journey ledger" },
+  { Component: MotorClaimFile, demo: "motor-claim", path: "claim", title: "Claim CLM-1" },
+  { Component: MotorClaimRequests, demo: "motor-claim", path: "claim/requests", title: "Requests" },
+  { Component: MotorClaimSeen, demo: "motor-claim", path: "claim/seen", title: "Who saw what" },
+  {
+    Component: MotorClaimSharing,
+    demo: "motor-claim",
+    path: "claim/sharing",
+    title: "Grants and ledger",
+  },
 ];
