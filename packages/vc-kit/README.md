@@ -125,5 +125,29 @@ proved. In a browser every call that reaches the network must be given a
 `fetch`; the guarded-fetch stand-in rejects instead of falling back to the
 global one.
 
+### The prover's CRS comes from the site
+
+In a browser, bb.js would download its CRS from Aztec's CDN every time it
+starts: 2^20 G1 points (64 MiB) and a 2^16-point Grumpkin CRS (4 MiB), cached
+only in that browser's IndexedDB. Proofs would then depend on a third party at
+proof time. Instead, in a page or a worker, `zk/crs.ts` loads the CRS from the
+site's own origin and hands it to bb.js:
+
+- `crs/bn254-g1-32768-….dat`: the first 2^15 G1 points (2 MiB). Every committed
+  circuit is 17,416 gates, 2^15 once padded; bb.js refuses with one point fewer
+  (`test/zk-crs.test.ts` checks both on the real wasm).
+- `crs/bn254-g2-….dat`: the G2 point (128 bytes).
+- No Grumpkin CRS: only IPA accumulation uses it, and the `evm` flavour never
+  runs it.
+
+Each file is pinned by length and SHA-256 and checked when it loads; anything
+else (a missing file, a redirect, one changed byte) fails closed, with no
+fallback to the network. The bytes are the start of Aztec's published
+`g1.dat` and its `g2.dat`. `tools/build-site.mjs` copies `crs/` to `dist/crs/`,
+which the site serves same-origin only (`Cross-Origin-Resource-Policy`) and
+caches for a year by hashed name. A circuit larger than 2^15 needs a larger G1
+file and a new pin. In Node, bb.js uses its native binary and its own CRS
+handling, unchanged.
+
 `@mortgage/vc-kit/seed-tooling` is Node-only (it drives the sparq native
 helper) and must not be imported from browser code.
