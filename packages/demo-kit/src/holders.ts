@@ -26,8 +26,7 @@ export interface HolderRecord {
   readonly operator?: string;
 }
 
-/** The registry. Order is the wallet switcher's order; the first is the default holder. */
-export const HOLDERS = Object.freeze({
+const REGISTERED = {
   alex: Object.freeze({
     id: "alex",
     kind: "person",
@@ -57,9 +56,12 @@ export const HOLDERS = Object.freeze({
     podPath: "/pods/northwind/",
     short: "Northwind",
   }),
-} as const satisfies Record<string, HolderRecord>);
+} as const satisfies Record<string, HolderRecord>;
 
-export type HolderId = keyof typeof HOLDERS;
+export type HolderId = keyof typeof REGISTERED;
+
+/** The registry. Order is the wallet switcher's order; the first is the default holder. */
+export const HOLDERS: Readonly<Record<HolderId, HolderRecord>> = Object.freeze(REGISTERED);
 
 /** Every registered holder id, in registry order. */
 export const HOLDER_IDS: readonly HolderId[] = Object.freeze(Object.keys(HOLDERS) as HolderId[]);
