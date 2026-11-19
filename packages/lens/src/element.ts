@@ -104,6 +104,12 @@ export class SolidLens extends HTMLElement {
   private pinned: Pinned | null = null;
   private selection: Selection = null;
   private dirty = false;
+  /** One presentation is scheduled (see {@link schedule}). */
+  private scheduled = false;
+  /** The map needs drawing again before the next presentation. */
+  private mapDirty = false;
+  /** Live entries received since the last presentation, to announce and animate in order. */
+  private livePending: { rec: Received; sentence: Sentence }[] = [];
   private mql: MediaQueryList | undefined;
   private reducedMql: MediaQueryList | undefined;
   private readonly n = ++uid;
@@ -178,6 +184,9 @@ export class SolidLens extends HTMLElement {
     replace(this.els.mapWrap, this.lensMap.svg);
     this.pinned = null;
     this.selection = null;
+    // Entries of the previous log are not drawn on the new one.
+    this.livePending = [];
+    this.mapDirty = true;
     this.renderFoot();
     this.invalidate();
   }
@@ -191,19 +200,23 @@ export class SolidLens extends HTMLElement {
     return this._model !== undefined;
   }
 
-  /** Feed one entry. Live entries animate and are announced; replayed ones only update state. */
+  /**
+   * Feed one entry. Live entries animate and are announced; replayed ones only update state.
+   *
+   * The model takes the entry at once; what is drawn (map, announcement, motion, panels) is drawn
+   * once per frame for everything pushed since the last frame (see {@link present}). Entries arrive
+   * one message at a time, and while the agents work that is hundreds a second: drawing each one
+   * (a full panel and map, and a forced layout for the pulse) took the page's main thread for
+   * minutes. `flush()` draws what is pending at once.
+   */
   push(entry: LensEntry, opts: { replayed?: boolean } = {}): Received | undefined {
     const rec = this.model.push(entry, opts);
     if (!rec) return undefined;
     const sentence = describe(this.model, rec);
     this.trackPinned(rec, sentence);
-    this.lensMap?.render();
+    this.mapDirty = true;
     if (!rec.replayed) {
-      this.announce(sentence.text);
-      void this.lensMap?.play(rec, sentence);
-      this.els.pulse.classList.remove("on");
-      void this.els.pulse.offsetWidth;
-      this.els.pulse.classList.add("on");
+      this.livePending.push({ rec, sentence });
     } else if (!isPod(entry) && entry.kind === "no-solid" && rec.step === this.step?.id) {
       // Replays rebuild state silently; a replayed "no Solid" note in this step still dims.
       this.lensMap?.dim(entry.text);
@@ -286,9 +299,9 @@ export class SolidLens extends HTMLElement {
     return computeTotals(this.model);
   }
 
-  /** Re-render now (normally batched to the next microtask). */
+  /** Draw everything pending now (normally batched to the next frame). */
   flush(): void {
-    if (this.dirty) this.renderAll();
+    this.present();
   }
 
   // ---- building ------------------------------------------------------------------------------
@@ -594,11 +607,47 @@ export class SolidLens extends HTMLElement {
   }
 
   private invalidate(): void {
-    if (this.dirty) return;
     this.dirty = true;
-    queueMicrotask(() => {
-      if (this.dirty) this.renderAll();
-    });
+    this.schedule();
+  }
+
+  /**
+   * Present once at the next frame, however many changes arrive before it. A hidden page gets no
+   * animation frames, so there a short timer stands in.
+   */
+  private schedule(): void {
+    if (this.scheduled) return;
+    this.scheduled = true;
+    const run = () => {
+      if (!this.scheduled) return;
+      this.scheduled = false;
+      this.present();
+    };
+    const visible = typeof document === "undefined" || document.visibilityState !== "hidden";
+    if (visible && typeof requestAnimationFrame === "function") requestAnimationFrame(run);
+    else setTimeout(run, 50);
+  }
+
+  /** Draw what changed since the last presentation: the map, then live entries, then the panels. */
+  private present(): void {
+    this.scheduled = false;
+    if (!this.els || !this._model) return;
+    if (this.mapDirty) {
+      this.mapDirty = false;
+      this.lensMap?.render();
+    }
+    const live = this.livePending;
+    if (live.length > 0) {
+      this.livePending = [];
+      // The live region keeps the last three sentences: announcing only those leaves it the same.
+      for (const { sentence } of live.slice(-3)) this.announce(sentence.text);
+      // The map queues each motion, and shortens them itself when a burst backs up.
+      for (const { rec, sentence } of live) void this.lensMap?.play(rec, sentence);
+      this.els.pulse.classList.remove("on");
+      void this.els.pulse.offsetWidth;
+      this.els.pulse.classList.add("on");
+    }
+    if (this.dirty) this.renderAll();
   }
 
   // ---- rendering -----------------------------------------------------------------------------
