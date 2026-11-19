@@ -1,0 +1,15 @@
+/* AUTHORED-BY Claude Opus 5.5
+ * This app's own design tokens. Every app defines its own values (design.md §b.2): no shared
+ * component library for app chrome, original colours only. */
+:root {
+  --color-canvas: #f7f5fb;
+  --color-surface: #ffffff;
+  --color-ink: #1f1a2e;
+  --color-muted: #5d5670;
+  --color-primary: #5b4b8a;
+  --color-on-primary: #ffffff;
+  --color-focus: #c2410c;
+  --font-body: "Inter", system-ui, sans-serif;
+  --radius: 10px;
+  --space: 1rem;
+}

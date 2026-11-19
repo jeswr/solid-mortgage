@@ -1,0 +1,47 @@
+/* AUTHORED-BY Claude Opus 5.5 */
+@import "./tokens.css";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+}
+
+main {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: calc(var(--space) * 2) var(--space);
+}
+
+.card {
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  padding: calc(var(--space) * 1.5);
+}
+
+.muted {
+  color: var(--color-muted);
+}
+
+button.primary {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  border: 0;
+  border-radius: var(--radius);
+  font: inherit;
+  font-weight: 600;
+  padding: 0.75rem 1.25rem;
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
