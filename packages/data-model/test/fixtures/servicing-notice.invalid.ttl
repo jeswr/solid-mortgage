@@ -25,7 +25,7 @@
     dcterms:creator <https://servicer.example/profile/card#me>;
     dcterms:issued "2026-10-12"^^xsd:date;
     schema:name "Notice of servicing transfer";
-    dcterms:type mort:NoticeKind-Other;
+    dcterms:type mort:ScoreModel-ClassicFICO;
     mort:transferEffectiveDate "2026-10-11"^^xsd:date;
     mort:transferor _:transferor;
     mort:transferee _:transferee;

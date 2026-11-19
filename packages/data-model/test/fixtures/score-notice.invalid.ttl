@@ -29,6 +29,6 @@
     schema:description "Notice to the home loan applicant".
 _:scoreDisclosure1 schema:name "Repository 1";
     mort:creditScoreValue 900;
-    mort:scoreModel mort:ScoreModel-Unknown;
+    mort:scoreModel mort:NoticeKind-OwnershipTransfer;
     dcterms:created "2026-08-05"^^xsd:date;
     mort:keyFactor "Length of credit history".
