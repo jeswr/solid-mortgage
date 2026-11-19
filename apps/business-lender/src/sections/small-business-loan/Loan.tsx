@@ -189,7 +189,7 @@ function DealSheet({ sheet }: { sheet: Assessment }) {
             </thead>
             <tbody>
               {sheet.checks.map((check) => (
-                <tr key={check.path} data-testid={`lender-check-${check.label.toLowerCase()}`}>
+                <tr key={check.path} data-testid={`lender-check-${check.path.split("/").pop()}`}>
                   <th scope="row">{check.label}</th>
                   <td>
                     <span className={`status status-${check.verified ? "met" : "pending"}`}>
