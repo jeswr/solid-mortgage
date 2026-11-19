@@ -34,6 +34,12 @@ import {
   smallBusinessLoanLens,
   smallBusinessLoanTour,
 } from "@mortgage/content/small-business-loan/mount";
+import {
+  isSmallDollarPage,
+  SMALL_DOLLAR_HOLDER,
+  smallDollarLens,
+  smallDollarTour,
+} from "@mortgage/content/small-dollar-lending/mount";
 import { configure, onEvent, ready, resetDemo, setTourContext } from "@mortgage/pod-runtime";
 import { mountDemo } from "@mortgage/tour/mount";
 import { StrictMode } from "react";
@@ -53,16 +59,21 @@ const kyb = !medication && !loan && isBusinessKybPage(location.pathname, "wallet
 const movingHouse =
   !medication && !loan && !kyb && isMovingHousePage(location.pathname, "wallet", location.search);
 
+// A page under lending/ belongs to the small-dollar lending demo (src/sections/small-dollar-lending/).
+const lending = isSmallDollarPage(location.pathname, "wallet", location.search);
+
 // The demo the wallet is mounted for, and the holder it shows first (src/holder.ts).
-const demo = medication
-  ? medicationTour()
-  : loan
-    ? smallBusinessLoanTour()
-    : kyb
-      ? businessKybTour()
-      : movingHouse
-        ? movingHouseTour()
-        : mortgageTour();
+const demo = lending
+  ? smallDollarTour()
+  : medication
+    ? medicationTour()
+    : loan
+      ? smallBusinessLoanTour()
+      : kyb
+        ? businessKybTour()
+        : movingHouse
+          ? movingHouseTour()
+          : mortgageTour();
 const holder = initialHolder(window.location.href, demo.holder);
 
 configure({ app: "wallet", holder, registry: ORGS, seed: mortgageSeed() });
@@ -75,24 +86,28 @@ const started = ready().then((info) => {
 
 void mountDemo({
   app: "wallet",
-  holder: medication
-    ? MEDICATION_HOLDER
-    : loan
-      ? SMALL_BUSINESS_LOAN_HOLDER
-      : kyb
-        ? BUSINESS_KYB_HOLDER
-        : movingHouse
-          ? MOVING_HOUSE_HOLDER
-          : MORTGAGE_HOLDER,
-  lens: medication
-    ? medicationLens()
-    : loan
-      ? smallBusinessLoanLens()
-      : kyb
-        ? businessKybLens()
-        : movingHouse
-          ? movingHouseLens()
-          : mortgageLens(),
+  holder: lending
+    ? SMALL_DOLLAR_HOLDER
+    : medication
+      ? MEDICATION_HOLDER
+      : loan
+        ? SMALL_BUSINESS_LOAN_HOLDER
+        : kyb
+          ? BUSINESS_KYB_HOLDER
+          : movingHouse
+            ? MOVING_HOUSE_HOLDER
+            : MORTGAGE_HOLDER,
+  lens: lending
+    ? smallDollarLens()
+    : medication
+      ? medicationLens()
+      : loan
+        ? smallBusinessLoanLens()
+        : kyb
+          ? businessKybLens()
+          : movingHouse
+            ? movingHouseLens()
+            : mortgageLens(),
   ...(loan
     ? { ledger: { compliance: [...LOAN_COMPLIANCE] } }
     : kyb

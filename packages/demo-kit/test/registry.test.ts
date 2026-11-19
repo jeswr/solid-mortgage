@@ -12,8 +12,10 @@ import {
 
 describe("registry types", () => {
   it("has the thirteen mortgage apps, the later demos' apps and the front door", () => {
-    expect(ORG_SLUGS).toHaveLength(19);
-    expect(ORG_SLUGS).toContain("state");
+    expect(ORG_SLUGS).toHaveLength(22);
+    expect(ORG_SLUGS.slice(0, 13)).toContain("servicer");
+    expect(ORG_SLUGS.at(13)).toBe("state");
+    expect(ORG_SLUGS).toEqual(expect.arrayContaining(["idv", "fintech-lender", "payout"]));
     expect(ORG_SLUGS).toContain("registry");
     expect(ORG_SLUGS).toContain("business-lender");
     expect(ORG_SLUGS.slice(-3)).toEqual(["hospital", "pharmacy", "clinic"]);

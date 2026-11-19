@@ -51,4 +51,11 @@ describe("who the bank shows as signed in", () => {
       expect(masthead).not.toContain("Alex");
     },
   );
+
+  it("names Maya on the small-dollar lending pages", () => {
+    const { container } = render(<App hook={at("/lending/cash-flow")} />);
+    expect(signedIn(container)).toContain("Maya");
+    expect(signedIn(container)).not.toContain("Jordan Blake");
+    expect(container.querySelector(".masthead .signed-in")?.textContent).toContain("Maya");
+  });
 });

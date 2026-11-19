@@ -10,6 +10,7 @@
     "vite.ts",
     "mortgage/**/*.ts",
     "moving-house/**/*.ts",
+    "small-dollar-lending/**/*.ts",
     "business-kyb/**/*.ts",
     "medication-handover/**/*.ts",
     "small-business-loan/**/*.ts"

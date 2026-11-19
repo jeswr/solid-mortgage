@@ -161,6 +161,11 @@ export const MESSAGE_KIND_IRIS = [
   MORT.MessageKind_LoanDelivery,
   MORT.MessageKind_PurchaseConfirmation,
   MORT.MessageKind_ServicingBoarding,
+  // Small-dollar lending (flows.md section 4).
+  MORT.MessageKind_RepaymentFurnishing,
+  MORT.MessageKind_PayoutConfirmation,
+  MORT.MessageKind_ScoreInquiry,
+  MORT.MessageKind_ScoreDelivery,
 ] as const;
 
 export type MessageKindIri = (typeof MESSAGE_KIND_IRIS)[number];

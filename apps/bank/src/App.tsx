@@ -2,6 +2,10 @@
 import { isBusinessKybPage } from "@mortgage/content/business-kyb/mount";
 import { BORROWER } from "@mortgage/content/mortgage/facts";
 import { isSmallBusinessLoanPage } from "@mortgage/content/small-business-loan/mount";
+import {
+  isSmallDollarPage,
+  smallDollarPersona,
+} from "@mortgage/content/small-dollar-lending/mount";
 import { HOLDERS } from "@mortgage/demo-kit/holders";
 import { applyDocumentMeta, DemoTrust, TrustBanner } from "@mortgage/demo-kit/trust";
 import { appUrl } from "@mortgage/demo-kit/urls";
@@ -33,26 +37,33 @@ const NAV = [
 ] as const;
 
 /**
- * On the business pages (business KYB under `kyb/`, the small business loan under `business/`)
- * the customer is Northwind, whose pod Jordan Blake operates; elsewhere it is Alex, the registry's
- * persona. Returns `undefined` for Alex, so the banner keeps the registry's own line.
+ * Who the bank shows as signed in on this page: on the business pages (business KYB under `kyb/`,
+ * the small business loan under `business/`) Northwind, whose pod Jordan Blake operates; on the
+ * small-dollar lending pages (`lending/`) Maya; elsewhere Alex, the registry's persona. Returns
+ * `undefined` for Alex, so the banner keeps the registry's own line.
  */
-function useBusinessCustomer(): { name: string; role: string } | undefined {
+function usePagePersona(): { name: string; role?: string } | undefined {
   const [location] = useLocation();
   const path = `/bank${location}`;
-  if (!isBusinessKybPage(path, "bank") && !isSmallBusinessLoanPage(path, "bank")) return undefined;
-  const { name, operator } = HOLDERS.northwind;
-  return { name: operator ?? name, role: `for ${name}` };
+  if (isBusinessKybPage(path, "bank") || isSmallBusinessLoanPage(path, "bank")) {
+    const { name, operator } = HOLDERS.northwind;
+    return { name: operator ?? name, role: `for ${name}` };
+  }
+  // The lending demo also claims a page whose query names its tour.
+  if (isSmallDollarPage(path, "bank", globalThis.location?.search ?? "")) {
+    return smallDollarPersona("online banking");
+  }
+  return undefined;
 }
 
 function BankTrustBanner() {
-  const business = useBusinessCustomer();
+  const business = usePagePersona();
   return business === undefined ? <TrustBanner /> : <TrustBanner signedInAs={business} />;
 }
 
 function TopNav() {
   const [location] = useLocation();
-  const business = useBusinessCustomer();
+  const business = usePagePersona();
   return (
     <header className="masthead">
       <div className="masthead-inner">
@@ -86,7 +97,9 @@ function TopNav() {
           ) : (
             <>
               {business.name}
-              <span className="sr-only"> {business.role}</span>
+              {business.role === undefined ? null : (
+                <span className="sr-only"> {business.role}</span>
+              )}
             </>
           )}
         </p>

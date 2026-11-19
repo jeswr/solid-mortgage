@@ -426,38 +426,63 @@ export const DEMOS: readonly Demo[] = [
       "Income, cash flow and a credit summary arrive as credentials; two lenders quote from a proof, and the chosen one reads under a 30-day grant.",
     sectors: ["Finance"],
     durationSeconds: 220,
-    status: "coming",
+    status: "live",
     media: mediaFor("small-dollar-lending"),
+    // Step 1 of content/small-dollar-lending/tour.ts: Maya's empty pod, in her wallet.
+    tour: { demo: "small-dollar-lending", app: "wallet", path: "lending", step: "vault" },
     chapters: [
       {
         id: "intro",
         title: "Two thousand dollars, this week",
-        transcript: [],
+        transcript: [
+          "Maya's car has broken down, and she needs two thousand dollars to fix it. Her credit file is thin. Her income and her bank account tell a better story.",
+          "Maya has a pod. It is empty.",
+        ],
       },
       {
         id: "fill",
         title: "Filling it",
-        transcript: [],
+        transcript: [
+          "An identity service checks who she is, once, and gives her a credential.",
+          "Her employer's payroll provider states her income. This is the same application you saw in the mortgage demo, issuing to a different person.",
+          "Her bank summarises her account: regular deposits, and no returned payments in ninety days.",
+          "And the credit bureau adds its view: a score of six hundred and twelve, from a short history.",
+        ],
       },
       {
         id: "shop",
         title: "Two quotes, nothing handed over",
-        transcript: [],
+        transcript: [
+          "Maya asks two lenders for a quote. Each receives a proof that she clears its thresholds. Neither receives her name, her income or her transactions.",
+        ],
       },
       {
         id: "decide",
         title: "One decision, two models",
-        transcript: [],
+        transcript: [
+          "She picks one and applies. The lender is granted her identity, income and cash-flow records for thirty days, and the consent is recorded before the first read.",
+          "The lender shows both ways of deciding. On the credit score alone, she is declined. With cash flow as well, she is approved.",
+          "The loan disclosure is written to her pod. It is hers to keep.",
+          "The bank that looked only at the score sends its decline, with reasons, to the same place.",
+        ],
       },
       {
         id: "payout",
         title: "Paid out",
-        transcript: [],
+        transcript: [
+          "A payment service sends the money to her card. It is granted one record, once: where to pay. It sees nothing else.",
+        ],
       },
       {
         id: "repay",
         title: "Repaying, and leaving",
-        transcript: [],
+        transcript: [
+          "Each payment made on time is added to a repayment credential in her pod, and reported to the bureau. The thin file gets thicker.",
+          "When the loan is paid off, Maya withdraws the lender's access.",
+          "The lender asks for her bank data again, and the pod refuses.",
+          "Five issuers, two lenders, one payment service. The next time Maya applies for anything, the pod is already full.",
+          "Try it from the welcome page, or join us at the EDMA Solid Community of Practice.",
+        ],
       },
     ],
   },
