@@ -1,4 +1,5 @@
 // AUTHORED-BY Claude Opus 5.5
+import { ORG_SLUGS } from "@mortgage/demo-kit/registry";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { memoryLocation } from "wouter/memory-location";
@@ -88,13 +89,17 @@ describe("home", () => {
 
   it("says Video coming soon while the recording is missing", async () => {
     render(<App hook={at("/")} probe={missing} />);
-    expect(await screen.findByRole("img", { name: /video coming soon/ })).toBeTruthy();
+    // One player per live demo card.
+    const placeholders = await screen.findAllByRole("img", { name: /video coming soon/ });
+    expect(placeholders).toHaveLength(DEMOS.filter((demo) => demo.status === "live").length);
     expect(document.querySelector("video")).toBeNull();
   });
 
   it("offers a play button and seekable chapters once the recording exists", async () => {
     render(<App hook={at("/")} probe={present} />);
-    expect(await screen.findByRole("button", { name: /Play the narrated video/ })).toBeTruthy();
+    expect(
+      (await screen.findAllByRole("button", { name: /Play the narrated video/ }))[0],
+    ).toBeTruthy();
     const mortgage = DEMOS[0];
     for (const chapter of mortgage?.chapters ?? []) {
       expect(
@@ -105,7 +110,8 @@ describe("home", () => {
 
   it("opens the video in place with captions and preload none", async () => {
     render(<App hook={at("/")} probe={present} />);
-    (await screen.findByRole("button", { name: /Play the narrated video/ })).click();
+    // The mortgage card comes first.
+    (await screen.findAllByRole("button", { name: /Play the narrated video/ }))[0]?.click();
     const video = await waitFor(() => {
       const found = document.querySelector("video");
       if (found === null) throw new Error("no video yet");
@@ -140,7 +146,7 @@ describe("home", () => {
     const tiles = within(screen.getByRole("list", { name: "Organisation apps" })).getAllByRole(
       "link",
     );
-    expect(tiles).toHaveLength(13);
+    expect(tiles).toHaveLength(ORG_SLUGS.length);
     expect(tiles.map((tile) => tile.getAttribute("href"))).toContain("/lender-desk/");
     for (const tile of tiles) {
       expect(tile.style.getPropertyValue("--tile-bg")).toMatch(/^#[0-9A-F]{6}$/i);
@@ -179,7 +185,7 @@ describe("watch pages", () => {
   });
 
   it("gives a coming demo a Coming next page without a player", () => {
-    render(<App hook={at("/watch/moving-house")} probe={present} />);
+    render(<App hook={at("/watch/medication-handover")} probe={present} />);
     expect(screen.getByRole("heading", { name: "This demo is being built" })).toBeTruthy();
     expect(document.querySelector("video, .player")).toBeNull();
   });
@@ -195,7 +201,8 @@ describe("honesty and ledger", () => {
     render(<App hook={at("/honesty")} />);
     expect(screen.getByText(HONESTY_STATEMENT)).toBeTruthy();
     expect(screen.getByRole("table")).toBeTruthy();
-    expect(screen.getAllByRole("row")).toHaveLength(14);
+    // A header row, then one row per organisation app.
+    expect(screen.getAllByRole("row")).toHaveLength(ORG_SLUGS.length + 1);
   });
 
   it("redirects the old ledger path to /journey", async () => {
