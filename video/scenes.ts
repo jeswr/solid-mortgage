@@ -382,6 +382,10 @@ export const actions: Record<string, Action> = {
     if (!s.action) return c.d.warn(`step ${s.id} has no action`);
     await c.d.clearHighlight();
     await handOff(c, s);
+    // A button can be drawn before the data it acts on has loaded, and stay disabled until it has
+    // (the lending prover waits for its anchors): a press then would be lost.
+    if (!(await until(20_000, () => targetOf(c, s).first().isEnabled({ timeout: 1000 }))))
+      console.log(`  · ${s.id}: "${s.action.label}" still disabled; pressing anyway`);
     const pressed = await targetOf(c, s)
       .first()
       .elementHandle({ timeout: 8000 })
