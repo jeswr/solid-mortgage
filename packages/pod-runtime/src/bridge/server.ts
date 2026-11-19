@@ -6,7 +6,13 @@
  * worker. In a host-mode build the service worker honours the identity header only from this page.
  */
 import type { AppNote } from "@mortgage/demo-kit/contracts";
-import { AGENT_HEADER, type ControlReply, type ControlRequest, TOUR_HEADER } from "../protocol.js";
+import {
+  AGENT_HEADER,
+  type ControlReply,
+  type ControlRequest,
+  HOLDER_HEADER,
+  TOUR_HEADER,
+} from "../protocol.js";
 
 export const BRIDGE_REQUEST = "pod-bridge";
 export const BRIDGE_REPLY = "pod-bridge-reply";
@@ -35,6 +41,11 @@ export interface BridgeOptions {
   podsOrigin: string;
   /** The app slug an origin belongs to, or undefined (then requests are anonymous). */
   identify(origin: string): string | undefined;
+  /**
+   * The registered holders an app may act for (fixed at build time: the wallet holds every
+   * holder's pod, other apps none). A request naming a holder outside this list is refused.
+   */
+  holders?(app: string): readonly string[];
   /** Where `message` events arrive. Default: the window. */
   target?: {
     addEventListener(type: "message", listener: (event: BridgeMessageEvent) => void): void;
@@ -83,8 +94,16 @@ async function forwardFetch(
     return { error: "the bridge only forwards requests for this origin's pods", ok: false };
   const headers = new Headers(message.headers);
   const tour = headers.get(TOUR_HEADER);
+  const holder = headers.get(HOLDER_HEADER);
   for (const name of [...headers.keys()]) if (name.startsWith("x-demo-")) headers.delete(name);
-  if (identity !== undefined) headers.set(AGENT_HEADER, identity);
+  let actor = identity;
+  if (holder !== null) {
+    // Only an app the build lets act for that holder (the wallet) may; never guessed.
+    if (identity === undefined || !(options.holders?.(identity) ?? []).includes(holder))
+      return { error: "this app may not act for that holder", ok: false };
+    actor = holder;
+  }
+  if (actor !== undefined) headers.set(AGENT_HEADER, actor);
   if (tour !== null) headers.set(TOUR_HEADER, tour);
   const init: RequestInit = { headers, method: message.method };
   if (message.body !== null) init.body = message.body;

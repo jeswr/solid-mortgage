@@ -42,9 +42,24 @@ read them; nobody redefines them. Design leaves three parts open, defined here:
 
 `actsAs` is the pod an app's requests are made as. It is the app's own slug except for
 `lender-desk`, which acts as `lender` (one organisation, one pod, one WebID), and `wallet`, which
-acts as `alex` (the wallet is Alex's own app). `podOwners(ORGS)` gives the twelve pods: Alex's
-and eleven organisations' (Cairn needs none). A pod lives at `/pods/<owner>/` and its WebID is
-`webidFor(owner, podOrigin)` = `<origin>/pods/<owner>/profile/card#me`.
+acts as `alex` (the wallet is Alex's own app). `podOwners(ORGS)` gives every pod: one per
+registered holder, then each organisation's (Cairn needs none). A pod lives at `/pods/<owner>/`
+and its WebID is `webidFor(owner, podOrigin)` = `<origin>/pods/<owner>/profile/card#me`.
+
+## Holders
+
+The people and businesses who keep pods are data, not a constant (`@mortgage/demo-kit/holders`,
+also exported from `./registry`). `HOLDERS` maps each `HolderId` to a `HolderRecord`:
+`{ id, name, short, kind: "person" | "business", podPath, operator? }` (`operator` is the person
+who signs in for a business). Registered: `alex` (the default, `DEFAULT_HOLDER`), `maya`, `rosa`
+and `northwind`, all fictional. `isHolderId(value)`, `holderRecord(id)` and
+`holderOfPodUrl(url)` (the holder whose `/pods/<id>/` a URL is in) go with it. `PodOwner` is
+`OrgSlug | HolderId`; `isPodOwner(value)` checks one.
+
+`holdersActedFor(registry, app)` lists the holders an app may act for: every holder for the app
+whose `actsAs` is a holder (Cairn), none for an organisation. To add a holder, add one entry to
+`REGISTERED` in `src/registry.ts` (the file imports nothing: the site tools load it directly).
+pod-runtime then provisions its pod, WebID, public profile and WAC; no seed is needed for those.
 
 ## Links between apps
 

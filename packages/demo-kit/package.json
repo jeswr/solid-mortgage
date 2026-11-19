@@ -18,6 +18,10 @@
       "types": "./dist/contracts/index.d.ts",
       "import": "./dist/contracts/index.js"
     },
+    "./holders": {
+      "types": "./dist/holders.d.ts",
+      "import": "./dist/holders.js"
+    },
     "./registry": {
       "types": "./dist/registry.d.ts",
       "import": "./dist/registry.js"

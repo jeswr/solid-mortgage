@@ -24,7 +24,13 @@ import {
   type MortgageResource,
 } from "@mortgage/data-model";
 import type { DemoCalendar } from "@mortgage/demo-kit/calendar";
-import { ORG_SLUGS, type PodOwner, podOwners, webidFor } from "@mortgage/demo-kit/registry";
+import {
+  isHolderId,
+  ORG_SLUGS,
+  type PodOwner,
+  podOwners,
+  webidFor,
+} from "@mortgage/demo-kit/registry";
 import { ORGS, POD_HOLDER } from "../orgs.js";
 import { type AclRule, aclDataset, aclTurtle, PUBLIC_READ, SIGNED_IN_APPEND } from "./acl.js";
 import { BORROWER, CURRENT_ADDRESS, DAY, LOAN, PROPERTY, SELLER_NAME } from "./facts.js";
@@ -173,7 +179,7 @@ export async function seedRequests(env: SeedEnvironment): Promise<SeedRequest[]>
 
   // --- Organisations ---
   for (const owner of podOwners(ORGS)) {
-    if (owner === "alex") continue;
+    if (isHolderId(owner)) continue;
     container(owner, "profile/");
     await acl(owner, "profile/", [PUBLIC_READ]);
     await resource(

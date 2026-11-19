@@ -75,7 +75,7 @@ function CredentialFacts({ card }: { card: CredentialCard }) {
     async (world) => {
       // Loaded at the point of use: verification brings the signing library.
       const { checkAtSource } = await import("@mortgage/content/mortgage/issuers");
-      return checkAtSource(world, "alex", card.url, card.kind, [card.expectedIssuer]);
+      return checkAtSource(world, world.holder, card.url, card.kind, [card.expectedIssuer]);
     },
     [card.url],
   );

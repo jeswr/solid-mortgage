@@ -28,7 +28,14 @@ import type {
   LensEntry,
   PodEvent,
 } from "@mortgage/demo-kit/contracts";
-import { isOrgSlug, type OrgSlug, type PodOwner, webidFor } from "@mortgage/demo-kit/registry";
+import {
+  HOLDERS,
+  isHolderId,
+  isOrgSlug,
+  type OrgSlug,
+  type PodOwner,
+  webidFor,
+} from "@mortgage/demo-kit/registry";
 import { DataFactory, type Store } from "n3";
 import {
   aclDocument,
@@ -166,6 +173,8 @@ const MUTATING = new Set(["PUT", "POST", "PATCH", "DELETE"]);
 const RDF_ACL_TYPES = new Set(["text/turtle", "application/ld+json"]);
 const FOAF = "http://xmlns.com/foaf/0.1/";
 const PIM = "http://www.w3.org/ns/pim/space#";
+const SCHEMA = "https://schema.org/";
+const RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
 
 function isTrap(error: unknown): boolean {
   const ns = (globalThis as { WebAssembly?: { RuntimeError?: new () => Error } }).WebAssembly;
@@ -267,6 +276,28 @@ function parentOf(path: string): string | undefined {
   const trimmed = path.endsWith("/") ? path.slice(0, -1) : path;
   if (trimmed === "") return undefined;
   return trimmed.slice(0, trimmed.lastIndexOf("/") + 1);
+}
+
+/**
+ * A registered holder's baseline profile also says who the holder is (schema.org type and
+ * name, from `@mortgage/demo-kit/holders`), so a holder with no demo seed yet still has a
+ * readable profile. A demo's seed may replace `profile/card` with a fuller one.
+ */
+function holderProfile(owner: PodOwner, me: string) {
+  if (!isHolderId(owner)) return [];
+  const holder = HOLDERS[owner];
+  return [
+    DataFactory.quad(
+      DataFactory.namedNode(me),
+      DataFactory.namedNode(RDF_TYPE),
+      DataFactory.namedNode(`${SCHEMA}${holder.kind === "person" ? "Person" : "Organization"}`),
+    ),
+    DataFactory.quad(
+      DataFactory.namedNode(me),
+      DataFactory.namedNode(`${SCHEMA}name`),
+      DataFactory.literal(holder.name),
+    ),
+  ];
 }
 
 export function createPodHost(options: PodHostOptions): PodHost {
@@ -400,8 +431,9 @@ export function createPodHost(options: PodHostOptions): PodHost {
               DataFactory.namedNode(`${PIM}storage`),
               DataFactory.namedNode(base(owner)),
             ),
+            ...holderProfile(owner, me),
           ],
-          { foaf: FOAF, pim: PIM },
+          { foaf: FOAF, pim: PIM, schema: SCHEMA },
         ),
       ],
       [
@@ -848,11 +880,23 @@ export function createPodHost(options: PodHostOptions): PodHost {
   // ---- runtime services (change notification, one-time grants) ----
   /** The organisation app notes for `owner` go to: `key` when it is one, else the first that acts as it. */
   function appFor(owner: PodOwner, key?: string | null): OrgSlug | undefined {
-    if (key !== undefined && key !== null && isOrgSlug(key) && resolveIdentity(key) === owner)
-      return key;
+    if (key !== undefined && key !== null && isOrgSlug(key) && actsFor(key, owner)) return key;
     if (isOrgSlug(owner)) return owner;
     for (const [app, target] of identities) if (target === owner && isOrgSlug(app)) return app;
+    // A holder with no app of its own is served by the app that acts for holders (the wallet).
+    if (isHolderId(owner))
+      for (const [app, target] of identities) if (isHolderId(target) && isOrgSlug(app)) return app;
     return undefined;
+  }
+
+  /**
+   * Whether app `app` may act for `owner`: it acts as that owner, or it acts as a holder and
+   * `owner` is a registered holder (one wallet holds every holder's pod, flows.md §1).
+   */
+  function actsFor(app: string, owner: PodOwner): boolean {
+    const target = resolveIdentity(app);
+    if (target === owner) return true;
+    return isHolderId(target) && isHolderId(owner) && owners.includes(owner);
   }
 
   /** A fetch that dispatches directly (the caller already holds the queue) as `identity`. */
@@ -882,7 +926,7 @@ export function createPodHost(options: PodHostOptions): PodHost {
   }
 
   const services = createRuntimeServices({
-    actsAs: (app, owner) => isOrgSlug(app) && resolveIdentity(app) === owner,
+    actsAs: (app, owner) => isOrgSlug(app) && actsFor(app, owner),
     appFor,
     async canRead(owner, path, agent) {
       const pod = pods.get(owner);

@@ -38,6 +38,15 @@ await podFetch(podUrl("alex", "/inbox/"), { method: "POST", body, headers });
 - `podFetch` adds `X-Demo-Agent: <app slug>` only to requests for this origin's `/pods/**`. It
   first removes any `X-Demo-*` header the caller set. Every other URL goes to the normal `fetch`.
 - `podUrl(owner, path)` is absolute: the page origin in path mode, `https://pods.<domain>` in host mode.
+- `owner` is any `PodOwner`: an organisation or a registered holder (`HOLDERS` in
+  `@mortgage/demo-kit/holders`). Every registered holder gets a pod, a WebID and a baseline
+  profile (below), whichever demo the page belongs to.
+- The wallet acts for holders. `configure({ holder })` or `setHolder(holder)` makes `podFetch`,
+  `session()` and `actingAs()` act for that holder; the default is the app's `actsAs` (Alex),
+  sent exactly as before. Only an app whose `actsAs` is a holder may call them
+  (`holdersActedFor`); any other app gets an error. Path mode sends the holder id as
+  `X-Demo-Agent`; host mode sends `X-Demo-Holder`, which the bridge accepts only from an origin
+  the build lets act for that holder, and refuses otherwise.
 - `onEvent(cb, { replay: true })` delivers the logged entries, then live ones from every tab, with
   no duplicates.
 - `setDay(n)` moves the demo clock that `PodEvent.at` reads.
@@ -71,6 +80,8 @@ Every pod gets a baseline before the seed runs:
 - a root `.acl` that gives the owner Read, Write and Control (`acl:accessTo` and `acl:default`);
 - `profile/card` with `foaf:primaryTopic` and `pim:storage`;
 - a public-read `profile/card.acl`.
+- for a registered holder, `profile/card` also says who it is: `schema:Person` or
+  `schema:Organization` and `schema:name`, from the holder registry. A demo's seed may replace it.
 
 ### Agent contract
 

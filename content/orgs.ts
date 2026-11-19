@@ -5,9 +5,10 @@
  * rename is a change to this file only. Theme colours are original values, never a real
  * organisation's palette.
  */
-import type { OrgRegistry, PodHolder } from "@mortgage/demo-kit/registry";
+import { HOLDERS, type OrgRegistry, type PodHolder } from "@mortgage/demo-kit/registry";
 
-export const POD_HOLDER: PodHolder = Object.freeze({ name: "Alex Rivera", owner: "alex" });
+/** The mortgage demo's holder; the holders themselves are registered in `@mortgage/demo-kit/holders`. */
+export const POD_HOLDER: PodHolder = Object.freeze({ name: HOLDERS.alex.name, owner: "alex" });
 
 const alex = (role?: string) =>
   role === undefined ? { name: POD_HOLDER.name } : { name: POD_HOLDER.name, role };

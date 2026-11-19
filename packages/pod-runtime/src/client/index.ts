@@ -7,9 +7,11 @@ import type { AppNote, LensEntry, Session } from "@mortgage/demo-kit/contracts";
 import {
   type AppSlug,
   displayName,
+  HOLDERS,
+  type HolderId,
+  holdersActedFor,
   isOrgSlug,
   type OrgRegistry,
-  type OrgSlug,
   type PodOwner,
   podOwners,
   webidFor,
@@ -17,7 +19,13 @@ import {
 import { podOrigin, urlMode } from "@mortgage/demo-kit/urls";
 import { createBridgeClient } from "../bridge/client.js";
 import type { HostInfo, HostMessage, Seed, SeedContext } from "../host/host.js";
-import { AGENT_HEADER, EVENTS_CHANNEL, HOST_WORKER_NAME, TOUR_HEADER } from "../protocol.js";
+import {
+  AGENT_HEADER,
+  EVENTS_CHANNEL,
+  HOLDER_HEADER,
+  HOST_WORKER_NAME,
+  TOUR_HEADER,
+} from "../protocol.js";
 import {
   makeGrantOneTime,
   type OneTimeGrantRecord,
@@ -32,6 +40,11 @@ export interface RuntimeConfig {
   registry: OrgRegistry;
   /** The app this page belongs to; its `actsAs` is who `podFetch` acts as. */
   app: AppSlug;
+  /**
+   * For an app that acts for holders (the wallet): the registered holder this page acts for.
+   * Default: the app's `actsAs`. Change it later with `setHolder`.
+   */
+  holder?: HolderId;
   /** Applied once, the first time any page starts the runtime. */
   seed?: Seed;
   /** App slugs with an agent bundle at `/agents/<slug>.js`. Default: read from `/site.json`. */
@@ -50,6 +63,7 @@ export interface RuntimeInfo extends HostInfo {
 }
 
 let config: RuntimeConfig | undefined;
+let holder: HolderId | undefined;
 let started: Promise<{ transport: Transport; info: RuntimeInfo }> | undefined;
 let tour: { demo: string; step: string } | undefined;
 const listeners = new Set<(entry: LensEntry) => void>();
@@ -65,7 +79,38 @@ function requireConfig(): RuntimeConfig {
 /** Set the registry, the app and the seed. Call once, before `ready()`. */
 export function configure(next: RuntimeConfig): void {
   if (started !== undefined) throw new Error("pod-runtime: configure() after the runtime started");
+  if (next.holder !== undefined) checkHolder(next, next.holder);
   config = next;
+  holder = next.holder;
+}
+
+function checkHolder(current: RuntimeConfig, next: HolderId): void {
+  if (!holdersActedFor(current.registry, current.app).includes(next))
+    throw new Error(`pod-runtime: ${current.app} cannot act for ${next}`);
+}
+
+/**
+ * Act for another registered holder from now on (the wallet's holder switcher). Only an app
+ * that acts for holders may call it; `podFetch`, `session()` and `actingAs()` follow at once.
+ */
+export function setHolder(next: HolderId): void {
+  checkHolder(requireConfig(), next);
+  holder = next;
+}
+
+/** Who this page's requests are made as: the holder it acts for, or the app's `actsAs`. */
+export function actingAs(): PodOwner {
+  const { registry, app } = requireConfig();
+  if (!isOrgSlug(app)) throw new Error(`pod-runtime: ${app} is not an organisation app`);
+  return holder ?? registry[app].actsAs;
+}
+
+/** The holder this page acts for when it is not the app's own `actsAs`, else undefined. */
+function actingHolder(): HolderId | undefined {
+  const { registry, app } = requireConfig();
+  return holder !== undefined && isOrgSlug(app) && holder !== registry[app].actsAs
+    ? holder
+    : undefined;
 }
 
 function origin(): string {
@@ -73,7 +118,7 @@ function origin(): string {
 }
 
 /** The absolute URL of `path` in `owner`'s pod. */
-export function podUrl(owner: OrgSlug | "alex", path: string): string {
+export function podUrl(owner: PodOwner, path: string): string {
   return `${origin()}/pods/${owner}/${path.replace(/^\/+/, "")}`;
 }
 
@@ -88,6 +133,13 @@ export function session(): Session {
   const { registry, app } = requireConfig();
   if (!isOrgSlug(app)) throw new Error(`pod-runtime: ${app} is not an organisation app`);
   const record = registry[app];
+  const other = actingHolder();
+  if (other !== undefined) {
+    // The wallet showing another holder's pod is signed in as that holder (simulated).
+    const shown = HOLDERS[other];
+    const persona = shown.operator === undefined ? shown.name : `${shown.operator}, ${shown.name}`;
+    return { org: app, persona, simulated: true, webid: webidFor(other, origin()) };
+  }
   const persona =
     record.persona === null
       ? displayName(record)
@@ -202,7 +254,14 @@ export const podFetch: typeof fetch = async (input, init) => {
   const { transport } = await runtime();
   const headers = new Headers(request.headers);
   for (const name of [...headers.keys()]) if (name.startsWith("x-demo-")) headers.delete(name);
-  if (transport.mode !== "bridge" && isOrgSlug(app)) headers.set(AGENT_HEADER, app);
+  const other = actingHolder();
+  if (transport.mode === "bridge") {
+    // The bridge decides whether this origin may act for the holder.
+    if (other !== undefined) headers.set(HOLDER_HEADER, other);
+  } else if (isOrgSlug(app)) {
+    // Path mode: the holder is an identity of its own (self-declared, design.md §d.5).
+    headers.set(AGENT_HEADER, other ?? app);
+  }
   if (tour !== undefined) headers.set(TOUR_HEADER, `${tour.demo}:${tour.step}`);
   return transport.fetch(new Request(request, { headers }));
 };

@@ -12,7 +12,7 @@ import type {
   PodEvent,
 } from "@mortgage/demo-kit/contracts";
 import type { OrgRegistry } from "@mortgage/demo-kit/registry";
-import { isOrgSlug } from "@mortgage/demo-kit/registry";
+import { HOLDERS, isHolderId, isOrgSlug } from "@mortgage/demo-kit/registry";
 import {
   drawerPathOf,
   HOLDER,
@@ -105,6 +105,8 @@ const ruleKey = (r: AccessRule) => `${r.agent} ${podRelative(r.resource)} ${r.in
 export class LensModel {
   readonly config: LensConfig;
   readonly registry: OrgRegistry;
+  /** The pod owner at the centre of the map: the holder this Lens's demo is about. */
+  readonly holder: string;
   readonly holderName: string;
   readonly received: Received[] = [];
   private readonly seen = new Set<string>();
@@ -123,7 +125,10 @@ export class LensModel {
   constructor(config: LensConfig) {
     this.config = config;
     this.registry = config.registry;
-    this.holderName = config.holder?.name ?? "Alex";
+    const id = config.holder?.id ?? HOLDER;
+    if (!isHolderId(id)) throw new Error(`solid-lens: ${id} is not a registered holder`);
+    this.holder = id;
+    this.holderName = config.holder?.name ?? HOLDERS[id].short;
     this.recordDrawers = (config.recordDrawers ?? ["/inbox/"]).map(drawerPathOf);
     for (const spec of config.drawers ?? []) this.addDrawer(spec, 0);
   }
@@ -168,8 +173,8 @@ export class LensModel {
     if (isPod(e)) {
       if (e.resource?.label) this.labels.set(`${e.pod} ${podRelative(e.path)}`, e.resource.label);
       this.meet(e.actor.org, rec.seq);
-      if (e.pod !== HOLDER) this.meet(e.pod, rec.seq);
-      if (e.pod === HOLDER && !isAclPath(e.path)) {
+      if (e.pod !== this.holder) this.meet(e.pod, rec.seq);
+      if (e.pod === this.holder && !isAclPath(e.path)) {
         const drawer = this.drawerFor(e.path, e.resource?.drawer, rec.seq);
         if (e.kind !== "denied" && isOk(e.status)) {
           const rel = podRelative(e.path);
@@ -178,7 +183,9 @@ export class LensModel {
           if (e.kind === "write" && e.resource?.credential) drawer.credentials.add(rel);
         }
       }
-      if (e.acl && isOk(e.status)) this.foldAcl(e, rec);
+      // Another holder's sharing (Maya's grants, seen in a Lens for Alex) is not this holder's.
+      const otherHolder = e.pod !== this.holder && isHolderId(e.pod);
+      if (e.acl && isOk(e.status) && !otherHolder) this.foldAcl(e, rec);
     } else {
       this.meet(e.org, rec.seq);
       if (e.kind === "grant-used") {
@@ -252,12 +259,14 @@ export class LensModel {
 
   private meet(slug: string, seq: number): void {
     const key = nodeOf(this.registry, slug);
-    if (key === HOLDER || this.orgMap.has(key)) return;
+    if (key === this.holder || this.orgMap.has(key)) return;
     const record = isOrgSlug(key) ? this.registry[key] : undefined;
+    // Another holder (a carer reading a parent's pod) is met like an organisation, by its name.
+    const person = record === undefined && isHolderId(key) ? HOLDERS[key] : undefined;
     this.orgMap.set(key, {
       key,
-      label: record?.short ?? humanise(key),
-      name: record?.organisation ?? humanise(key),
+      label: record?.short ?? person?.short ?? humanise(key),
+      name: record?.organisation ?? person?.name ?? humanise(key),
       color: record?.themeColor ?? "#4a5664",
       firstSeq: seq,
     });
@@ -317,7 +326,7 @@ export class LensModel {
   orgOfAgent(agent: string): string | undefined {
     if (PUBLIC_AGENTS.has(agent)) return undefined;
     const owner = ownerOfWebid(this.registry, agent);
-    if (owner === undefined || owner === HOLDER) return undefined;
+    if (owner === undefined || owner === this.holder) return undefined;
     return owner;
   }
 
@@ -327,17 +336,17 @@ export class LensModel {
     const self = nodeOf(this.registry, note.org);
     for (const ref of note.refs ?? []) {
       const node = isOrgSlug(ref) ? nodeOf(this.registry, ref) : ownerOfWebid(this.registry, ref);
-      if (node !== undefined && node !== self && node !== HOLDER) return node;
+      if (node !== undefined && node !== self && node !== this.holder) return node;
     }
     return undefined;
   }
 
   /** A resource's label as events described it, or its humanised last segment. */
-  labelOf(path: string, pod: string = HOLDER): string {
+  labelOf(path: string, pod: string = this.holder): string {
     const rel = podRelative(path);
     const known = this.labels.get(`${pod} ${rel}`);
     if (known !== undefined) return known;
-    if (pod === HOLDER && rel.endsWith("/")) {
+    if (pod === this.holder && rel.endsWith("/")) {
       const d = this.drawerMap.get(drawerPathOf(rel));
       if (d && d.path === rel) return d.label;
     }
@@ -350,13 +359,13 @@ export class LensModel {
 
   /** Short name for a slug, `holderName` for the holder. */
   nameOf(slug: string): string {
-    if (nodeOf(this.registry, slug) === HOLDER) return this.holderName;
+    if (nodeOf(this.registry, slug) === this.holder) return this.holderName;
     return this.node(slug)?.label ?? humanise(slug);
   }
 
-  /** The app that acts as the holder (the holder's own data app), for "applied by …". */
+  /** The app that acts for holders (the holder's own data app, the wallet), for "applied by …". */
   holderAppName(): string | undefined {
-    for (const r of Object.values(this.registry)) if (r.actsAs === HOLDER) return r.organisation;
+    for (const r of Object.values(this.registry)) if (isHolderId(r.actsAs)) return r.organisation;
     return undefined;
   }
 
@@ -478,7 +487,7 @@ export class LensModel {
       let proofs = 0;
       for (const { entry } of this.received) {
         if (isPod(entry)) {
-          if (entry.pod !== HOLDER || !isOk(entry.status) || isDenied(entry)) continue;
+          if (entry.pod !== this.holder || !isOk(entry.status) || isDenied(entry)) continue;
           if (nodeOf(this.registry, entry.actor.org) !== org.key || isAclPath(entry.path)) continue;
           const dp = drawerPathOf(entry.path);
           if (entry.kind === "read") read.add(dp);

@@ -5,7 +5,7 @@
  * them typed as the `TourStep` contract from demo-kit.
  */
 import { type AppNote, TOUR_STEP_LIMITS, type TourStep } from "@mortgage/demo-kit/contracts";
-import { isAppSlug, isOrgSlug } from "@mortgage/demo-kit/registry";
+import { isAppSlug, isOrgSlug, isPodOwner } from "@mortgage/demo-kit/registry";
 import { z } from "zod";
 
 export const CHIP_KINDS = [
@@ -37,7 +37,7 @@ export function wordCount(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length;
 }
 
-const owner = z.string().refine((v) => v === "alex" || isOrgSlug(v), "unknown organisation slug");
+const owner = z.string().refine(isPodOwner, "unknown organisation slug or holder");
 const target = z
   .string()
   .regex(TARGET_NAME, "data-tour names are lower-case words joined by hyphens");
