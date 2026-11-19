@@ -1,0 +1,16 @@
+@prefix schema: <https://schema.org/>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#>.
+@prefix odrl: <http://www.w3.org/ns/odrl/2/>.
+@prefix cred: <https://www.w3.org/2018/credentials#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+<https://pods.example/pods/insurer/claims/CLM-1> a mort:ClaimCase;
+  schema:identifier "CLM-1";
+  dcterms:type mort:CaseKind-InsuranceClaim;
+  schema:customer <https://pods.example/pods/alex/profile/card#me>;
+  schema:about <https://pods.example/pods/alex/claims/CLM-1/>;
+  schema:actionStatus schema:ActiveActionStatus;
+  dcterms:modified "2026-09-25T11:00:00Z"^^xsd:dateTime;
+  schema:acceptedOffer <https://pods.example/pods/alex/claims/CLM-1/estimate>;
+  odrl:hasPolicy <https://pods.example/pods/alex/policies/c1>.

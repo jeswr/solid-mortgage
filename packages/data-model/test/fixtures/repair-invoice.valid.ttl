@@ -1,0 +1,16 @@
+@prefix schema: <https://schema.org/>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#>.
+@prefix odrl: <http://www.w3.org/ns/odrl/2/>.
+@prefix cred: <https://www.w3.org/2018/credentials#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+<https://pods.example/pods/alex/claims/CLM-1/invoice> a schema:Invoice;
+  schema:name "Invoice";
+  schema:identifier "INV-2041";
+  schema:referencesOrder <https://pods.example/pods/alex/claims/CLM-1/estimate>;
+  mort:lineItem [ a schema:MonetaryAmount; schema:name "Rear bumper cover"; schema:value 640.0; schema:currency "USD" ],
+    [ a schema:MonetaryAmount; schema:name "Labour, 4 hours"; schema:value 380.0; schema:currency "USD" ];
+  schema:totalPaymentDue [ a schema:MonetaryAmount; schema:value 1020.0; schema:currency "USD" ];
+  dcterms:creator <https://pods.example/pods/repairer/profile/card#me>;
+  dcterms:created "2026-09-30T16:00:00Z"^^xsd:dateTime.

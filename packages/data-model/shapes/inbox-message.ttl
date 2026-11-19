@@ -21,7 +21,7 @@ mshape:InboxMessageShape
     sh:minCount 1 ;
     sh:maxCount 1 ;
     sh:nodeKind sh:IRI ;
-    sh:in ( mort:MessageKind-CreditReportOrder mort:MessageKind-CreditReportDelivery mort:MessageKind-CasefileSubmission mort:MessageKind-FindingsDelivery mort:MessageKind-ServiceOrder mort:MessageKind-AppraisalDelivery mort:MessageKind-CommitmentDelivery mort:MessageKind-RefreshRequest mort:MessageKind-RefreshDelivery mort:MessageKind-ClosingInstructions mort:MessageKind-ClosingConfirmation mort:MessageKind-RecordingSubmission mort:MessageKind-RecordingConfirmation mort:MessageKind-LoanDelivery mort:MessageKind-PurchaseConfirmation mort:MessageKind-ServicingBoarding ) ;
+    sh:in ( mort:MessageKind-CreditReportOrder mort:MessageKind-CreditReportDelivery mort:MessageKind-CasefileSubmission mort:MessageKind-FindingsDelivery mort:MessageKind-ServiceOrder mort:MessageKind-AppraisalDelivery mort:MessageKind-CommitmentDelivery mort:MessageKind-RefreshRequest mort:MessageKind-RefreshDelivery mort:MessageKind-ClosingInstructions mort:MessageKind-ClosingConfirmation mort:MessageKind-RecordingSubmission mort:MessageKind-RecordingConfirmation mort:MessageKind-LoanDelivery mort:MessageKind-PurchaseConfirmation mort:MessageKind-ServicingBoarding mort:MessageKind-RepairReferral mort:MessageKind-RepairAuthorisation mort:MessageKind-RepairCompletion ) ;
     sh:message "dcterms:type must be a concept from mort:MessageKindScheme" ;
   ] ;
   sh:property [

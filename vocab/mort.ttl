@@ -1187,6 +1187,36 @@ mort:MessageKind-ServicingBoarding
   skos:topConceptOf mort:MessageKindScheme ;
   rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
 
+mort:MessageKind-RepairReferral
+  a skos:Concept ;
+  rdfs:label "repair referral"@en ;
+  rdfs:comment "An insurer refers a claimant's vehicle to a repairer."@en ;
+  skos:definition "An insurer refers a claimant's vehicle to a repairer."@en ;
+  skos:prefLabel "repair referral"@en ;
+  skos:inScheme mort:MessageKindScheme ;
+  skos:topConceptOf mort:MessageKindScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:MessageKind-RepairAuthorisation
+  a skos:Concept ;
+  rdfs:label "repair authorisation"@en ;
+  rdfs:comment "An insurer authorises a repairer's estimate."@en ;
+  skos:definition "An insurer authorises a repairer's estimate."@en ;
+  skos:prefLabel "repair authorisation"@en ;
+  skos:inScheme mort:MessageKindScheme ;
+  skos:topConceptOf mort:MessageKindScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:MessageKind-RepairCompletion
+  a skos:Concept ;
+  rdfs:label "repair completion"@en ;
+  rdfs:comment "A repairer tells the claimant that the repair is complete and the invoice is filed."@en ;
+  skos:definition "A repairer tells the claimant that the repair is complete and the invoice is filed."@en ;
+  skos:prefLabel "repair completion"@en ;
+  skos:inScheme mort:MessageKindScheme ;
+  skos:topConceptOf mort:MessageKindScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
 mort:GrantEndScheme
   a skos:ConceptScheme ;
   rdfs:label "Grant end scheme"@en ;
@@ -1243,4 +1273,173 @@ mort:GrantEnd-ServicingEnds
   skos:prefLabel "servicing ends"@en ;
   skos:inScheme mort:GrantEndScheme ;
   skos:topConceptOf mort:GrantEndScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:GrantEnd-ClaimClosed
+  a skos:Concept ;
+  rdfs:label "claim closed"@en ;
+  rdfs:comment "The claimant closes the insurance claim."@en ;
+  skos:definition "The claimant closes the insurance claim."@en ;
+  skos:prefLabel "claim closed"@en ;
+  skos:inScheme mort:GrantEndScheme ;
+  skos:topConceptOf mort:GrantEndScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:GrantEnd-JobCompleted
+  a skos:Concept ;
+  rdfs:label "job completed"@en ;
+  rdfs:comment "The repairer completes the repair job and files its invoice."@en ;
+  skos:definition "The repairer completes the repair job and files its invoice."@en ;
+  skos:prefLabel "job completed"@en ;
+  skos:inScheme mort:GrantEndScheme ;
+  skos:topConceptOf mort:GrantEndScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:GrantEnd-MotorPolicyLapses
+  a skos:Concept ;
+  rdfs:label "motor policy lapses"@en ;
+  rdfs:comment "The motor insurance policy is no longer in force."@en ;
+  skos:definition "The motor insurance policy is no longer in force."@en ;
+  skos:prefLabel "motor policy lapses"@en ;
+  skos:inScheme mort:GrantEndScheme ;
+  skos:topConceptOf mort:GrantEndScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+#################################################################
+# Motor claim demo (flows.md section 7). ACORD publishes no RDF
+# vocabulary; content/motor-claim/README.md maps these terms and the
+# schema.org terms beside them to ACORD first-notice-of-loss fields
+# as documentation only.
+#################################################################
+
+mort:MotorPolicyCredential
+  a owl:Class ;
+  rdfs:label "Motor policy credential"@en ;
+  rdfs:comment "A verifiable credential in which a motor insurer attests that a policy is in force on a vehicle, with its coverages, deductible and period. Approximates the policy section of an ACORD automobile insurance card."@en ;
+  skos:definition "A verifiable credential in which a motor insurer attests that a policy is in force on a vehicle, with its coverages, deductible and period. Approximates the policy section of an ACORD automobile insurance card."@en ;
+  rdfs:subClassOf cred:VerifiableCredential ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:MotorIncidentReport
+  a owl:Class ;
+  rdfs:label "Motor incident report"@en ;
+  rdfs:comment "The claimant's own first report of a motor incident: when and where it happened, what happened, the vehicle, photos and a link to the other party's details. Approximates the loss section of ACORD first-notice-of-loss data."@en ;
+  skos:definition "The claimant's own first report of a motor incident: when and where it happened, what happened, the vehicle, photos and a link to the other party's details. Approximates the loss section of ACORD first-notice-of-loss data."@en ;
+  rdfs:subClassOf <https://schema.org/Report> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:OtherPartyDetails
+  a owl:Class ;
+  rdfs:label "Other party details"@en ;
+  rdfs:comment "The details the claimant took from the other driver in a motor incident: name, telephone, vehicle and the other driver's insurer and policy number. Approximates the other-party section of ACORD first-notice-of-loss data."@en ;
+  skos:definition "The details the claimant took from the other driver in a motor incident: name, telephone, vehicle and the other driver's insurer and policy number. Approximates the other-party section of ACORD first-notice-of-loss data."@en ;
+  rdfs:subClassOf <https://schema.org/DigitalDocument> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:DamageReport
+  a owl:Class ;
+  rdfs:label "Damage report"@en ;
+  rdfs:comment "An insurer's assessment of the damage to an insured vehicle, written into the claimant's claim file: the damaged parts and the photos that show them."@en ;
+  skos:definition "An insurer's assessment of the damage to an insured vehicle, written into the claimant's claim file: the damaged parts and the photos that show them."@en ;
+  rdfs:subClassOf <https://schema.org/Report> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:RepairEstimate
+  a owl:Class ;
+  rdfs:label "Repair estimate"@en ;
+  rdfs:comment "A repairer's priced estimate for repairing the damage a damage report describes, with its line items and total."@en ;
+  skos:definition "A repairer's priced estimate for repairing the damage a damage report describes, with its line items and total."@en ;
+  rdfs:subClassOf <https://schema.org/DigitalDocument> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:ClaimCase
+  a owl:Class ;
+  rdfs:label "Claim case"@en ;
+  rdfs:comment "An organisation's own record of its part in a claim: the claim number, the claimant, where the claim file lives and whether its part is open or complete. Kept in the organisation's own store, never in the claimant's pod."@en ;
+  skos:definition "An organisation's own record of its part in a claim: the claim number, the claimant, where the claim file lives and whether its part is open or complete. Kept in the organisation's own store, never in the claimant's pod."@en ;
+  rdfs:subClassOf <https://schema.org/DigitalDocument> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:vehicle
+  a owl:ObjectProperty ;
+  rdfs:label "vehicle"@en ;
+  rdfs:comment "The vehicle a policy, incident report, damage report or party's details is about."@en ;
+  skos:definition "The vehicle a policy, incident report, damage report or party's details is about."@en ;
+  rdfs:range <https://schema.org/Vehicle> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:coverage
+  a owl:DatatypeProperty ;
+  rdfs:label "coverage"@en ;
+  rdfs:comment "One coverage a motor policy includes, in words."@en ;
+  skos:definition "One coverage a motor policy includes, in words."@en ;
+  rdfs:range xsd:string ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:occurredAt
+  a owl:DatatypeProperty ;
+  rdfs:label "occurred at"@en ;
+  rdfs:comment "When the incident a report describes happened."@en ;
+  skos:definition "When the incident a report describes happened."@en ;
+  rdfs:range xsd:dateTime ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:otherParty
+  a owl:ObjectProperty ;
+  rdfs:label "other party"@en ;
+  rdfs:comment "The other party's details in a motor incident."@en ;
+  skos:definition "The other party's details in a motor incident."@en ;
+  rdfs:range mort:OtherPartyDetails ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:insurerName
+  a owl:DatatypeProperty ;
+  rdfs:label "insurer name"@en ;
+  rdfs:comment "The name of a party's insurer, as the claimant recorded it."@en ;
+  skos:definition "The name of a party's insurer, as the claimant recorded it."@en ;
+  rdfs:range xsd:string ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:damageItem
+  a owl:DatatypeProperty ;
+  rdfs:label "damage item"@en ;
+  rdfs:comment "One damaged part of a vehicle and what is wrong with it, in words."@en ;
+  skos:definition "One damaged part of a vehicle and what is wrong with it, in words."@en ;
+  rdfs:range xsd:string ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:totalAmount
+  a owl:ObjectProperty ;
+  rdfs:label "total amount"@en ;
+  rdfs:comment "The total of a document's line items."@en ;
+  skos:definition "The total of a document's line items."@en ;
+  rdfs:range <https://schema.org/MonetaryAmount> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:CaseKindScheme
+  a skos:ConceptScheme ;
+  rdfs:label "Case kind scheme"@en ;
+  rdfs:comment "Kinds of claim case an organisation keeps in its own store."@en ;
+  skos:definition "Kinds of claim case an organisation keeps in its own store."@en ;
+  skos:prefLabel "Case kind scheme"@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:CaseKind-InsuranceClaim
+  a skos:Concept ;
+  rdfs:label "insurance claim"@en ;
+  rdfs:comment "An insurer's handling of a claim under a policy."@en ;
+  skos:definition "An insurer's handling of a claim under a policy."@en ;
+  skos:prefLabel "insurance claim"@en ;
+  skos:inScheme mort:CaseKindScheme ;
+  skos:topConceptOf mort:CaseKindScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:CaseKind-RepairJob
+  a skos:Concept ;
+  rdfs:label "repair job"@en ;
+  rdfs:comment "A repairer's job repairing the damage a claim covers."@en ;
+  skos:definition "A repairer's job repairing the damage a claim covers."@en ;
+  skos:prefLabel "repair job"@en ;
+  skos:inScheme mort:CaseKindScheme ;
+  skos:topConceptOf mort:CaseKindScheme ;
   rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .

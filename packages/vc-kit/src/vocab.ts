@@ -96,6 +96,7 @@ const SHAPE_LOCAL_NAMES: Readonly<Record<CredentialKind, string>> = {
   "identity-credential": "IdentityCredentialShape",
   "title-commitment-credential": "TitleCommitmentCredentialShape",
   "evidence-of-insurance-credential": "EvidenceOfInsuranceCredentialShape",
+  "motor-policy-credential": "MotorPolicyCredentialShape",
   "zk-operand-anchor": "ZkOperandAnchorShape",
 };
 
@@ -109,6 +110,7 @@ export type CredentialKind =
   | "identity-credential"
   | "title-commitment-credential"
   | "evidence-of-insurance-credential"
+  | "motor-policy-credential"
   | "zk-operand-anchor";
 
 /** `cred:credentialSchema` IRI per credential kind (decision 0004). */

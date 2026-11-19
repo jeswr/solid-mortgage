@@ -40,6 +40,7 @@ test("every shape document is bundled", () => {
     "appraisal-credential",
     "asset-credential",
     "borrower-profile",
+    "claim-case",
     "closing-disclosure",
     "closing-record",
     "common",
@@ -48,6 +49,7 @@ test("every shape document is bundled", () => {
     "credential-pointer",
     "credit-report",
     "credit-score-credential",
+    "damage-report",
     "data-product",
     "document",
     "employment-income-credential",
@@ -57,11 +59,16 @@ test("every shape document is bundled", () => {
     "inbox-message",
     "loan-application",
     "loan-estimate",
+    "motor-incident-report",
+    "motor-policy-credential",
     "odrl-policy",
+    "other-party-details",
     "payment-mandate",
     "purchase-agreement",
     "recorded-instrument",
     "recording-receipt",
+    "repair-estimate",
+    "repair-invoice",
     "score-notice",
     "service-order",
     "servicing-notice",
@@ -71,6 +78,7 @@ test("every shape document is bundled", () => {
     "title-clear-credential",
     "title-commitment-credential",
     "underwriting-decision",
+    "vehicle",
     "zk-operand-anchor",
   ]);
 });
@@ -78,7 +86,7 @@ test("every shape document is bundled", () => {
 test("every targeted resource shape is closed", () => {
   const store = shapesStore();
   const targeted = store.getSubjects(`${SH}targetClass`, null, null);
-  expect(targeted.length).toBe(36);
+  expect(targeted.length).toBe(43);
   for (const shape of targeted) {
     const closed = store.getObjects(shape, `${SH}closed`, null);
     expect(
@@ -205,6 +213,26 @@ const cases: readonly {
   { name: "inbox-message", expectedViolations: ["NodeKindConstraintComponent"] },
   { name: "credential-pointer", expectedViolations: ["PatternConstraintComponent"] },
   { name: "document", expectedViolations: ["MinCountConstraintComponent"] },
+  // Motor claim demo (flows.md section 7).
+  {
+    name: "motor-incident-report",
+    expectedViolations: ["LessThanOrEqualsConstraintComponent", "MinCountConstraintComponent"],
+  },
+  { name: "other-party-details", expectedViolations: ["PatternConstraintComponent"] },
+  {
+    name: "damage-report",
+    expectedViolations: ["ClosedConstraintComponent", "MinCountConstraintComponent"],
+  },
+  {
+    name: "repair-estimate",
+    expectedViolations: ["MinCountConstraintComponent", "NodeConstraintComponent"],
+  },
+  { name: "repair-invoice", expectedViolations: ["NodeKindConstraintComponent"] },
+  { name: "claim-case", expectedViolations: ["InConstraintComponent"] },
+  {
+    name: "motor-policy-credential",
+    expectedViolations: ["NodeConstraintComponent"],
+  },
 ];
 
 // Generous timeout: the first validation pays comunica's cold start for the

@@ -18,6 +18,7 @@ import {
   TypedNode,
   writeEvidenceOfInsuranceClaims,
   writeIdentityClaims,
+  writeMotorPolicyClaims,
   writeTitleCommitmentClaims,
 } from "@mortgage/data-model";
 import type { DataFactory, DatasetCore, Term } from "@rdfjs/types";
@@ -267,6 +268,31 @@ export interface EvidenceOfInsuranceClaims {
   readonly loanNumber?: string;
 }
 
+/** A vehicle as a motor policy names it (`mshape:VehicleShape`). Every value is fictional. */
+export interface VehicleClaims {
+  /** Make and model. */
+  readonly name: string;
+  /** 17 characters, upper-case letters and digits. */
+  readonly vin?: string;
+  readonly plate?: string;
+  readonly color?: string;
+}
+
+/** Motor policy VC subject (`mshape:MotorPolicySubjectShape`). */
+export interface MotorPolicyClaims {
+  readonly kind: "motor-policy-credential";
+  readonly policyNumber: string;
+  readonly vehicle: VehicleClaims;
+  /** At least one, in words ("Collision", "Liability"). */
+  readonly coverages: readonly string[];
+  /** The collision deductible, in US dollars. */
+  readonly deductibleUsd: number;
+  /** `YYYY-MM-DD`. */
+  readonly policyStart: string;
+  /** `YYYY-MM-DD`. */
+  readonly policyEnd: string;
+}
+
 /** The typed claims union - discriminated by the credential kind. */
 export type CredentialClaims =
   | EmploymentIncomeClaims
@@ -277,6 +303,7 @@ export type CredentialClaims =
   | IdentityClaims
   | TitleCommitmentClaims
   | EvidenceOfInsuranceClaims
+  | MotorPolicyClaims
   | ZkOperandAnchorClaims;
 
 /** Base wrapper: typed multi-valued `rdf:type` plus single-valued setters. */
@@ -537,6 +564,22 @@ export function writeSubjectClaims(
         policyNumber: claims.policyNumber,
         policyStart: dateOf(claims.policyStart, "policyStart"),
         propertyAddress: addressFieldsOf(claims.propertyAddress),
+      });
+      return;
+    }
+    case "motor-policy-credential": {
+      writeMotorPolicyClaims(typedSubject(subject), {
+        coverages: claims.coverages,
+        deductibleUsd: claims.deductibleUsd,
+        policyEnd: dateOf(claims.policyEnd, "policyEnd"),
+        policyNumber: claims.policyNumber,
+        policyStart: dateOf(claims.policyStart, "policyStart"),
+        vehicle: {
+          name: claims.vehicle.name,
+          ...(claims.vehicle.vin === undefined ? {} : { vin: claims.vehicle.vin }),
+          ...(claims.vehicle.plate === undefined ? {} : { plate: claims.vehicle.plate }),
+          ...(claims.vehicle.color === undefined ? {} : { color: claims.vehicle.color }),
+        },
       });
       return;
     }

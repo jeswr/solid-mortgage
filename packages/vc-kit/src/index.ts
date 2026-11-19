@@ -46,11 +46,13 @@ export {
   type EmploymentIncomeClaims,
   type EvidenceOfInsuranceClaims,
   type IdentityClaims,
+  type MotorPolicyClaims,
   type OrganizationClaims,
   type PostalAddressClaims,
   type PropertyClaims,
   type TitleClearClaims,
   type TitleCommitmentClaims,
+  type VehicleClaims,
   type ZkOperandAnchorClaims,
 } from "./claims.js";
 export { type DayClock, instantOn, type ValidityOnOptions, validityOn } from "./clock.js";

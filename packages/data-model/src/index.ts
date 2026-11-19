@@ -76,6 +76,7 @@ export {
   type UnderwritingDecisionInit,
   type ZkOperandAnchorInit,
 } from "./wrappers/build.js";
+export * from "./wrappers/claims.js";
 export * from "./wrappers/documents.js";
 export { type AddressFields, addressFields } from "./wrappers/fields.js";
 export { literalFromXsdDate, literalFromXsdDecimal } from "./wrappers/mappings.js";
