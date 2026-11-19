@@ -6,6 +6,7 @@ import { TOUR } from "@mortgage/content/mortgage/tour";
 import { TOUR as MOTOR_CLAIM_TOUR } from "@mortgage/content/motor-claim/tour";
 import { TOUR as MOVING_HOUSE_TOUR } from "@mortgage/content/moving-house/tour";
 import { ORGS } from "@mortgage/content/orgs";
+import { TOUR as REUSABLE_KYC_TOUR } from "@mortgage/content/reusable-kyc/tour";
 import { TOUR as SMALL_DOLLAR_TOUR } from "@mortgage/content/small-dollar-lending/tour";
 import { isAppSlug, ORG_SLUGS } from "@mortgage/demo-kit/registry";
 import { appUrl } from "@mortgage/demo-kit/urls";
@@ -104,6 +105,21 @@ describe("the demo list", () => {
     });
     expect(tour === undefined ? "" : tourUrl(tour)).toBe(
       "/wallet/kyb?tour=business-kyb&step=vault",
+    );
+  });
+
+  it("starts the reusable-KYC tour at its first step, on Alder Bank's identity page", () => {
+    const tour = demoById("reusable-kyc")?.tour;
+    const first = REUSABLE_KYC_TOUR[0];
+    expect(demoById("reusable-kyc")?.status).toBe("live");
+    expect(tour).toEqual({
+      demo: "reusable-kyc",
+      app: first?.app,
+      path: first?.path,
+      step: first?.id,
+    });
+    expect(tour === undefined ? "" : tourUrl(tour)).toBe(
+      "/bank/kyc?tour=reusable-kyc&step=attestation",
     );
   });
 

@@ -13,7 +13,8 @@
     "small-dollar-lending/**/*.ts",
     "business-kyb/**/*.ts",
     "medication-handover/**/*.ts",
-    "motor-claim/**/*.ts"
+    "motor-claim/**/*.ts",
+    "reusable-kyc/**/*.ts"
   ],
   "exclude": ["dist", "node_modules", "test", "mortgage/**/*.test.ts"]
 }

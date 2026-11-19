@@ -21,6 +21,12 @@ import {
 } from "@mortgage/content/moving-house/mount";
 import { ORGS } from "@mortgage/content/orgs";
 import {
+  isReusableKycPage,
+  REUSABLE_KYC_HOLDER,
+  reusableKycLens,
+  reusableKycTour,
+} from "@mortgage/content/reusable-kyc/mount";
+import {
   isSmallDollarPage,
   SMALL_DOLLAR_HOLDER,
   smallDollarLens,
@@ -40,6 +46,8 @@ const movingHouse = isMovingHousePage(location.pathname, "bank", location.search
 const lending = isSmallDollarPage(location.pathname, "bank", location.search);
 // A page under kyb/ belongs to the business KYB demo (src/sections/business-kyb/).
 const kyb = isBusinessKybPage(location.pathname, "bank", location.search);
+// A page under kyc/ belongs to the reusable-KYC demo (src/sections/reusable-kyc/).
+const reusableKyc = isReusableKycPage(location.pathname, "bank", location.search);
 const root = document.getElementById("root");
 if (root === null) throw new Error("index.html is missing #root");
 const view = createRoot(root);
@@ -70,18 +78,27 @@ startPods(APP).then(
             runtime,
             tour: businessKybTour(),
           }
-        : {
-            app: APP,
-            holder: lending
-              ? SMALL_DOLLAR_HOLDER
-              : movingHouse
-                ? MOVING_HOUSE_HOLDER
-                : MORTGAGE_HOLDER,
-            lens: lending ? smallDollarLens() : movingHouse ? movingHouseLens() : mortgageLens(),
-            registry: ORGS,
-            runtime,
-            tour: lending ? smallDollarTour() : movingHouse ? movingHouseTour() : mortgageTour(),
-          },
+        : reusableKyc
+          ? {
+              app: APP,
+              holder: REUSABLE_KYC_HOLDER,
+              lens: reusableKycLens(),
+              registry: ORGS,
+              runtime,
+              tour: reusableKycTour(),
+            }
+          : {
+              app: APP,
+              holder: lending
+                ? SMALL_DOLLAR_HOLDER
+                : movingHouse
+                  ? MOVING_HOUSE_HOLDER
+                  : MORTGAGE_HOLDER,
+              lens: lending ? smallDollarLens() : movingHouse ? movingHouseLens() : mortgageLens(),
+              registry: ORGS,
+              runtime,
+              tour: lending ? smallDollarTour() : movingHouse ? movingHouseTour() : mortgageTour(),
+            },
     );
   },
   (error: unknown) => console.error("bank: the pods did not start", error),

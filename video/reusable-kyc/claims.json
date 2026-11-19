@@ -1,0 +1,10 @@
+[
+  { "says": "One set of checks", "metric": "reusable-kyc.checks", "value": 1 },
+  { "says": "two institutions", "metric": "organisations.involved", "value": 2 },
+  { "says": "one read", "metric": "reusable-kyc.reads", "value": 1 },
+  {
+    "says": "And two ways to take something back: the owner withdraws access, and the issuer withdraws its word.",
+    "metric": "reusable-kyc.withdrawals",
+    "value": 2
+  }
+]

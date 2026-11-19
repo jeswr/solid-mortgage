@@ -34,6 +34,12 @@ import {
 } from "@mortgage/content/moving-house/mount";
 import { ORGS } from "@mortgage/content/orgs";
 import {
+  isReusableKycPage,
+  REUSABLE_KYC_HOLDER,
+  reusableKycLens,
+  reusableKycTour,
+} from "@mortgage/content/reusable-kyc/mount";
+import {
   isSmallDollarPage,
   SMALL_DOLLAR_HOLDER,
   smallDollarLens,
@@ -50,15 +56,22 @@ import { linkTour } from "./tour-link.ts";
 
 // A page under moving/ belongs to the moving-house demo (src/sections/moving-house/); a page
 // under kyb/ (or prove/kyb) to the business KYB demo (src/sections/business-kyb/); a page under
-// health/ to the medication handover (src/sections/medication-handover/).
+// health/ to the medication handover (src/sections/medication-handover/); a page under kyc/ to
+// the reusable-KYC demo (src/sections/reusable-kyc/).
 const medication = isMedicationPage(location.pathname, "wallet", location.search);
 const kyb = !medication && isBusinessKybPage(location.pathname, "wallet", location.search);
+const reusableKyc =
+  !medication && !kyb && isReusableKycPage(location.pathname, "wallet", location.search);
 const movingHouse =
-  !medication && !kyb && isMovingHousePage(location.pathname, "wallet", location.search);
+  !medication &&
+  !kyb &&
+  !reusableKyc &&
+  isMovingHousePage(location.pathname, "wallet", location.search);
 // A page under claim/ belongs to the motor claim (src/sections/motor-claim/).
 const motorClaim =
   !medication &&
   !kyb &&
+  !reusableKyc &&
   !movingHouse &&
   isMotorClaimPage(location.pathname, "wallet", location.search);
 
@@ -72,11 +85,13 @@ const demo = lending
     ? medicationTour()
     : kyb
       ? businessKybTour()
-      : movingHouse
-        ? movingHouseTour()
-        : motorClaim
-          ? motorClaimTour()
-          : mortgageTour();
+      : reusableKyc
+        ? reusableKycTour()
+        : movingHouse
+          ? movingHouseTour()
+          : motorClaim
+            ? motorClaimTour()
+            : mortgageTour();
 const holder = initialHolder(window.location.href, demo.holder);
 
 configure({ app: "wallet", holder, registry: ORGS, seed: mortgageSeed() });
@@ -95,22 +110,26 @@ void mountDemo({
       ? MEDICATION_HOLDER
       : kyb
         ? BUSINESS_KYB_HOLDER
-        : movingHouse
-          ? MOVING_HOUSE_HOLDER
-          : motorClaim
-            ? MOTOR_CLAIM_HOLDER
-            : MORTGAGE_HOLDER,
+        : reusableKyc
+          ? REUSABLE_KYC_HOLDER
+          : movingHouse
+            ? MOVING_HOUSE_HOLDER
+            : motorClaim
+              ? MOTOR_CLAIM_HOLDER
+              : MORTGAGE_HOLDER,
   lens: lending
     ? smallDollarLens()
     : medication
       ? medicationLens()
       : kyb
         ? businessKybLens()
-        : movingHouse
-          ? movingHouseLens()
-          : motorClaim
-            ? motorClaimLens()
-            : mortgageLens(),
+        : reusableKyc
+          ? reusableKycLens()
+          : movingHouse
+            ? movingHouseLens()
+            : motorClaim
+              ? motorClaimLens()
+              : mortgageLens(),
   ...(kyb ? { ledger: { compliance: [...KYB_COMPLIANCE] } } : {}),
   registry: ORGS,
   runtime: { onEvent, resetDemo, setTourContext: trackTourContext(setTourContext) },

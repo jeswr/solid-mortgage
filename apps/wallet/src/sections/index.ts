@@ -32,6 +32,7 @@ import {
   MovingSharing,
   MovingWho,
 } from "./moving-house/MovingHouse.tsx";
+import { KycConsent, KycHome, KycLedger } from "./reusable-kyc/ReusableKyc.tsx";
 import {
   LendingHome,
   LendingLedger,
@@ -128,4 +129,7 @@ export const sections: readonly AppSection[] = [
     path: "claim/sharing",
     title: "Grants and ledger",
   },
+  { Component: KycHome, demo: "reusable-kyc", path: "kyc", title: "Verified identity" },
+  { Component: KycConsent, demo: "reusable-kyc", path: "kyc/consent", title: "One-time request" },
+  { Component: KycLedger, demo: "reusable-kyc", path: "kyc/ledger", title: "Journey ledger" },
 ];

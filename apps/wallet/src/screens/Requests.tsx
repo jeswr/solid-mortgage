@@ -1,5 +1,5 @@
 // AUTHORED-BY Claude Opus 5.5
-import { approveRequest } from "@mortgage/content/mortgage/grants";
+import { approveRequest, isLimitedUse } from "@mortgage/content/mortgage/grants";
 import type { World } from "@mortgage/content/mortgage/world";
 import { remove } from "@mortgage/content/mortgage/world";
 import { ORGS } from "@mortgage/content/orgs";
@@ -162,6 +162,9 @@ function ConsentCard({
   const [busy, setBusy] = useState<"approve" | "decline" | undefined>();
   const [error, setError] = useState<unknown>();
   const headingId = `request-${request.grantCode}-${item.url.split("/").pop()}`;
+  // A request limited in uses is answered on the one-time screen, which registers the runtime's
+  // one-time grant; the generic approval refuses it (content/mortgage/grants.ts).
+  const limited = isLimitedUse(request);
 
   const act = async (kind: "approve" | "decline") => {
     setBusy(kind);
@@ -248,15 +251,26 @@ function ConsentCard({
           >
             {busy === "decline" ? "Declining…" : "Decline"}
           </button>
-          <button
-            type="button"
-            className="button primary"
-            data-tour={tourTarget}
-            disabled={busy !== undefined}
-            onClick={() => act("approve")}
-          >
-            {busy === "approve" ? "Approving…" : "Approve"}
-          </button>
+          {limited ? (
+            // A full navigation: the one-time screen mounts its own demo's tour.
+            <a
+              className="button primary"
+              data-testid="request-one-time"
+              href={appUrl("wallet", "kyc/consent", { request: item.url })}
+            >
+              Answer on the one-time screen
+            </a>
+          ) : (
+            <button
+              type="button"
+              className="button primary"
+              data-tour={tourTarget}
+              disabled={busy !== undefined}
+              onClick={() => act("approve")}
+            >
+              {busy === "approve" ? "Approving…" : "Approve"}
+            </button>
+          )}
         </div>
       )}
     </article>

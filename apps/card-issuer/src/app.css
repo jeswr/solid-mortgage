@@ -1,0 +1,347 @@
+/* AUTHORED-BY Claude Opus 5.5
+ * Pennant Card: a red top bar, then one long white column. The form's parts are rounded panels;
+ * the identity part collapses to one line once it is prefilled. */
+@import "./tokens.css";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--pn-canvas);
+  color: var(--pn-ink);
+  font-family: var(--pn-font);
+  line-height: 1.55;
+}
+
+a {
+  color: var(--pn-red-deep);
+}
+
+.bar {
+  background: var(--pn-red);
+  color: var(--pn-white);
+}
+
+.bar-inner {
+  max-width: var(--pn-width);
+  margin: 0 auto;
+  padding: 0.85rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--pn-white);
+  font-weight: 800;
+  font-size: 1.4rem;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+}
+
+.mark {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.bar nav a {
+  color: var(--pn-white);
+  font-weight: 600;
+}
+
+main {
+  max-width: var(--pn-width);
+  margin: 0 auto;
+  padding: 2rem 1rem 4rem;
+}
+
+h1 {
+  margin: 0 0 0.5rem;
+  font-size: 2.1rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--pn-red-deep);
+}
+
+h3 {
+  margin: 0 0 0.25rem;
+  font-size: 1.05rem;
+}
+
+.lede {
+  font-size: 1.1rem;
+  margin: 0 0 1.5rem;
+}
+
+.muted {
+  color: var(--pn-muted);
+}
+
+.small {
+  font-size: 0.9rem;
+}
+
+.hero {
+  padding: 1rem 0 2rem;
+}
+
+/* The card itself, drawn in CSS: red, rounded, the wordmark in white. */
+.card-art {
+  position: relative;
+  width: min(20rem, 100%);
+  aspect-ratio: 1.586;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--pn-red) 0%, var(--pn-red-deep) 100%);
+  color: var(--pn-white);
+  margin: 0 0 1.5rem;
+  box-shadow: 0 12px 28px rgb(140 13 33 / 0.25);
+}
+
+.card-art-name {
+  position: absolute;
+  top: 1rem;
+  left: 1.1rem;
+  font-weight: 800;
+  font-size: 1.3rem;
+}
+
+.card-art-chip {
+  position: absolute;
+  top: 42%;
+  left: 1.1rem;
+  width: 2.4rem;
+  height: 1.8rem;
+  border-radius: 5px;
+  background: rgb(255 255 255 / 0.75);
+}
+
+.card-art-number {
+  position: absolute;
+  bottom: 1rem;
+  left: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.panel {
+  border: 1px solid var(--pn-line);
+  border-radius: var(--pn-radius);
+  padding: 1.25rem;
+  margin: 0 0 1.25rem;
+}
+
+.choice {
+  background: var(--pn-red-soft);
+  border-radius: var(--pn-field-radius);
+  padding: 1rem;
+  margin: 0 0 1.25rem;
+}
+
+.choice p {
+  margin: 0 0 0.75rem;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.button {
+  display: inline-block;
+  font: inherit;
+  font-weight: 800;
+  border-radius: 999px;
+  padding: 0.7rem 1.4rem;
+  cursor: pointer;
+  text-decoration: none;
+  border: 2px solid var(--pn-red);
+}
+
+.button.primary {
+  background: var(--pn-red);
+  color: var(--pn-white);
+}
+
+.button.primary:hover:not(:disabled) {
+  background: var(--pn-red-deep);
+  border-color: var(--pn-red-deep);
+}
+
+.button.secondary {
+  background: var(--pn-white);
+  color: var(--pn-red-deep);
+}
+
+.button:disabled {
+  background: var(--pn-mist);
+  color: var(--pn-muted);
+  border-color: var(--pn-line);
+  cursor: not-allowed;
+}
+
+.long-form {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+.long-form legend {
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  padding: 0;
+}
+
+label {
+  display: block;
+  font-weight: 600;
+  margin: 0 0 0.85rem;
+}
+
+input,
+select {
+  display: block;
+  width: 100%;
+  margin-top: 0.3rem;
+  font: inherit;
+  font-weight: 400;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--pn-line);
+  border-radius: var(--pn-field-radius);
+  background: var(--pn-white);
+  color: var(--pn-ink);
+}
+
+input[type="file"] {
+  padding: 0.45rem;
+}
+
+input:disabled {
+  background: var(--pn-mist);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 0 0.75rem;
+}
+
+.prefilled {
+  border: 2px solid var(--pn-ok);
+  border-radius: var(--pn-field-radius);
+  background: var(--pn-ok-soft);
+  padding: 0.75rem 1rem;
+}
+
+.prefilled summary {
+  cursor: pointer;
+  font-weight: 800;
+  color: var(--pn-ok);
+}
+
+.tick {
+  display: inline-grid;
+  place-items: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 50%;
+  background: var(--pn-ok);
+  color: var(--pn-white);
+  font-size: 0.85rem;
+}
+
+.claims {
+  display: grid;
+  grid-template-columns: minmax(7rem, auto) 1fr;
+  gap: 0.35rem 1rem;
+  margin: 0.75rem 0 0;
+}
+
+.claims dt {
+  font-weight: 600;
+}
+
+.claims dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.checks {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.gates {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.gates li {
+  border-left: 5px solid var(--pn-ok);
+  background: var(--pn-ok-soft);
+  padding: 0.5rem 0.75rem;
+  border-radius: 0 var(--pn-field-radius) var(--pn-field-radius) 0;
+}
+
+.gates li.fail {
+  border-left-color: var(--pn-red-deep);
+  background: var(--pn-red-soft);
+}
+
+.alert {
+  background: var(--pn-red-soft);
+  color: var(--pn-red-deep);
+  border-left: 5px solid var(--pn-red-deep);
+  padding: 0.6rem 1rem;
+  margin: 0.75rem 0;
+  border-radius: 0 var(--pn-field-radius) var(--pn-field-radius) 0;
+}
+
+.alert p {
+  margin: 0;
+}
+
+.ok {
+  background: var(--pn-ok-soft);
+  color: var(--pn-ok);
+  border-left: 5px solid var(--pn-ok);
+  padding: 0.6rem 1rem;
+}
+
+code {
+  overflow-wrap: anywhere;
+}
+
+:focus-visible {
+  outline: 3px solid var(--pn-focus);
+  outline-offset: 2px;
+}
+
+@media (max-width: 30rem) {
+  h1 {
+    font-size: 1.65rem;
+  }
+  .row {
+    grid-template-columns: 1fr;
+  }
+}

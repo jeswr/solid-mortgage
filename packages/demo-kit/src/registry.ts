@@ -33,6 +33,7 @@ export const ORG_SLUGS = [
   "hospital",
   "pharmacy",
   "clinic",
+  "card-issuer",
   "repairer",
 ] as const;
 

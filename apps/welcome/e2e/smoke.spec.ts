@@ -17,6 +17,7 @@ const ROUTES = [
   "./watch/small-dollar-lending",
   "./watch/business-kyb",
   "./watch/medication-handover",
+  "./watch/reusable-kyc",
   "./honesty",
   "./journey",
   "./nope",

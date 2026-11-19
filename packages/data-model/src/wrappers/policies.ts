@@ -101,6 +101,19 @@ export class Permission extends TypedNode {
     const event = this.constraintOn(ODRL.event)?.rightOperand;
     return event === undefined ? undefined : { event: event.value };
   }
+  /**
+   * How many times the permission may be used (`odrl:count`), if it says: 1 for a one-time
+   * grant. WAC cannot count; the holder's wallet closes the grant after the use.
+   */
+  get maxUses(): number | undefined {
+    const count = this.constraintOn(ODRL.count)?.rightOperand;
+    if (count === undefined) return undefined;
+    const value = Number(count.value);
+    if (!Number.isSafeInteger(value) || value < 1) {
+      throw new RangeError(`odrl:count must be a positive integer: ${count.value}`);
+    }
+    return value;
+  }
 }
 
 export interface PermissionInit {
@@ -110,6 +123,8 @@ export interface PermissionInit {
   /** A DPV purpose IRI. */
   purpose: string;
   end?: GrantEnd;
+  /** How many times the permission may be used (`odrl:count`); 1 for a one-time grant. */
+  maxUses?: number;
 }
 
 /** Fields shared by the request and the agreement. */
@@ -222,6 +237,17 @@ function applyPolicy(policy: AccessPolicy, init: AccessPolicyInit, type: string)
         setIri(constraint, ODRL.rightOperand, end.event),
       );
     }
+    const maxUses = permissionInit.maxUses;
+    if (maxUses !== undefined) {
+      if (!Number.isSafeInteger(maxUses) || maxUses < 1) {
+        throw new RangeError(`maxUses must be a positive integer: ${maxUses}`);
+      }
+      addConstraint(permission, 3, ODRL.count, ODRL.lteq, (constraint) =>
+        RequiredAs.object(constraint, ODRL.rightOperand, maxUses, (value, factory) =>
+          factory.literal(String(value), factory.namedNode(XSD.integer)),
+        ),
+      );
+    }
   });
   setDateTime(policy, DCTERMS.issued, init.issued);
 }
@@ -261,12 +287,14 @@ export function permissionInits(policy: AccessPolicy): PermissionInit[] {
     const purpose = permission.purposeIri;
     if (purpose === undefined) throw new TypeError("a permission needs a purpose constraint");
     const end = permission.end;
+    const maxUses = permission.maxUses;
     return {
       assignee: permission.assigneeIri,
       modes: permission.modes,
       purpose,
       targets: [...permission.targetIris].sort(),
       ...(end === undefined ? {} : { end }),
+      ...(maxUses === undefined ? {} : { maxUses }),
     };
   });
 }

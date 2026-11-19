@@ -61,6 +61,7 @@ export const SCHEMA_STREET_ADDRESS = `${SCHEMA}streetAddress`;
 export const SCHEMA_ADDRESS_LOCALITY = `${SCHEMA}addressLocality`;
 export const SCHEMA_ADDRESS_REGION = `${SCHEMA}addressRegion`;
 export const SCHEMA_POSTAL_CODE = `${SCHEMA}postalCode`;
+export const SCHEMA_BIRTH_DATE = `${SCHEMA}birthDate`;
 
 /** FIBO terms used by the appraisal / title / property shapes. */
 export const FIBO_REAL_ESTATE =
@@ -97,6 +98,7 @@ const SHAPE_LOCAL_NAMES: Readonly<Record<CredentialKind, string>> = {
   "title-commitment-credential": "TitleCommitmentCredentialShape",
   "evidence-of-insurance-credential": "EvidenceOfInsuranceCredentialShape",
   "motor-policy-credential": "MotorPolicyCredentialShape",
+  "kyc-attestation-credential": "KycAttestationCredentialShape",
   "zk-operand-anchor": "ZkOperandAnchorShape",
   // Small-dollar lending (flows.md section 4).
   "cash-flow-credential": "CashFlowCredentialShape",
@@ -118,6 +120,7 @@ export type CredentialKind =
   | "title-commitment-credential"
   | "evidence-of-insurance-credential"
   | "motor-policy-credential"
+  | "kyc-attestation-credential"
   | "zk-operand-anchor"
   | "cash-flow-credential"
   | "repayment-history-credential"

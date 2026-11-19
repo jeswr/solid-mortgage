@@ -188,7 +188,7 @@ describe("watch pages", () => {
   });
 
   it("gives a coming demo a Coming next page without a player", () => {
-    render(<App hook={at("/watch/reusable-kyc")} probe={present} />);
+    render(<App hook={at("/watch/small-business-loan")} probe={present} />);
     expect(screen.getByRole("heading", { name: "This demo is being built" })).toBeTruthy();
     expect(document.querySelector("video, .player")).toBeNull();
   });
