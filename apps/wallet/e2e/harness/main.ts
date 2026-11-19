@@ -7,7 +7,12 @@
  */
 import "@mortgage/vc-kit/browser/buffer";
 import { createBrowserWorld, mortgageSeed } from "@mortgage/content/mortgage/browser";
-import { type GrantCode, readAcl, requestAccess } from "@mortgage/content/mortgage/grants";
+import {
+  type GrantCode,
+  membersOf,
+  readAcl,
+  requestAccess,
+} from "@mortgage/content/mortgage/grants";
 import { JOURNEY } from "@mortgage/content/mortgage/journey";
 import { podUrl } from "@mortgage/content/mortgage/world";
 import { ORGS } from "@mortgage/content/orgs";
@@ -46,6 +51,13 @@ const harness = {
       method,
     });
     return response.status;
+  },
+  /** The members of container `path` in `pod`, as `owner` reads its listing, relative to the pod. */
+  async members(owner: PodOwner, pod: PodOwner, path: string): Promise<string[]> {
+    const w = await world(1);
+    const base = podUrl(w, pod, "");
+    const listed = await membersOf(w.fetchAs(owner), podUrl(w, pod, path));
+    return listed.map((url) => (url.startsWith(base) ? url.slice(base.length) : url));
   },
   /** PUT a plain-text document as `owner` into `pod`; the status the pod server answered. */
   async write(owner: PodOwner, pod: PodOwner, path: string, text: string): Promise<number> {

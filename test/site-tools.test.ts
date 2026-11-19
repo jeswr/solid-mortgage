@@ -1,6 +1,14 @@
 // AUTHORED-BY Claude Opus 5.5
 
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  cpSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { request } from "node:http";
 import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
@@ -243,7 +251,14 @@ describe("build-site", () => {
     };
 
     it("takes exactly the pinned files, as committed", () => {
-      expect(collectCrs(source)).toEqual(CRS_FILES.map((pin) => pin.file));
+      const files = collectCrs(source);
+      expect(files.map((entry: { file: string }) => entry.file)).toEqual(
+        CRS_FILES.map((pin) => pin.file),
+      );
+      // It returns the bytes it checked, which the build writes into dist/crs/.
+      for (const [index, pin] of CRS_FILES.entries()) {
+        expect(Buffer.compare(files[index].bytes, readFileSync(join(source, pin.file)))).toBe(0);
+      }
     });
 
     it("fails when a pinned file is missing, or the directory is", () => {
@@ -257,6 +272,25 @@ describe("build-site", () => {
       const target = copy("extra");
       writeFileSync(join(target, "bn254-g1-65536-0000000000000000.dat"), "more points");
       expect(() => collectCrs(target)).toThrow("does not pin: bn254-g1-65536-0000000000000000.dat");
+    });
+
+    it("refuses a pinned name that is a symbolic link, even to the genuine file", () => {
+      // The link's target passes every check, but a copy of the path would ship the link itself.
+      const target = copy("link");
+      rmSync(join(target, CRS_G2.file));
+      symlinkSync(join(source, CRS_G2.file), join(target, CRS_G2.file));
+      expect(() => collectCrs(target)).toThrow(`${CRS_G2.file} is a symbolic link`);
+    });
+
+    it("refuses a pinned name that is a directory, and a CRS directory that is a link", () => {
+      const target = copy("directory");
+      rmSync(join(target, CRS_G2.file));
+      mkdirSync(join(target, CRS_G2.file));
+      expect(() => collectCrs(target)).toThrow(`${CRS_G2.file} is not a regular file`);
+      const linked = join(dir, "linked-directory");
+      rmSync(linked, { force: true, recursive: true });
+      symlinkSync(source, linked);
+      expect(() => collectCrs(linked)).toThrow("is not a directory (a symbolic link is refused)");
     });
 
     it("fails on a same-length change to a pinned file, and on a wrong length", () => {

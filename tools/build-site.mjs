@@ -20,9 +20,14 @@
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
+  closeSync,
+  constants,
   cpSync,
   existsSync,
+  fstatSync,
+  lstatSync,
   mkdirSync,
+  openSync,
   readdirSync,
   readFileSync,
   rmSync,
@@ -183,12 +188,37 @@ async function bundleAgents(apps) {
 }
 
 /**
- * The CRS files to copy into `dist/crs/`: exactly the files vc-kit pins (`zk/crs-pins.ts`), each
- * with its pinned length and SHA-256. Throws when one is missing, differs from its pin, or the
- * directory holds any other file, so a build never ships a CRS the prover would refuse, nor
- * anything else under `/crs/`.
+ * Read `path` only if it is a regular file, never through a symbolic link: O_NOFOLLOW refuses a link
+ * at open, and fstat checks the very file that was opened, so nothing can swap it in between.
+ */
+function readRegularFile(path) {
+  let fd;
+  try {
+    fd = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW);
+  } catch (error) {
+    if (error?.code === "ELOOP") throw new Error(`build-site: CRS file ${path} is a symbolic link`);
+    throw error;
+  }
+  try {
+    if (!fstatSync(fd).isFile())
+      throw new Error(`build-site: CRS file ${path} is not a regular file`);
+    return readFileSync(fd);
+  } finally {
+    closeSync(fd);
+  }
+}
+
+/**
+ * The CRS files for `dist/crs/`: exactly the files vc-kit pins (`zk/crs-pins.ts`), each a regular
+ * file (not a symbolic link) with its pinned length and SHA-256. Returns the bytes it checked, and
+ * the build writes those bytes, so what ships is what was checked. Throws when a file is missing,
+ * differs from its pin or is not a regular file, when the directory is a link or holds anything
+ * else, so a build never ships a CRS the prover would refuse, nor anything else under `/crs/`.
  */
 export function collectCrs(source, pins = CRS_FILES) {
+  if (existsSync(source) && !lstatSync(source).isDirectory()) {
+    throw new Error(`build-site: ${source} is not a directory (a symbolic link is refused)`);
+  }
   const present = existsSync(source) ? readdirSync(source).sort() : [];
   const pinned = pins.map((pin) => pin.file);
   const missing = pinned.filter((name) => !present.includes(name));
@@ -201,8 +231,8 @@ export function collectCrs(source, pins = CRS_FILES) {
       `build-site: ${source} holds file(s) vc-kit does not pin: ${extra.join(", ")} (pins: packages/vc-kit/src/zk/crs-pins.ts)`,
     );
   }
-  for (const pin of pins) {
-    const bytes = readFileSync(join(source, pin.file));
+  return pins.map((pin) => {
+    const bytes = readRegularFile(join(source, pin.file));
     if (bytes.length !== pin.bytes) {
       throw new Error(
         `build-site: CRS file ${pin.file} is ${bytes.length} bytes, not the pinned ${pin.bytes}`,
@@ -211,8 +241,8 @@ export function collectCrs(source, pins = CRS_FILES) {
     if (createHash("sha256").update(bytes).digest("hex") !== pin.sha256) {
       throw new Error(`build-site: CRS file ${pin.file} does not match its pinned SHA-256`);
     }
-  }
-  return pinned;
+    return { bytes, file: pin.file };
+  });
 }
 
 async function main() {
@@ -264,9 +294,11 @@ async function main() {
 
   // The prover loads its CRS from the site, never from a CDN; vc-kit checks each file's SHA-256.
   const crsSource = join(ROOT, "packages", "vc-kit", "crs");
-  const crs = collectCrs(crsSource);
+  const crsFiles = collectCrs(crsSource);
   mkdirSync(join(DIST, "crs"), { recursive: true });
-  for (const name of crs) cpSync(join(crsSource, name), join(DIST, "crs", name));
+  // Write the bytes collectCrs checked, rather than copy the paths again.
+  for (const { file, bytes } of crsFiles) writeFileSync(join(DIST, "crs", file), bytes);
+  const crs = crsFiles.map(({ file }) => file);
 
   const agents = await bundleAgents(apps);
 
