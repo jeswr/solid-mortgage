@@ -7,7 +7,7 @@
  */
 import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page, test } from "@playwright/test";
-import { evaluateSoon } from "./support/site.ts";
+import { evaluateSoon, waitForRuntime } from "./support/site.ts";
 import { chapterStarts, loadMortgageTour, type TourStep } from "./support/tour-content.ts";
 import { tourState, walkTour } from "./support/walk.ts";
 
@@ -41,12 +41,26 @@ test("2 Accessibility: axe passes on every step with the Lens open and collapsed
   const violations: string[] = [];
   const result = await walkTour(page, tour, {
     onReached: async (step, index) => {
-      const where = `step ${index + 1} "${step.id}" ${page.url()}`;
-      await setLensCollapsed(page, false);
-      for (const v of await axe(page)) violations.push(`${where} [Lens open] ${v}`);
-      await setLensCollapsed(page, true);
-      for (const v of await axe(page)) violations.push(`${where} [Lens collapsed] ${v}`);
-      await setLensCollapsed(page, false);
+      // A page can still move on as a step is reached (a redirect, the runtime claiming it);
+      // then the check runs again on the page it settled on.
+      for (let attempt = 1; ; attempt++) {
+        const found: string[] = [];
+        try {
+          const where = `step ${index + 1} "${step.id}" ${page.url()}`;
+          await setLensCollapsed(page, false);
+          for (const v of await axe(page)) found.push(`${where} [Lens open] ${v}`);
+          await setLensCollapsed(page, true);
+          for (const v of await axe(page)) found.push(`${where} [Lens collapsed] ${v}`);
+          await setLensCollapsed(page, false);
+          violations.push(...found);
+          return;
+        } catch (error) {
+          if (attempt >= 3 || !/Execution context was destroyed|navigat/i.test(String(error)))
+            throw error;
+          await page.waitForLoadState("load").catch(() => undefined);
+          await waitForRuntime(page, { tour: true });
+        }
+      }
     },
   });
   expect(violations, "axe violations").toEqual([]);
@@ -88,12 +102,26 @@ test("2 Accessibility: chapters 1 to 3 run with the keyboard alone", async ({ pa
   // design.md §b.5: Welcome, then chapters 1 Get ready, 2 Shop, 3 Apply; stop before chapter 4.
   const end = starts[4];
   expect(end, `the tour needs at least five chapters (found ${starts.length})`).toBeDefined();
+  // Some actions take two presses of the same target, as "Do it for me" does them: in the wallet
+  // "Have Juniper ask now" brings Juniper's request, whose Approve carries the same target.
   const perform = async (step: TourStep) => {
     const target = step.action?.target as string;
-    const reached = await tabTo(page, () => focusIs(page, "target", target));
-    if (!reached)
-      throw new Error(`[data-tour="${target}"] cannot be reached with Tab on ${page.url()}`);
-    await page.keyboard.press("Enter");
+    const done = async () => (await tourState(page))?.done.includes(step.id) ?? false;
+    for (let press = 0; press < 3 && !(await done()); press++) {
+      if (press > 0) {
+        const settled = await expect
+          .poll(done, { timeout: 10_000 })
+          .toBe(true)
+          .then(() => true)
+          .catch(() => false);
+        if (settled) return;
+        if ((await page.locator(`[data-tour="${target}"]:enabled`).count()) === 0) return;
+      }
+      const reached = await tabTo(page, () => focusIs(page, "target", target));
+      if (!reached)
+        throw new Error(`[data-tour="${target}"] cannot be reached with Tab on ${page.url()}`);
+      await page.keyboard.press("Enter");
+    }
   };
   const result = await walkTour(page, tour, {
     onDone: async (step, index) => {

@@ -45,6 +45,42 @@ async function containers(page: Page): Promise<Record<string, { status: number; 
   return out;
 }
 
+async function restartFromLens(page: Page, firstStepId: string): Promise<void> {
+  const restart = page
+    .locator("solid-lens")
+    .getByRole("button", { name: /restart/i })
+    .first();
+  await expect(restart, "the Lens's restart control").toBeVisible({ timeout: 15_000 });
+  await restart.click();
+  const confirm = page.getByRole("button", { name: /^(restart|yes|confirm)/i });
+  if (
+    await confirm
+      .first()
+      .isVisible()
+      .catch(() => false)
+  )
+    await confirm.first().click();
+
+  await expect
+    .poll(async () => (await tourState(page))?.step, {
+      message: "tour back at step 1",
+      timeout: 30_000,
+    })
+    .toBe(firstStepId);
+  await waitForRuntime(page, { tour: true });
+  await expect
+    .poll(
+      async () =>
+        (await podLogSoon(page)).filter((e) => e.source === "pod" && e.kind !== "read").length,
+      {
+        message: "the event log is cleared (only the test's own reads may follow)",
+        timeout: 30_000,
+      },
+    )
+    .toBe(0);
+  expect((await tourState(page))?.done ?? [], "no step done after restart").toEqual([]);
+}
+
 test("8 Reset: Restart the demo returns the pods to the seed and a second run passes", async ({
   page,
   browser,
@@ -71,40 +107,7 @@ test("8 Reset: Restart the demo returns the pods to the seed and a second run pa
 
   // Restart from the Lens (the visitor's control), accepting any confirmation.
   page.on("dialog", (dialog) => void dialog.accept());
-  const restart = page
-    .locator("solid-lens")
-    .getByRole("button", { name: /restart/i })
-    .first();
-  await expect(restart, "the Lens's restart control").toBeVisible({ timeout: 15_000 });
-  await restart.click();
-  const confirm = page.getByRole("button", { name: /^(restart|yes|confirm)/i });
-  if (
-    await confirm
-      .first()
-      .isVisible()
-      .catch(() => false)
-  )
-    await confirm.first().click();
-
-  await expect
-    .poll(async () => (await tourState(page))?.step, {
-      message: "tour back at step 1",
-      timeout: 30_000,
-    })
-    .toBe(firstStep.id);
-  await waitForRuntime(page, { tour: true });
-  await expect
-    .poll(
-      async () =>
-        (await podLogSoon(page)).filter((e) => e.source === "pod" && e.kind !== "read").length,
-      {
-        message: "the event log is cleared (only the test's own reads may follow)",
-        timeout: 30_000,
-      },
-    )
-    .toBe(0);
-  expect((await tourState(page))?.done ?? [], "no step done after restart").toEqual([]);
-
+  await restartFromLens(page, firstStep.id);
   expect(await containers(page), "Alex's containers equal their seed state").toEqual(
     seedContainers,
   );
@@ -125,6 +128,11 @@ test("8 Reset: Restart the demo returns the pods to the seed and a second run pa
   }
   await fresh.close();
   expect(differences, "resources not returned to the seed").toEqual([]);
+
+  // The checks above read Alex's pod root as Alex, which is step 1's own completion signal, so
+  // the tour would count step 1 done before the second run starts. Restart once more, as a
+  // visitor may, and run from a step 1 nobody has touched.
+  await restartFromLens(page, firstStep.id);
 
   const second = await walkTour(page, tour);
   const log = await podLogSoon(page).catch(() => []);

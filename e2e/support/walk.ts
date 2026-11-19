@@ -143,6 +143,10 @@ export async function walkTour(
     const step = tour.steps[index] as TourStep;
     const label = `step ${index + 1} "${step.id}" (${step.app}${step.path.startsWith("/") ? "" : "/"}${step.path})`;
     try {
+      // The first step's window opens before its page loads, so the reads that page makes as it
+      // loads count (step 1 is done by the wallet reading Alex's pod root). On a page the pod
+      // runtime does not control yet, the window starts at the beginning of the log.
+      if (index === from) watermark = await lastId(page, watermark);
       if (index === from && (options.open ?? from === 0)) {
         await openApp(page, step.app, step.path, {
           params: { step: step.id, tour: tour.demo },
@@ -171,10 +175,9 @@ export async function walkTour(
       }
       await waitForRuntime(page, { tour: true });
       await options.onReached?.(step, index);
-      // The first step's window opens now. Later steps' windows open where the previous step's
-      // closed, so the reads a step's page makes as it loads (steps 6, 10 and 24 expect them)
-      // count towards the step that navigated there.
-      if (index === from) watermark = await lastId(page, watermark);
+      // Later steps' windows open where the previous step's closed, so the reads a step's page
+      // makes as it loads (steps 6, 10 and 24 expect them) count towards the step that
+      // navigated there.
       const span: StepWindow = {
         app: step.app,
         completed: false,
