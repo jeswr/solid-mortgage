@@ -197,8 +197,26 @@ WAC on every request.
 | Mode | When it is used | How it works |
 |---|---|---|
 | Service worker | The normal case | Same-origin pages are controlled after `clients.claim()`. A hard-reloaded page asks for a claim. |
-| Dedicated worker (`pod-host`) | No service worker, or `mode: "worker"` | The same bundle and the same IndexedDB. Every tab starts one, but only the holder of the `pod-runtime-host` Web Lock runs the pods and the agents. The others forward their page's messages to it over a BroadcastChannel. When the hosting tab closes, the next worker restores from the snapshots and takes over. |
+| Dedicated worker (`pod-host`) | No service worker (including plain HTTP, which is not a secure context), or `mode: "worker"` | The same bundle and the same IndexedDB. Every tab starts one, but only one, the host, runs the pods and the agents. The others forward their page's messages to it over a BroadcastChannel. When the host goes away, the next worker restores from the snapshots and takes over. See "Electing the fallback host" below. |
 | Host-mode bridge | `setUrlMode({ kind: "host" })` | A hidden iframe on `https://pods.<domain>/pods-bridge/` carries the requests. |
+
+**Electing the fallback host.**
+
+- With Web Locks, the holder of the `pod-runtime-host` lock hosts. When its tab closes, the lock
+  passes to a waiting worker.
+- Without Web Locks (plain HTTP: Web Locks and `crypto.randomUUID` exist only in secure contexts),
+  a lease in IndexedDB elects the host. A worker claims it in one readwrite transaction, so two
+  tabs cannot both take a free lease, and renews it every second; a lease not renewed for 5 s is
+  free. The host also renews before it answers each request. A host that finds the lease taken
+  (its tab was suspended, say) steps down and forwards instead of writing to stale pods. A closed
+  worker releases the lease; a tab killed outright frees it after 5 s, and requests wait for the
+  next host meanwhile.
+- A new host always restores from storage first, then announces itself, and the other workers
+  resend what is still unanswered. A request keeps its id across resends and the host answers each
+  id once, so a request the old host never saw is applied once. Replies to state-changing requests
+  (writes, seed, reset, notes) are also kept in a short log in storage (the last 200, bodies over
+  4 KB dropped), so a resend of something the old host already applied gets its original reply.
+- The agents start once, however many tabs ask at the same time.
 
 ## Characterisation of the 0.1.8 wasm
 
@@ -243,8 +261,9 @@ The tests in `test/wasm/` pin down these behaviours. Treat any change as a break
 
 - **Anonymous requests emit no Lens event**, because `PodEvent.actor` cannot express "anonymous".
   Showing them would need a contract change.
-- **Fallback hand-over.** A request in flight when the hosting tab closes is sent again to the new
-  host. If the old host had already applied it, it is applied twice.
+- **Fallback hand-over.** Two narrow windows remain. If the hosting tab dies after a write is saved
+  but before its reply is logged, the new host applies the resend again. Without Web Locks, a
+  single request that takes longer than the 5 s lease can overlap a new host's first requests.
 - **The bundle is about 3.7 MB** with the wasm inlined. It is served `no-cache`, so the HTTP cache
   revalidates it.
 - **Host mode** needs these outside this package:
@@ -282,6 +301,6 @@ matter.
 | `test/host/` | Access (owner, Read, Append, refused, anonymous), the ACL policy and `acl:origin` conditions, grant and revoke events, event kinds, persistence and reset, corrupt snapshots, the guard, and a real trap in a child process with recovery. |
 | `test/wasm/` | The characterisation tests above. |
 | `test/agents/`, `test/bridge/` | Agents and the bridge over the real host. |
-| `test/sw/` | The real service-worker role and runtime over the Node wasm, through a fake worker scope. Covers host-mode identity, the client check, hello and note handling, and prototype names. |
-| `test/browser/` | The built `pods-sw.js` in Chrome, including fallback mode with several tabs. A host-mode build also runs on `*.demo.localhost`; it needs port 80 and skips without it. Everything here skips when `dist/` or a Chrome is missing; set `POD_RUNTIME_CHROME` to choose the binary. |
+| `test/sw/` | The real service-worker role and runtime over the Node wasm, through a fake worker scope. Covers host-mode identity, the client check, hello and note handling, and prototype names. `host-worker.test.ts` runs several fallback "tabs" in one process: the lease election without Web Locks, stepping down, hand-over without double writes, single-flight agents, and no `crypto.randomUUID`. |
+| `test/browser/` | The built `pods-sw.js` in Chrome, including fallback mode with several tabs and on a plain-HTTP origin. A host-mode build also runs on `*.demo.localhost`; it needs port 80 and skips without it. Everything here skips when `dist/` or a Chrome is missing; set `POD_RUNTIME_CHROME` to choose the binary. |
 | `test/domain-gate.test.ts` | No domain vocabulary anywhere in the package. |
