@@ -98,6 +98,17 @@ describe("serve-dist", () => {
     expect((await fetch(`${origin}/lender/assets/gone.js`)).status).toBe(404);
   });
 
+  it("answers 404 for an app that is not built, and revalidates with Last-Modified", async () => {
+    expect((await fetch(`${origin}/wallet/requests`)).status).toBe(404);
+    const first = await fetch(`${origin}/lender/assets/app.js`);
+    const lastModified = first.headers.get("last-modified");
+    expect(lastModified).toBeTruthy();
+    const again = await fetch(`${origin}/lender/assets/app.js`, {
+      headers: { "If-Modified-Since": lastModified ?? "" },
+    });
+    expect(again.status).toBe(304);
+  });
+
   it("never serves a file outside dist/", async () => {
     // fetch() would normalise the path, so send raw request lines.
     const statusOf = (path: string) =>
