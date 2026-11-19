@@ -5,6 +5,13 @@
  */
 import type { ComponentType } from "react";
 import {
+  MedHealth,
+  MedLedger,
+  MedRequests,
+  MedSharedWithMe,
+  MedSharing,
+} from "./medication-handover/Medication.tsx";
+import {
   MovingAddress,
   MovingHome,
   MovingLedger,
@@ -44,4 +51,29 @@ export const sections: readonly AppSection[] = [
     title: "Standing grants",
   },
   { Component: MovingLedger, demo: "moving-house", path: "moving/ledger", title: "Journey ledger" },
+  { Component: MedHealth, demo: "medication-handover", path: "health", title: "Health" },
+  {
+    Component: MedRequests,
+    demo: "medication-handover",
+    path: "health/requests",
+    title: "Health requests",
+  },
+  {
+    Component: MedSharing,
+    demo: "medication-handover",
+    path: "health/sharing",
+    title: "Who can see it",
+  },
+  {
+    Component: MedSharedWithMe,
+    demo: "medication-handover",
+    path: "health/shared",
+    title: "Shared with me",
+  },
+  {
+    Component: MedLedger,
+    demo: "medication-handover",
+    path: "health/ledger",
+    title: "Journey ledger",
+  },
 ];
