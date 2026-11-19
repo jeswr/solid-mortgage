@@ -21,16 +21,10 @@ import {
   ZkOperandAnchor,
 } from "@mortgage/data-model";
 import type { OrgSlug } from "@mortgage/demo-kit/registry";
-import {
-  proveTierA,
-  type TierAProofJson,
-  type TierAStatement,
-  tierAProofFromJson,
-  tierAProofToJson,
-  verifyTierA,
-} from "@mortgage/vc-kit";
+import type { TierAProofJson, TierAStatement } from "@mortgage/vc-kit";
 import { DataFactory } from "n3";
 import { PREQUALIFICATION } from "./facts.js";
+import { vcKit } from "./vc.js";
 import {
   at,
   PodRequestError,
@@ -139,6 +133,7 @@ export async function presentThresholdProofs(
     await readText(alex, challengeUrl(world, lender), "application/json"),
   ) as PrequalificationChallenge;
   const statements: ThresholdPresentation["statements"][number][] = [];
+  const { proveTierA, tierAProofToJson } = await vcKit();
   for (const statement of challenge.statements) {
     const source = STATEMENT_SOURCES[statement.field];
     if (source === undefined) throw new Error(`cannot prove ${statement.field}`);
@@ -208,6 +203,7 @@ export async function verifyPresentation(
   }
   if (live !== undefined) {
     const challenge = live;
+    const { tierAProofFromJson, verifyTierA } = await vcKit();
     for (const asked of challenge.statements) {
       const offered = presentation.statements.find(
         (entry) =>

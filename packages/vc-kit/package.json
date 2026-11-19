@@ -25,9 +25,17 @@
       "types": "./dist/browser/zlib.d.ts",
       "import": "./dist/browser/zlib.js"
     },
+    "./honesty": {
+      "types": "./dist/zk/honesty.d.ts",
+      "import": "./dist/zk/honesty.js"
+    },
     "./seed-tooling": {
       "types": "./dist/seed-tooling/index.d.ts",
       "import": "./dist/seed-tooling/index.js"
+    },
+    "./sha256": {
+      "types": "./dist/sha256.d.ts",
+      "import": "./dist/sha256.js"
     }
   },
   "scripts": {

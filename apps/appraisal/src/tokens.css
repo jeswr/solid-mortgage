@@ -1,0 +1,19 @@
+/* AUTHORED-BY Claude Opus 5.5
+ * Plumbline's tokens: dispatch-software graphite with safety orange (design.md §b.3). */
+:root {
+  --pl-graphite: #2b2d31;
+  --pl-graphite-2: #3a3d43;
+  --pl-steel: #e9eaec;
+  --pl-paper: #f6f6f4;
+  --pl-ink: #1b1c1f;
+  --pl-muted: #575b63;
+  --pl-orange: #e8590c;
+  --pl-orange-deep: #b8460a;
+  --pl-on-orange: #1b1c1f;
+  --pl-ok: #2f6b3a;
+  --pl-refused: #9b1c1c;
+  --pl-focus: #1d4ed8;
+  --pl-head: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --pl-body: "Barlow", system-ui, sans-serif;
+  --pl-radius: 3px;
+}

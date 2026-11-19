@@ -1,0 +1,15 @@
+/* AUTHORED-BY Claude Opus 5.5
+ * Quillon Credit Bureau's tokens (design.md §b.3): a utility. The system serif, one grey-blue,
+ * white paper, hairline rules, no decoration and no web font. Original values. */
+:root {
+  --qc-blue: #44546a;
+  --qc-blue-deep: #2e3a4b;
+  --qc-ink: #1a1a1a;
+  --qc-muted: #4a4f57;
+  --qc-rule: #b9bfc8;
+  --qc-paper: #ffffff;
+  --qc-ground: #eceef1;
+  --qc-red: #8a1c1c;
+  --qc-serif: Georgia, "Times New Roman", Times, serif;
+  --qc-mono: ui-monospace, "Courier New", monospace;
+}
