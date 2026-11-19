@@ -180,6 +180,13 @@ export class TourEngine extends EventTarget {
     };
     this.doc.addEventListener("click", this.clickListener, true);
     this.doc.addEventListener("focusin", this.clickListener, true);
+    // A keyboard visitor can reach the region before the tour mounts on this page: focus that is
+    // already there counts as arriving now.
+    let active: Element | null = this.doc.activeElement;
+    while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
+    if (active && active !== this.doc.body) {
+      this.clickListener({ target: active, type: "focusin" } as unknown as Event);
+    }
   }
 
   /**

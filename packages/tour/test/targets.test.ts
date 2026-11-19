@@ -71,6 +71,14 @@ describe("target completion", () => {
     engine.dispose();
   });
 
+  it("completes a Look step whose region already has focus when the tour mounts", async () => {
+    document.body.innerHTML = `<section data-tour="received" tabindex="0"><p>Two answers</p></section>`;
+    (document.querySelector('[data-tour="received"]') as HTMLElement).focus();
+    const engine = await engineOn(LOOK);
+    await expect.poll(() => engine.isDone("look")).toBe(true);
+    engine.dispose();
+  });
+
   it("does not complete a step with an action when its button only receives focus", async () => {
     document.body.innerHTML = `<button data-tour="finish">Finish</button>`;
     const engine = await engineOn(PRESS);
