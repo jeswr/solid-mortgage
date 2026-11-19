@@ -127,8 +127,8 @@ Decisions specific to these shapes:
 - **Title commitment replaces "title clear".** A title agent issues a
   commitment with Schedule A (vested owner, proposed insured, policy amounts)
   and Schedule B (requirements, then exceptions); nobody issues a "title clear"
-  credential. `title-clear-credential` stays only until the retired
-  `packages/solid-kit` that still imports it is deleted.
+  credential. `title-clear-credential` has had no importer since
+  `packages/solid-kit` was deleted and is due for removal.
 - **Grants are three records.** The request (`odrl:Request`) and the agreement
   (`odrl:Agreement`) share one permission shape: assignee, targets, actions
   (`odrl:read`/`write`/`append` only), a DPV purpose, and exactly one end

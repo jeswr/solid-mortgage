@@ -4,41 +4,8 @@
  * this browser. Nothing is mocked. Owner reads use the path-mode identity header the pod
  * runtime's `podFetch` sends.
  */
-import AxeBuilder from "@axe-core/playwright";
-import { expect, type Page, test } from "@playwright/test";
-
-/** A GET to a pod as `owner`, from inside the page (so the service worker answers it). */
-function asOwner(
-  page: Page,
-  owner: string,
-  path: string,
-): Promise<{ status: number; body: string }> {
-  return page.evaluate(
-    async ({ owner, path }) => {
-      const response = await fetch(`/pods/${path}`, {
-        headers: { accept: "text/turtle", "x-demo-agent": owner },
-      });
-      return { body: await response.text(), status: response.status };
-    },
-    { owner, path },
-  );
-}
-
-async function openReady(page: Page, path: string): Promise<void> {
-  await page.goto(`${path}${path.includes("?") ? "&" : "?"}tour=off`);
-  await expect(page.getByRole("status").filter({ hasText: "Connecting" })).toHaveCount(0, {
-    timeout: 60_000,
-  });
-}
-
-async function noAxeViolations(page: Page): Promise<void> {
-  const results = await new AxeBuilder({ page })
-    .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
-    .analyze();
-  expect(
-    results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(" ")}`),
-  ).toEqual([]);
-}
+import { expect, test } from "@playwright/test";
+import { podRequest as asOwner, expectAccessible, openReady } from "../../../test-support/e2e.ts";
 
 test("step 3: Send writes a signed account summary into Alex's pod", async ({ page }) => {
   await openReady(page, "share");
@@ -67,7 +34,7 @@ test("step 3: Send writes a signed account summary into Alex's pod", async ({ pa
   await receipt.getByRole("button", { name: /Try to read it back/ }).click();
   await expect(receipt.locator(".refusal")).toContainText("403 Forbidden");
   expect((await asOwner(page, "bank", "alex/credentials/assets")).status).toBe(403);
-  await noAxeViolations(page);
+  await expectAccessible(page);
 });
 
 test("Connected services: the seeded identity credential, and no access to read it", async ({
@@ -106,7 +73,7 @@ for (const path of ["", "accounts/2291", "share", "connected", "no-such-page"]) 
       "noindex, nofollow",
     );
     await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute("content", "#1F5135");
-    await noAxeViolations(page);
+    await expectAccessible(page);
     await page.setViewportSize({ height: 844, width: 390 });
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth - document.documentElement.clientWidth,

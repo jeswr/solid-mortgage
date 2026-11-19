@@ -1,21 +1,28 @@
 // AUTHORED-BY Claude Opus 5.5
 /**
- * The e2e server: the assembled site (`pnpm run build` → dist/) with the production routing of
- * tools/serve-dist.mjs, plus the test-only harness page at /e2e-harness/ (same origin, so it
+ * An e2e server: the assembled site (`pnpm run build` → dist/) with the production routing of
+ * tools/serve-dist.mjs, plus an app's test-only harness page at /e2e-harness/ (same origin, so it
  * shares the browser context's service-worker pods with the app under test).
  *
- * Usage: node e2e/server.mjs --port <n>
+ * Usage: node test-support/e2e-server.mjs --port <n> --harness <built harness directory>
  */
 import { createReadStream, existsSync, statSync } from "node:fs";
 import { createServer } from "node:http";
 import { extname, join, normalize, resolve, sep } from "node:path";
-import { createSiteServer } from "../../../tools/serve-dist.mjs";
+import { createSiteServer } from "../tools/serve-dist.mjs";
 
-const HERE = import.meta.dirname;
-const SITE = resolve(HERE, "../../../dist");
-const HARNESS = resolve(HERE, "harness/dist");
+const SITE = resolve(import.meta.dirname, "../dist");
 const PREFIX = "/e2e-harness/";
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8" };
+
+function option(name) {
+  const index = process.argv.indexOf(name);
+  return index === -1 ? undefined : process.argv[index + 1];
+}
+
+const harnessOption = option("--harness");
+if (harnessOption === undefined) throw new Error("--harness <directory> is required");
+const HARNESS = resolve(harnessOption);
 
 if (!existsSync(join(SITE, "site.json"))) {
   throw new Error(`no assembled site at ${SITE}: run \`pnpm run build\` at the repository root`);
@@ -44,8 +51,7 @@ const server = createServer((request, response) => {
   else siteHandler.call(site, request, response);
 });
 
-const index = process.argv.indexOf("--port");
-const port = Number(index === -1 ? "0" : process.argv[index + 1]);
+const port = Number(option("--port") ?? "0");
 server.listen(port, "127.0.0.1", () => {
   console.log(`e2e server on http://127.0.0.1:${server.address().port}/`);
 });

@@ -5,11 +5,11 @@
  * page through the harness, the proofs from the test (they need no signing key; see pods.ts). The "What we received" panel must show a yes and who vouches for it, and
  * never the numbers; a read of Alex's pod by Copperfield must be refused.
  */
-import AxeBuilder from "@axe-core/playwright";
 import { CREDIT, DAY, EMPLOYMENT } from "@mortgage/content/mortgage/facts";
 import { proveToLenders } from "@mortgage/content/mortgage/journey";
 import { podUrl } from "@mortgage/content/mortgage/world";
 import { expect, type Page, test } from "@playwright/test";
+import { expectAccessible, expectNoSideScroll } from "../../../test-support/e2e.ts";
 import { injectHarness, on, runBeats, statusAs, testWorld } from "./pods.ts";
 
 test.describe.configure({ mode: "serial" });
@@ -20,16 +20,8 @@ async function open(page: Page, path: string): Promise<void> {
 }
 
 async function checkPage(page: Page): Promise<void> {
-  const results = await new AxeBuilder({ page })
-    .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
-    .analyze();
-  expect(results.violations).toEqual([]);
-  await page.setViewportSize({ height: 844, width: 390 });
-  const overflow = await page.evaluate(
-    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
-  );
-  expect(overflow).toBeLessThanOrEqual(0);
-  await page.setViewportSize({ height: 900, width: 1280 });
+  await expectAccessible(page);
+  await expectNoSideScroll(page);
 }
 
 async function controlled(page: Page): Promise<void> {

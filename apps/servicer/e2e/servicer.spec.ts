@@ -4,22 +4,14 @@
  * server. Every test gets a fresh browser context, so fresh pods. The wallet's Approve (lane
  * A1's screen) is stood in for by the harness calling the same `approveRequest` as Alex.
  */
-import AxeBuilder from "@axe-core/playwright";
 import { DAY } from "@mortgage/content/mortgage/facts";
 import { expect, type Page, test } from "@playwright/test";
+import { expectAccessible, OUTSIDE_LENS } from "../../../test-support/e2e.ts";
 import { injectHarness, noHorizontalScroll, podsReady, readAs, runUntil } from "./pods.ts";
 
 const ROUTES = ["./", "./connect", "./account", "./escrow", "./insurance", "./no-such-page"];
 
 test.setTimeout(240_000);
-
-async function axe(page: Page): Promise<void> {
-  const results = await new AxeBuilder({ page })
-    .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
-    .exclude("solid-lens")
-    .analyze();
-  expect(results.violations).toEqual([]);
-}
 
 /** Run the journey to step 21, connect through the hand-off, and come back approved. */
 async function connectThroughTheWallet(page: Page): Promise<void> {
@@ -98,13 +90,13 @@ test("step 21: Connect asks, the wallet approves, Marigold delivers and reads un
     timeout: 20_000,
   });
   await expect(page.getByText("Late-fee protection until")).toBeVisible();
-  await axe(page);
+  await expectAccessible(page, OUTSIDE_LENS);
 
   await page.goto("./account");
   await expect(page.getByText("$2,659.03")).toBeVisible({ timeout: 20_000 });
   await expect(page.getByText(/•••• \d{4}/)).toBeVisible();
   await expect(page.getByRole("heading", { name: "Where we reach you" })).toBeVisible();
-  await axe(page);
+  await expectAccessible(page, OUTSIDE_LENS);
 
   await page.goto("./escrow");
   await expect(page.getByRole("rowheader", { name: "Property taxes, per year" })).toBeVisible({
@@ -113,14 +105,14 @@ test("step 21: Connect asks, the wallet approves, Marigold delivers and reads un
   await expect(
     page.getByRole("rowheader", { name: "Homeowner's insurance, per year" }),
   ).toBeVisible();
-  await axe(page);
+  await expectAccessible(page, OUTSIDE_LENS);
 
   await page.goto("./insurance");
   await expect(page.getByRole("heading", { name: "Policy WM-HO-558120" })).toBeVisible({
     timeout: 20_000,
   });
   await expect(page.getByText("Signed by Wrenfield Mutual")).toBeVisible();
-  await axe(page);
+  await expectAccessible(page, OUTSIDE_LENS);
   await page.setViewportSize({ height: 844, width: 390 });
   for (const route of ["./", "./account", "./escrow", "./insurance"]) {
     await page.goto(route);
@@ -133,7 +125,7 @@ test("Marigold asked for three things: reading income is refused", async ({ page
   await connectThroughTheWallet(page);
   await page.getByRole("button", { name: "Read income as Marigold" }).click();
   await expect(page.getByText("Alex's pod refused this read (403)")).toBeVisible();
-  await axe(page);
+  await expectAccessible(page, OUTSIDE_LENS);
 });
 
 test("axe passes on every route and nothing scrolls sideways at 390 px", async ({ page }) => {
@@ -141,7 +133,7 @@ test("axe passes on every route and nothing scrolls sideways at 390 px", async (
   for (const route of ROUTES) {
     await page.goto(route);
     await expect(page.getByRole("note", { name: "Concept demonstration notice" })).toBeVisible();
-    await axe(page);
+    await expectAccessible(page, OUTSIDE_LENS);
     await noHorizontalScroll(page);
   }
 });

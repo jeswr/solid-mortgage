@@ -1,13 +1,13 @@
 /**
- * Pod integration (deliverable 6): one dev Solid server per suite (sm-4
- * harness). The issuer's WebID document (with its published Multikey) and the
+ * Pod integration (deliverable 6): one sparq wasm Solid server per suite, in
+ * fixed-owner mode on a free loopback port. The issuer's WebID document (with its published Multikey) and the
  * signed status list are POD RESOURCES; credentials round-trip
  * issue -> PUT -> GET -> verify with the real fail-closed WebID key resolver.
  */
 
+import { createServer } from "node:net";
 import { publishVerificationMethod } from "@jeswr/solid-vc";
-import type { SolidTestServer } from "@mortgage/solid-kit/testing";
-import { startSolidServer } from "@mortgage/solid-kit/testing";
+import { type SolidHttpServer, startSolidServer } from "@sparq-org/solid-server";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import type { IssuedCredential, KeyPair } from "../src/index.js";
 import {
@@ -21,7 +21,7 @@ import {
 } from "../src/index.js";
 import { BACKDATED_VALIDITY, DAY_MS, employmentClaims, NOW, parseTurtle } from "./support.js";
 
-let server: SolidTestServer;
+let server: { baseUrl: string; stop(): Promise<void> };
 let webid: string;
 let key: KeyPair;
 let list: StatusListClient;
@@ -29,6 +29,28 @@ let allocator: StatusIndexAllocator;
 let credentialUrl: string;
 let issued: IssuedCredential;
 let issuedIndex: number;
+
+/** A free loopback port (the OS picks one, then releases it for the pod). */
+async function freePort(): Promise<number> {
+  const probe = createServer();
+  await new Promise<void>((resolve) => probe.listen(0, "127.0.0.1", resolve));
+  const address = probe.address();
+  await new Promise<void>((resolve) => probe.close(() => resolve()));
+  if (address === null || typeof address === "string") throw new Error("no loopback port");
+  return address.port;
+}
+
+/** One in-memory pod; every request acts as the owner (no authentication). */
+async function startPod(): Promise<{ baseUrl: string; stop(): Promise<void> }> {
+  const port = await freePort();
+  const baseUrl = `http://127.0.0.1:${port}`;
+  const pod: SolidHttpServer = await startSolidServer({
+    port,
+    baseUrl,
+    ownerWebid: `${baseUrl}/profile/card#me`,
+  });
+  return { baseUrl, stop: () => pod.closeAsync() };
+}
 
 /** PUT a document into the pod, strict-create. */
 async function putResource(url: string, body: string, contentType: string): Promise<void> {
@@ -41,7 +63,7 @@ async function putResource(url: string, body: string, contentType: string): Prom
 }
 
 beforeAll(async () => {
-  server = await startSolidServer();
+  server = await startPod();
   webid = `${server.baseUrl}/profile/card#me`;
   key = await generateKeyPairForSuite(`${server.baseUrl}/profile/card#vc-key`, "Ed25519");
 

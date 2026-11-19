@@ -4,12 +4,12 @@
  * their buttons; the steps before them run as journey beats inside the page, over the same pods
  * (see harness.ts and pods.ts). Every resource a step writes is read back as its owner.
  */
-import AxeBuilder from "@axe-core/playwright";
 import { DAY } from "@mortgage/content/mortgage/facts";
 import { podUrl, readDataset } from "@mortgage/content/mortgage/world";
 import { ClosingDisclosure, LoanEstimate } from "@mortgage/data-model";
 import { expect, type Page, test } from "@playwright/test";
 import { DataFactory } from "n3";
+import { expectAccessible, expectNoSideScroll } from "../../../test-support/e2e.ts";
 import {
   approveAs,
   fetchAs,
@@ -28,16 +28,8 @@ async function open(page: Page, path: string): Promise<void> {
 }
 
 async function checkPage(page: Page): Promise<void> {
-  const results = await new AxeBuilder({ page })
-    .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
-    .analyze();
-  expect(results.violations).toEqual([]);
-  await page.setViewportSize({ height: 844, width: 390 });
-  const overflow = await page.evaluate(
-    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
-  );
-  expect(overflow).toBeLessThanOrEqual(0);
-  await page.setViewportSize({ height: 900, width: 1280 });
+  await expectAccessible(page);
+  await expectNoSideScroll(page);
 }
 
 /** A second page in the same context carries the test's own pod requests. */

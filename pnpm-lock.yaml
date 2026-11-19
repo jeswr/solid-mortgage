@@ -6,7 +6,6 @@ settings:
 
 overrides:
   '@jeswr/rdf-serialize': github:jeswr/rdf-serialize#9c3a34dd93f318fd00d9e6f22081123e502a0578
-  '@jeswr/synthetic-rdf': file:packages/solid-kit/vendor/jeswr-synthetic-rdf-0.1.0.tgz
   '@jeswr/solid-showcase-kit': file:vendor/jeswr-solid-showcase-kit-0.1.0.tgz
   '@jeswr/solid-showcase-kit>@jeswr/app-shell': file:vendor/jeswr-app-shell-0.1.0.tgz
 
@@ -26,9 +25,6 @@ importers:
       '@mortgage/data-model':
         specifier: workspace:*
         version: link:packages/data-model
-      '@mortgage/solid-kit':
-        specifier: workspace:*
-        version: link:packages/solid-kit
       '@mortgage/vc-kit':
         specifier: workspace:*
         version: link:packages/vc-kit
@@ -1608,61 +1604,6 @@ importers:
         specifier: ^4.1.9
         version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
 
-  packages/solid-kit:
-    dependencies:
-      '@jeswr/fetch-rdf':
-        specifier: ^0.1.0
-        version: 0.1.0
-      '@jeswr/guarded-fetch':
-        specifier: github:jeswr/guarded-fetch#81926b4481310ff74a5c02c3c4eaa2a51ce2dee6
-        version: https://codeload.github.com/jeswr/guarded-fetch/tar.gz/81926b4481310ff74a5c02c3c4eaa2a51ce2dee6
-      '@jeswr/solid-api-auth':
-        specifier: github:jeswr/solid-api-auth#0560b5e8fdd59b2886060d5377bb03d3f5ef01d0
-        version: https://codeload.github.com/jeswr/solid-api-auth/tar.gz/0560b5e8fdd59b2886060d5377bb03d3f5ef01d0
-      '@jeswr/solid-auth-core':
-        specifier: github:jeswr/solid-auth-core#79d90556df6319b5a3699d877be56769c55fe15e
-        version: https://codeload.github.com/jeswr/solid-auth-core/tar.gz/79d90556df6319b5a3699d877be56769c55fe15e(react@19.2.7)
-      '@jeswr/solid-seed':
-        specifier: file:vendor/jeswr-solid-seed-0.1.0.tgz
-        version: file:packages/solid-kit/vendor/jeswr-solid-seed-0.1.0.tgz(shacl-engine@1.1.2)
-      '@jeswr/solid-session-restore':
-        specifier: github:jeswr/solid-session-restore#72755147e627e853b9600fc301fe2d06b9433c42
-        version: https://codeload.github.com/jeswr/solid-session-restore/tar.gz/72755147e627e853b9600fc301fe2d06b9433c42
-      '@jeswr/synthetic-rdf':
-        specifier: file:vendor/jeswr-synthetic-rdf-0.1.0.tgz
-        version: file:packages/solid-kit/vendor/jeswr-synthetic-rdf-0.1.0.tgz(shacl-engine@1.1.2)
-      '@mortgage/data-model':
-        specifier: workspace:*
-        version: link:../data-model
-      '@rdfjs/types':
-        specifier: ^2.0.1
-        version: 2.0.1
-      '@sparq-org/solid-server':
-        specifier: 0.1.8
-        version: 0.1.8
-      get-port:
-        specifier: ^7.1.0
-        version: 7.2.0
-      jose:
-        specifier: ^5.10.0
-        version: 5.10.0
-      n3:
-        specifier: ^2.1.1
-        version: 2.1.1
-      shacl-engine:
-        specifier: ^1.1.2
-        version: 1.1.2
-    devDependencies:
-      '@types/n3':
-        specifier: ^1.26.1
-        version: 1.26.1
-      '@types/node':
-        specifier: ^25.9.2
-        version: 25.9.5
-      typescript:
-        specifier: ^6.0.3
-        version: 6.0.3
-
   packages/tour:
     dependencies:
       '@mortgage/demo-kit':
@@ -1706,40 +1647,6 @@ importers:
         specifier: ^4.1.9
         version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
 
-  packages/ui:
-    dependencies:
-      '@jeswr/app-shell':
-        specifier: github:jeswr/app-shell#4b6509919cd822d638a7736ddb45ba7c52c40dca
-        version: https://codeload.github.com/jeswr/app-shell/tar.gz/4b6509919cd822d638a7736ddb45ba7c52c40dca(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@jeswr/guarded-fetch':
-        specifier: github:jeswr/guarded-fetch#81926b4481310ff74a5c02c3c4eaa2a51ce2dee6
-        version: https://codeload.github.com/jeswr/guarded-fetch/tar.gz/81926b4481310ff74a5c02c3c4eaa2a51ce2dee6
-      '@jeswr/solid-components':
-        specifier: github:jeswr/solid-components#fa6461a7cd3fd356ba5d2ab689186662e5c59442
-        version: https://codeload.github.com/jeswr/solid-components/tar.gz/fa6461a7cd3fd356ba5d2ab689186662e5c59442(@jeswr/guarded-fetch@https://codeload.github.com/jeswr/guarded-fetch/tar.gz/81926b4481310ff74a5c02c3c4eaa2a51ce2dee6)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-    devDependencies:
-      '@testing-library/dom':
-        specifier: ^10.4.1
-        version: 10.4.1
-      '@testing-library/react':
-        specifier: ^16.3.0
-        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@types/react':
-        specifier: ^19.2.17
-        version: 19.2.17
-      '@types/react-dom':
-        specifier: ^19.2.3
-        version: 19.2.3(@types/react@19.2.17)
-      react:
-        specifier: ^19.2.7
-        version: 19.2.7
-      react-dom:
-        specifier: ^19.2.7
-        version: 19.2.7(react@19.2.7)
-      typescript:
-        specifier: ^6.0.3
-        version: 6.0.3
-
   packages/vc-kit:
     dependencies:
       '@aztec/bb.js':
@@ -1770,9 +1677,9 @@ importers:
         specifier: ^1.7.0
         version: 1.7.0
     devDependencies:
-      '@mortgage/solid-kit':
-        specifier: workspace:*
-        version: link:../solid-kit
+      '@sparq-org/solid-server':
+        specifier: 0.1.8
+        version: 0.1.8
       '@types/n3':
         specifier: ^1.26.1
         version: 1.26.1
@@ -2932,14 +2839,6 @@ packages:
       react: '>=18'
       react-dom: '>=18'
 
-  '@jeswr/app-shell@https://codeload.github.com/jeswr/app-shell/tar.gz/4b6509919cd822d638a7736ddb45ba7c52c40dca':
-    resolution: {tarball: https://codeload.github.com/jeswr/app-shell/tar.gz/4b6509919cd822d638a7736ddb45ba7c52c40dca}
-    version: 0.1.0
-    engines: {node: '>=20.12'}
-    peerDependencies:
-      react: '>=18'
-      react-dom: '>=18'
-
   '@jeswr/fetch-rdf@0.1.0':
     resolution: {integrity: sha512-bdugw+QynGEUTUYERuVDY0sMfEiCehx54ahvXVUY/KThq1r6w+uHH0kbhg8s36gvdW3xNDaqAbbnGbRDR9qgkw==}
     engines: {node: '>=20'}
@@ -2954,54 +2853,10 @@ packages:
     version: 0.1.0
     engines: {node: '>=24'}
 
-  '@jeswr/solid-api-auth@https://codeload.github.com/jeswr/solid-api-auth/tar.gz/0560b5e8fdd59b2886060d5377bb03d3f5ef01d0':
-    resolution: {tarball: https://codeload.github.com/jeswr/solid-api-auth/tar.gz/0560b5e8fdd59b2886060d5377bb03d3f5ef01d0}
-    version: 0.1.0
-    engines: {node: '>=22.12'}
-
-  '@jeswr/solid-auth-core@https://codeload.github.com/jeswr/solid-auth-core/tar.gz/79d90556df6319b5a3699d877be56769c55fe15e':
-    resolution: {tarball: https://codeload.github.com/jeswr/solid-auth-core/tar.gz/79d90556df6319b5a3699d877be56769c55fe15e}
-    version: 0.1.0
-    engines: {node: '>=20.12'}
-    peerDependencies:
-      react: '>=18'
-    peerDependenciesMeta:
-      react:
-        optional: true
-
-  '@jeswr/solid-components@https://codeload.github.com/jeswr/solid-components/tar.gz/fa6461a7cd3fd356ba5d2ab689186662e5c59442':
-    resolution: {tarball: https://codeload.github.com/jeswr/solid-components/tar.gz/fa6461a7cd3fd356ba5d2ab689186662e5c59442}
-    version: 0.0.1
-    engines: {node: '>=22.19.0'}
-    peerDependencies:
-      '@jeswr/guarded-fetch': github:jeswr/guarded-fetch#81926b4481310ff74a5c02c3c4eaa2a51ce2dee6
-      '@lit/react': ^1.0.8
-      react: '>=18'
-      react-dom: '>=18'
-    peerDependenciesMeta:
-      '@jeswr/guarded-fetch':
-        optional: true
-      '@lit/react':
-        optional: true
-      react:
-        optional: true
-      react-dom:
-        optional: true
-
   '@jeswr/solid-odrl@https://codeload.github.com/jeswr/solid-odrl/tar.gz/a116c5993e3cdfdaf8d16f2d5b411b92c9c932e3':
     resolution: {tarball: https://codeload.github.com/jeswr/solid-odrl/tar.gz/a116c5993e3cdfdaf8d16f2d5b411b92c9c932e3}
     version: 0.1.0
     engines: {node: '>=24'}
-
-  '@jeswr/solid-seed@file:packages/solid-kit/vendor/jeswr-solid-seed-0.1.0.tgz':
-    resolution: {integrity: sha512-C4SEkt8NF+oD3Fj74c5aHOrbZ7IgB7opl54MIVf/8ejHrfjqcROfd7WqOebPSIKr+82K/TlRdP9O2BSxU0SwPQ==, tarball: file:packages/solid-kit/vendor/jeswr-solid-seed-0.1.0.tgz}
-    version: 0.1.0
-    engines: {node: '>=24'}
-
-  '@jeswr/solid-session-restore@https://codeload.github.com/jeswr/solid-session-restore/tar.gz/72755147e627e853b9600fc301fe2d06b9433c42':
-    resolution: {tarball: https://codeload.github.com/jeswr/solid-session-restore/tar.gz/72755147e627e853b9600fc301fe2d06b9433c42}
-    version: 0.1.0
-    engines: {node: '>=20.0.0'}
 
   '@jeswr/solid-showcase-kit@file:vendor/jeswr-solid-showcase-kit-0.1.0.tgz':
     resolution: {integrity: sha512-NlsBoTmjzfvbJZZC5fr80y+OdphkMQ33+IiZkMxcKOsTZ6sZmArhBkcYV/fYjc/A/1VcoPGnok6o2EQ1/ZJ4og==, tarball: file:vendor/jeswr-solid-showcase-kit-0.1.0.tgz}
@@ -3018,24 +2873,8 @@ packages:
   '@jeswr/stream-to-string@2.0.0':
     resolution: {integrity: sha512-VmoW6xYRjVzdMr2njBObVSlUc5KCJT+gyuuH+tea9ZLE59XhgfLNc8ufN5Md38STxCyAJUDUVcCBfaOo11BfuA==}
 
-  '@jeswr/synthetic-rdf@file:packages/solid-kit/vendor/jeswr-synthetic-rdf-0.1.0.tgz':
-    resolution: {integrity: sha512-KFhWY7XC1zMLDyJHk1l9Gnmir4nwsz/7htbQs6Ik0ww1qWGLupiky/6D8JDOp1d0uTmZ6L3eElYnk0FA4oKHVQ==, tarball: file:packages/solid-kit/vendor/jeswr-synthetic-rdf-0.1.0.tgz}
-    version: 0.1.0
-    engines: {node: '>=24'}
-    peerDependencies:
-      shacl-engine: ^1.1.2
-    peerDependenciesMeta:
-      shacl-engine:
-        optional: true
-
   '@jridgewell/sourcemap-codec@1.5.5':
     resolution: {integrity: sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og==}
-
-  '@lit-labs/ssr-dom-shim@1.6.0':
-    resolution: {integrity: sha512-VHb0ALPMTlgKjM6yIxxoQNnpKyUKLD04VzeQdsiXkMqkvYlAHxq9glGLmgbb889/1GsohSOAjvQYoiBppXFqrQ==}
-
-  '@lit/reactive-element@2.1.2':
-    resolution: {integrity: sha512-pbCDiVMnne1lYUIaYNN5wrwQXDtHaYtg7YEFPeW+hws6U47WeFvISGUWekPGKWOP1ygrs0ef0o1VJMk1exos5A==}
 
   '@msgpackr-extract/msgpackr-extract-darwin-arm64@3.0.4':
     resolution: {integrity: sha512-LCkGo6JDfaBhgST7UpPWgNgLINpcpabaHfyz5OBx75nUYxBsaEPxjnyNjWpeb/xBup/682QnBfRBy2/LvPutZQ==}
@@ -3590,21 +3429,6 @@ packages:
     resolution: {integrity: sha512-o4PXJQidqJl82ckFaXUeoAW+XysPLauYI43Abki5hABd853iMhitooc6znOnczgbTYmEP6U6/y1ZyKAIsvMKGg==}
     engines: {node: '>=18'}
 
-  '@testing-library/react@16.3.2':
-    resolution: {integrity: sha512-XU5/SytQM+ykqMnAnvB2umaJNIOsLF3PVv//1Ew4CTcpz0/BRyy/af40qqrt7SjKpDdT1saBMc42CUok5gaw+g==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      '@testing-library/dom': ^10.0.0
-      '@types/react': ^18.0.0 || ^19.0.0
-      '@types/react-dom': ^18.0.0 || ^19.0.0
-      react: ^18.0.0 || ^19.0.0
-      react-dom: ^18.0.0 || ^19.0.0
-    peerDependenciesMeta:
-      '@types/react':
-        optional: true
-      '@types/react-dom':
-        optional: true
-
   '@testing-library/react@16.3.3':
     resolution: {integrity: sha512-Uo193NgQbPMz6lrrhtRQQFcMC6Re/ELLFbbuVL30WDlZxlpZf9/lMHTAVxPRLw1q1iu9OJmR1c2BLiENRstdBg==}
     engines: {node: '>=18'}
@@ -3747,9 +3571,6 @@ packages:
 
   '@types/triple-beam@1.3.5':
     resolution: {integrity: sha512-6WaYesThRMCl19iryMYP7/x2OVgCtbIVflDGFpWnb9irXI3UjYE4AzmYuiUKY1AJstGijoY+MgUszMgRxIYTYw==}
-
-  '@types/trusted-types@2.0.7':
-    resolution: {integrity: sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw==}
 
   '@types/uuid@10.0.0':
     resolution: {integrity: sha512-7gqG38EyHgyP1S+7+xomFtL+ZNHcKv6DwNaCZmJmo1vgMugyF3TCnXVg4t1uk89mLNwnLtnY3TpOpCOyp1/xHQ==}
@@ -3972,9 +3793,6 @@ packages:
   domutils@3.2.2:
     resolution: {integrity: sha512-6kZKyUajlDuqlHKVX1w7gyslj9MPIXzIFiz/rGu35uC1wMi+kMhQwGhl4lt9unC9Vb9INnY9Z3/ZA3+FhASLaw==}
 
-  dpop@2.1.1:
-    resolution: {integrity: sha512-J0Of2JTiM4h5si0tlbPQ/lkqfZ5wAEVkKYBhkwyyANnPJfWH4VsR5uIkZ+T+OSPIwDYUg1fbd5Mmodd25HjY1w==}
-
   emoji-regex@8.0.0:
     resolution: {integrity: sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==}
 
@@ -4052,10 +3870,6 @@ packages:
   get-nonce@1.0.1:
     resolution: {integrity: sha512-FJhYRoDaiatfEkUK8HKlicmu/3SGFD51q3itKDGoSTysQJBnfOcxU5GxnhE1E6soB76MbT0MBtnKJuXyAx+96Q==}
     engines: {node: '>=6'}
-
-  get-port@7.2.0:
-    resolution: {integrity: sha512-afP4W205ONCuMoPBqcR6PSXnzX35KTcJygfJfcp+QY+uwm3p20p1YczWXhlICIzGMCxYBQcySEcOgsJcrkyobg==}
-    engines: {node: '>=16'}
 
   grapoi@1.2.0:
     resolution: {integrity: sha512-oK+qPeiYugQKEm57IlgmedU6NrZMz0nA5g8MJ6db5afOp//isTC1P0zqwSlwfDJrUt+2TEGIoQlW7C8/a2QalQ==}
@@ -4224,15 +4038,6 @@ packages:
     resolution: {integrity: sha512-WkUDrojuJs0xkgGf2udWxa3yGBRxPtxUkB79i6aCZLRgc7PM8fZe9TosfPDcvEpQZbuFASnHYmRLBLUbmLOIIA==}
     engines: {node: '>= 12.0.0'}
 
-  lit-element@4.2.2:
-    resolution: {integrity: sha512-aFKhNToWxoyhkNDmWZwEva2SlQia+jfG0fjIWV//YeTaWrVnOxD89dPKfigCUspXFmjzOEUQpOkejH5Ly6sG0w==}
-
-  lit-html@3.3.3:
-    resolution: {integrity: sha512-el8M6jK2o3RXBnrSHX3ZKrsN8zEV63pSExTO1wYJz7QndGYZ8353e2a5PPX+qHe2aGayfnchQmkAojaWAREOIA==}
-
-  lit@3.3.3:
-    resolution: {integrity: sha512-fycuvZg/hkpozL00lm1pEJH5nN/lr9ZXd6mJI2HSN4+Bzc+LDNdEApJ6HFbPkdFNHLvOplIIuJvxkS4XUxqirw==}
-
   lodash@4.18.1:
     resolution: {integrity: sha512-dMInicTPVE8d1e5otfwmmjlxkZoUpiVLwyeTdUsi/Caj/gfzzblBcCE5sRHV/AsjuCmxWrte2TNGSYuCeCq+0Q==}
 
@@ -4292,10 +4097,6 @@ packages:
     resolution: {integrity: sha512-SQknS0ua90rN+3RHuk8BeIqeYyqIH/+ecViZxX08jR4j6MugqWRjtONl3uANG/crWXnOM2WIqBJtjIhVYFha+w==}
     engines: {node: '>=12.0'}
 
-  n3@2.0.3:
-    resolution: {integrity: sha512-um/toGVENTarHBYIK2TdH6ByBhW75WpdKpv8iTYt9wF2QfBk8s8a16iaWZFUAAC1BKfGdb99kfgx6pltdDwfKA==}
-    engines: {node: '>=12.0'}
-
   n3@2.1.1:
     resolution: {integrity: sha512-kqg8ers6Lc+uAmHeS+ycd3b8mC4x8wr8V8Fi6+w7l4hX6b0KZ5bT05Tf49qM2mujwaqZT3+08zcgtXgfxivbVQ==}
     engines: {node: '>=12.0'}
@@ -4350,9 +4151,6 @@ packages:
   node-gyp-build-optional-packages@5.2.2:
     resolution: {integrity: sha512-s+w+rBWnpTMwSFbaE0UXsRlg7hU4FjekKU4eyAih5T8nJuNZT1nNsskXpxmeqSK9UzkBl6UgRlnKc8hz8IEqOw==}
     hasBin: true
-
-  oauth4webapi@3.8.6:
-    resolution: {integrity: sha512-iwemM91xz8nryHti2yTmg5fhyEMVOkOXwHNqbvcATjyajb5oQxCQzrNOA6uElRHuMhQQTKUyFKV9y/CNyg25BQ==}
 
   object-inspect@1.13.4:
     resolution: {integrity: sha512-W67iLl4J2EXEGTbfeHCffrjDfitvLANg0UlX3wFUUSTx92KXRFegMHUVgSqE+wvhAbi4WqjGg9czysTV2Epbew==}
@@ -7695,17 +7493,6 @@ snapshots:
       - '@types/react'
       - '@types/react-dom'
 
-  '@jeswr/app-shell@https://codeload.github.com/jeswr/app-shell/tar.gz/4b6509919cd822d638a7736ddb45ba7c52c40dca(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
-    dependencies:
-      '@radix-ui/react-avatar': 1.2.2(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@radix-ui/react-dropdown-menu': 2.1.20(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      lucide-react: 0.544.0(react@19.2.7)
-      react: 19.2.7
-      react-dom: 19.2.7(react@19.2.7)
-    transitivePeerDependencies:
-      - '@types/react'
-      - '@types/react-dom'
-
   '@jeswr/fetch-rdf@0.1.0':
     dependencies:
       '@rdfjs/dataset': 2.0.3
@@ -7722,33 +7509,6 @@ snapshots:
       '@rdfjs/types': 2.0.1
       n3: 2.1.1
 
-  '@jeswr/solid-api-auth@https://codeload.github.com/jeswr/solid-api-auth/tar.gz/0560b5e8fdd59b2886060d5377bb03d3f5ef01d0':
-    dependencies:
-      '@jeswr/fetch-rdf': 0.1.0
-      jose: 6.2.3
-      oauth4webapi: 3.8.6
-      undici: 8.5.0
-
-  '@jeswr/solid-auth-core@https://codeload.github.com/jeswr/solid-auth-core/tar.gz/79d90556df6319b5a3699d877be56769c55fe15e(react@19.2.7)':
-    dependencies:
-      '@jeswr/fetch-rdf': 0.1.0
-      '@solid/object': 0.6.0
-      dpop: 2.1.1
-      n3: 2.1.1
-      oauth4webapi: 3.8.6
-    optionalDependencies:
-      react: 19.2.7
-
-  '@jeswr/solid-components@https://codeload.github.com/jeswr/solid-components/tar.gz/fa6461a7cd3fd356ba5d2ab689186662e5c59442(@jeswr/guarded-fetch@https://codeload.github.com/jeswr/guarded-fetch/tar.gz/81926b4481310ff74a5c02c3c4eaa2a51ce2dee6)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
-    dependencies:
-      '@types/n3': 1.26.1
-      lit: 3.3.3
-      n3: 1.26.0
-    optionalDependencies:
-      '@jeswr/guarded-fetch': https://codeload.github.com/jeswr/guarded-fetch/tar.gz/81926b4481310ff74a5c02c3c4eaa2a51ce2dee6
-      react: 19.2.7
-      react-dom: 19.2.7(react@19.2.7)
-
   '@jeswr/solid-odrl@https://codeload.github.com/jeswr/solid-odrl/tar.gz/a116c5993e3cdfdaf8d16f2d5b411b92c9c932e3':
     dependencies:
       '@jeswr/rdf-serialize': https://codeload.github.com/jeswr/rdf-serialize/tar.gz/9c3a34dd93f318fd00d9e6f22081123e502a0578
@@ -7757,21 +7517,6 @@ snapshots:
       content-type: 1.0.5
       jsonld-streaming-parser: 5.0.1
       n3: 2.1.1
-
-  '@jeswr/solid-seed@file:packages/solid-kit/vendor/jeswr-solid-seed-0.1.0.tgz(shacl-engine@1.1.2)':
-    dependencies:
-      '@jeswr/rdf-serialize': https://codeload.github.com/jeswr/rdf-serialize/tar.gz/9c3a34dd93f318fd00d9e6f22081123e502a0578
-      '@jeswr/synthetic-rdf': file:packages/solid-kit/vendor/jeswr-synthetic-rdf-0.1.0.tgz(shacl-engine@1.1.2)
-      '@rdfjs/types': 2.0.1
-      '@solid/object': 0.6.0
-      n3: 2.0.3
-    transitivePeerDependencies:
-      - shacl-engine
-
-  '@jeswr/solid-session-restore@https://codeload.github.com/jeswr/solid-session-restore/tar.gz/72755147e627e853b9600fc301fe2d06b9433c42':
-    dependencies:
-      dpop: 2.1.1
-      oauth4webapi: 3.8.6
 
   '@jeswr/solid-showcase-kit@file:vendor/jeswr-solid-showcase-kit-0.1.0.tgz(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
     dependencies:
@@ -7800,21 +7545,7 @@ snapshots:
     dependencies:
       event-emitter-promisify: 1.1.0
 
-  '@jeswr/synthetic-rdf@file:packages/solid-kit/vendor/jeswr-synthetic-rdf-0.1.0.tgz(shacl-engine@1.1.2)':
-    dependencies:
-      '@jeswr/rdf-serialize': https://codeload.github.com/jeswr/rdf-serialize/tar.gz/9c3a34dd93f318fd00d9e6f22081123e502a0578
-      '@rdfjs/types': 2.0.1
-      n3: 2.0.3
-    optionalDependencies:
-      shacl-engine: 1.1.2
-
   '@jridgewell/sourcemap-codec@1.5.5': {}
-
-  '@lit-labs/ssr-dom-shim@1.6.0': {}
-
-  '@lit/reactive-element@2.1.2':
-    dependencies:
-      '@lit-labs/ssr-dom-shim': 1.6.0
 
   '@msgpackr-extract/msgpackr-extract-darwin-arm64@3.0.4':
     optional: true
@@ -8273,16 +8004,6 @@ snapshots:
       picocolors: 1.1.1
       pretty-format: 27.5.1
 
-  '@testing-library/react@16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
-    dependencies:
-      '@babel/runtime': 7.29.7
-      '@testing-library/dom': 10.4.1
-      react: 19.2.7
-      react-dom: 19.2.7(react@19.2.7)
-    optionalDependencies:
-      '@types/react': 19.2.17
-      '@types/react-dom': 19.2.3(@types/react@19.2.17)
-
   '@testing-library/react@16.3.3(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
     dependencies:
       '@babel/runtime': 7.29.7
@@ -8433,8 +8154,6 @@ snapshots:
       '@rdfjs/types': 2.0.1
 
   '@types/triple-beam@1.3.5': {}
-
-  '@types/trusted-types@2.0.7': {}
 
   '@types/uuid@10.0.0': {}
 
@@ -8653,8 +8372,6 @@ snapshots:
       domelementtype: 2.3.0
       domhandler: 5.0.3
 
-  dpop@2.1.1: {}
-
   emoji-regex@8.0.0: {}
 
   enabled@2.0.0: {}
@@ -8699,8 +8416,6 @@ snapshots:
   get-caller-file@2.0.5: {}
 
   get-nonce@1.0.1: {}
-
-  get-port@7.2.0: {}
 
   grapoi@1.2.0:
     dependencies:
@@ -8889,22 +8604,6 @@ snapshots:
       lightningcss-win32-arm64-msvc: 1.33.0
       lightningcss-win32-x64-msvc: 1.33.0
 
-  lit-element@4.2.2:
-    dependencies:
-      '@lit-labs/ssr-dom-shim': 1.6.0
-      '@lit/reactive-element': 2.1.2
-      lit-html: 3.3.3
-
-  lit-html@3.3.3:
-    dependencies:
-      '@types/trusted-types': 2.0.7
-
-  lit@3.3.3:
-    dependencies:
-      '@lit/reactive-element': 2.1.2
-      lit-element: 4.2.2
-      lit-html: 3.3.3
-
   lodash@4.18.1: {}
 
   logform@2.7.0:
@@ -8973,11 +8672,6 @@ snapshots:
       buffer: 6.0.3
       readable-stream: 4.7.0
 
-  n3@2.0.3:
-    dependencies:
-      buffer: 6.0.3
-      readable-stream: 4.7.0
-
   n3@2.1.1:
     dependencies:
       buffer: 6.0.3
@@ -9024,8 +8718,6 @@ snapshots:
     dependencies:
       detect-libc: 2.1.2
     optional: true
-
-  oauth4webapi@3.8.6: {}
 
   object-inspect@1.13.4: {}
 

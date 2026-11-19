@@ -13,7 +13,8 @@ import {
   openHarness,
   read,
   UP_TO_APPLICATION,
-} from "./support.ts";
+  WCAG_21,
+} from "../../../test-support/e2e.ts";
 
 const CHECKS = "casefiles/JHL-1001/source-checks";
 
@@ -67,13 +68,13 @@ test("source checks, the purchase, and the same checks refused after the revoke"
     const listing = await read(harness, "aus", `${CHECKS}/`);
     expect(listing.status).toBe(200);
     expect((await read(harness, "aus", "casefiles/JHL-1001/findings")).status).toBe(200);
-    await expectAccessible(page);
+    await expectAccessible(page, WCAG_21);
   });
 
   await test.step("findings: numbered messages from the casefile", async () => {
     await open(page, "casefiles/JHL-1001");
     await expect(page.getByText("0001")).toBeVisible();
-    await expectAccessible(page);
+    await expectAccessible(page, WCAG_21);
   });
 
   await test.step("the rest of the journey, through the loan sale", () =>
@@ -84,7 +85,7 @@ test("source checks, the purchase, and the same checks refused after the revoke"
     await open(page, "deliveries/JHL-1001");
     await expect(page.getByRole("heading", { level: 1 })).toContainText("JHL-1001");
     await expect(page.getByText(/refused/i)).toHaveCount(0);
-    await expectAccessible(page);
+    await expectAccessible(page, WCAG_21);
   });
 
   await test.step("after the revoke, the source checks are refused by Alex's pod", async () => {
@@ -95,7 +96,7 @@ test("source checks, the purchase, and the same checks refused after the revoke"
     await expect(rows.filter({ hasText: "/credentials/assets" })).toContainText(
       "REFUSED 403: the pod no longer lets Castellan read this credential at source",
     );
-    await expectAccessible(page);
+    await expectAccessible(page, WCAG_21);
   });
 
   await test.step("every route: axe and 390 px", async () => {
@@ -103,7 +104,7 @@ test("source checks, the purchase, and the same checks refused after the revoke"
       await page.setViewportSize({ height: 900, width: 1280 });
       await open(page, route);
       await expect(page.locator("main h1, h1").first()).toBeVisible();
-      await expectAccessible(page);
+      await expectAccessible(page, WCAG_21);
       await page.setViewportSize({ height: 844, width: 390 });
       await expectNoHorizontalScroll(page);
     }
@@ -127,5 +128,5 @@ test("free play on fresh pods: no casefile yet", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Automated underwriting" })).toBeVisible();
   await open(page, CHECKS);
   await expect(page.locator("body")).not.toContainText("■ valid");
-  await expectAccessible(page);
+  await expectAccessible(page, WCAG_21);
 });

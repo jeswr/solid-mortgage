@@ -1,8 +1,7 @@
 // AUTHORED-BY Claude Opus 5.5
 /** Helpers the specs share: wait for the real pods, inject the harness, read as an owner. */
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { expect, type Page } from "@playwright/test";
+import { injectHarness as injectHarnessBundle } from "../../../test-support/e2e.ts";
 import { HARNESS_DIR } from "./build-harness.ts";
 
 /** The app's page is controlled by the pod service worker and the pods are seeded. */
@@ -20,10 +19,8 @@ export async function podsReady(page: Page): Promise<void> {
 }
 
 /** Put the harness in the page (it acts on the page's service worker). */
-export async function injectHarness(page: Page): Promise<void> {
-  const content = readFileSync(join(HARNESS_DIR, "harness.js"), "utf8");
-  await page.addScriptTag({ content, type: "module" });
-  await page.waitForFunction(() => window.__harness !== undefined);
+export function injectHarness(page: Page): Promise<void> {
+  return injectHarnessBundle(page, HARNESS_DIR);
 }
 
 export const podUrlIn = (page: Page, owner: string, path: string): string =>
@@ -47,9 +44,4 @@ export function readAs(
 }
 
 /** No horizontal scroll at the page's current width. */
-export async function noHorizontalScroll(page: Page): Promise<void> {
-  const overflow = await page.evaluate(
-    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
-  );
-  expect(overflow).toBeLessThanOrEqual(0);
-}
+export { expectNoHorizontalScroll as noHorizontalScroll } from "../../../test-support/e2e.ts";

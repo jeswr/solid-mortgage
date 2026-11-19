@@ -1,6 +1,6 @@
 // AUTHORED-BY Claude Opus 5.5
 import { DemoTrust } from "@mortgage/demo-kit/trust";
-import { type BaseLocationHook, Route, Router, Switch } from "wouter";
+import { type BaseLocationHook, Redirect, Route, Router, Switch } from "wouter";
 import { Layout } from "./components/Layout.tsx";
 import { demoById } from "./demos.ts";
 import { Home } from "./pages/Home.tsx";
@@ -37,7 +37,10 @@ export function App({ hook, probe }: AppProps) {
               }}
             </Route>
             <Route path="/honesty" component={Honesty} />
-            <Route path="/ledger" component={Ledger} />
+            <Route path="/journey" component={Ledger} />
+            <Route path="/ledger">
+              <Redirect to="/journey" replace />
+            </Route>
             <Route component={NotFound} />
           </Switch>
         </Layout>

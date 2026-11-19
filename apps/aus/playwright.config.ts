@@ -22,7 +22,7 @@ export default defineConfig({
   expect: { timeout: 20_000 },
   use: { baseURL: `http://127.0.0.1:${port}/aus/`, trace: "retain-on-failure" },
   webServer: {
-    command: `pnpm exec vite build --config e2e/harness.vite.config.ts && node e2e/server.mjs --port ${port}`,
+    command: `pnpm exec vite build --config e2e/harness.vite.config.ts && node ../../test-support/e2e-server.mjs --port ${port} --harness e2e/harness/dist`,
     url: `http://127.0.0.1:${port}/e2e-harness/`,
     reuseExistingServer: false,
     timeout: 120_000,

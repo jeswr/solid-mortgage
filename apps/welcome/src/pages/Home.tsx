@@ -1,6 +1,7 @@
 // AUTHORED-BY Claude Opus 5.5
 /** The front door (design.md §e), sections in the specified order. */
 
+import { appUrl } from "@mortgage/demo-kit/urls";
 import type { ReactNode } from "react";
 import { useEffect } from "react";
 import { Link } from "wouter";
@@ -18,7 +19,7 @@ import { Launcher } from "../components/Launcher.tsx";
 import { PodDiagram } from "../components/PodDiagram.tsx";
 import { EXPLAINER, HEADLINE, REAL, SIMULATED } from "../copy.ts";
 import { DEMOS, demoById } from "../demos.ts";
-import { tourUrl } from "../demos-links.ts";
+import { guidedDemo, startTourFresh, tourUrl } from "../demos-links.ts";
 import { applyMeta, CONVENER, LINKS } from "../site.ts";
 
 /** design.md §e item 3: one pod, four sectors, each pointing at the demo card that shows it. */
@@ -62,6 +63,7 @@ const SECTOR_STRIP: ReadonlyArray<{
 export function Home({ probe }: { probe?: (url: string) => Promise<boolean> }) {
   useEffect(() => applyMeta(), []);
   const flagship = DEMOS.find((demo) => demo.status === "live" && demo.tour !== undefined);
+  const guided = guidedDemo(window.location.search) !== undefined;
   return (
     <>
       <section className="hero" aria-labelledby="hero-title">
@@ -73,11 +75,22 @@ export function Home({ probe }: { probe?: (url: string) => Promise<boolean> }) {
             </h1>
             <p className="hero__explainer">{EXPLAINER}</p>
             <div className="hero__actions">
-              <a href="#demos" className="button button--light">
-                See the demos
-              </a>
-              {flagship?.tour === undefined ? null : (
-                <a href={tourUrl(flagship.tour)} className="button button--ghost-light">
+              {guided ? (
+                // Step 1 of the guided tour: Start opens Alex's wallet, which reads Alex's pod.
+                <a href={appUrl("wallet")} data-tour="tour-start" className="button button--light">
+                  Start
+                </a>
+              ) : (
+                <a href="#demos" className="button button--light">
+                  See the demos
+                </a>
+              )}
+              {guided || flagship?.tour === undefined ? null : (
+                <a
+                  href={tourUrl(flagship.tour)}
+                  onClick={startTourFresh}
+                  className="button button--ghost-light"
+                >
                   Try the mortgage demo
                 </a>
               )}

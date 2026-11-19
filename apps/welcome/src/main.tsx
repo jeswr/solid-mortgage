@@ -13,3 +13,9 @@ createRoot(root).render(
     <App />
   </StrictMode>,
 );
+
+// The tour and the Solid Lens, as on every organisation app. Loaded after the first render: the
+// pod runtime and the seed stay out of the front door's first load.
+import("./guided-tour.ts")
+  .then((tour) => tour.mountGuidedTour())
+  .catch((error: unknown) => console.error("welcome: the demo did not start", error));

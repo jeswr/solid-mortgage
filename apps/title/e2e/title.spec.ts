@@ -1,6 +1,13 @@
 // AUTHORED-BY Claude Opus 5.5
 import { expect, type Page, test } from "@playwright/test";
-import { catchUp, expectAccessible, expectNoSideScroll, open, readAs } from "./helpers.ts";
+import {
+  catchUp,
+  expectAccessible,
+  expectNoSideScroll,
+  OUTSIDE_LENS,
+  open,
+  readAs,
+} from "../../../test-support/e2e.ts";
 
 const FILE = "files/STE-2026-0417";
 
@@ -23,7 +30,7 @@ async function visitEveryRoom(page: Page): Promise<void> {
       .click();
     await expect(page.getByRole("heading", { level: 1, name: room.heading })).toBeVisible();
     await expect(page.getByText("Reading the pods…")).toHaveCount(0);
-    await expectAccessible(page);
+    await expectAccessible(page, OUTSIDE_LENS);
     await expectNoSideScroll(page);
   }
 }
@@ -41,7 +48,7 @@ test("the open files list renders with the trust banner and its own metadata", a
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "noindex, nofollow");
   await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute("content", "#1B2A49");
   await expect(page.getByRole("heading", { name: "Open files" })).toBeVisible();
-  await expectAccessible(page);
+  await expectAccessible(page, OUTSIDE_LENS);
   await expectNoSideScroll(page);
 });
 
@@ -49,7 +56,7 @@ test("not-found keeps the banner", async ({ page }) => {
   await open(page, "./no-such-document");
   await expect(page.getByRole("heading", { name: "No such document" })).toBeVisible();
   await expect(page.getByRole("note", { name: "Concept demonstration notice" })).toBeVisible();
-  await expectAccessible(page);
+  await expectAccessible(page, OUTSIDE_LENS);
 });
 
 test("step 14: Sextant searches title and issues the signed commitment", async ({ page }) => {
@@ -59,7 +66,7 @@ test("step 14: Sextant searches title and issues the signed commitment", async (
   await expect(page.getByText("Draft. Not issued.")).toBeVisible();
   const issue = page.locator('[data-tour="title-issue-commitment"]');
   await expect(issue).toBeEnabled();
-  await expectAccessible(page);
+  await expectAccessible(page, OUTSIDE_LENS);
   await expectNoSideScroll(page);
   await issue.click();
   await expect(page.getByText(/^Issued .*, signed by Sextant Title & Escrow/)).toBeVisible({
@@ -85,7 +92,7 @@ test("step 18: the closing is signed (simulated) and Sextant cannot read back wh
   await catchUp(page);
   const sign = page.locator('[data-tour="title-sign"]');
   await expect(sign).toBeEnabled();
-  await expectAccessible(page);
+  await expectAccessible(page, OUTSIDE_LENS);
   await expectNoSideScroll(page);
   await sign.click();
   await expect(page.getByText("Signed (simulated)").first()).toBeVisible({ timeout: 60_000 });
@@ -103,7 +110,7 @@ test("step 18: the closing is signed (simulated) and Sextant cannot read back wh
   // G6 is write-only on mortgage/closing/: the read-back is refused, and the screen says so.
   await page.getByRole("button", { name: "Try to open Alex's settlement statement" }).click();
   await expect(page.getByRole("alert")).toContainText("Refused by the pod (403)");
-  await expectAccessible(page);
+  await expectAccessible(page, OUTSIDE_LENS);
 
   await visitEveryRoom(page);
 });

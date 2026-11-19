@@ -1,20 +1,40 @@
 // AUTHORED-BY Claude Opus 5.5
 /**
- * `/welcome/ledger`: the journey ledger page (design.md §c.5). The ledger itself is the
- * `<journey-ledger>` element from @mortgage/lens; this page owns only the frame around it and the
- * calls to action.
+ * `/welcome/journey`: the journey ledger page (design.md §c.5, the tour's last step and the Lens's
+ * ledger link). The ledger itself is the `<journey-ledger>` element from @mortgage/lens, fed from
+ * the pods' request log in this browser; this page owns only the frame around it and the calls to
+ * action. `/welcome/ledger` redirects here.
  */
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
 import { ExternalIcon } from "../components/icons.tsx";
 import { homeSection } from "../components/Layout.tsx";
 import { DEMOS } from "../demos.ts";
-import { tourUrl } from "../demos-links.ts";
+import { startTourFresh, tourUrl } from "../demos-links.ts";
 import { applyMeta, LINKS } from "../site.ts";
 
 export function Ledger() {
   useEffect(() => applyMeta("Journey ledger"), []);
   const flagship = DEMOS.find((demo) => demo.tour !== undefined);
+  const ledgerRef = useRef<HTMLDivElement>(null);
+  const [hasEntries, setHasEntries] = useState(false);
+  useEffect(() => {
+    const mount = ledgerRef.current;
+    if (mount === null) return;
+    let live = true;
+    let stop: (() => void) | undefined;
+    import("../guided-tour.ts")
+      .then((pods) => pods.mountJourneyLedger(mount, (has) => live && setHasEntries(has)))
+      .then((unmount) => {
+        if (live) stop = unmount;
+        else unmount();
+      })
+      .catch((error: unknown) => console.error("welcome: the journey ledger did not load", error));
+    return () => {
+      live = false;
+      stop?.();
+    };
+  }, []);
   return (
     <div className="page">
       <div className="page__inner">
@@ -30,19 +50,23 @@ export function Ledger() {
           </p>
         </header>
 
-        {/*
-          MOUNT POINT: the journey ledger from @mortgage/lens (`<journey-ledger>`, lane L2) renders
-          inside this element, replacing the placeholder. Mount it here and nowhere else; the
-          frame, heading and calls to action stay owned by this page.
-        */}
-        <div id="journey-ledger" className="ledger-mount" data-journey-ledger-mount="">
-          <div className="ledger-mount__placeholder">
-            <p className="ledger-mount__title">The ledger appears here after you run a demo.</p>
-            <p>
-              Run the guided tour in this browser, and this page will show who read what, under
-              which grant, and what never left the pod.
-            </p>
-          </div>
+        {/* The journey ledger renders into the inner element; the tour's last step points here. */}
+        <div
+          id="journey-ledger"
+          className="ledger-mount"
+          data-journey-ledger-mount=""
+          data-tour="journey-ledger"
+        >
+          {hasEntries ? null : (
+            <div className="ledger-mount__placeholder">
+              <p className="ledger-mount__title">The ledger appears here after you run a demo.</p>
+              <p>
+                Run the guided tour in this browser, and this page will show who read what, under
+                which grant, and what never left the pod.
+              </p>
+            </div>
+          )}
+          <div ref={ledgerRef} />
         </div>
 
         <section className="cta-row" aria-labelledby="ledger-next">
@@ -52,7 +76,11 @@ export function Ledger() {
           <ul>
             {flagship?.tour === undefined ? null : (
               <li>
-                <a href={tourUrl(flagship.tour)} className="button button--primary">
+                <a
+                  href={tourUrl(flagship.tour)}
+                  onClick={startTourFresh}
+                  className="button button--primary"
+                >
                   Start the mortgage demo again
                 </a>
               </li>
