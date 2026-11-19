@@ -190,11 +190,14 @@ a {
 
 .tab-body {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
 }
 
 /* Panels and tables */
 .panel {
+  min-width: 0;
+  overflow-wrap: anywhere;
   background: var(--desk-surface);
   border: 1px solid var(--desk-line);
   border-radius: var(--radius);
