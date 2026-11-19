@@ -1,0 +1,14 @@
+@prefix fhir: <http://hl7.org/fhir/>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+<https://pods.example/pods/rosa/discharge/summary> a fhir:Composition;
+  fhir:nodeRole fhir:treeRoot;
+  fhir:id [ fhir:v "summary" ];
+  fhir:status [ fhir:v "final" ];
+  fhir:type [ fhir:coding ( [ fhir:system [ fhir:v "http://loinc.org"^^xsd:anyURI ]; fhir:code [ fhir:v "18842-5" ]; fhir:display [ fhir:v "Discharge summary" ] ] ) ];
+  fhir:subject ( [ fhir:reference [ fhir:v "https://pods.example/pods/rosa/profile/card#me" ]; fhir:link <https://pods.example/pods/rosa/profile/card#me>; fhir:display [ fhir:v "Rosa Rivera" ] ] );
+  fhir:date [ fhir:v "2026-09-10T11:00:00Z"^^xsd:dateTime ];
+  fhir:author ( [ fhir:display [ fhir:v "Imani Brooks, ward pharmacist" ] ] );
+  fhir:title [ fhir:v "Discharge summary" ];
+  fhir:note ( [ fhir:text [ fhir:v "Fictional summary. Not clinical guidance." ] ] );
+  fhir:section ( [ fhir:title [ fhir:v "Medicines on discharge" ];
+    fhir:entry ( [ fhir:reference [ fhir:v "https://pods.example/pods/rosa/medications/lisinopril" ]; fhir:link <https://pods.example/pods/rosa/medications/lisinopril>; fhir:display [ fhir:v "Lisinopril" ] ] ) ] ).

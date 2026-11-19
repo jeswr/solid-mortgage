@@ -1,4 +1,5 @@
 // AUTHORED-BY Claude Opus 5.5
+import { ORG_SLUGS } from "@mortgage/demo-kit/registry";
 import { expect, test } from "@playwright/test";
 import {
   expectAccessible,
@@ -14,6 +15,7 @@ const ROUTES = [
   "./watch/moving-house",
   "./watch/small-dollar-lending",
   "./watch/business-kyb",
+  "./watch/medication-handover",
   "./honesty",
   "./journey",
   "./nope",
@@ -65,10 +67,8 @@ test("home: title, order, demos, launcher and join-in links", async ({ page }) =
   }
 
   const tiles = page.getByRole("list", { name: "Organisation apps" }).getByRole("link");
-  // The thirteen mortgage apps, the state app (moving house), the identity service, the online
-  // lender and the payment service (small-dollar lending), and the registry and the business
-  // lender (business KYB).
-  await expect(tiles).toHaveCount(19);
+  // One tile per organisation app in the registry.
+  await expect(tiles).toHaveCount(ORG_SLUGS.length);
 
   await expect(page.getByRole("link", { name: /Register for the weekly meeting/ })).toHaveAttribute(
     "href",
@@ -178,10 +178,8 @@ test("honesty page reports the runtime mode and the fictional organisations", as
     "data-runtime-mode",
     "checking",
   );
-  // A header row, then the nineteen organisation apps (the state app is moving house's; the
-  // identity service, the online lender and the payment service are small-dollar lending's; the
-  // registry and the business lender are business KYB's).
-  await expect(page.getByRole("table").getByRole("row")).toHaveCount(20);
+  // A header row, then one row per organisation app in the registry.
+  await expect(page.getByRole("table").getByRole("row")).toHaveCount(ORG_SLUGS.length + 1);
 });
 
 test("the old ledger path redirects to the journey ledger", async ({ page }) => {

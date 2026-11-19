@@ -11,7 +11,8 @@
     "mortgage/**/*.ts",
     "moving-house/**/*.ts",
     "small-dollar-lending/**/*.ts",
-    "business-kyb/**/*.ts"
+    "business-kyb/**/*.ts",
+    "medication-handover/**/*.ts"
   ],
   "exclude": ["dist", "node_modules", "test", "mortgage/**/*.test.ts"]
 }

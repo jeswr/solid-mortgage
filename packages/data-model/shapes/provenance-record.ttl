@@ -1,0 +1,47 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix fhir: <http://hl7.org/fhir/> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+
+# AUTHORED-BY Claude Opus 5.5
+# Who changed a medicine, when and why (medication handover, flows.md section 5): rosa:/medications/
+# provenance/<name>, a FHIR R5 Provenance (aligned with W3C PROV). The pod's own request log
+# shows which organisation wrote; this record carries what the log cannot: the clinician's name
+# and the reason (fhir:why). Every change to a statement has one.
+mshape:ProvenanceRecordShape
+  a sh:NodeShape ;
+  sh:targetClass fhir:Provenance ;
+  sh:closed true ;
+  sh:property [ sh:path rdf:type ; sh:in ( fhir:Provenance ) ] ;
+  sh:property [ sh:path fhir:nodeRole ; sh:maxCount 1 ; sh:in ( fhir:treeRoot ) ] ;
+  sh:property [ sh:path fhir:id ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirIdShape ] ;
+  sh:property [ sh:path fhir:target ; sh:minCount 1 ; sh:maxCount 1 ] ;
+  sh:property [
+    sh:path ( fhir:target [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+    sh:minCount 1 ;
+    sh:node mshape:FhirLinkedReferenceShape ;
+  ] ;
+  sh:property [ sh:path fhir:recorded ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirDateTimeShape ] ;
+  sh:property [ sh:path fhir:why ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirStringShape ] ;
+  sh:property [ sh:path fhir:activity ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirCodeableConceptShape ] ;
+  sh:property [
+    sh:path ( fhir:activity fhir:coding [ sh:zeroOrMorePath rdf:rest ] rdf:first fhir:code fhir:v ) ;
+    sh:minCount 1 ;
+    sh:in ( "CREATE" "UPDATE" ) ;
+  ] ;
+  sh:property [ sh:path fhir:patient ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirLinkedReferenceShape ] ;
+  sh:property [ sh:path fhir:agent ; sh:minCount 1 ; sh:maxCount 1 ] ;
+  sh:property [
+    sh:path ( fhir:agent [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+    sh:minCount 1 ;
+    sh:node mshape:ProvenanceAgentShape ;
+  ] .
+
+# Provenance.agent: the person (by name) and the organisation they acted for (a WebID).
+mshape:ProvenanceAgentShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:property [ sh:path fhir:type ; sh:maxCount 1 ; sh:node mshape:FhirCodeableConceptShape ] ;
+  sh:property [ sh:path fhir:who ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirReferenceShape ] ;
+  sh:property [ sh:path fhir:onBehalfOf ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirLinkedReferenceShape ] .

@@ -1,0 +1,13 @@
+@prefix fhir: <http://hl7.org/fhir/>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+# No requester and an intent outside the value set.
+<https://pods.example/pods/rosa/medications/requests/atorvastatin> a fhir:MedicationRequest;
+  fhir:id [ fhir:v "atorvastatin" ];
+  fhir:status [ fhir:v "active" ];
+  fhir:intent [ fhir:v "wish" ];
+  fhir:medication [ fhir:concept [
+    fhir:coding ( [ fhir:system [ fhir:v "http://www.nlm.nih.gov/research/umls/rxnorm"^^xsd:anyURI ]; fhir:code [ fhir:v "83367" ] ] );
+    fhir:text [ fhir:v "Atorvastatin 40 mg tablet" ] ] ];
+  fhir:subject [ fhir:reference [ fhir:v "https://pods.example/pods/rosa/profile/card#me" ]; fhir:link <https://pods.example/pods/rosa/profile/card#me>; fhir:display [ fhir:v "Rosa Rivera" ] ];
+  fhir:authoredOn [ fhir:v "2026-09-10T11:00:00Z"^^xsd:dateTime ];
+  fhir:dosageInstruction ( [ fhir:text [ fhir:v "One tablet at night" ] ] ).
