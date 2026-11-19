@@ -6,14 +6,13 @@ import "@fontsource/nunito-sans/600.css";
 import "@fontsource/nunito-sans/800.css";
 import "./app.css";
 import { mortgageSeed, trackTourContext } from "@mortgage/content/mortgage/browser";
-import { SOURCE_IDS, TOUR } from "@mortgage/content/mortgage/tour";
-import { ORGS, POD_HOLDER } from "@mortgage/content/orgs";
+import { MORTGAGE_HOLDER, mortgageLens, mortgageTour } from "@mortgage/content/mortgage/mount";
+import { ORGS } from "@mortgage/content/orgs";
 import { configure, onEvent, ready, resetDemo, setTourContext } from "@mortgage/pod-runtime";
 import { mountDemo } from "@mortgage/tour/mount";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App.tsx";
-import { LENS } from "./lens-config.ts";
 import { setDayOne, setWalletDay } from "./runtime.tsx";
 
 configure({ app: "wallet", registry: ORGS, seed: mortgageSeed() });
@@ -26,11 +25,11 @@ const started = ready().then((info) => {
 
 void mountDemo({
   app: "wallet",
-  holder: { name: POD_HOLDER.name.split(" ")[0] ?? POD_HOLDER.name },
-  lens: LENS,
+  holder: MORTGAGE_HOLDER,
+  lens: mortgageLens(),
   registry: ORGS,
   runtime: { onEvent, resetDemo, setTourContext: trackTourContext(setTourContext) },
-  tour: { demo: "mortgage", sources: SOURCE_IDS, steps: [...TOUR] },
+  tour: mortgageTour(),
 }).then(({ tour }) => {
   if (tour === undefined) return;
   // In the guided tour the wallet acts on the day of the step the visitor is on.

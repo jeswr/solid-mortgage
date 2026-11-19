@@ -19,31 +19,36 @@ interface Harness {
   webid(owner: Owner): string;
 }
 
-declare global {
-  interface Window {
-    __harness?: Harness;
-  }
-}
-
 /** A page on the harness, in the same browser context (same pods) as the wallet pages. */
 async function openHarness(context: BrowserContext) {
   const page = await context.newPage();
   await page.goto("/__wallet-e2e__/");
-  await page.waitForFunction(() => window.__harness !== undefined);
-  await page.evaluate(() => window.__harness?.ready());
+  await page.waitForFunction(
+    () => (window as unknown as { __harness?: Harness }).__harness !== undefined,
+  );
+  await page.evaluate(() => (window as unknown as { __harness: Harness }).__harness.ready());
   return {
     page,
-    beats: (names: string[]) => page.evaluate((n) => (window.__harness as Harness).beats(n), names),
+    beats: (names: string[]) =>
+      page.evaluate((n) => (window as unknown as { __harness: Harness }).__harness.beats(n), names),
     request: (code: string, day: number) =>
-      page.evaluate(([c, d]) => (window.__harness as Harness).request(c, d), [code, day] as const),
+      page.evaluate(
+        ([c, d]) => (window as unknown as { __harness: Harness }).__harness.request(c, d),
+        [code, day] as const,
+      ),
     status: (owner: Owner, pod: Owner, path: string, method = "GET") =>
       page.evaluate(
-        ([o, p, x, m]) => (window.__harness as Harness).status(o, p, x, m),
+        ([o, p, x, m]) =>
+          (window as unknown as { __harness: Harness }).__harness.status(o, p, x, m),
         [owner, pod, path, method] as const,
       ),
     aclAgents: (path: string) =>
-      page.evaluate((p) => (window.__harness as Harness).aclAgents(p), path),
-    webid: (owner: Owner) => page.evaluate((o) => (window.__harness as Harness).webid(o), owner),
+      page.evaluate(
+        (p) => (window as unknown as { __harness: Harness }).__harness.aclAgents(p),
+        path,
+      ),
+    webid: (owner: Owner) =>
+      page.evaluate((o) => (window as unknown as { __harness: Harness }).__harness.webid(o), owner),
   };
 }
 
@@ -82,7 +87,9 @@ async function expectAxeClean(page: Page) {
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();
-  expect(results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(" | ")}`)).toEqual([]);
+  expect(
+    results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(" | ")}`),
+  ).toEqual([]);
 }
 
 async function expectNoSideScroll(page: Page) {
@@ -227,7 +234,9 @@ test("steps 21 and 22: approve Marigold, revoke Juniper, and the pod refuses Jun
   const request = await harness.request("G8", 70);
 
   // Step 21, in the guided tour (day 70).
-  await page.goto(`requests?tour=mortgage&step=servicer-connect&request=${encodeURIComponent(request)}`);
+  await page.goto(
+    `requests?tour=mortgage&step=servicer-connect&request=${encodeURIComponent(request)}`,
+  );
   const card = page.locator("article.consent", { hasText: "Marigold Loan Servicing" });
   await expect(card).toContainText("Contact details");
   await expect(card).toContainText("Autopay instruction");
