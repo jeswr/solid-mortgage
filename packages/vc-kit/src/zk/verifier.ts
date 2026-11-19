@@ -10,8 +10,8 @@
  *  1. structural   - sanctioned flavour (`evm`, never `*-no-zk`), committed
  *                    member, 5 public inputs, member width within the field's
  *                    decision-0005 budget;
- *  2. nonce        - single-use challenge burned via the injected solid-kit
- *                    NonceStore seam BEFORE anything else (a failed attempt
+ *  2. nonce        - single-use challenge burned via the injected
+ *                    nonce-consumer seam BEFORE anything else (a failed attempt
  *                    consumes the challenge too);
  *  3. challenge    - the proof's `challenge` public input equals the burned
  *                    nonce's field derivation (transcript-bound freshness);
@@ -28,9 +28,10 @@
  *                    public input (constant-time) - the forgeability gate;
  *  9. cryptography - bb.js UltraHonk verify against the COMMITTED artifact.
  *
- * ANY failure rejects. Verification is server/route-side: the WebID comes from
- * `@mortgage/solid-kit`'s `verifyApiRequest` (DPoP-bound Solid-OIDC), the
- * nonce store from `createNonceStore` - both injected, never re-implemented.
+ * ANY failure rejects. The caller supplies the presenter WebID and the
+ * single-use nonce consumer (in the static demo, the lender's pod-held
+ * challenge: content/mortgage/prequalification.ts) - both injected, never
+ * re-implemented here.
  */
 
 import { parseCredentialRdf } from "@jeswr/solid-vc";
@@ -79,7 +80,7 @@ export interface PresentedTierAProof {
   readonly verifierTarget: string;
 }
 
-/** The single-use challenge seam - `@mortgage/solid-kit`'s NonceStore satisfies it. */
+/** The single-use challenge seam the caller injects. */
 export interface TierANonceConsumer {
   /** `true` iff `nonce` is the live challenge for `sessionKey`; burns it. */
   consume(sessionKey: string, nonce: string): boolean;
@@ -91,11 +92,11 @@ export interface VerifyTierAOptions {
   readonly statement: TierAStatement;
   /** The presenter's operand-anchor VC document (pod-resident, untrusted). */
   readonly anchorVc: string | DatasetCore;
-  /** The DPoP-verified presenter WebID (from solid-kit `verifyApiRequest`). */
+  /** The presenter WebID, as established by the caller. */
   readonly webid: string;
   /** The challenge nonce the presenter claims (from the POST body). */
   readonly nonce: string;
-  /** The injected single-use nonce store (solid-kit `createNonceStore`). */
+  /** The injected single-use nonce consumer. */
   readonly nonces: TierANonceConsumer;
   /** The nonce store session key the challenge was minted under. */
   readonly sessionKey: string;

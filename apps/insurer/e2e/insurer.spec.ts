@@ -3,19 +3,11 @@
  * Wrenfield against the real pods: the built site, the real service worker, the real wasm
  * server. Every test gets a fresh browser context, so fresh pods.
  */
-import AxeBuilder from "@axe-core/playwright";
-import { expect, type Page, test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+import { expectAccessible, OUTSIDE_LENS } from "../../../test-support/e2e.ts";
 import { injectHarness, noHorizontalScroll, podsReady, readAs, runUntil } from "./pods.ts";
 
 const ROUTES = ["./", "./property", "./quote", "./evidence", "./no-such-page"];
-
-async function axe(page: Page): Promise<void> {
-  const results = await new AxeBuilder({ page })
-    .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
-    .exclude("solid-lens")
-    .analyze();
-  expect(results.violations).toEqual([]);
-}
 
 test("every route has the trust banner, noindex and its own metadata", async ({ page }) => {
   for (const route of ROUTES) {
@@ -64,7 +56,7 @@ test("step 15: Bind reads the property facts and writes the evidence into Alex's
   await expect(page.getByText("Asphalt shingle")).toBeVisible();
   await expect(page.getByText("Appraised value")).toBeVisible();
   await expect(page.getByText("Alex's pod · property record").first()).toBeVisible();
-  await axe(page);
+  await expectAccessible(page, OUTSIDE_LENS);
 });
 
 test("the evidence is write-only for Wrenfield: reading it back is refused", async ({ page }) => {
@@ -80,7 +72,7 @@ test("the evidence is write-only for Wrenfield: reading it back is refused", asy
   await expect(page.getByText("Fingerprint (SHA-256)")).toBeVisible({ timeout: 20_000 });
   await page.getByRole("button", { name: "Read the evidence as Wrenfield" }).click();
   await expect(page.getByText("Refused by Alex's pod (403)")).toBeVisible();
-  await axe(page);
+  await expectAccessible(page, OUTSIDE_LENS);
 });
 
 test("axe passes on every route and nothing scrolls sideways at 390 px", async ({ page }) => {
@@ -88,7 +80,7 @@ test("axe passes on every route and nothing scrolls sideways at 390 px", async (
   for (const route of ROUTES) {
     await page.goto(route);
     await expect(page.getByRole("note", { name: "Concept demonstration notice" })).toBeVisible();
-    await axe(page);
+    await expectAccessible(page, OUTSIDE_LENS);
     await noHorizontalScroll(page);
   }
 });

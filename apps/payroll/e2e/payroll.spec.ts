@@ -4,58 +4,11 @@
  * this browser. Nothing is mocked. Owner reads use the same path-mode identity header the pod
  * runtime's `podFetch` sends.
  */
-import AxeBuilder from "@axe-core/playwright";
 import { buildInboxMessage, MORT } from "@mortgage/data-model";
 import { createDemoCalendar } from "@mortgage/demo-kit/calendar";
-import { expect, type Page, test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { Writer } from "n3";
-
-interface PodAnswer {
-  status: number;
-  body: string;
-}
-
-/** A request to a pod as `owner`, from inside the page (so the service worker answers it). */
-function asOwner(
-  page: Page,
-  owner: string,
-  path: string,
-  init: { method?: string; body?: string; contentType?: string } = {},
-): Promise<PodAnswer & { location: string | null }> {
-  return page.evaluate(
-    async ({ owner, path, init }) => {
-      const headers: Record<string, string> = { accept: "text/turtle", "x-demo-agent": owner };
-      if (init.contentType) headers["content-type"] = init.contentType;
-      const response = await fetch(`/pods/${path}`, {
-        body: init.body,
-        headers,
-        method: init.method ?? "GET",
-      });
-      return {
-        body: await response.text(),
-        location: response.headers.get("location"),
-        status: response.status,
-      };
-    },
-    { init, owner, path },
-  );
-}
-
-async function openReady(page: Page, path: string): Promise<void> {
-  await page.goto(`${path}${path.includes("?") ? "&" : "?"}tour=off`);
-  await expect(page.getByRole("status").filter({ hasText: "Connecting" })).toHaveCount(0, {
-    timeout: 60_000,
-  });
-}
-
-async function noAxeViolations(page: Page): Promise<void> {
-  const results = await new AxeBuilder({ page })
-    .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
-    .analyze();
-  expect(
-    results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(" ")}`),
-  ).toEqual([]);
-}
+import { podRequest as asOwner, expectAccessible, openReady } from "../../../test-support/e2e.ts";
 
 test("step 2: Sign and send writes a signed credential into Alex's pod", async ({ page }) => {
   await openReady(page, "share");
@@ -84,7 +37,7 @@ test("step 2: Sign and send writes a signed credential into Alex's pod", async (
   await page.getByRole("button", { name: "Try to read it back from Alex's pod" }).click();
   await expect(page.locator(".refusal")).toContainText("403 Forbidden");
   expect((await asOwner(page, "payroll", "alex/credentials/employment-income")).status).toBe(403);
-  await noAxeViolations(page);
+  await expectAccessible(page);
 });
 
 test("the back office answers a refresh request: new credential, old one revoked", async ({
@@ -161,7 +114,7 @@ for (const path of ["", "pay", "share", "verifications", "no-such-page"]) {
       "noindex, nofollow",
     );
     await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute("content", "#3D3A8C");
-    await noAxeViolations(page);
+    await expectAccessible(page);
     await page.setViewportSize({ height: 844, width: 390 });
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth - document.documentElement.clientWidth,

@@ -8,7 +8,7 @@ import { Link } from "wouter";
 import { ArrowIcon } from "../components/icons.tsx";
 import { VideoPlayer } from "../components/VideoPlayer.tsx";
 import type { Demo } from "../demos.ts";
-import { tourUrl } from "../demos-links.ts";
+import { startTourFresh, tourUrl } from "../demos-links.ts";
 import { formatDuration, isoDuration } from "../format.ts";
 import { applyMeta } from "../site.ts";
 
@@ -52,7 +52,11 @@ export function Watch({ demo, probe }: { demo: Demo; probe?: (url: string) => Pr
             </div>
             {demo.tour === undefined ? null : (
               <p className="watch__try">
-                <a href={tourUrl(demo.tour)} className="button button--primary">
+                <a
+                  href={tourUrl(demo.tour)}
+                  onClick={startTourFresh}
+                  className="button button--primary"
+                >
                   Try it yourself <ArrowIcon />
                 </a>
               </p>

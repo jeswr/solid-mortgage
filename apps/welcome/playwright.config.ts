@@ -10,13 +10,17 @@ process.env.APP_E2E_PORT ??= execFileSync(process.execPath, ["-e", FREE_PORT], {
 });
 const port = Number(process.env.APP_E2E_PORT);
 
+/**
+ * Runs against the assembled site (`pnpm run build` at the root first): "Try it yourself"
+ * restarts the pods, which live in the site-wide service worker `/pods-sw.js`.
+ */
 export default defineConfig({
   testDir: "./e2e",
   forbidOnly: Boolean(process.env.CI),
   reporter: process.env.CI ? [["github"]] : "list",
   use: { baseURL: `http://127.0.0.1:${port}/welcome/` },
   webServer: {
-    command: `pnpm exec vite preview --host 127.0.0.1 --strictPort --port ${port}`,
+    command: `node ../../tools/serve-dist.mjs --port ${port} --dir ../../dist`,
     url: `http://127.0.0.1:${port}/welcome/`,
     reuseExistingServer: false,
   },

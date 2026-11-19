@@ -8,7 +8,6 @@
  * request into the page, so the service worker and the pods' access rules answer it exactly as
  * they answer the apps.
  */
-import AxeBuilder from "@axe-core/playwright";
 import {
   createBrowserWorld,
   crossOwnerFetch,
@@ -21,6 +20,7 @@ import { podUrl, type World } from "@mortgage/content/mortgage/world";
 import { MORT } from "@mortgage/data-model";
 import { createDemoCalendar } from "@mortgage/demo-kit/calendar";
 import { expect, type Page, test } from "@playwright/test";
+import { podRequest as asOwner, expectAccessible, openReady } from "../../../test-support/e2e.ts";
 
 /** A fetch that runs inside the page, so the site's service worker answers it. */
 function pageFetch(page: Page): typeof fetch {
@@ -74,38 +74,6 @@ function orderReport(world: World): Promise<string> {
   });
 }
 
-function asOwner(
-  page: Page,
-  owner: string,
-  path: string,
-): Promise<{ status: number; body: string }> {
-  return page.evaluate(
-    async ({ owner, path }) => {
-      const response = await fetch(`/pods/${path}`, {
-        headers: { accept: "text/turtle", "x-demo-agent": owner },
-      });
-      return { body: await response.text(), status: response.status };
-    },
-    { owner, path },
-  );
-}
-
-async function openReady(page: Page, path: string): Promise<void> {
-  await page.goto(`${path}${path.includes("?") ? "&" : "?"}tour=off`);
-  await expect(page.getByRole("status").filter({ hasText: "Connecting" })).toHaveCount(0, {
-    timeout: 60_000,
-  });
-}
-
-async function noAxeViolations(page: Page): Promise<void> {
-  const results = await new AxeBuilder({ page })
-    .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
-    .analyze();
-  expect(
-    results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(" ")}`),
-  ).toEqual([]);
-}
-
 test("step 4: Send summary to my pod writes the summary and its anchor", async ({ page }) => {
   await openReady(page, "summary");
   const button = page.locator('[data-tour="bureau-send"]');
@@ -127,7 +95,7 @@ test("step 4: Send summary to my pod writes the summary and its anchor", async (
   await page.getByRole("button", { name: "Try to read it back from Alex's pod" }).click();
   await expect(page.locator(".refusal")).toContainText("403 Forbidden");
   expect((await asOwner(page, "bureau", "alex/credentials/credit-summary")).status).toBe(403);
-  await noAxeViolations(page);
+  await expectAccessible(page);
 
   await page.getByRole("link", { name: "Inquiries" }).click();
   await expect(page.getByRole("row", { name: /Soft/ })).toContainText("Consumer disclosure");
@@ -164,7 +132,7 @@ test("step 9, Quillon's side: its agent checks the authorisation and releases th
   await expect(row).toContainText("/consents/g4-credit-report-authorisation");
   await row.getByRole("button", { name: /Check at source/ }).click();
   await expect(row.getByRole("status")).toContainText("200 OK");
-  await noAxeViolations(page);
+  await expectAccessible(page);
   await expect(page.locator("[data-demo-signed-in]")).toContainText("Order desk clerk");
 
   await page.getByRole("link", { name: "Inquiries" }).click();
@@ -185,7 +153,7 @@ test("an order without a standing authorisation is refused at source", async ({ 
   const row = page.getByRole("row", { name: /Juniper Home Loans/ });
   await row.getByRole("button", { name: /Check at source/ }).click();
   await expect(row.locator(".refusal")).toContainText("403 Forbidden");
-  await noAxeViolations(page);
+  await expectAccessible(page);
   // Quillon's agent hit the same refusal, so no report was released and its claim was given back.
   await page.waitForTimeout(2_000);
   expect((await asOwner(page, "bureau", "bureau/orders/JHL-1001/report")).status).toBe(404);
@@ -203,7 +171,7 @@ for (const path of ["", "summary", "orders", "inquiries", "no-such-page"]) {
       "noindex, nofollow",
     );
     await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute("content", "#44546A");
-    await noAxeViolations(page);
+    await expectAccessible(page);
     await page.setViewportSize({ height: 844, width: 390 });
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth - document.documentElement.clientWidth,

@@ -1,4 +1,5 @@
 // AUTHORED-BY Claude Opus 5.5
+import { mortgageAliases } from "@mortgage/content/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
@@ -9,6 +10,9 @@ export default defineConfig({
   base: `/${SLUG}/`,
   build: { outDir: "dist", emptyOutDir: true, sourcemap: true },
   plugins: [react()],
+  // The guided tour loads the seed: the pinned @jeswr/solid-vc build imports Node modules, and
+  // vc-kit ships browser stand-ins.
+  resolve: { alias: mortgageAliases() },
   test: {
     environment: "jsdom",
     include: ["test/**/*.test.{ts,tsx}"],

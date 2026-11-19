@@ -75,9 +75,6 @@ legacy/               the retired Next.js apps and their e2e suite; not in the w
 video/                recorder and narration (lane V1)
 ```
 
-`packages/solid-kit`, `packages/ui` and `scripts/demo` are old code kept until lane L4 deletes
-them; do not build on them.
-
 ## Building, serving, gating
 
 - `pnpm run build` builds every app (Turbo, dependencies first) and assembles `dist/`
