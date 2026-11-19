@@ -284,6 +284,14 @@ export function withdrawMotorGrant(world: World, code: MotorCode, time: string):
   return endGrant(world, code, DPV.ConsentWithdrawn, "withdrawn", time);
 }
 
+async function anyEndEvidence(world: World): Promise<boolean> {
+  for (const evidence of new Set(Object.values(MOTOR_END_EVIDENCE))) {
+    const response = await world.fetchAs("alex")(alexUrl(world, evidence), { method: "HEAD" });
+    if (response.ok) return true;
+  }
+  return false;
+}
+
 async function hasEnded(world: World, record: GrantRecord): Promise<boolean> {
   for (const permission of record.agreement.permissions) {
     const end = permission.end;
@@ -303,6 +311,9 @@ async function hasEnded(world: World, record: GrantRecord): Promise<boolean> {
  * the codes that expired.
  */
 export async function applyMotorClaimExpiries(world: World, time = "00:05"): Promise<string[]> {
+  // The wallet runs this on every write to Alex's inbox, in every demo: while no end event has
+  // left its evidence, one HEAD per kind of evidence is all it costs.
+  if (!(await anyEndEvidence(world))) return [];
   const expired: string[] = [];
   for (const record of await motorGrants(world)) {
     if (record.state !== "active" || !(await hasEnded(world, record))) continue;
