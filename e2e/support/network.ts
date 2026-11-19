@@ -35,7 +35,22 @@ export interface Recorder {
   flush(): Promise<void>;
   /** Pod requests (`/pods/**` on the site origin) with a response, in the order sent. */
   podRequests(): ObservedRequest[];
+  /**
+   * Resolve once no pod request has been in flight for `quietMs` (or after `timeoutMs`). A page
+   * that is still working when the tour moves on loses its last requests from Playwright's view
+   * as its document unloads, though the pod (and so the Lens) still answers them.
+   */
+  podIdle(quietMs?: number, timeoutMs?: number): Promise<boolean>;
 }
+
+const isPodUrl = (url: string): boolean => {
+  try {
+    const parsed = new URL(url);
+    return parsed.origin === siteOrigin() && /^\/pods(\/|$)/.test(parsed.pathname);
+  } catch {
+    return false;
+  }
+};
 
 const isSiteUrl = (url: string): boolean => {
   if (!/^(https?|wss?):/i.test(url)) return true; // data:, blob:, about:, chrome-extension: …
@@ -54,6 +69,11 @@ export async function recordNetwork(context: BrowserContext): Promise<Recorder> 
   const foreign: string[] = [];
   const websockets: string[] = [];
   let seq = 0;
+  const inFlight = new Set<Request>();
+  let lastPodActivity = Date.now();
+  const podDone = (request: Request) => {
+    if (inFlight.delete(request)) lastPodActivity = Date.now();
+  };
 
   await context.route(
     (url) => !isSiteUrl(url.href),
@@ -78,9 +98,14 @@ export async function recordNetwork(context: BrowserContext): Promise<Recorder> 
     };
     requests.push(entry);
     byRequest.set(request, entry);
+    if (isPodUrl(entry.url)) {
+      inFlight.add(request);
+      lastPodActivity = Date.now();
+    }
   });
 
   const settle = (request: Request) => {
+    podDone(request);
     const entry = byRequest.get(request);
     if (entry === undefined) return;
     const job = (async () => {
@@ -100,6 +125,7 @@ export async function recordNetwork(context: BrowserContext): Promise<Recorder> 
   };
   context.on("requestfinished", settle);
   context.on("requestfailed", (request) => {
+    podDone(request);
     const entry = byRequest.get(request);
     if (entry !== undefined) entry.failure = request.failure()?.errorText ?? "failed";
   });
@@ -115,15 +141,15 @@ export async function recordNetwork(context: BrowserContext): Promise<Recorder> 
       await Promise.all([...pending]);
     },
     podRequests() {
-      return requests.filter((r) => {
-        if (r.status === undefined) return false;
-        try {
-          const url = new URL(r.url);
-          return url.origin === siteOrigin() && /^\/pods(\/|$)/.test(url.pathname);
-        } catch {
-          return false;
-        }
-      });
+      return requests.filter((r) => r.status !== undefined && isPodUrl(r.url));
+    },
+    async podIdle(quietMs = 750, timeoutMs = 8_000) {
+      const deadline = Date.now() + timeoutMs;
+      while (Date.now() < deadline) {
+        if (inFlight.size === 0 && Date.now() - lastPodActivity >= quietMs) return true;
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+      return false;
     },
     requests,
     websockets,

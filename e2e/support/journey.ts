@@ -341,6 +341,10 @@ export async function journey(browser: Browser): Promise<JourneyRecord> {
     }
     record.walk = await walkTour(page, tour, {
       open: false,
+      // A visitor reads each step before pressing Next; the pages finish their requests first.
+      settle: async () => {
+        await recorder.podIdle();
+      },
       onDone: async (_step, index) => {
         if (index === 22) {
           const text = revokeCaveat();

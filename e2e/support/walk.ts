@@ -50,6 +50,8 @@ export interface WalkOptions {
   perform?: (step: TourStep, index: number) => Promise<void>;
   /** How the visitor looks at a step with no action (default: click its target region). */
   look?: (step: TourStep, index: number) => Promise<void>;
+  /** Called before moving on to the next step: let the page finish what it is doing. */
+  settle?: (step: TourStep, index: number) => Promise<void>;
   reachTimeout?: number;
   doneTimeout?: number;
   expectTimeout?: number;
@@ -232,7 +234,10 @@ export async function walkTour(
       await options.onDone?.(step, index, span);
 
       const next = tour.steps[index + 1];
-      if (next !== undefined && index + 1 < to) await gotoStep(page, next.id);
+      if (next !== undefined && index + 1 < to) {
+        await options.settle?.(step, index);
+        await gotoStep(page, next.id);
+      }
     } catch (error) {
       return stop(index, `${label}: ${error instanceof Error ? error.message : String(error)}`);
     }
