@@ -43,6 +43,11 @@ export interface SwRuntimeOptions {
 export interface SwRuntime {
   /** The host, once the owners are known (from a page's hello, or stored from an earlier one). */
   getHost(): Promise<PodHost | undefined>;
+  /**
+   * Forget the running host, so the next call restores it from storage. The fallback worker calls
+   * this when it starts hosting, since another tab's host may have written since it last looked.
+   */
+  dropHost(): void;
   /** Answer a `/pods/**` request; `identity` is what the transport established. */
   serveRequest(request: Request, identity: string | null): Promise<Response>;
   handleControl(message: ControlRequest): Promise<ControlReply>;
@@ -178,5 +183,10 @@ export function createSwRuntime(options: SwRuntimeOptions): SwRuntime {
     );
   }
 
-  return { getHost, handleControl, onControlMessage, serveRequest };
+  function dropHost(): void {
+    hostPromise = undefined;
+    config = undefined;
+  }
+
+  return { dropHost, getHost, handleControl, onControlMessage, serveRequest };
 }
