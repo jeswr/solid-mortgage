@@ -58,8 +58,11 @@ export function mortgageLens(): MortgageLensOptions {
   return {
     drawers: MORTGAGE_DRAWERS.map((drawer) => ({ ...drawer })),
     grants,
-    // Access requests, agreements and consent records are bookkeeping, not documents.
-    recordDrawers: ["/inbox/", "/policies/", "/consents/"],
+    // Access requests, agreements and consent records are bookkeeping, not documents. So is
+    // `banking/`: it holds only Alex's autopay mandate, an authorisation her wallet writes when
+    // she approves G8 (like a consent record), not a document she hands anyone. Writes outside
+    // these drawers count as "uploads by Alex", which the demo says never happen.
+    recordDrawers: ["/inbox/", "/policies/", "/consents/", "/banking/"],
     // design.md c.4 fixes this sentence (the e2e suite asserts it). Only Juniper's grant (G4) is
     // ever withdrawn in this demo; every other grant expires, and expiry shows no caveat.
     revokeCaveat: REVOKE_CAVEAT,

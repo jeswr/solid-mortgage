@@ -16,6 +16,7 @@ import { ACL } from "../../mortgage/acl.js";
 import { DAY } from "../../mortgage/facts.js";
 import { checkAtSource } from "../../mortgage/issuers.js";
 import { CREDENTIALS, JOURNEY, readLedger } from "../../mortgage/journey.js";
+import { mortgageLens } from "../../mortgage/mount.js";
 import { applySeed, firstRun, seedRequests } from "../../mortgage/seed.js";
 import { TOUR } from "../../mortgage/tour.js";
 import { at, podUrl, readDataset, readText, webid } from "../../mortgage/world.js";
@@ -351,6 +352,26 @@ describe("the journey runs on real pods", () => {
       expect(events.every((event) => event.day >= (step.clock?.day ?? 0))).toBe(true);
     },
   );
+});
+
+describe("Alex uploads nothing", () => {
+  test("every document Alex writes in the journey is in one of the Lens's record drawers", () => {
+    const records = mortgageLens().recordDrawers;
+    const written = host.events.filter(
+      (event) =>
+        !["seed", "probe", "crawl"].includes(event.step) &&
+        event.actor === "alex" &&
+        event.pod === "alex" &&
+        ["PUT", "POST", "PATCH"].includes(event.method) &&
+        event.status < 300 &&
+        !event.path.endsWith(".acl"),
+    );
+    expect(written.length).toBeGreaterThan(0);
+    const outside = written.filter(
+      (event) => !records.some((drawer) => event.path.startsWith(drawer)),
+    );
+    expect(outside.map((event) => `${event.step} ${event.method} ${event.path}`)).toEqual([]);
+  });
 });
 
 describe("every resource in every pod validates", () => {

@@ -16,7 +16,7 @@ describe("the mountDemo options every mortgage app shares", () => {
     expect(Object.keys(lens.grants)).toEqual(
       GRANT_CODES.map((c) => `/policies/${c.toLowerCase()}`),
     );
-    expect(lens.recordDrawers).toEqual(["/inbox/", "/policies/", "/consents/"]);
+    expect(lens.recordDrawers).toEqual(["/inbox/", "/policies/", "/consents/", "/banking/"]);
     expect(lens.revokeCaveat).toBe(
       "Juniper still holds the loan file it is required to keep. What has ended is its access to Alex's data at source.",
     );
