@@ -9,7 +9,6 @@
  * of its own (design.md section b.4).
  */
 import { createBrowserWorld, crossOwnerFetch } from "@mortgage/content/mortgage/browser";
-import { agents } from "@mortgage/content/mortgage/journey";
 import type { World } from "@mortgage/content/mortgage/world";
 import type { LensEntry } from "@mortgage/demo-kit/contracts";
 import { note, onEvent, onReset, podFetch, setDay } from "@mortgage/pod-runtime";
@@ -201,7 +200,12 @@ export function WalletProvider({
   // Apply expiry whenever the day the wallet runs on differs from the last day it did so.
   useEffect(() => {
     if (!ready || lastExpiryDay() === day) return;
-    enqueue((world) => agents.walletApplyExpiries(world), backOfficeWorld).then(
+    enqueue(
+      async (world) =>
+        // Loaded at the point of use: the journey module brings the signing library.
+        (await import("@mortgage/content/mortgage/journey")).agents.walletApplyExpiries(world),
+      backOfficeWorld,
+    ).then(
       () => rememberExpiryDay(day),
       (error: unknown) => console.warn("applying expiry failed", error),
     );
@@ -223,6 +227,11 @@ export function WalletProvider({
 /**
  * Load data for a screen from the pod. Re-reads when the runtime's version changes. `version`
  * is -1 until the pods are ready, and nothing is read before then.
+ *
+ * While the agents work, Alex's pod changes every few hundred milliseconds. A read is never
+ * thrown away because a newer change arrived: one read runs at a time, it is shown when it
+ * lands, and one more read follows if the pod changed meanwhile. Only a change of `deps` (a
+ * different thing to show) discards a read in flight.
  */
 export function usePodData<T>(
   load: (world: World) => Promise<T>,
@@ -234,18 +243,51 @@ export function usePodData<T>(
     error: undefined,
     loading: true,
   });
-  // biome-ignore lint/correctness/useExhaustiveDependencies: `load` changes identity each render; deps say when to re-read.
-  useEffect(() => {
-    if (version < 0) return;
-    let live = true;
+  const latest = useRef({ load, world });
+  latest.current = { load, world };
+  const generation = useRef(0);
+  const running = useRef(false);
+  const again = useRef(false);
+
+  const read = useCallback(() => {
+    if (running.current) {
+      again.current = true;
+      return;
+    }
+    running.current = true;
+    again.current = false;
+    const mine = generation.current;
     setState((previous) => ({ ...previous, loading: true }));
-    load(world()).then(
-      (data) => live && setState({ data, error: undefined, loading: false }),
-      (error: unknown) => live && setState({ data: undefined, error, loading: false }),
-    );
+    const { load: loadNow, world: worldNow } = latest.current;
+    loadNow(worldNow())
+      .then(
+        (data) =>
+          mine === generation.current && setState({ data, error: undefined, loading: false }),
+        (error: unknown) =>
+          mine === generation.current && setState({ data: undefined, error, loading: false }),
+      )
+      .finally(() => {
+        if (mine !== generation.current) return;
+        running.current = false;
+        if (again.current) read();
+      });
+  }, []);
+
+  // A different thing to show (the deps are plain values: names, URLs): forget reads in flight.
+  const subject = JSON.stringify(deps);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `subject` is what the effect keys on.
+  useEffect(() => {
+    generation.current += 1;
+    running.current = false;
+    again.current = false;
     return () => {
-      live = false;
+      generation.current += 1;
     };
-  }, [version, ...deps]);
+  }, [subject]);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `subject` restarts the read above.
+  useEffect(() => {
+    if (version >= 0) read();
+  }, [version, read, subject]);
   return state;
 }
