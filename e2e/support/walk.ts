@@ -48,6 +48,8 @@ export interface WalkOptions {
   onDone?: (step: TourStep, index: number, window: StepWindow) => Promise<void>;
   /** "act" (Do it for me, default) or a custom actor (the keyboard run). */
   perform?: (step: TourStep, index: number) => Promise<void>;
+  /** How the visitor looks at a step with no action (default: click its target region). */
+  look?: (step: TourStep, index: number) => Promise<void>;
   reachTimeout?: number;
   doneTimeout?: number;
   expectTimeout?: number;
@@ -88,6 +90,13 @@ export async function doItForMe(page: Page): Promise<void> {
   await evaluateSoon(page, () => {
     void window.__demo?.act().catch((error: unknown) => console.warn("[e2e] act failed", error));
   });
+}
+
+/** A visitor looking at a "Look" step's region: a real click on its `data-tour` target. */
+export async function lookAt(page: Page, target: string): Promise<void> {
+  const region = page.locator(`[data-tour="${target}"]`).first();
+  await region.waitFor({ state: "visible", timeout: 30_000 });
+  await region.click({ position: { x: 4, y: 4 } });
 }
 
 async function gotoStep(page: Page, id: string): Promise<void> {
@@ -160,7 +169,10 @@ export async function walkTour(
       }
       await waitForRuntime(page, { tour: true });
       await options.onReached?.(step, index);
-      watermark = await lastId(page, watermark);
+      // The first step's window opens now. Later steps' windows open where the previous step's
+      // closed, so the reads a step's page makes as it loads (steps 6, 10 and 24 expect them)
+      // count towards the step that navigated there.
+      if (index === from) watermark = await lastId(page, watermark);
       const span: StepWindow = {
         app: step.app,
         completed: false,
@@ -174,11 +186,15 @@ export async function walkTour(
       };
       windows.push(span);
 
-      // Act, then wait for the tour to mark the step done.
+      // Act, then wait for the tour to mark the step done. A "Look" step has no action (and no
+      // "Do it for me"): the visitor looks at its target region, which is what completes it.
       const isDone = async () => (await tourState(page))?.done.includes(step.id) ?? false;
       if (step.action !== undefined && !(await isDone())) {
         if (options.perform) await options.perform(step, index);
         else await doItForMe(page);
+      } else if (step.done.target !== undefined && !(await isDone())) {
+        if (options.look) await options.look(step, index);
+        else await lookAt(page, step.done.target);
       }
       let done = await waitFor(page, isDone, step.action ? doneTimeout / 2 : doneTimeout);
       if (!done && step.action !== undefined && options.perform === undefined) {

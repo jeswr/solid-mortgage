@@ -4,6 +4,8 @@
  * the whole mortgage journey from fresh demo data ("Do it for me" on every step). The run is
  * recorded once per suite run (support/journey.ts); each test asserts its own part of it.
  */
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { expect, test } from "@playwright/test";
 import { Parser, Store } from "n3";
 import {
@@ -26,7 +28,7 @@ import { computeTotals } from "./support/ledger.ts";
 import { describeEntry } from "./support/match.ts";
 import { isSiteUrl } from "./support/network.ts";
 import { isAclPath, isOk, isPodEntry, type PodEntry, podRelative } from "./support/pod.ts";
-import { type AppSlug, actsAs, siteOrigin, webidOf } from "./support/site.ts";
+import { type AppSlug, actsAs, REPO_ROOT, siteOrigin, webidOf } from "./support/site.ts";
 import { DESIGN_STEP_COUNT } from "./support/tour-content.ts";
 
 // One worker runs these in order; a worker restarted after a failure reads the record back.
@@ -365,4 +367,63 @@ test("13 Ledger: journey ledger totals equal counts computed from the event log"
   });
   const reuses = Object.fromEntries((shown?.credentials ?? []).map((c) => [c.path, c.reuses]));
   expect(reuses).toEqual(computed.reuses);
+});
+
+test("13 Ledger: the journey ledger page at the end agrees with the log, the Lens and content", async () => {
+  requireWholeRun();
+  const end = record.end;
+  expect(end, record.liveError ?? "the journey ledger page at the end of the walk").toBeDefined();
+  if (end === undefined) return;
+  expect(new URL(end.url).pathname, "the tour ends on the journey ledger").toBe("/welcome/journey");
+  expect(end.lens, "the Solid Lens is on the journey ledger page").toBe(true);
+
+  // The tiles the visitor sees equal the totals counted independently from the event log, and
+  // the Lens's own totals.
+  const computed = computeTotals(end.log);
+  const lens = end.lensTotals as {
+    organisations: number;
+    grants: { active: number; expired: number; revoked: number };
+    credentialsIssued: number;
+    documentsDelivered: number;
+    denied: number;
+    uploads: number;
+  };
+  const fromLog = {
+    credentials: computed.credentialsIssued,
+    denied: computed.denied,
+    documents: computed.documentsDelivered,
+    grants: computed.grants.active + computed.grants.expired + computed.grants.revoked,
+    organisations: computed.organisations,
+    uploads: computed.uploads,
+  };
+  expect(end.tiles, "journey ledger tiles vs the event log").toEqual(fromLog);
+  expect(
+    {
+      credentials: lens.credentialsIssued,
+      denied: lens.denied,
+      documents: lens.documentsDelivered,
+      grants: lens.grants.active + lens.grants.expired + lens.grants.revoked,
+      organisations: lens.organisations,
+      uploads: lens.uploads,
+    },
+    "the Lens totals vs the journey ledger tiles",
+  ).toEqual(end.tiles);
+
+  // Content: every grant the journey defines was given (the narration's "Eight grants"), only
+  // Juniper's G4 was withdrawn, and Alex uploaded nothing.
+  const { GRANT_CODES } = (await import(
+    pathToFileURL(join(REPO_ROOT, "content", "dist", "mortgage", "grants.js")).href
+  )) as { GRANT_CODES: readonly string[] };
+  expect(end.tiles.grants, "grants on the ledger vs content/mortgage/grants.ts").toBe(
+    GRANT_CODES.length,
+  );
+  expect(end.tiles.uploads, "documents uploaded by Alex").toBe(0);
+  expect(computed.grants.revoked, "grants withdrawn (only G4)").toBe(1);
+
+  // The grants on record in Alex's pod (policies/ and consents/, read by the page) say the same.
+  expect(end.grantsOnRecord.map((g) => g.code).sort()).toEqual([...GRANT_CODES].sort());
+  expect(end.grantsOnRecord.find((g) => g.code === "G4")?.state).toBe("revoked");
+  const states = { active: 0, expired: 0, revoked: 0 } as Record<string, number>;
+  for (const grant of end.grantsOnRecord) states[grant.state] = (states[grant.state] ?? 0) + 1;
+  expect(states, "grant states on record vs the ledger's grant states").toEqual(computed.grants);
 });

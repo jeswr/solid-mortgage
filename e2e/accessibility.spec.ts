@@ -111,6 +111,12 @@ test("2 Accessibility: chapters 1 to 3 run with the keyboard alone", async ({ pa
         })
         .toBe(next.id);
     },
+    // A "Look" step: Tab until focus is in the region (the tour completes it on focus).
+    look: async (step) => {
+      const target = step.done.target as string;
+      if (!(await tabTo(page, () => focusIs(page, "target", target))))
+        throw new Error(`[data-tour="${target}"] cannot be reached with Tab on ${page.url()}`);
+    },
     perform: async (step) => perform(step),
     to: end,
   });

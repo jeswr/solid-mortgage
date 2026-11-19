@@ -24,12 +24,14 @@ import {
 import {
   APP_LANE,
   type AppSlug,
+  appPath,
   HOLDER_FIRST_NAME,
   ORGS,
   type PodOwner,
   REPO_ROOT,
   siteJson,
   siteOrigin,
+  waitForRuntime,
   webidOf,
 } from "./site.ts";
 import { loadMortgageTour, type MortgageTour } from "./tour-content.ts";
@@ -65,6 +67,19 @@ export interface JourneyRecord {
     rereads: Array<{ path: string; status: number }>;
     acls: Array<{ path: string; status: number; mentionsAgent: boolean | null }>;
   }>;
+  /**
+   * The end of the journey as the visitor sees it on /welcome/journey, read before the test's
+   * own probes: the journey ledger's totals tiles, the grants on record in Alex's pod, the Lens
+   * totals, and the log both were built from.
+   */
+  end?: {
+    url: string;
+    tiles: Record<string, number>;
+    grantsOnRecord: Array<{ code: string; state: string }>;
+    lensTotals: unknown;
+    log: LensEntry[];
+    lens: boolean;
+  };
   resources?: FetchedResource[];
   totals?: unknown;
   totalsLog?: LensEntry[];
@@ -239,6 +254,52 @@ async function liveChecks(page: Page, record: JourneyRecord): Promise<void> {
   record.totals = await page.evaluate(() => window.__demo?.totals());
 }
 
+/** What /welcome/journey shows at the end of the walk (see `JourneyRecord.end`). */
+async function readEnd(page: Page): Promise<NonNullable<JourneyRecord["end"]>> {
+  const tiles = page.locator("journey-ledger [data-total][data-value]");
+  await tiles.first().waitFor({ state: "visible", timeout: 30_000 });
+  const rows = page.locator(".grants-on-record tbody tr[data-grant]");
+  await rows.first().waitFor({ state: "visible", timeout: 30_000 });
+  const log = await settledLog(page);
+  return {
+    grantsOnRecord: await rows.evaluateAll((trs) =>
+      trs.map((tr) => ({
+        code: tr.getAttribute("data-grant") ?? "",
+        state: tr.getAttribute("data-state") ?? "",
+      })),
+    ),
+    lens: await page.locator("solid-lens").isVisible(),
+    lensTotals: await page.evaluate(() => window.__demo?.totals()),
+    log,
+    tiles: Object.fromEntries(
+      await tiles.evaluateAll((lis) =>
+        lis.map((li) => [
+          li.getAttribute("data-total") ?? "",
+          Number(li.getAttribute("data-value")),
+        ]),
+      ),
+    ),
+    url: page.url(),
+  };
+}
+
+/**
+ * Open the welcome page as a first-time visitor and press "Try the mortgage demo": the demo
+ * restarts from its seed and the tour opens at step 1 on the welcome page, under the pod runtime.
+ */
+export async function enterFromWelcome(page: Page, tour: MortgageTour): Promise<void> {
+  const first = tour.steps[0];
+  if (first === undefined) throw new Error("the tour has no steps");
+  const response = await page.goto(appPath("welcome"));
+  if (response?.status() !== 200) throw new Error(`GET /welcome/ answered ${response?.status()}`);
+  await page.getByRole("link", { name: "Try the mortgage demo" }).click();
+  await page.waitForURL(
+    (url) => url.pathname === "/welcome/" && url.searchParams.get("step") === first.id,
+    { timeout: 60_000 },
+  );
+  await waitForRuntime(page, { runtime: true, timeout: 60_000, tour: true });
+}
+
 /** Run (or read back) the recorded guided journey for this suite run. */
 export async function journey(browser: Browser): Promise<JourneyRecord> {
   const file = recordFile();
@@ -267,7 +328,19 @@ export async function journey(browser: Browser): Promise<JourneyRecord> {
       record.loadError = error instanceof Error ? error.message : String(error);
       return record;
     }
+    // A visitor's entry: the front door, then "Try the mortgage demo" (fresh data, step 1).
+    try {
+      await enterFromWelcome(page, tour);
+    } catch (error) {
+      record.walk = {
+        error: `entering the tour from /welcome/: ${error instanceof Error ? error.message : String(error)}`,
+        stoppedAt: 0,
+        windows: [],
+      };
+      return record;
+    }
     record.walk = await walkTour(page, tour, {
+      open: false,
       onDone: async (_step, index) => {
         if (index === 22) {
           const text = revokeCaveat();
@@ -285,6 +358,13 @@ export async function journey(browser: Browser): Promise<JourneyRecord> {
       record.log = await settledLog(page);
     } catch (error) {
       record.liveError = `could not read the pod log: ${error instanceof Error ? error.message : String(error)}`;
+    }
+    if (walkCompleted(record)) {
+      try {
+        record.end = await readEnd(page);
+      } catch (error) {
+        record.liveError = `could not read the journey ledger page: ${error instanceof Error ? error.message : String(error)}`;
+      }
     }
     if (record.log.length > 0) {
       try {
