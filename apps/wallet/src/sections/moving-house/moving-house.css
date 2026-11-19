@@ -120,4 +120,6 @@
   margin-top: 12px;
   min-width: 0;
   overflow-x: auto;
+  /* The ledger's visually hidden labels are absolutely positioned: keep them in this scroller. */
+  position: relative;
 }
