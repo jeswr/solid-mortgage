@@ -141,7 +141,7 @@ test("step 5: prove to two lenders, cross-origin isolated, no grant given", asyn
   context,
   page,
 }) => {
-  test.setTimeout(480_000);
+  test.setTimeout(240_000);
   const harness = await openHarness(context);
   await harness.beats(["share-employment", "share-credit-summary"]);
   await page.goto("prove");
@@ -149,7 +149,9 @@ test("step 5: prove to two lenders, cross-origin isolated, no grant given", asyn
   const prove = page.locator('[data-tour="wallet-prove"]');
   await expect(prove).toBeEnabled();
   await prove.click();
-  await expect(page.getByText("Checked: yes")).toHaveCount(2, { timeout: 420_000 });
+  // Seconds with the prover's threads. The prover's workers load from /wallet/assets/, which
+  // must carry Cross-Origin-Embedder-Policy too, or the isolated page cannot start them.
+  await expect(page.getByText("Checked: yes")).toHaveCount(2, { timeout: 180_000 });
   // Each lender wrote its own result; each challenge was used up; neither can read Alex's data.
   for (const lender of ["lender-b", "lender"] as const) {
     expect(await harness.status(lender, lender, "quotes/prequalification")).toBe(200);
@@ -181,7 +183,10 @@ test("step 7: Juniper's request explained, approved, enforced, and the visitor s
   expect(await harness.status("alex", "alex", "consents/g4-given")).toBe(200);
   const lender = await harness.webid("lender");
   const aus = await harness.webid("aus");
-  expect(await harness.aclAgents("credentials/")).toEqual(expect.arrayContaining([lender, aus]));
+  // Juniper gets the drawer; its underwriting service only the three documents it checks.
+  expect(await harness.aclAgents("credentials/")).toContain(lender);
+  expect(await harness.aclAgents("credentials/")).not.toContain(aus);
+  expect(await harness.aclAgents("credentials/assets")).toEqual(expect.arrayContaining([aus]));
   expect(await harness.status("lender", "alex", "credentials/assets")).toBe(200);
   expect(await harness.status("aus", "alex", "credentials/assets")).toBe(200);
   expect(await harness.status("aus", "alex", "property/purchase-agreement")).toBe(403);
@@ -241,7 +246,7 @@ test("the wallet applies expiry when the day moves past a grant's end", async ({
   expect(await harness.status("alex", "alex", "consents/g2-expired")).toBe(404);
   // In the tour on day 12 (step 13), seven days after G2 was approved on day 1.
   await page.goto("sharing?tour=mortgage&step=appraisal-report");
-  const g2 = page.locator("article.grant", { hasText: "G2" });
+  const g2 = page.locator("article.grant:has(#grant-G2)");
   await expect(g2).toContainText("Ended");
   expect(await harness.status("alex", "alex", "consents/g2-expired")).toBe(200);
   expect(await harness.aclAgents("credentials/")).not.toContain(await harness.webid("bank"));
@@ -262,22 +267,26 @@ test("steps 21 and 22: approve Marigold, revoke Juniper, and the pod refuses Jun
     `requests?tour=mortgage&step=servicer-connect&request=${encodeURIComponent(request)}`,
   );
   const card = page.locator("article.consent", { hasText: "Marigold Loan Servicing" });
-  await expect(card).toContainText("Contact details");
+  // The harness ran the earlier beats with agents off; on this first wallet page the back-office
+  // agents catch up on every inbox message, and pod reads queue behind them for a while.
+  await expect(card).toContainText("Contact details", { timeout: 90_000 });
   await expect(card).toContainText("Autopay instruction");
   await page.locator('[data-tour="wallet-approve-g8"]').click();
-  await expect(page.getByRole("status").filter({ hasText: "Shared" })).toBeVisible();
+  await expect(page.getByRole("status").filter({ hasText: "Shared" })).toBeVisible({
+    timeout: 90_000,
+  });
   expect(await harness.status("alex", "alex", "consents/g8-given")).toBe(200);
   expect(await harness.status("servicer", "alex", "profile/contact")).toBe(200);
   expect(await harness.status("servicer", "alex", "credentials/assets")).toBe(403);
 
   // Step 22 (day 72): the sharing screen explains Juniper's grant, then Alex revokes it.
   await page.goto("sharing?tour=mortgage&step=revoke-juniper");
-  const juniper = page.locator("article.grant", { hasText: "Juniper Home Loans" });
+  const juniper = page.locator("article.grant:has(#grant-G4)");
   await expect(juniper).toContainText("Mortgage application");
   await expect(juniper).toContainText("Castellan Housing Finance may read");
-  await expect(juniper).toContainText("Active");
+  await expect(juniper).toContainText("Active", { timeout: 60_000 });
   await page.locator('[data-tour="wallet-revoke-juniper"]').click();
-  await expect(juniper).toContainText("Withdrawn");
+  await expect(juniper).toContainText("Withdrawn", { timeout: 60_000 });
   await expect(page.locator('[data-tour="wallet-revoke-juniper"]')).toHaveCount(0);
   await juniper.getByRole("button", { name: "Show access rules" }).click();
   await expect(juniper).toContainText("No access rule in your pod names Juniper Home Loans");
@@ -290,6 +299,6 @@ test("steps 21 and 22: approve Marigold, revoke Juniper, and the pod refuses Jun
   expect(await harness.status("lender", "lender", "loans/JHL-1001/application")).toBe(200);
   expect(await harness.aclAgents("credentials/")).not.toContain(await harness.webid("lender"));
   // Grants that ended on their own are shown as ended, Marigold's is still active.
-  await expect(page.locator("article.grant", { hasText: "G2" })).toContainText("Ended");
-  await expect(page.locator("article.grant", { hasText: "G8" })).toContainText("Active");
+  await expect(page.locator("article.grant:has(#grant-G2)")).toContainText("Ended");
+  await expect(page.locator("article.grant:has(#grant-G8)")).toContainText("Active");
 });

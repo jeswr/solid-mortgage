@@ -103,7 +103,8 @@ function GrantCard({ grant }: { grant: GrantItem }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>();
   const [showRules, setShowRules] = useState(false);
-  const isJuniper = orgOfWebid(agreement.assigneeIri) === "lender";
+  // Step 22 withdraws G4, Juniper's application grant (content/mortgage/journey.ts revokeJuniper).
+  const isJuniper = record.code === "G4" && orgOfWebid(agreement.assigneeIri) === "lender";
   const headingId = `grant-${record.code}`;
 
   const revoke = async () => {
