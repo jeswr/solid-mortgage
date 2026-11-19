@@ -63,8 +63,9 @@ test("home: title, order, demos, launcher and join-in links", async ({ page }) =
   }
 
   const tiles = page.getByRole("list", { name: "Organisation apps" }).getByRole("link");
-  // The thirteen mortgage apps and the state app (moving house).
-  await expect(tiles).toHaveCount(14);
+  // The thirteen mortgage apps, the state app (moving house), and the hospital, pharmacy and
+  // clinic (medication handover).
+  await expect(tiles).toHaveCount(17);
 
   await expect(page.getByRole("link", { name: /Register for the weekly meeting/ })).toHaveAttribute(
     "href",
@@ -174,8 +175,9 @@ test("honesty page reports the runtime mode and the fictional organisations", as
     "data-runtime-mode",
     "checking",
   );
-  // A header row, then the fourteen organisation apps (the state app is moving house's).
-  await expect(page.getByRole("table").getByRole("row")).toHaveCount(15);
+  // A header row, then the seventeen organisation apps (the state app is moving house's; the
+  // hospital, pharmacy and clinic are the medication handover's).
+  await expect(page.getByRole("table").getByRole("row")).toHaveCount(18);
 });
 
 test("the old ledger path redirects to the journey ledger", async ({ page }) => {
