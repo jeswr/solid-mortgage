@@ -4,7 +4,9 @@
  * export), timeline, the illustrative "today" comparison and calls to action. Rendered from
  * `computeLedger`, so every number traces back to an entry.
  */
+import { describe } from "./describe.js";
 import { h } from "./dom.js";
+import { type ComplianceItem, type Examination, examine, registerCsv } from "./examiner.js";
 import { computeLedger, type Ledger, ledgerCsv } from "./ledger.js";
 import type { LensModel } from "./model.js";
 import { TOKENS } from "./styles.js";
@@ -20,7 +22,15 @@ export interface LedgerViewOptions {
   onRestart?: () => void;
   /** Heading level of the ledger title (1 on a page of its own, 2 inside the Lens). */
   headingLevel?: 1 | 2;
+  /** Obligations the examiner view checks against the log (the demo's `compliance` list). */
+  compliance?: ComplianceItem[];
+  /** Which tab opens first. Default "journey". */
+  view?: LedgerTab;
+  /** Hears the tab the viewer picks (so a re-render can keep it). */
+  onTab?: (tab: LedgerTab) => void;
 }
+
+export type LedgerTab = "journey" | "examiner";
 
 export const LEDGER_CSS = `
 .ledger { ${TOKENS} font-family: var(--font); color: var(--ink); background: var(--paper); padding: 20px clamp(14px, 3vw, 32px) 32px; font-size: 15px; line-height: 1.5; }
@@ -73,6 +83,20 @@ export const LEDGER_CSS = `
 .ledger .src-note { font-size: 0.84em; color: var(--ink-3); }
 .ledger .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .ledger :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.ledger .ledger-tabs { display: flex; gap: 4px; margin: 14px 0 0; border-bottom: 2px solid var(--line); }
+.ledger .ledger-tabs [role="tab"] { border: 0; background: none; font: inherit; font-weight: 700; color: var(--ink-2); padding: 8px 14px; border-bottom: 3px solid transparent; margin-bottom: -2px; cursor: pointer; }
+.ledger .ledger-tabs [role="tab"][aria-selected="true"] { color: var(--brand); border-bottom-color: var(--brand); }
+.ledger .obligations { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+.ledger .obligation { border: 1.5px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.ledger .obligation[data-met="true"] { border-color: var(--grant); }
+.ledger .obligation[data-met="false"] { border-style: dashed; }
+.ledger .obligation h4, .ledger .obligation h3 { margin: 0; font-size: 1em; }
+.ledger .verdict { font-weight: 800; font-size: 0.82em; letter-spacing: 0.06em; text-transform: uppercase; }
+.ledger .obligation[data-met="true"] .verdict { color: var(--grant); }
+.ledger .obligation[data-met="false"] .verdict { color: var(--denied); }
+.ledger .rule { font-family: var(--mono); font-size: 0.84em; color: var(--ink-2); }
+.ledger ul.evidence { margin: 6px 0 0; padding-left: 18px; font-size: 0.9em; }
+.ledger .register td.refused { color: var(--denied); font-weight: 700; }
 `;
 
 const STATE_MARK = { active: "●", expired: "◌", revoked: "✕", never: "" } as const;
@@ -90,7 +114,7 @@ function times(n: number, verb: string): string {
 export function renderLedger(
   model: LensModel,
   opts: LedgerViewOptions = {},
-): { el: HTMLElement; ledger: Ledger } {
+): { el: HTMLElement; ledger: Ledger; examination: Examination } {
   const ledger = computeLedger(model, opts.steps ?? []);
   const t = ledger.totals;
   const holder = model.holderName;
@@ -368,10 +392,10 @@ export function renderLedger(
     );
   }
 
-  const el = h(
+  const examination = examine(model, opts.compliance ?? []);
+  const journeyPanel = h(
     "div",
-    { class: "ledger", role: "region", "aria-labelledby": "ledger-title" },
-    title,
+    { role: "tabpanel", id: "ledger-panel-journey", "aria-labelledby": "ledger-tab-journey" },
     h(
       "p",
       { class: "lede" },
@@ -383,5 +407,246 @@ export function renderLedger(
     today,
     cta,
   );
-  return { el, ledger };
+  const examinerPanel = renderExaminer(model, examination, sec);
+  const panels: Record<LedgerTab, HTMLElement> = {
+    examiner: examinerPanel,
+    journey: journeyPanel,
+  };
+  const tabs = h("div", { class: "ledger-tabs", role: "tablist", "aria-label": "Ledger views" });
+  const buttons = new Map<LedgerTab, HTMLButtonElement>();
+  const select = (tab: LedgerTab, focus = false) => {
+    for (const [id, button] of buttons) {
+      const on = id === tab;
+      button.setAttribute("aria-selected", String(on));
+      button.tabIndex = on ? 0 : -1;
+      panels[id].hidden = !on;
+      if (on && focus) button.focus();
+    }
+  };
+  const order: LedgerTab[] = ["journey", "examiner"];
+  for (const id of order) {
+    const button = h(
+      "button",
+      {
+        type: "button",
+        role: "tab",
+        id: `ledger-tab-${id}`,
+        "aria-controls": `ledger-panel-${id}`,
+        "data-tab": id,
+      },
+      id === "journey" ? "Journey" : "Examiner view",
+    ) as HTMLButtonElement;
+    button.addEventListener("click", () => {
+      select(id);
+      opts.onTab?.(id);
+    });
+    button.addEventListener("keydown", (event) => {
+      if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
+      event.preventDefault();
+      const next =
+        order[
+          (order.indexOf(id) + (event.key === "ArrowRight" ? 1 : order.length - 1)) % order.length
+        ];
+      if (next) {
+        select(next, true);
+        opts.onTab?.(next);
+      }
+    });
+    buttons.set(id, button);
+    tabs.append(button);
+  }
+  examinerPanel.setAttribute("role", "tabpanel");
+  examinerPanel.id = "ledger-panel-examiner";
+  examinerPanel.setAttribute("aria-labelledby", "ledger-tab-examiner");
+  select(opts.view ?? "journey");
+
+  const el = h(
+    "div",
+    { class: "ledger", role: "region", "aria-labelledby": "ledger-title" },
+    title,
+    tabs,
+    journeyPanel,
+    examinerPanel,
+  );
+  return { el, ledger, examination };
+}
+
+function download(name: string, type: string, text: string): void {
+  const blob = new Blob([text], { type });
+  const url = URL.createObjectURL(blob);
+  const a = h("a", { href: url, download: name });
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/** The examiner view: obligations against the log, the access register, access changes. */
+function renderExaminer(model: LensModel, x: Examination, sec: "h2" | "h3"): HTMLElement {
+  const holder = model.holderName;
+  const sub = sec === "h2" ? "h3" : "h4";
+  const when = (at: string) => {
+    const date = at.slice(0, 10);
+    const cal = model.config.calendar;
+    return `${cal ? cal.label(cal.dayOf(date)) : date} ${at.slice(11, 16)}`.trim();
+  };
+
+  const obligations =
+    x.obligations.length === 0
+      ? null
+      : h(
+          "section",
+          { "aria-labelledby": "obligations-h" },
+          h(sec, { id: "obligations-h" }, "Obligations and the entries that meet them"),
+          h(
+            "ul",
+            { class: "obligations" },
+            ...x.obligations.map((o) => {
+              const seen = new Set<number>();
+              const entries = o.evidence
+                .flatMap((ev) => ev.matches)
+                .filter((r) => !seen.has(r.seq) && seen.add(r.seq));
+              return h(
+                "li",
+                { class: "obligation", "data-obligation": o.item.id, "data-met": String(o.met) },
+                h(sub, {}, o.item.obligation),
+                h(
+                  "p",
+                  { class: "rule" },
+                  o.item.source
+                    ? h(
+                        "a",
+                        { href: o.item.source, target: "_blank", rel: "noopener" },
+                        o.item.rule,
+                      )
+                    : o.item.rule,
+                ),
+                h(
+                  "p",
+                  { class: "verdict" },
+                  o.met
+                    ? `Evidenced by ${entries.length} entr${entries.length === 1 ? "y" : "ies"}`
+                    : "Not evidenced in this session",
+                ),
+                entries.length === 0
+                  ? null
+                  : h(
+                      "ul",
+                      { class: "evidence" },
+                      ...entries.map((r) => {
+                        const s = describe(model, r);
+                        return h(
+                          "li",
+                          { "data-entry": `${r.entry.source}:${r.entry.id}` },
+                          `${when(r.entry.at)} · ${s.text}`,
+                          s.meta.length ? ` (${s.meta.join(" · ")})` : "",
+                        );
+                      }),
+                    ),
+              );
+            }),
+          ),
+        );
+
+  const csv = h("button", { class: "btn", type: "button" }, "Download the register as CSV");
+  csv.addEventListener("click", () =>
+    download("access-register.csv", "text/csv", registerCsv(model, x.register)),
+  );
+  const register = h(
+    "section",
+    { "aria-labelledby": "register-h" },
+    h(sec, { id: "register-h" }, "Access register: every request by an organisation"),
+    x.register.length === 0
+      ? h("p", { class: "src-note" }, "No organisation has made a request yet.")
+      : h(
+          "div",
+          {
+            class: "matrix-wrap",
+            tabindex: 0,
+            role: "region",
+            "aria-label": "Access register, scrollable",
+          },
+          h(
+            "table",
+            { class: "register" },
+            h(
+              "caption",
+              {},
+              "One row per request a pod answered for an organisation other than its owner, in order.",
+            ),
+            h(
+              "thead",
+              {},
+              h(
+                "tr",
+                {},
+                ...["When", "Organisation", "Action", "Resource", "Outcome", "Under"].map((c) =>
+                  h("th", { scope: "col" }, c),
+                ),
+              ),
+            ),
+            h(
+              "tbody",
+              {},
+              ...x.register.map((r) =>
+                h(
+                  "tr",
+                  { "data-entry": r.rec.entry.id, "data-action": r.action, "data-org": r.org },
+                  h("td", {}, when(r.at)),
+                  h(
+                    "th",
+                    { scope: "row" },
+                    r.orgName,
+                    r.viaAgent ? h("span", { class: "path" }, "back-office agent") : null,
+                  ),
+                  h("td", { class: r.action === "refused" ? "refused" : "" }, r.action),
+                  h(
+                    "td",
+                    {},
+                    r.resource,
+                    h("span", { class: "path" }, `${model.nameOf(r.pod)} · ${r.path}`),
+                  ),
+                  h("td", {}, String(r.status)),
+                  h("td", {}, r.under),
+                ),
+              ),
+            ),
+          ),
+        ),
+    h("p", { class: "row" }, csv),
+  );
+
+  const changes = h(
+    "section",
+    { "aria-labelledby": "changes-h" },
+    h(sec, { id: "changes-h" }, "Changes to access"),
+    x.changes.length === 0
+      ? h("p", { class: "src-note" }, "No access was given or withdrawn.")
+      : h(
+          "ol",
+          { class: "steps" },
+          ...x.changes.map((c) =>
+            h(
+              "li",
+              { "data-entry": c.rec.entry.id },
+              h("strong", {}, c.text),
+              h("span", { class: "day" }, ` · ${when(c.at)}`),
+              ...c.meta.map((m) => h("span", { class: "clock" }, m)),
+            ),
+          ),
+        ),
+  );
+
+  return h(
+    "div",
+    {},
+    h(
+      "p",
+      { class: "lede" },
+      `What an examiner would ask of this session: who reached ${holder}'s data and the organisations' pods, under which grant, and what evidences each obligation. Built from the same log as the journey view. The access log is the demo's record, not a feature of the Solid protocol.`,
+    ),
+    obligations,
+    register,
+    changes,
+  );
 }

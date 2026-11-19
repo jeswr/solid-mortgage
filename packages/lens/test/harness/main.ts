@@ -5,9 +5,12 @@ import "../../src/index.js";
 import type { LensStep, SolidLens } from "../../src/index.js";
 import events from "../fixtures/events.json" with { type: "json" };
 import { CONFIG } from "../fixtures/registry.js";
+import services from "../fixtures/runtime-services.json" with { type: "json" };
 
-const ENTRIES = events as LensEntry[];
 const params = new URLSearchParams(location.search);
+/** `?fixture=services`: the log the real host recorded for the runtime services. */
+const SERVICES = params.get("fixture") === "services";
+const ENTRIES = (SERVICES ? services : events) as LensEntry[];
 
 const lens = document.createElement("solid-lens") as SolidLens;
 if (params.get("layout") === "window") lens.setAttribute("layout", "window");
@@ -38,6 +41,23 @@ lens.ledgerOptions = {
   todaySource: "fixture copy",
   callsToAction: [{ label: "Read about pods", href: "#pods" }],
   onRestart: () => location.reload(),
+  compliance: [
+    {
+      id: "kept-current",
+      obligation: "Keep the record of where the holder lives current",
+      rule: "Fixture rule 1",
+      evidence: [
+        { kind: "notified", org: "payroll" },
+        { actor: { org: "payroll" }, kind: "read", path: "/profile/address", status: 200 },
+      ],
+    },
+    {
+      id: "never",
+      obligation: "Something nobody did",
+      rule: "Fixture rule 2",
+      evidence: [{ actor: { org: "county" }, kind: "read" }],
+    },
+  ],
 };
 
 let cursor = 0;

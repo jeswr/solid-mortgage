@@ -22,6 +22,8 @@ export type EntryKind =
   | "org-to-org"
   | "no-solid"
   | "clock"
+  | "notified"
+  | "grant-used"
   | "other";
 
 /** A sentence with emphasised spans, its plain form, and secondary facts. */
@@ -153,6 +155,33 @@ export function describe(model: LensModel, rec: Received): Sentence {
         return sentence("no-solid", "app", [e.text], ["no Solid in this step"]);
       case "clock":
         return sentence("clock", "app", [e.text], [`reported by ${who}`]);
+      case "notified": {
+        const [, url, activity] = e.refs ?? [];
+        const what = url === undefined ? "a resource it watches" : resourceLabel(model, url);
+        const verb = activity?.endsWith("#Create")
+          ? " was created"
+          : activity?.endsWith("#Delete")
+            ? " was deleted"
+            : " changed";
+        return sentence(
+          "notified",
+          "app",
+          [{ b: who }, " was told that ", { b: what }, verb],
+          [NOTIFIED_LABEL, "the notice carries no data"],
+        );
+      }
+      case "grant-used": {
+        const [url, agent] = e.refs ?? [];
+        const org = agent === undefined ? undefined : model.orgOfAgent(agent);
+        const user = org === undefined ? "An organisation" : model.nameOf(org);
+        const what = url === undefined ? "a resource" : resourceLabel(model, url);
+        return sentence(
+          "grant-used",
+          "app",
+          [{ b: user }, " used its one-time grant to read ", { b: what }],
+          [oneTimeLabel(model)],
+        );
+      }
     }
   }
 
@@ -278,6 +307,14 @@ function describeAcl(model: LensModel, rec: Received): Sentence {
   }
   if (revoked.size > 0) {
     const names = listWords([...revoked.keys()].map((o) => possessive(model.nameOf(o))));
+    if (e.actor.viaAgent && model.closedOneTime(rec.seq) !== undefined) {
+      return sentence(
+        "expire",
+        "pod",
+        [{ b: names }, " one-time access closed"],
+        [oneTimeLabel(model), ...meta],
+      );
+    }
     if (e.actor.viaAgent) {
       const app = model.holderAppName();
       return sentence(
@@ -299,6 +336,21 @@ function describeAcl(model: LensModel, rec: Received): Sentence {
     ],
     meta,
   );
+}
+
+/** How the Lens labels a change notice: the runtime sends it, not the pod server. */
+export const NOTIFIED_LABEL =
+  "notified by the demo runtime; the Solid Notifications Protocol in production";
+
+/** "one-time grant, closed by Alex's wallet". */
+export function oneTimeLabel(model: LensModel): string {
+  return `one-time grant, closed by ${possessive(model.holderName)} wallet`;
+}
+
+/** A resource URL's label as events described it, in the pod the URL names. */
+function resourceLabel(model: LensModel, url: string): string {
+  const pod = /\/pods\/([^/]+)\//.exec(url)?.[1] ?? HOLDER;
+  return model.labelOf(podRelative(url), pod);
 }
 
 export function possessive(name: string): string {
