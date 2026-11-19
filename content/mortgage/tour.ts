@@ -6,8 +6,9 @@
  * - `action.target` and `done.target` are `data-tour` names. The app lanes put them on the
  *   elements; the full list is in README.md.
  * - `expect` lists pod requests and app notes the step must produce. A pod entry is matched on
- *   pod, path, method, status and kind. `actor` is left out: `Partial<PodEvent>` wants a whole
- *   actor, and who may act is already fixed by the access rules the pod enforces.
+ *   pod, path, method, status and kind. `actor` is left out: who may act is already fixed by the
+ *   access rules the pod enforces. A `done` event that several organisations could produce names
+ *   its actor's organisation (`actedBy`); the tour matches patterns as deep partials.
  * - Paths are relative to the pod, with a leading slash. `/inbox/` is a POST to the container.
  * - Steps 7 and 21 start in another app and finish in the wallet. The starting app calls the
  *   request half (`requestApplicationAccess`, `requestServicerAccess`), the wallet approves, and
@@ -22,6 +23,12 @@ import type { OrgSlug } from "@mortgage/demo-kit/registry";
 import { DAY } from "./facts.js";
 
 type Pod = PodEvent["pod"];
+
+/**
+ * An actor pattern naming only the organisation. `Partial<PodEvent>` types a whole actor, but the
+ * tour's matcher compares nested objects key by key, so `{ org }` alone is the pattern meant.
+ */
+const actedBy = (org: Pod): PodEvent["actor"] => ({ org }) as PodEvent["actor"];
 
 const read = (pod: Pod, path: string): Partial<PodEvent> => ({
   kind: "read",
@@ -813,7 +820,9 @@ export const TOUR: readonly TourStep[] = Object.freeze([
     chapter: "6 After closing",
     clock: { day: DAY.revoke },
     done: {
+      // Juniper's refusal only: Castellan's own refused read of the same slot must not count.
       event: {
+        actor: actedBy("lender"),
         kind: "denied",
         method: "GET",
         path: "/credentials/assets",

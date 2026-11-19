@@ -287,9 +287,15 @@ beforeAll(async () => {
   for (const owner of host.owners) pods.push(...(await crawl(host.world, owner)));
 }, 600_000);
 
+/**
+ * A pattern matches when every key it names is equal. The host records the actor as the acting
+ * pod owner, so a pattern's `actor: { org }` compares with that.
+ */
 const matches = (event: object, expected: object): boolean =>
-  Object.entries(expected).every(
-    ([key, value]) => (event as Record<string, unknown>)[key] === value,
+  Object.entries(expected).every(([key, value]) =>
+    key === "actor" && typeof value === "object" && value !== null
+      ? (event as Record<string, unknown>).actor === (value as { org?: unknown }).org
+      : (event as Record<string, unknown>)[key] === value,
   );
 
 describe("the journey runs on real pods", () => {
