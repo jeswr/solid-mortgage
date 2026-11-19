@@ -39,6 +39,8 @@
     "test": "vitest run && pnpm run test:video && turbo run test --concurrency=4",
     "test:video": "vitest run --root video",
     "test:e2e": "pnpm run build && playwright test --pass-with-no-tests && turbo run test:e2e --concurrency=1",
+    "test:e2e:site": "pnpm run build && playwright test --pass-with-no-tests",
+    "test:e2e:apps": "pnpm run build && turbo run test:e2e --concurrency=1",
     "gate": "pnpm run lint && pnpm run check:vocab && pnpm run check:shapes && pnpm run build && pnpm run check:insignia && pnpm run typecheck && pnpm run test"
   },
   "devDependencies": {
