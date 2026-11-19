@@ -3,7 +3,6 @@ title: A business loan from live data
 script: Small business loan
 target: 3:00 · about 390 words
 steps: publish-cash-flow, tax-compliance, apply, assessment, decision, monitoring, quarter, revoke, ledger
-note: provisional until the apps exist.
 ---
 <!-- AUTHORED-BY Claude Fable 5.2 (words, from docs/rebuild/video-scripts.md); Claude Opus 5.5 (split for the recorder) -->
 <!-- Spoken words must stay equal to docs/rebuild/video-scripts.md: `record.ts --check` compares them. -->

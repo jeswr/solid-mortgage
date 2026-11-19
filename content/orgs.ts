@@ -321,6 +321,7 @@ export const DEMO_APPS = Object.freeze({
   "small-dollar-lending": SMALL_DOLLAR_APPS,
   "business-kyb": ["wallet", "registry", "bank", "business-lender"],
   "medication-handover": ["wallet", "hospital", "pharmacy", "clinic"],
+  "small-business-loan": ["wallet", "bank", "state", "business-lender"],
   "motor-claim": ["wallet", "insurer", "repairer", "state"],
   "reusable-kyc": ["wallet", "bank", "card-issuer"],
 } satisfies Record<string, readonly OrgSlug[]>);

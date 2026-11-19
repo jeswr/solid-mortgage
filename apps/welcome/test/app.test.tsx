@@ -79,14 +79,12 @@ describe("home", () => {
     ).toBe("/welcome/?tour=mortgage&step=welcome");
   });
 
-  it("shows coming demos as Coming next with no links at all", () => {
+  it("marks no demo as coming now that every demo is live, and no card says Coming next", () => {
     render(<App hook={at("/")} probe={missing} />);
-    const coming = DEMOS.filter((demo) => demo.status === "coming");
-    expect(coming.length).toBeGreaterThan(0);
-    for (const demo of coming) {
+    expect(DEMOS.filter((demo) => demo.status === "coming")).toEqual([]);
+    for (const demo of DEMOS) {
       const card = document.getElementById(`demo-${demo.id}`) as HTMLElement;
-      expect(within(card).getByText("Coming next")).toBeTruthy();
-      expect(card.querySelectorAll("a, button")).toHaveLength(0);
+      expect(within(card).queryByText("Coming next")).toBeNull();
     }
   });
 
@@ -187,10 +185,12 @@ describe("watch pages", () => {
     expect(screen.getByText(/Thirteen applications\. Eight grants\./)).toBeTruthy();
   });
 
-  it("gives a coming demo a Coming next page without a player", () => {
-    render(<App hook={at("/watch/small-business-loan")} probe={present} />);
-    expect(screen.getByRole("heading", { name: "This demo is being built" })).toBeTruthy();
-    expect(document.querySelector("video, .player")).toBeNull();
+  it("gives no demo a Coming next page: every watch page is a live demo's", () => {
+    for (const demo of DEMOS) {
+      const { unmount } = render(<App hook={at(`/watch/${demo.id}`)} probe={present} />);
+      expect(screen.queryByRole("heading", { name: "This demo is being built" })).toBeNull();
+      unmount();
+    }
   });
 
   it("answers an unknown demo with not found", () => {

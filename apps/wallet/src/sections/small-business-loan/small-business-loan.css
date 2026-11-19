@@ -1,0 +1,68 @@
+/* AUTHORED-BY Claude Opus 5.5
+ * Cairn's small business loan screens: the wallet's own tokens (tokens.css), a few layouts. */
+.sbl-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 18px 4px 8px;
+}
+
+.sbl-nav a {
+  color: var(--teal);
+  font-weight: 700;
+}
+
+.sbl-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.sbl-code {
+  margin-left: auto;
+  font-weight: 800;
+  color: var(--teal);
+  border: 2px solid var(--teal);
+  border-radius: var(--radius-s);
+  padding: 2px 8px;
+}
+
+.sbl-plain {
+  margin: 4px 0 0;
+  padding-left: 1.2rem;
+}
+
+.sbl-mono {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  overflow-wrap: anywhere;
+}
+
+.sbl-totals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+  gap: 8px;
+  margin: 12px 0 0;
+}
+
+.sbl-totals div {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
+  padding: 8px 10px;
+}
+
+.sbl-totals dt {
+  font-size: 0.875rem;
+}
+
+.sbl-totals dd {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.sbl-ledger {
+  margin-top: 12px;
+  overflow-x: auto;
+}

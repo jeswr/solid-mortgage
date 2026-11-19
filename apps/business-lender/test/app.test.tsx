@@ -36,3 +36,26 @@ describe("Brackenridge Bank Commercial Credit", () => {
     expect(screen.getByRole("note", { name: "Concept demonstration notice" })).toBeTruthy();
   });
 });
+
+describe("the equipment loan pages (small business loan)", () => {
+  it.each([
+    ["/loan", "Equipment loan application", "lender-loan-assess"],
+    ["/loan/decision", "Credit decision", "lender-loan-decide"],
+    ["/loan/covenants", "Covenant monitoring", "lender-loan-quarter"],
+  ])(
+    "%s renders its heading, the trust banner and a disabled tour button",
+    (path, title, target) => {
+      const { container } = render(<App hook={at(path)} />);
+      expect(screen.getByRole("heading", { level: 1, name: title })).toBeTruthy();
+      expect(container.querySelector("[data-demo-trust]")).not.toBeNull();
+      const button = container.querySelector<HTMLButtonElement>(`[data-tour="${target}"]`);
+      expect(button?.disabled).toBe(true);
+      expect(screen.getByRole("navigation", { name: "This loan" })).toBeTruthy();
+    },
+  );
+
+  it("lists the loan in the pipeline", () => {
+    render(<App hook={at("/")} />);
+    expect(screen.getByRole("link", { name: /equipment term loan/ })).toBeTruthy();
+  });
+});

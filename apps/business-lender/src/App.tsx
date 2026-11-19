@@ -15,6 +15,7 @@ import { type ReactNode, useEffect } from "react";
 import { type BaseLocationHook, Link, Route, Router, Switch } from "wouter";
 import { org } from "./org.ts";
 import { journey, lenderWorld, proof, usePodState } from "./runtime.ts";
+import { sections } from "./sections/index.ts";
 
 /** The router base: Vite's `base` without its trailing slash ("/business-lender"). */
 export const ROUTER_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -52,6 +53,10 @@ function Pipeline() {
         <li>
           <Link href="/deal">{ENTITY.legalName}</Link>
           <p>Revolving credit line · $750,000 · 3 years · freight and logistics</p>
+        </li>
+        <li>
+          <Link href="/loan">{ENTITY.legalName}: equipment term loan</Link>
+          <p>Term loan · $150,000 · 5 years · two refrigerated box trucks</p>
         </li>
       </ul>
       <p className="muted small">
@@ -279,6 +284,9 @@ export function App({ hook }: { hook?: BaseLocationHook }) {
         <Switch>
           <Route path="/" component={Pipeline} />
           <Route path="/deal" component={Deal} />
+          {sections.map((section) => (
+            <Route key={section.path} path={`/${section.path}`} component={section.Component} />
+          ))}
           <Route component={NotFound} />
         </Switch>
         <footer className="foot">

@@ -132,7 +132,7 @@ mshape:ConstraintShape
     sh:minCount 1 ;
     sh:maxCount 1 ;
     sh:nodeKind sh:IRI ;
-    sh:in ( odrl:purpose odrl:dateTime odrl:event odrl:count ) ;
+    sh:in ( odrl:purpose odrl:dateTime odrl:event odrl:timeInterval odrl:count ) ;
   ] ;
   sh:property [
     sh:path odrl:operator ;

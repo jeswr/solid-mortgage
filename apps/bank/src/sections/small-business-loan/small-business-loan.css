@@ -1,0 +1,123 @@
+/* AUTHORED-BY Claude Opus 5.5
+ * The small business loan section: Alder Bank's own tokens (forest on cream, serif headings). */
+.sbl {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+}
+.sbl h1 {
+  font-family: var(--ab-serif);
+  margin: 0.25rem 0 0.5rem;
+}
+.sbl-eyebrow {
+  margin: 0;
+  color: var(--ab-muted);
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.sbl-lede {
+  color: var(--ab-muted);
+  overflow-wrap: anywhere;
+}
+.sbl-mono {
+  font-family: var(--ab-mono);
+}
+.sbl-steps {
+  padding-left: 1.25rem;
+}
+.sbl-steps li {
+  margin: 0.4rem 0;
+}
+.sbl-card {
+  background: var(--ab-paper);
+  border: 1px solid var(--ab-rule);
+  border-radius: 4px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+.sbl-card h2 {
+  font-family: var(--ab-serif);
+  margin-top: 0;
+  font-size: 1.2rem;
+}
+.sbl-dl {
+  display: grid;
+  grid-template-columns: minmax(7rem, auto) 1fr;
+  gap: 0.3rem 1rem;
+  margin: 0;
+}
+.sbl-dl dt {
+  color: var(--ab-muted);
+}
+.sbl-dl dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.sbl-small {
+  font-size: 0.9rem;
+  color: var(--ab-muted);
+}
+.sbl-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.sbl-table th,
+.sbl-table td {
+  text-align: left;
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid var(--ab-rule);
+}
+.sbl-button {
+  display: inline-block;
+  background: var(--ab-forest);
+  color: #ffffff;
+  border: 0;
+  border-radius: 3px;
+  padding: 0.6rem 1rem;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+.sbl-button:hover {
+  background: var(--ab-forest-deep);
+}
+.sbl-button.secondary {
+  background: transparent;
+  color: var(--ab-forest);
+  border: 1px solid var(--ab-forest);
+}
+.sbl-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.sbl-button:focus-visible {
+  outline: 3px solid var(--ab-focus);
+  outline-offset: 2px;
+}
+.sbl-alert {
+  background: var(--ab-red-soft);
+  color: var(--ab-red);
+  border-left: 4px solid var(--ab-red);
+  padding: 0.75rem;
+  margin-top: 1rem;
+}
+.sbl-owners {
+  padding-left: 1.25rem;
+}
+.sbl-table td.num,
+.sbl-table th.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.sbl-scroll {
+  overflow-x: auto;
+}
+.sbl-ok {
+  background: var(--ab-forest-soft);
+  border-left: 4px solid var(--ab-forest);
+  padding: 0.75rem;
+  margin-top: 1rem;
+}
