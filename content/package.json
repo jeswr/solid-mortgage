@@ -18,6 +18,10 @@
       "types": "./dist/moving-house/*.d.ts",
       "import": "./dist/moving-house/*.js"
     },
+    "./medication-handover/*": {
+      "types": "./dist/medication-handover/*.d.ts",
+      "import": "./dist/medication-handover/*.js"
+    },
     "./vite": {
       "types": "./dist/vite.d.ts",
       "import": "./dist/vite.js"
@@ -25,7 +29,7 @@
   },
   "scripts": {
     "build": "tsc --project tsconfig.json",
-    "lint": "biome check orgs.ts vite.ts mortgage moving-house test package.json tsconfig.json",
+    "lint": "biome check orgs.ts vite.ts mortgage moving-house medication-handover test package.json tsconfig.json",
     "test": "vitest run --root . --config ../vitest.config.ts",
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },
