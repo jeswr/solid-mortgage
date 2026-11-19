@@ -6,7 +6,8 @@
  *
  * `action.target` names are `data-tour` attributes on the wallet's moving-house sections and the
  * state app's Driver Services page. Steps that only show something (1, 5, 6, 7, 10) are summary
- * steps: they complete when reached; the page they open still reads the pod for real.
+ * steps: they complete when reached (step 1 when its page has read the pod); the pages they open
+ * still read the pod for real.
  */
 
 import type { PodEvent, TourStep } from "@mortgage/demo-kit/contracts";
@@ -61,7 +62,9 @@ export const TOUR: readonly TourStep[] = Object.freeze([
     body: "Alex closed on 14 Larch Lane yesterday. Cairn shows the one address record in Alex's pod, and its description as a data product: one owner, a stated purpose, and the organisations that read it.",
     chapter: "1 One address",
     clock: { day: DAY.moved },
-    done: {},
+    // Done when the page has read the data product description (a summary step opened by the
+    // welcome page's deep link is never "gone to", so it cannot complete on arrival).
+    done: { event: read("alex", "/profile/address.dprod") },
     expect: [read("alex", "/profile/address", "alex"), read("alex", "/profile/address.dprod")],
     id: "address",
     lens: {
