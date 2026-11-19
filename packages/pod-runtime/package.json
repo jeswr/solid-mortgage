@@ -1,0 +1,27 @@
+{
+  "name": "@mortgage/pod-runtime",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "In-browser pods: service-worker host, client, bridge, journal, events, organisation agents. Scaffold manifest from lane L0: dependencies are fixed here so the lockfile is complete; lane L1 owns the package and adds scripts and source.",
+  "dependencies": {
+    "@jeswr/fetch-rdf": "^0.1.0",
+    "@mortgage/demo-kit": "workspace:*",
+    "@rdfjs/types": "^2.0.1",
+    "@rdfjs/wrapper": "^0.34.0",
+    "@solid/object": "^0.8.0",
+    "@sparq-org/solid-server": "0.1.8",
+    "idb": "^8.0.4",
+    "n3": "^2.1.1"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9",
+    "@types/node": "^25.9.2",
+    "@playwright/test": "~1.63.0",
+    "@types/n3": "^1.26.1",
+    "fake-indexeddb": "^6.2.8",
+    "jsdom": "^29.1.1",
+    "vite": "^8.3.0"
+  }
+}
