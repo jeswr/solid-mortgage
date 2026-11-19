@@ -1,0 +1,197 @@
+/* AUTHORED-BY Claude Opus 5.5 */
+@import "./tokens.css";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  line-height: 1.5;
+}
+
+a {
+  color: var(--color-signal);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  padding: 0.9rem max(var(--space), calc((100% - var(--measure)) / 2));
+  background: var(--color-head);
+  color: var(--color-head-ink);
+}
+
+.brand {
+  color: var(--color-head-ink);
+  font-weight: 700;
+  font-size: 1.15rem;
+  text-decoration: none;
+  letter-spacing: 0.01em;
+}
+
+.rail {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+}
+
+.screen {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 1.5rem var(--space) 3rem;
+}
+
+h1 {
+  margin: 0 0 0.5rem;
+  font-size: 1.8rem;
+}
+
+h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+}
+
+.lede {
+  color: var(--color-muted);
+}
+
+.small {
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.link-strong {
+  font-weight: 700;
+}
+
+.amount {
+  font-size: 1.15rem;
+}
+
+.amount .num:first-child {
+  font-size: 1.6rem;
+}
+
+/* The single timeline: a rule down the left, a dot per stage, filled when done. */
+.timeline {
+  margin: 1.25rem 0;
+  padding: 0;
+  list-style: none;
+  border-left: 2px solid var(--color-line);
+}
+
+.stage {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+  padding: 0.55rem 0 0.55rem 1.25rem;
+}
+
+.dot {
+  position: absolute;
+  top: 0.95rem;
+  left: -0.45rem;
+  width: 0.8rem;
+  height: 0.8rem;
+  border: 2px solid var(--color-line);
+  border-radius: 50%;
+  background: var(--color-paper);
+}
+
+.stage-state {
+  color: var(--color-muted);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+
+.stage-done .dot {
+  border-color: var(--color-done);
+  background: var(--color-done);
+}
+
+.stage-done .stage-state {
+  color: var(--color-done);
+}
+
+.primary,
+.secondary {
+  padding: 0.7rem 1.2rem;
+  border-radius: var(--radius);
+  font: 700 1rem var(--font-body);
+  cursor: pointer;
+}
+
+.primary {
+  border: 0;
+  background: var(--color-signal);
+  color: var(--color-signal-ink);
+}
+
+.secondary {
+  border: 2px solid var(--color-head);
+  background: transparent;
+  color: var(--color-head);
+}
+
+.primary:disabled,
+.secondary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* The receipt: a paper slip with a dashed tear line and mono figures. */
+.receipt,
+.probe {
+  margin-top: 1.5rem;
+  padding: 1rem 1.2rem;
+  border-radius: var(--radius);
+  background: var(--color-paper);
+}
+
+.receipt {
+  border-top: 2px dashed var(--color-line);
+  border-bottom: 2px dashed var(--color-line);
+}
+
+.receipt dl {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0;
+}
+
+.receipt dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.receipt dd {
+  margin: 0;
+}
+
+.alert {
+  padding: 0.6rem 0.9rem;
+  border-radius: var(--radius);
+  background: var(--color-alert-bg);
+  color: var(--color-alert);
+}

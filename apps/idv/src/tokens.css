@@ -1,0 +1,22 @@
+/* AUTHORED-BY Claude Opus 5.5
+ * Trueline Identity's own tokens: near-black and electric green, a phone funnel's camera frames,
+ * Archivo Black for display and Inter Tight for text (self-hosted, SIL Open Font License).
+ * Original values, no imagery (design.md section b.2). */
+:root {
+  --color-canvas: #0b0e0c;
+  --color-panel: #151a17;
+  --color-panel-2: #1d2420;
+  --color-ink: #f2f7f3;
+  --color-muted: #aab8ae;
+  --color-line: #34403a;
+  --color-accent: #39ff88;
+  --color-accent-ink: #04140a;
+  --color-alert: #ffb4a8;
+  --color-alert-bg: #3a1712;
+  --color-focus: #39ff88;
+  --font-display: "Archivo Black", "Inter Tight", system-ui, sans-serif;
+  --font-body: "Inter Tight", system-ui, sans-serif;
+  --radius-frame: 18px;
+  --space: 1rem;
+  --measure: 30rem;
+}

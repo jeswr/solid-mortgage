@@ -1,0 +1,269 @@
+/* AUTHORED-BY Claude Opus 5.5 */
+@import "./tokens.css";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  line-height: 1.5;
+}
+
+a {
+  color: var(--color-violet-deep);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: var(--space);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-ink);
+  font: 800 1.2rem var(--font-display);
+  text-decoration: none;
+}
+
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--color-violet);
+  color: var(--color-mint);
+  font: 800 1.1rem var(--font-display);
+}
+
+.top-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.top-nav a {
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+.top-nav a:hover {
+  background: var(--color-line);
+}
+
+.screen {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 0.5rem var(--space) calc(var(--space) * 3);
+}
+
+h1 {
+  margin: 0.5rem 0 1rem;
+  font: 800 2rem / 1.15 var(--font-display);
+}
+
+h2 {
+  margin: 0 0 0.35rem;
+  font: 800 1.1rem var(--font-display);
+}
+
+.lede {
+  color: var(--color-muted);
+  font-size: 1.05rem;
+}
+
+.small,
+.muted {
+  color: var(--color-muted);
+}
+
+.small {
+  font-size: 0.9rem;
+}
+
+code {
+  overflow-wrap: anywhere;
+}
+
+/* The big number: a violet slab with the figure in heavy Manrope. */
+.big {
+  display: grid;
+  gap: 0.15rem;
+  padding: 1.25rem 1.5rem;
+  border-radius: var(--radius-card);
+  background: var(--color-violet);
+  color: var(--color-on-violet);
+}
+
+.big-label {
+  color: var(--color-mint);
+  font-weight: 600;
+}
+
+.big-value {
+  font: 800 clamp(2.5rem, 12vw, 4rem) / 1 var(--font-display);
+  font-variant-numeric: tabular-nums;
+}
+
+.big-note {
+  opacity: 0.9;
+}
+
+/* The card stack: each card overlaps the one above a little. */
+.stack {
+  display: grid;
+  gap: 0;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  position: relative;
+  padding: 1.25rem 1.4rem;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+  background: var(--color-card);
+  box-shadow: 0 6px 18px rgb(29 20 66 / 8%);
+}
+
+.stack > .card + .card {
+  margin-top: -0.6rem;
+}
+
+.card p {
+  margin: 0.25rem 0 0;
+}
+
+.reads {
+  margin: 0.5rem 0;
+  padding-left: 1.2rem;
+}
+
+.cta,
+.ghost {
+  margin-top: 0.9rem;
+  padding: 0.8rem 1.4rem;
+  border-radius: 999px;
+  font: 600 1rem var(--font-body);
+  cursor: pointer;
+}
+
+.cta {
+  border: 0;
+  background: var(--color-mint);
+  color: var(--color-mint-ink);
+}
+
+.ghost {
+  border: 2px solid var(--color-violet);
+  background: transparent;
+  color: var(--color-violet-deep);
+}
+
+.cta:disabled,
+.ghost:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.models {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.pairs {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0.75rem 0 0;
+}
+
+.pairs > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.pairs dd {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.verdict {
+  display: inline-block;
+  padding: 0.2rem 0.8rem;
+  border-radius: 999px;
+  font: 800 1rem var(--font-display);
+}
+
+.model-yes .verdict {
+  background: var(--color-mint);
+  color: var(--color-mint-ink);
+}
+
+.model-no .verdict {
+  background: var(--color-decline);
+  color: var(--color-decline-ink);
+}
+
+.disclosure {
+  margin-top: 1rem;
+}
+
+.schedule {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.schedule li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.num {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.ok {
+  padding: 0.6rem 0.9rem;
+  border-radius: 14px;
+  background: var(--color-mint);
+  color: var(--color-mint-ink);
+}
+
+.alert {
+  padding: 0.6rem 0.9rem;
+  border-radius: 14px;
+  background: var(--color-alert-bg);
+  color: var(--color-alert);
+}
