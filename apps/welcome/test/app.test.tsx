@@ -1,6 +1,6 @@
 // AUTHORED-BY Claude Opus 5.5
 import { ORG_SLUGS } from "@mortgage/demo-kit/registry";
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { memoryLocation } from "wouter/memory-location";
 import { App } from "../src/App.tsx";
@@ -107,6 +107,42 @@ describe("home", () => {
       expect(
         screen.getByRole("button", { name: `Play from chapter: ${chapter.title}` }),
       ).toBeTruthy();
+    }
+  });
+
+  it("asks for a card's poster only as the card comes near the viewport", async () => {
+    // Acceptance test 15: native lazy loading would fetch every card's poster on arrival.
+    const watched: Array<{ element: Element; callback: IntersectionObserverCallback }> = [];
+    class FakeObserver {
+      constructor(private readonly callback: IntersectionObserverCallback) {}
+      observe(element: Element) {
+        watched.push({ callback: this.callback, element });
+      }
+      disconnect() {}
+      unobserve() {}
+      takeRecords() {
+        return [];
+      }
+    }
+    vi.stubGlobal("IntersectionObserver", FakeObserver);
+    try {
+      render(<App hook={at("/")} probe={present} />);
+      const buttons = await screen.findAllByRole("button", { name: /Play the narrated video/ });
+      expect(document.querySelectorAll("img.poster__image")).toHaveLength(0);
+      const first = buttons[0] as HTMLElement;
+      const entry = watched.find((w) => w.element === first);
+      expect(entry, "the first card's poster is watched").toBeDefined();
+      act(() =>
+        entry?.callback(
+          [{ isIntersecting: true, target: first } as unknown as IntersectionObserverEntry],
+          {} as IntersectionObserver,
+        ),
+      );
+      const images = document.querySelectorAll("img.poster__image");
+      expect(images).toHaveLength(1);
+      expect(images[0]?.getAttribute("src")).toBe("/video/mortgage/poster.jpg");
+    } finally {
+      vi.unstubAllGlobals();
     }
   });
 
