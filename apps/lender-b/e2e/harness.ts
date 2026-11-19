@@ -6,7 +6,6 @@
  * IndexedDB key store) the seed published. Each owner's requests carry that owner's path-mode
  * identity, exactly as the shared World sends them; the pod server checks every one.
  */
-import "@mortgage/vc-kit/browser/buffer";
 import { createBrowserWorld, crossOwnerFetch } from "@mortgage/content/mortgage/browser";
 import { approveRequest } from "@mortgage/content/mortgage/grants";
 import { JOURNEY } from "@mortgage/content/mortgage/journey";

@@ -4,6 +4,7 @@ import { mkdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { mortgageAliases } from "@mortgage/content/vite";
 import { build } from "vite";
 
 /**
@@ -11,9 +12,6 @@ import { build } from "vite";
  * insignia check scans each app's whole tree.
  */
 export const HARNESS_DIR = join(tmpdir(), "mortgage-e2e-harness-lender");
-
-const shim = (name: string) =>
-  fileURLToPath(new URL(`../../../packages/vc-kit/dist/browser/${name}.js`, import.meta.url));
 
 export default async function buildHarness(): Promise<void> {
   mkdirSync(HARNESS_DIR, { recursive: true });
@@ -31,13 +29,6 @@ export default async function buildHarness(): Promise<void> {
     configFile: false,
     logLevel: "warn",
     publicDir: false,
-    resolve: {
-      alias: {
-        "@jeswr/guarded-fetch/node": shim("guarded-fetch"),
-        "@mortgage/vc-kit/browser/buffer": shim("buffer"),
-        "node:crypto": shim("crypto"),
-        "node:zlib": shim("zlib"),
-      },
-    },
+    resolve: { alias: mortgageAliases() },
   });
 }
