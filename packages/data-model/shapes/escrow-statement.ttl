@@ -1,0 +1,63 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+@prefix fibo-fbc-dae-dbt: <https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Debt/> .
+
+# mortgage/servicing/escrow-statement: the initial escrow account statement (12 CFR 1024.17(g)).
+mshape:EscrowAccountStatementShape
+  a sh:NodeShape ;
+  sh:targetClass mort:EscrowAccountStatement ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue mort:EscrowAccountStatement ;
+  ] ;
+  sh:property [
+    sh:path schema:name ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:loanNumber ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path fibo-fbc-dae-dbt:hasBorrower ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path dcterms:creator ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path dcterms:issued ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+  ] ;
+  sh:property [
+    sh:path mort:monthlyEscrowPayment ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path mort:lineItem ;
+    sh:minCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:LineItemShape ;
+  ] .

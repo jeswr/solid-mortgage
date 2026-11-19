@@ -1,0 +1,69 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+
+# policies/<grant>: the ODRL Agreement the wallet writes with each grant. dcterms:source is
+# the request it answers.
+mshape:OdrlPolicyShape
+  a sh:NodeShape ;
+  sh:targetClass odrl:Agreement ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue odrl:Agreement ;
+  ] ;
+  sh:property [
+    # The grant code shown in the Lens (G1 to G8).
+    sh:path schema:identifier ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path schema:name ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path dcterms:description ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path odrl:assigner ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path odrl:assignee ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path odrl:permission ;
+    sh:minCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:PermissionShape ;
+  ] ;
+  sh:property [
+    sh:path dcterms:issued ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dateTime ;
+  ] ;
+  sh:property [
+    sh:path dcterms:source ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] .

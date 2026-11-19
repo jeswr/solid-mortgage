@@ -28,13 +28,16 @@ export {
   type ShapesDocumentKey,
 } from "./shapes/shapes.js";
 export {
+  AS,
   CRED,
   DCTERMS,
   DPV,
   FIBO,
+  FOAF,
   ODRL,
   RDF_TYPE,
   SCHEMA,
+  SOLID_TERMS,
   TURTLE_PREFIXES,
   XSD,
 } from "./vocab/external.js";
@@ -73,7 +76,11 @@ export {
   type UnderwritingDecisionInit,
   type ZkOperandAnchorInit,
 } from "./wrappers/build.js";
+export * from "./wrappers/documents.js";
+export { type AddressFields, addressFields } from "./wrappers/fields.js";
 export { literalFromXsdDate, literalFromXsdDecimal } from "./wrappers/mappings.js";
+export * from "./wrappers/policies.js";
+export * from "./wrappers/records.js";
 
 export {
   AMORTIZATION_TYPE_IRIS,

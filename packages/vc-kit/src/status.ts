@@ -14,7 +14,6 @@
  *   indices.
  */
 
-import { createHash } from "node:crypto";
 import {
   type BitstringStatusListEntry,
   bitstringStatusListEntry,
@@ -30,6 +29,7 @@ import {
   type VerifiableCredential,
   verifyCredential as verifyVcObject,
 } from "@jeswr/solid-vc";
+import { sha256 } from "./sha256.js";
 
 export { MIN_STATUS_LIST_LENGTH };
 
@@ -59,8 +59,9 @@ export function deriveStatusIndex(seed: string, options: DeriveStatusIndexOption
   if (!Number.isSafeInteger(listLength) || listLength <= 0) {
     throw new StatusListError(`listLength must be a positive integer: ${listLength}`);
   }
-  const digest = createHash("sha256").update(seed, "utf8").digest();
-  const start = Number(digest.readBigUInt64BE(0) % BigInt(listLength));
+  const digest = sha256(seed);
+  const head = new DataView(digest.buffer, digest.byteOffset, 8).getBigUint64(0);
+  const start = Number(head % BigInt(listLength));
   const isTaken = options.isTaken ?? (() => false);
   for (let probe = 0; probe < listLength; probe += 1) {
     const index = (start + probe) % listLength;
@@ -117,6 +118,13 @@ export interface StatusListClientOptions {
   readonly fetch: typeof fetch;
   /** Ceiling on the decoded bitstring when reading back (zip-bomb guard). */
   readonly maxDecodedBytes?: number;
+  /**
+   * How long each signed copy of the list stays valid when a write names no
+   * `validUntil`. Default 24 hours. A demo that jumps its calendar forward by
+   * weeks between steps sets a longer lifetime (or calls `refresh` each day);
+   * a verifier still refuses the list once this window has passed.
+   */
+  readonly listLifetimeMs?: number;
 }
 
 /** Explicit timestamps for a list write - vc-kit never reads the clock. */
@@ -152,8 +160,14 @@ export class StatusListClient {
   private readonly key: KeyPair;
   private readonly fetchImpl: typeof fetch;
   private readonly maxDecodedBytes: number | undefined;
+  private readonly listLifetimeMs: number;
 
   constructor(options: StatusListClientOptions) {
+    const lifetime = options.listLifetimeMs ?? DAY_MS;
+    if (!Number.isFinite(lifetime) || lifetime <= 0) {
+      throw new StatusListError(`listLifetimeMs must be a positive duration: ${lifetime}`);
+    }
+    this.listLifetimeMs = lifetime;
     this.url = new URL(options.url).href;
     this.issuer = options.issuer;
     this.statusPurpose = options.statusPurpose ?? "revocation";
@@ -194,6 +208,16 @@ export class StatusListClient {
     await this.writeBit(index, false, options);
   }
 
+  /**
+   * Re-sign the hosted list, bits unchanged, with a validity window that
+   * starts at `now`: what an issuer does on its publishing schedule so that
+   * verifiers never meet an expired list.
+   */
+  async refresh(options: StatusListWriteOptions): Promise<void> {
+    const { bits, etag } = await this.readVerified(options.now);
+    await this.putSigned(bits, etag, options);
+  }
+
   /** Read the CURRENT hosted bit for `index` (signature-verified read). */
   async readBit(index: number, options: { readonly now: Date }): Promise<boolean> {
     const { bits } = await this.readVerified(options.now);
@@ -213,6 +237,14 @@ export class StatusListClient {
       throw new StatusListError(`index ${index} is outside the ${bits.length * 8}-bit list`);
     }
     setStatusBit(bits, index, value);
+    await this.putSigned(bits, etag, options);
+  }
+
+  private async putSigned(
+    bits: Uint8Array,
+    etag: string | null,
+    options: StatusListWriteOptions,
+  ): Promise<void> {
     const signed = await this.signList(bits, options);
     if (etag === null) {
       // Fail closed rather than unconditional-PUT: without If-Match a
@@ -282,7 +314,7 @@ export class StatusListClient {
     bits: Uint8Array,
     options: StatusListWriteOptions,
   ): Promise<VerifiableCredential> {
-    const validUntil = options.validUntil ?? new Date(options.now.getTime() + DAY_MS);
+    const validUntil = options.validUntil ?? new Date(options.now.getTime() + this.listLifetimeMs);
     const credential = buildBitstringStatusListCredential({
       id: this.url,
       issuer: this.issuer,

@@ -17,7 +17,7 @@
   },
   "scripts": {
     "build": "tsc --project tsconfig.json",
-    "lint": "biome check orgs.ts test package.json tsconfig.json",
+    "lint": "biome check orgs.ts mortgage test package.json tsconfig.json",
     "test": "vitest run --root . --config ../vitest.config.ts",
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },
@@ -33,6 +33,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@sparq-org/solid-server": "0.1.8",
     "@types/n3": "^1.26.1",
     "@types/node": "^25.9.2",
     "typescript": "^6.0.3",

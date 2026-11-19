@@ -44,12 +44,16 @@ export {
   type CreditScoreClaims,
   type DepositAccountClaims,
   type EmploymentIncomeClaims,
+  type EvidenceOfInsuranceClaims,
+  type IdentityClaims,
   type OrganizationClaims,
   type PostalAddressClaims,
   type PropertyClaims,
   type TitleClearClaims,
+  type TitleCommitmentClaims,
   type ZkOperandAnchorClaims,
 } from "./claims.js";
+export { type DayClock, instantOn, type ValidityOnOptions, validityOn } from "./clock.js";
 export { documentQuadsOf, ProofReadError, purposeIri, readProof } from "./credential.js";
 export {
   type FinishIssueOptions,
@@ -68,6 +72,7 @@ export {
   reissueCredential,
   type ValidityWindowInfo,
 } from "./reissue.js";
+export { sha256 } from "./sha256.js";
 export {
   type DeriveStatusIndexOptions,
   deriveStatusIndex,
@@ -98,7 +103,6 @@ export {
   MSHAPE,
   targetClassOf,
 } from "./vocab.js";
-// The sm-25 ZK layer (Tier A + operand anchors, Tier B manifests, honesty
-// panel). Heavy artifacts and the proving toolchain stay behind dynamic
+// The ZK layer (live threshold proofs + operand anchors, honesty panel). Heavy artifacts and the proving toolchain stay behind dynamic
 // imports - re-exporting here pulls in none of them.
 export * from "./zk/index.js";

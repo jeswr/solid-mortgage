@@ -9,7 +9,6 @@ import { describe, expect, it } from "vitest";
 import {
   PINNED_BB_JS_VERSION,
   PINNED_NOIR_JS_VERSION,
-  TIER_B_LABEL,
   ZK_HONESTY,
   ZK_HONESTY_ITEMS,
   ZK_TOOLCHAIN,
@@ -30,7 +29,6 @@ describe("ZK_HONESTY (decision 0005 - every ZK surface renders this)", () => {
         "research-grade",
         "simple-entailment",
         "tier-a-binding",
-        "tier-b-offline",
         "toolchain-pins",
       ].sort(),
     );
@@ -78,10 +76,9 @@ describe("ZK_HONESTY (decision 0005 - every ZK surface renders this)", () => {
     expect(text).toContain("single-use challenge");
   });
 
-  it("carries the verbatim Tier B label", () => {
-    expect(TIER_B_LABEL).toBe("proved offline · verified live");
-    expect(item("tier-b-offline")).toContain(TIER_B_LABEL);
-    expect(ZK_HONESTY.tierBLabel).toBe(TIER_B_LABEL);
+  it("makes no claim about precomputed proofs (dropped in the static rebuild)", () => {
+    expect(ZK_HONESTY_ITEMS.some((entry) => entry.id === "tier-b-offline")).toBe(false);
+    expect(JSON.stringify(ZK_HONESTY)).not.toContain("proved offline");
   });
 
   it("documents the COOP/COEP requirement for multithreaded proving", () => {

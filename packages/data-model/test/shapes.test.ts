@@ -32,18 +32,42 @@ test("committed shapes module matches shapes/*.ttl (codegen freshness)", () => {
   });
 });
 
-test("the eleven shape documents are bundled", () => {
+test("every shape document is bundled", () => {
   expect([...SHAPES_DOCUMENT_KEYS].sort()).toEqual([
+    "access-request",
+    "agent-profile",
     "appraisal-credential",
     "asset-credential",
     "borrower-profile",
+    "closing-disclosure",
     "closing-record",
     "common",
     "consent-receipt",
+    "contact-details",
+    "credential-pointer",
+    "credit-report",
     "credit-score-credential",
+    "document",
     "employment-income-credential",
+    "escrow-statement",
+    "evidence-of-insurance-credential",
+    "identity-credential",
+    "inbox-message",
     "loan-application",
+    "loan-estimate",
+    "odrl-policy",
+    "payment-mandate",
+    "purchase-agreement",
+    "recorded-instrument",
+    "recording-receipt",
+    "score-notice",
+    "service-order",
+    "servicing-notice",
+    "settlement-statement",
+    "subject-property",
+    "support",
     "title-clear-credential",
+    "title-commitment-credential",
     "underwriting-decision",
     "zk-operand-anchor",
   ]);
@@ -52,7 +76,7 @@ test("the eleven shape documents are bundled", () => {
 test("every targeted resource shape is closed", () => {
   const store = shapesStore();
   const targeted = store.getSubjects(`${SH}targetClass`, null, null);
-  expect(targeted.length).toBe(11);
+  expect(targeted.length).toBe(34);
   for (const shape of targeted) {
     const closed = store.getObjects(shape, `${SH}closed`, null);
     expect(
@@ -127,6 +151,58 @@ const cases: readonly {
       "MinCountConstraintComponent",
     ],
   },
+  // Static rebuild (decision 0017): design.md section d.9 resources and their companions.
+  {
+    name: "agent-profile",
+    expectedViolations: ["ClosedConstraintComponent", "MaxCountConstraintComponent"],
+  },
+  {
+    name: "contact-details",
+    expectedViolations: ["MinCountConstraintComponent", "PatternConstraintComponent"],
+  },
+  { name: "identity-credential", expectedViolations: ["PatternConstraintComponent"] },
+  {
+    name: "purchase-agreement",
+    expectedViolations: [
+      "ClosedConstraintComponent",
+      "MinCountConstraintComponent",
+      "DatatypeConstraintComponent",
+    ],
+  },
+  {
+    name: "subject-property",
+    expectedViolations: ["MinInclusiveConstraintComponent", "InConstraintComponent"],
+  },
+  {
+    name: "loan-estimate",
+    expectedViolations: ["LessThanConstraintComponent", "MaxInclusiveConstraintComponent"],
+  },
+  { name: "closing-disclosure", expectedViolations: ["MaxInclusiveConstraintComponent"] },
+  {
+    name: "score-notice",
+    expectedViolations: ["MaxInclusiveConstraintComponent", "InConstraintComponent"],
+  },
+  { name: "credit-report", expectedViolations: ["NodeKindConstraintComponent"] },
+  {
+    name: "title-commitment-credential",
+    expectedViolations: ["ClosedConstraintComponent", "MinCountConstraintComponent"],
+  },
+  { name: "evidence-of-insurance-credential", expectedViolations: ["LessThanConstraintComponent"] },
+  { name: "settlement-statement", expectedViolations: ["MinCountConstraintComponent"] },
+  { name: "recording-receipt", expectedViolations: ["NodeKindConstraintComponent"] },
+  {
+    name: "recorded-instrument",
+    expectedViolations: ["ClosedConstraintComponent", "MinCountConstraintComponent"],
+  },
+  { name: "servicing-notice", expectedViolations: ["InConstraintComponent"] },
+  { name: "escrow-statement", expectedViolations: ["DatatypeConstraintComponent"] },
+  { name: "payment-mandate", expectedViolations: ["MaxInclusiveConstraintComponent"] },
+  { name: "access-request", expectedViolations: ["InConstraintComponent"] },
+  { name: "odrl-policy", expectedViolations: ["MinCountConstraintComponent"] },
+  { name: "service-order", expectedViolations: ["InConstraintComponent"] },
+  { name: "inbox-message", expectedViolations: ["NodeKindConstraintComponent"] },
+  { name: "credential-pointer", expectedViolations: ["PatternConstraintComponent"] },
+  { name: "document", expectedViolations: ["MinCountConstraintComponent"] },
 ];
 
 // Generous timeout: the first validation pays comunica's cold start for the

@@ -1,0 +1,21 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+
+# A WebID profile document (profile/card) of Alex or of an organisation.
+mshape:AgentProfileShape
+  a sh:NodeShape ;
+  sh:targetClass foaf:PersonalProfileDocument ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue foaf:PersonalProfileDocument ;
+  ] ;
+  sh:property [
+    sh:path foaf:primaryTopic ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:node mshape:AgentShape ;
+  ] .

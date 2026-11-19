@@ -9,6 +9,22 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./browser/buffer": {
+      "types": "./dist/browser/buffer.d.ts",
+      "import": "./dist/browser/buffer.js"
+    },
+    "./browser/crypto": {
+      "types": "./dist/browser/crypto.d.ts",
+      "import": "./dist/browser/crypto.js"
+    },
+    "./browser/guarded-fetch": {
+      "types": "./dist/browser/guarded-fetch.d.ts",
+      "import": "./dist/browser/guarded-fetch.js"
+    },
+    "./browser/zlib": {
+      "types": "./dist/browser/zlib.d.ts",
+      "import": "./dist/browser/zlib.js"
+    },
     "./seed-tooling": {
       "types": "./dist/seed-tooling/index.d.ts",
       "import": "./dist/seed-tooling/index.js"

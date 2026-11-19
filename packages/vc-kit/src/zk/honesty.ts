@@ -12,7 +12,6 @@ import {
   PINNED_NARGO_VERSION,
   PINNED_NOIR_JS_VERSION,
 } from "./circuits/registry.js";
-import { TIER_B_LABEL } from "./manifest.js";
 
 export interface HonestyItem {
   /** Stable identifier (UI keys, tests). */
@@ -89,16 +88,6 @@ export const ZK_HONESTY_ITEMS: readonly HonestyItem[] = Object.freeze([
       "encoding with the proof's public input, plus a single-use challenge minted " +
       "for this session (decision 0012). If any check fails, the proof is rejected.",
   },
-  {
-    id: "tier-b-offline",
-    title: "Composed proofs are precomputed, then verified live",
-    body:
-      "Cross-credential proofs (same subject across credentials, hidden-index " +
-      "non-revocation, issuer-set membership) need native witness generation, so " +
-      `they are proved offline at seed time and re-verified in your presence: ` +
-      `"${TIER_B_LABEL}". Their challenges were fixed at capture time - freshness is ` +
-      "never claimed for them.",
-  },
 ]);
 
 /** The full panel payload apps feed into `packages/ui`'s HonestyPanel. */
@@ -108,7 +97,6 @@ export const ZK_HONESTY = Object.freeze({
     "externally unaudited, and leakier than production ZK systems would be.",
   items: ZK_HONESTY_ITEMS,
   toolchain: ZK_TOOLCHAIN,
-  tierBLabel: TIER_B_LABEL,
   /**
    * Multithreaded proving needs cross-origin isolation: apps set COOP
    * (`same-origin`) + COEP (`require-corp`) response headers; without them

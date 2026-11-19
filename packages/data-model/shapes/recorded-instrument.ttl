@@ -1,0 +1,61 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+
+# A public land record in the county's own store (public read).
+mshape:RecordedInstrumentShape
+  a sh:NodeShape ;
+  sh:targetClass mort:RecordedInstrument ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue mort:RecordedInstrument ;
+  ] ;
+  sh:property [
+    sh:path schema:name ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:recordingReference ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:recordedAt ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dateTime ;
+  ] ;
+  sh:property [
+    sh:path mort:grantor ;
+    sh:minCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:grantee ;
+    sh:minCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:parcelNumber ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path dcterms:creator ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] .

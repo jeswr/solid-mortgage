@@ -1,0 +1,140 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+@prefix fibo-fbc-dae-dbt: <https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Debt/> .
+@prefix fibo-loan-ln-ln: <https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/Loans/> .
+
+# mortgage/juniper/loan-estimate: the Loan Estimate summary the creditor writes to the pod
+# (12 CFR 1026.19(e)). dcterms:issued is the delivery date, which must fall within three
+# business days of mort:applicationDate (checked against the demo calendar, not in SHACL).
+# schema:expires is the date the estimate lapses if the consumer has not said they intend to
+# proceed (ten business days after delivery).
+mshape:LoanEstimateShape
+  a sh:NodeShape ;
+  sh:targetClass mort:LoanEstimate ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue mort:LoanEstimate ;
+  ] ;
+  sh:property [
+    sh:path schema:name ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:loanNumber ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path fibo-fbc-dae-dbt:hasBorrower ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path dcterms:creator ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path mort:applicationDate ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+    sh:lessThan schema:expires ;
+  ] ;
+  sh:property [
+    sh:path dcterms:issued ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+  ] ;
+  sh:property [
+    sh:path schema:expires ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+  ] ;
+  sh:property [
+    sh:path mort:intentToProceedDate ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+  ] ;
+  sh:property [
+    sh:path fibo-loan-ln-ln:hasPrincipalAmount ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path schema:interestRate ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive 0.0 ;
+    sh:maxInclusive 25.0 ;
+    sh:message "interestRate is the note rate in percent (e.g. 6.5)" ;
+  ] ;
+  sh:property [
+    sh:path mort:loanTermMonths ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:integer ;
+    sh:minInclusive 12 ;
+    sh:maxInclusive 480 ;
+  ] ;
+  sh:property [
+    sh:path mort:annualPercentageRate ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive 0.0 ;
+    sh:maxInclusive 40.0 ;
+  ] ;
+  sh:property [
+    sh:path mort:monthlyPrincipalAndInterest ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path mort:estimatedTotalMonthlyPayment ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path fibo-loan-ln-ln:hasTotalClosingCosts ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path mort:cashToClose ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path mort:subjectProperty ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:PropertyShape ;
+  ] .

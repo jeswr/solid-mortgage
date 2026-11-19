@@ -18,7 +18,9 @@ import { Store } from "n3";
 export const MORT_SHAPES_NAMESPACE = "https://solid-mortgage-vocab.vercel.app/shapes#";
 
 /** Node-shape IRI per shapes document (the `sh:targetClass`-bearing root). */
-export const MORT_SHAPE_IRIS: Readonly<Record<Exclude<ShapesDocumentKey, "common">, string>> = {
+export const MORT_SHAPE_IRIS: Readonly<
+  Partial<Record<Exclude<ShapesDocumentKey, "common">, string>>
+> = {
   "appraisal-credential": `${MORT_SHAPES_NAMESPACE}AppraisalCredentialShape`,
   "asset-credential": `${MORT_SHAPES_NAMESPACE}AssetCredentialShape`,
   "borrower-profile": `${MORT_SHAPES_NAMESPACE}BorrowerProfileShape`,

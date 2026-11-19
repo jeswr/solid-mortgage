@@ -1,0 +1,219 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix sec: <https://w3id.org/security#> .
+@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix ldp: <http://www.w3.org/ns/ldp#> .
+@prefix pim: <http://www.w3.org/ns/pim/space#> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+
+# Support shapes of the static rebuild (decision 0017), referenced via sh:node.
+# None declares a target.
+# 
+# A party known only by name (a seller, a current title holder).
+mshape:NamedPartyShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:ignoredProperties ( rdf:type ) ;
+  sh:property [
+    sh:path schema:name ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] .
+
+# One named amount: a settlement charge or credit, or an escrow item.
+# A credit to the borrower is a negative value.
+mshape:LineItemShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue schema:MonetaryAmount ;
+  ] ;
+  sh:property [
+    sh:path schema:name ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path schema:value ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal ;
+  ] ;
+  sh:property [
+    sh:path schema:currency ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:in ( "USD" ) ;
+  ] .
+
+# Living area as a schema:QuantitativeValue in square feet (UN/CEFACT code FTK).
+mshape:FloorSizeShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue schema:QuantitativeValue ;
+  ] ;
+  sh:property [
+    sh:path schema:value ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive 1.0 ;
+  ] ;
+  sh:property [
+    sh:path schema:unitCode ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:in ( "FTK" ) ;
+  ] .
+
+# One disclosed credit score (15 U.S.C. 1681g(g)(1)(A)): the score, the model, the date it was
+# created, the file it came from and up to five key factors (four, plus inquiries when they count).
+mshape:ScoreDisclosureShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:ignoredProperties ( rdf:type ) ;
+  sh:property [
+    sh:path mort:creditScoreValue ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:integer ;
+    sh:minInclusive 300 ;
+    sh:maxInclusive 850 ;
+  ] ;
+  sh:property [
+    sh:path mort:scoreModel ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:in ( mort:ScoreModel-FICO8 mort:ScoreModel-ClassicFICO mort:ScoreModel-VantageScore4 ) ;
+  ] ;
+  sh:property [
+    # The consumer reporting agency file the score was calculated from.
+    sh:path schema:name ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path dcterms:created ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+  ] ;
+  sh:property [
+    sh:path mort:keyFactor ;
+    sh:maxCount 5 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] .
+
+# An ODRL constraint on a permission: its purpose (a DPV purpose), a fixed end (odrl:dateTime)
+# or an event that ends it (odrl:event with a concept from mort:GrantEndScheme).
+mshape:ConstraintShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:ignoredProperties ( rdf:type ) ;
+  sh:property [
+    sh:path odrl:leftOperand ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:in ( odrl:purpose odrl:dateTime odrl:event ) ;
+  ] ;
+  sh:property [
+    sh:path odrl:operator ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:in ( odrl:eq odrl:lt odrl:lteq ) ;
+  ] ;
+  sh:property [
+    sh:path odrl:rightOperand ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+  ] .
+
+# One ODRL permission: who (assignee) may do what (actions mapped to the WAC modes the wallet
+# writes: read, append, write) to which pod resources, under which constraints.
+mshape:PermissionShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:ignoredProperties ( rdf:type ) ;
+  sh:property [
+    sh:path odrl:target ;
+    sh:minCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path odrl:action ;
+    sh:minCount 1 ;
+    sh:maxCount 3 ;
+    sh:nodeKind sh:IRI ;
+    sh:in ( odrl:read odrl:append odrl:write ) ;
+  ] ;
+  sh:property [
+    sh:path odrl:assignee ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path odrl:constraint ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:ConstraintShape ;
+  ] .
+
+# The person or organisation a WebID profile document describes. sec:verificationMethod and
+# sec:assertionMethod point at the issuer's published Multikey (written by vc-kit).
+mshape:AgentShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:minCount 1 ;
+    sh:in ( schema:Person schema:Organization foaf:Agent ) ;
+  ] ;
+  sh:property [
+    sh:path schema:name ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path ldp:inbox ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path pim:storage ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path sec:verificationMethod ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path sec:assertionMethod ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path mort:titleVesting ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] .

@@ -1,0 +1,74 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+
+# An order in an organisation's own records (schema:customer orders from schema:seller).
+mshape:ServiceOrderShape
+  a sh:NodeShape ;
+  sh:targetClass schema:Order ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue schema:Order ;
+  ] ;
+  sh:property [
+    sh:path schema:orderNumber ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path dcterms:type ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:in ( mort:ServiceKind-CreditReport mort:ServiceKind-Appraisal mort:ServiceKind-Title mort:ServiceKind-FloodDetermination mort:ServiceKind-TaxTranscripts ) ;
+  ] ;
+  sh:property [
+    sh:path schema:customer ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path schema:seller ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path schema:orderDate ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+  ] ;
+  sh:property [
+    sh:path schema:orderStatus ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:in ( schema:OrderProcessing schema:OrderDelivered ) ;
+  ] ;
+  sh:property [
+    sh:path mort:loanNumber ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:authorisedBy ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path schema:description ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] .

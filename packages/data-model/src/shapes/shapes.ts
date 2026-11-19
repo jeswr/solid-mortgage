@@ -7,6 +7,94 @@
  * reference via sh:node).
  */
 export const SHAPES_TURTLE = {
+  "access-request": `@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+
+# An access request an organisation posts to the borrower's inbox/: an ODRL Request naming
+# the resources, the actions, the purpose, the end and any onward recipients (further
+# permissions whose assignee differs from the policy's).
+mshape:AccessRequestShape
+  a sh:NodeShape ;
+  sh:targetClass odrl:Request ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue odrl:Request ;
+  ] ;
+  sh:property [
+    # The grant code shown in the Lens (G1 to G8).
+    sh:path schema:identifier ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path schema:name ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path dcterms:description ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path odrl:assigner ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path odrl:assignee ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path odrl:permission ;
+    sh:minCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:PermissionShape ;
+  ] ;
+  sh:property [
+    sh:path dcterms:issued ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dateTime ;
+  ] .
+`,
+  "agent-profile": `@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+
+# A WebID profile document (profile/card) of Alex or of an organisation.
+mshape:AgentProfileShape
+  a sh:NodeShape ;
+  sh:targetClass foaf:PersonalProfileDocument ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue foaf:PersonalProfileDocument ;
+  ] ;
+  sh:property [
+    sh:path foaf:primaryTopic ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:node mshape:AgentShape ;
+  ] .
+`,
   "appraisal-credential": `@prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
@@ -323,6 +411,143 @@ mshape:BorrowerProfileShape
     sh:message "maritalStatus must be a concept from mort:MaritalStatusScheme (URLA section 1a)" ;
   ] .
 `,
+  "closing-disclosure": `@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+@prefix fibo-fbc-dae-dbt: <https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Debt/> .
+@prefix fibo-loan-ln-ln: <https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/Loans/> .
+
+# mortgage/juniper/closing-disclosure: the Closing Disclosure summary (12 CFR 1026.19(f)).
+# mort:receivedDate is set when the consumer acknowledges receipt; consummation
+# (mort:closingDate) must be at least three business days after it.
+mshape:ClosingDisclosureShape
+  a sh:NodeShape ;
+  sh:targetClass mort:ClosingDisclosure ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue mort:ClosingDisclosure ;
+  ] ;
+  sh:property [
+    sh:path schema:name ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:loanNumber ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path fibo-fbc-dae-dbt:hasBorrower ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path dcterms:creator ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path dcterms:issued ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+  ] ;
+  sh:property [
+    sh:path mort:receivedDate ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+  ] ;
+  sh:property [
+    sh:path mort:closingDate ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+  ] ;
+  sh:property [
+    sh:path mort:disbursementDate ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+  ] ;
+  sh:property [
+    sh:path fibo-loan-ln-ln:hasPrincipalAmount ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path schema:interestRate ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive 0.0 ;
+    sh:maxInclusive 25.0 ;
+    sh:message "interestRate is the note rate in percent (e.g. 6.5)" ;
+  ] ;
+  sh:property [
+    sh:path mort:loanTermMonths ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:integer ;
+    sh:minInclusive 12 ;
+    sh:maxInclusive 480 ;
+  ] ;
+  sh:property [
+    sh:path mort:annualPercentageRate ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive 0.0 ;
+    sh:maxInclusive 40.0 ;
+  ] ;
+  sh:property [
+    sh:path mort:monthlyPrincipalAndInterest ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path mort:estimatedTotalMonthlyPayment ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path fibo-loan-ln-ln:hasTotalClosingCosts ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path mort:cashToClose ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path mort:subjectProperty ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:PropertyShape ;
+  ] .
+`,
   "closing-record": `@prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
@@ -603,8 +828,19 @@ mshape:ConsentReceiptShape
     sh:nodeKind sh:IRI ;
   ] ;
   sh:property [
+    # One receipt may cover several pod resources (a grant spans containers).
     sh:path odrl:target ;
     sh:minCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    # The ODRL policy (policies/<grant>) this record is the audit entry for.
+    sh:path dpv:hasPolicy ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path dpv:hasPurpose ;
     sh:maxCount 1 ;
     sh:nodeKind sh:IRI ;
   ] ;
@@ -612,7 +848,7 @@ mshape:ConsentReceiptShape
     sh:path dpv:hasConsentStatus ;
     sh:minCount 1 ;
     sh:maxCount 1 ;
-    sh:in ( dpv:ConsentGiven dpv:ConsentWithdrawn ) ;
+    sh:in ( dpv:ConsentGiven dpv:ConsentWithdrawn dpv:ConsentExpired ) ;
     sh:nodeKind sh:IRI ;
   ] ;
   sh:property [
@@ -620,6 +856,193 @@ mshape:ConsentReceiptShape
     sh:minCount 1 ;
     sh:maxCount 1 ;
     sh:datatype xsd:dateTime ;
+  ] .
+`,
+  "contact-details": `@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+
+# profile/contact: how to reach the borrower. Read by the lender (G4) and the servicer (G8).
+mshape:ContactDetailsShape
+  a sh:NodeShape ;
+  sh:targetClass schema:ContactPoint ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue schema:ContactPoint ;
+  ] ;
+  sh:property [
+    sh:path schema:email ;
+    sh:minCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path schema:telephone ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path schema:address ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:PostalAddressShape ;
+  ] .
+`,
+  "credential-pointer": `@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+
+# A pointer an organisation keeps in place of a copy: where the credential lives in the pod,
+# its digest, its issuer and its as-of time. The reader records its own source check.
+mshape:CredentialPointerShape
+  a sh:NodeShape ;
+  sh:targetClass mort:CredentialPointer ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue mort:CredentialPointer ;
+  ] ;
+  sh:property [
+    sh:path schema:url ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path dcterms:type ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path dcterms:creator ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path schema:sha256 ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:pattern "^[0-9a-f]{64}$" ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:asOf ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dateTime ;
+  ] ;
+  sh:property [
+    sh:path mort:signatureVerified ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:boolean ;
+  ] ;
+  sh:property [
+    sh:path mort:statusChecked ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:boolean ;
+  ] ;
+  sh:property [
+    sh:path mort:checkedAt ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dateTime ;
+  ] ;
+  sh:property [
+    sh:path mort:loanNumber ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] .
+`,
+  "credit-report": `@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+@prefix fibo-fbc-dae-dbt: <https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Debt/> .
+
+# The lender's own record of the merged report it ordered (loan file, never the borrower's pod).
+# dcterms:creator is the consumer reporting agency; mort:authorisedBy is the borrower's consent
+# record for the hard inquiry.
+mshape:CreditReportShape
+  a sh:NodeShape ;
+  sh:targetClass mort:CreditReport ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue mort:CreditReport ;
+  ] ;
+  sh:property [
+    sh:path schema:identifier ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:loanNumber ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path fibo-fbc-dae-dbt:hasBorrower ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path dcterms:creator ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path dcterms:issued ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+  ] ;
+  sh:property [
+    sh:path mort:permissiblePurpose ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:authorisedBy ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path mort:scoreDisclosure ;
+    sh:minCount 1 ;
+    sh:maxCount 3 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:ScoreDisclosureShape ;
+  ] ;
+  sh:property [
+    sh:path mort:totalMonthlyDebtUsd ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:integer ;
+    sh:minInclusive 0 ;
+    sh:maxInclusive 9999 ;
   ] .
 `,
   "credit-score-credential": `@prefix sh: <http://www.w3.org/ns/shacl#> .
@@ -716,6 +1139,81 @@ mshape:CreditScoreSubjectShape
     sh:nodeKind sh:IRI ;
     sh:in ( mort:ScoreModel-FICO8 ) ;
     sh:message "scoreModel must be a concept from mort:ScoreModelScheme" ;
+  ] .
+`,
+  document: `@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+
+# A delivered document that is not an attestation and has no summary of its own: a signed
+# copy, a policy. The description is the embedded summary.
+mshape:DocumentShape
+  a sh:NodeShape ;
+  sh:targetClass schema:DigitalDocument ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue schema:DigitalDocument ;
+  ] ;
+  sh:property [
+    sh:path schema:name ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path schema:description ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path dcterms:creator ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path dcterms:issued ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dateTime ;
+  ] ;
+  sh:property [
+    sh:path schema:identifier ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path schema:about ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path schema:sha256 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:pattern "^[0-9a-f]{64}$" ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:loanNumber ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:subjectProperty ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:PropertyShape ;
   ] .
 `,
   "employment-income-credential": `@prefix sh: <http://www.w3.org/ns/shacl#> .
@@ -825,6 +1323,353 @@ mshape:EmploymentIncomeSubjectShape
     sh:minInclusive 0 ;
     sh:maxInclusive 9999 ;
     sh:message "monthlyGrossIncomeUsd must fit decision 0005's 4-digit budget (0..9999 whole USD/month)" ;
+  ] .
+`,
+  "escrow-statement": `@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+@prefix fibo-fbc-dae-dbt: <https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Debt/> .
+
+# mortgage/servicing/escrow-statement: the initial escrow account statement (12 CFR 1024.17(g)).
+mshape:EscrowAccountStatementShape
+  a sh:NodeShape ;
+  sh:targetClass mort:EscrowAccountStatement ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue mort:EscrowAccountStatement ;
+  ] ;
+  sh:property [
+    sh:path schema:name ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:loanNumber ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path fibo-fbc-dae-dbt:hasBorrower ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path dcterms:creator ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path dcterms:issued ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+  ] ;
+  sh:property [
+    sh:path mort:monthlyEscrowPayment ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path mort:lineItem ;
+    sh:minCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:LineItemShape ;
+  ] .
+`,
+  "evidence-of-insurance-credential": `@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix cred: <https://www.w3.org/2018/credentials#> .
+@prefix sec: <https://w3id.org/security#> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+
+# Evidence of homeowner's insurance naming the lender as mortgagee. cred:validUntil is the
+# end of the policy period.
+mshape:EvidenceOfInsuranceCredentialShape
+  a sh:NodeShape ;
+  sh:targetClass mort:EvidenceOfInsuranceCredential ;
+  sh:closed true ;
+  sh:ignoredProperties ( sec:proof ) ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue cred:VerifiableCredential ;
+  ] ;
+  sh:property [
+    sh:path cred:issuer ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path cred:validFrom ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dateTime ;
+    sh:lessThan cred:validUntil ;
+  ] ;
+  sh:property [
+    sh:path cred:validUntil ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dateTime ;
+  ] ;
+  sh:property [
+    sh:path cred:credentialStatus ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+  ] ;
+  sh:property [
+    sh:path cred:credentialSubject ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:node mshape:EvidenceOfInsuranceSubjectShape ;
+  ] ;
+  sh:property [
+    sh:path cred:evidence ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+  ] ;
+  sh:property [
+    sh:path cred:credentialSchema ;
+    sh:nodeKind sh:IRI ;
+  ] .
+
+mshape:EvidenceOfInsuranceSubjectShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:ignoredProperties ( rdf:type ) ;
+  sh:property [
+    sh:path schema:identifier ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:subjectProperty ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:PropertyShape ;
+  ] ;
+  sh:property [
+    sh:path mort:dwellingCoverage ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path mort:annualPremium ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path mort:deductible ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path schema:validFrom ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+    sh:lessThan schema:validThrough ;
+  ] ;
+  sh:property [
+    sh:path schema:validThrough ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+  ] ;
+  sh:property [
+    sh:path mort:mortgageeClause ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:loanNumber ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] .
+`,
+  "identity-credential": `@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix cred: <https://www.w3.org/2018/credentials#> .
+@prefix sec: <https://w3id.org/security#> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+
+# Identity credential (seeded, signed at first run). The subject is the borrower's WebID.
+mshape:IdentityCredentialShape
+  a sh:NodeShape ;
+  sh:targetClass mort:IdentityCredential ;
+  sh:closed true ;
+  sh:ignoredProperties ( sec:proof ) ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue cred:VerifiableCredential ;
+  ] ;
+  sh:property [
+    sh:path cred:issuer ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path cred:validFrom ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dateTime ;
+    sh:lessThan cred:validUntil ;
+  ] ;
+  sh:property [
+    sh:path cred:validUntil ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dateTime ;
+  ] ;
+  sh:property [
+    sh:path cred:credentialStatus ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+  ] ;
+  sh:property [
+    sh:path cred:credentialSubject ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:node mshape:IdentitySubjectShape ;
+  ] ;
+  sh:property [
+    sh:path cred:evidence ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+  ] ;
+  sh:property [
+    sh:path cred:credentialSchema ;
+    sh:nodeKind sh:IRI ;
+  ] .
+
+mshape:IdentitySubjectShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:ignoredProperties ( rdf:type ) ;
+  sh:property [
+    sh:path schema:name ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path schema:birthDate ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+  ] ;
+  sh:property [
+    sh:path schema:address ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:PostalAddressShape ;
+  ] ;
+  sh:property [
+    sh:path mort:taxIdLast4 ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:pattern "^[0-9]{4}$" ;
+    sh:minLength 1 ;
+    sh:message "taxIdLast4 is exactly four digits; the full identifier never enters the pod" ;
+  ] .
+`,
+  "inbox-message": `@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix as: <https://www.w3.org/ns/activitystreams#> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+
+# A message one organisation appends to another organisation's inbox/ (organisation to
+# organisation, never through the borrower's pod). as:object names the resources it is about.
+mshape:InboxMessageShape
+  a sh:NodeShape ;
+  sh:targetClass as:Announce ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue as:Announce ;
+  ] ;
+  sh:property [
+    sh:path dcterms:type ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:in ( mort:MessageKind-CreditReportOrder mort:MessageKind-CreditReportDelivery mort:MessageKind-CasefileSubmission mort:MessageKind-FindingsDelivery mort:MessageKind-ServiceOrder mort:MessageKind-AppraisalDelivery mort:MessageKind-CommitmentDelivery mort:MessageKind-RefreshRequest mort:MessageKind-RefreshDelivery mort:MessageKind-ClosingInstructions mort:MessageKind-ClosingConfirmation mort:MessageKind-RecordingSubmission mort:MessageKind-RecordingConfirmation mort:MessageKind-LoanDelivery mort:MessageKind-PurchaseConfirmation mort:MessageKind-ServicingBoarding ) ;
+    sh:message "dcterms:type must be a concept from mort:MessageKindScheme" ;
+  ] ;
+  sh:property [
+    sh:path as:actor ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path as:object ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path as:summary ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path as:published ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dateTime ;
+  ] ;
+  sh:property [
+    sh:path mort:loanNumber ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path as:inReplyTo ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
   ] .
 `,
   "loan-application": `@prefix sh: <http://www.w3.org/ns/shacl#> .
@@ -1012,6 +1857,1125 @@ mshape:LoanApplicationShape
     ]
   ) .
 `,
+  "loan-estimate": `@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+@prefix fibo-fbc-dae-dbt: <https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Debt/> .
+@prefix fibo-loan-ln-ln: <https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/Loans/> .
+
+# mortgage/juniper/loan-estimate: the Loan Estimate summary the creditor writes to the pod
+# (12 CFR 1026.19(e)). dcterms:issued is the delivery date, which must fall within three
+# business days of mort:applicationDate (checked against the demo calendar, not in SHACL).
+# schema:expires is the date the estimate lapses if the consumer has not said they intend to
+# proceed (ten business days after delivery).
+mshape:LoanEstimateShape
+  a sh:NodeShape ;
+  sh:targetClass mort:LoanEstimate ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue mort:LoanEstimate ;
+  ] ;
+  sh:property [
+    sh:path schema:name ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:loanNumber ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path fibo-fbc-dae-dbt:hasBorrower ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path dcterms:creator ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path mort:applicationDate ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+    sh:lessThan schema:expires ;
+  ] ;
+  sh:property [
+    sh:path dcterms:issued ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+  ] ;
+  sh:property [
+    sh:path schema:expires ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+  ] ;
+  sh:property [
+    sh:path mort:intentToProceedDate ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+  ] ;
+  sh:property [
+    sh:path fibo-loan-ln-ln:hasPrincipalAmount ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path schema:interestRate ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive 0.0 ;
+    sh:maxInclusive 25.0 ;
+    sh:message "interestRate is the note rate in percent (e.g. 6.5)" ;
+  ] ;
+  sh:property [
+    sh:path mort:loanTermMonths ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:integer ;
+    sh:minInclusive 12 ;
+    sh:maxInclusive 480 ;
+  ] ;
+  sh:property [
+    sh:path mort:annualPercentageRate ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive 0.0 ;
+    sh:maxInclusive 40.0 ;
+  ] ;
+  sh:property [
+    sh:path mort:monthlyPrincipalAndInterest ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path mort:estimatedTotalMonthlyPayment ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path fibo-loan-ln-ln:hasTotalClosingCosts ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path mort:cashToClose ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path mort:subjectProperty ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:PropertyShape ;
+  ] .
+`,
+  "odrl-policy": `@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+
+# policies/<grant>: the ODRL Agreement the wallet writes with each grant. dcterms:source is
+# the request it answers.
+mshape:OdrlPolicyShape
+  a sh:NodeShape ;
+  sh:targetClass odrl:Agreement ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue odrl:Agreement ;
+  ] ;
+  sh:property [
+    # The grant code shown in the Lens (G1 to G8).
+    sh:path schema:identifier ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path schema:name ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path dcterms:description ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path odrl:assigner ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path odrl:assignee ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path odrl:permission ;
+    sh:minCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:PermissionShape ;
+  ] ;
+  sh:property [
+    sh:path dcterms:issued ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dateTime ;
+  ] ;
+  sh:property [
+    sh:path dcterms:source ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] .
+`,
+  "payment-mandate": `@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+
+# banking/payment-mandate: the borrower's autopay instruction. Read by the servicer (G8).
+mshape:PaymentMandateShape
+  a sh:NodeShape ;
+  sh:targetClass mort:PaymentMandate ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue mort:PaymentMandate ;
+  ] ;
+  sh:property [
+    sh:path dcterms:creator ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path mort:payee ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path mort:accountLast4 ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:pattern "^[0-9]{4}$" ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path schema:provider ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:OrganizationShape ;
+  ] ;
+  sh:property [
+    sh:path schema:amount ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path mort:debitDayOfMonth ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:integer ;
+    sh:minInclusive 1 ;
+    sh:maxInclusive 28 ;
+  ] ;
+  sh:property [
+    sh:path dcterms:issued ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dateTime ;
+  ] ;
+  sh:property [
+    sh:path mort:loanNumber ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] .
+`,
+  "purchase-agreement": `@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+
+# property/purchase-agreement: the executed contract (seeded). Read by the lender (G4),
+# the appraiser (G5) and the title agent (G6).
+mshape:PurchaseAgreementShape
+  a sh:NodeShape ;
+  sh:targetClass mort:PurchaseAgreement ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue mort:PurchaseAgreement ;
+  ] ;
+  sh:property [
+    sh:path schema:name ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path schema:buyer ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path schema:seller ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:NamedPartyShape ;
+  ] ;
+  sh:property [
+    sh:path mort:purchasePrice ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path mort:earnestMoneyDeposit ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path mort:subjectProperty ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:PropertyShape ;
+  ] ;
+  sh:property [
+    sh:path dcterms:issued ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+  ] ;
+  sh:property [
+    sh:path mort:closingDate ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+  ] .
+`,
+  "recorded-instrument": `@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+
+# A public land record in the county's own store (public read).
+mshape:RecordedInstrumentShape
+  a sh:NodeShape ;
+  sh:targetClass mort:RecordedInstrument ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue mort:RecordedInstrument ;
+  ] ;
+  sh:property [
+    sh:path schema:name ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:recordingReference ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:recordedAt ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dateTime ;
+  ] ;
+  sh:property [
+    sh:path mort:grantor ;
+    sh:minCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:grantee ;
+    sh:minCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:parcelNumber ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path dcterms:creator ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] .
+`,
+  "recording-receipt": `@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+
+# mortgage/closing/recording-receipt: the settlement agent's receipt. mort:recordedInstrument
+# links to the county's public records; nothing from the pod is in the register.
+mshape:RecordingReceiptShape
+  a sh:NodeShape ;
+  sh:targetClass mort:RecordingReceipt ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue mort:RecordingReceipt ;
+  ] ;
+  sh:property [
+    sh:path schema:name ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path dcterms:creator ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path dcterms:issued ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dateTime ;
+  ] ;
+  sh:property [
+    sh:path mort:recordedInstrument ;
+    sh:minCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path mort:recordingReference ;
+    sh:minCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:subjectProperty ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:PropertyShape ;
+  ] .
+`,
+  "score-notice": `@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+@prefix fibo-fbc-dae-dbt: <https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Debt/> .
+
+# mortgage/juniper/score-notice: the scores the lender used, with the notice to the home loan
+# applicant (15 U.S.C. 1681g(g)).
+mshape:CreditScoreNoticeShape
+  a sh:NodeShape ;
+  sh:targetClass mort:CreditScoreNotice ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue mort:CreditScoreNotice ;
+  ] ;
+  sh:property [
+    sh:path schema:name ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:loanNumber ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path fibo-fbc-dae-dbt:hasBorrower ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path dcterms:creator ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path dcterms:issued ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+  ] ;
+  sh:property [
+    sh:path mort:scoreDisclosure ;
+    sh:minCount 1 ;
+    sh:maxCount 3 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:ScoreDisclosureShape ;
+  ] ;
+  sh:property [
+    sh:path schema:description ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] .
+`,
+  "service-order": `@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+
+# An order in an organisation's own records (schema:customer orders from schema:seller).
+mshape:ServiceOrderShape
+  a sh:NodeShape ;
+  sh:targetClass schema:Order ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue schema:Order ;
+  ] ;
+  sh:property [
+    sh:path schema:orderNumber ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path dcterms:type ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:in ( mort:ServiceKind-CreditReport mort:ServiceKind-Appraisal mort:ServiceKind-Title mort:ServiceKind-FloodDetermination mort:ServiceKind-TaxTranscripts ) ;
+  ] ;
+  sh:property [
+    sh:path schema:customer ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path schema:seller ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path schema:orderDate ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+  ] ;
+  sh:property [
+    sh:path schema:orderStatus ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:in ( schema:OrderProcessing schema:OrderDelivered ) ;
+  ] ;
+  sh:property [
+    sh:path mort:loanNumber ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:authorisedBy ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path schema:description ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] .
+`,
+  "servicing-notice": `@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+@prefix fibo-fbc-dae-dbt: <https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Debt/> .
+
+# A servicing transfer notice (12 CFR 1024.33(b)) or an ownership transfer notice
+# (12 CFR 1026.39). dcterms:type says which.
+mshape:LoanTransferNoticeShape
+  a sh:NodeShape ;
+  sh:targetClass mort:LoanTransferNotice ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue mort:LoanTransferNotice ;
+  ] ;
+  sh:property [
+    sh:path schema:name ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path dcterms:type ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:in ( mort:NoticeKind-ServicingTransferFromTransferor mort:NoticeKind-ServicingTransferFromTransferee mort:NoticeKind-OwnershipTransfer ) ;
+    sh:message "dcterms:type must be a concept from mort:NoticeKindScheme" ;
+  ] ;
+  sh:property [
+    sh:path mort:loanNumber ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path fibo-fbc-dae-dbt:hasBorrower ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path dcterms:creator ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path dcterms:issued ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+  ] ;
+  sh:property [
+    sh:path mort:transferEffectiveDate ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+  ] ;
+  sh:property [
+    sh:path mort:transferor ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:OrganizationShape ;
+  ] ;
+  sh:property [
+    sh:path mort:transferee ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:OrganizationShape ;
+  ] ;
+  sh:property [
+    sh:path mort:paymentProtectionEnds ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+  ] ;
+  sh:property [
+    sh:path schema:telephone ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path schema:description ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] .
+`,
+  "settlement-statement": `@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+@prefix fibo-fbc-dae-dbt: <https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Debt/> .
+@prefix fibo-loan-ln-ln: <https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/Loans/> .
+
+# mortgage/closing/settlement-statement: written by the settlement agent at closing.
+mshape:SettlementStatementShape
+  a sh:NodeShape ;
+  sh:targetClass mort:SettlementStatement ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue mort:SettlementStatement ;
+  ] ;
+  sh:property [
+    sh:path schema:name ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path schema:identifier ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:loanNumber ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path fibo-fbc-dae-dbt:hasBorrower ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path dcterms:creator ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path dcterms:issued ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+  ] ;
+  sh:property [
+    sh:path mort:closingDate ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+  ] ;
+  sh:property [
+    sh:path mort:disbursementDate ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+  ] ;
+  sh:property [
+    sh:path mort:purchasePrice ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path fibo-loan-ln-ln:hasPrincipalAmount ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path mort:lineItem ;
+    sh:minCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:LineItemShape ;
+  ] ;
+  sh:property [
+    sh:path mort:cashToClose ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path mort:subjectProperty ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:PropertyShape ;
+  ] .
+`,
+  "subject-property": `@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+@prefix fibo-fnd-plc-rp: <https://spec.edmcouncil.org/fibo/ontology/FND/Places/RealProperty/> .
+
+# property/subject-property: facts about the home (seeded). Read by the lender (G4), the
+# appraiser (G5) and the insurer (G7). The node is also a fibo-fnd-plc-rp:RealEstate.
+mshape:SubjectPropertyShape
+  a sh:NodeShape ;
+  sh:targetClass schema:SingleFamilyResidence ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue schema:SingleFamilyResidence ;
+  ] ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue fibo-fnd-plc-rp:RealEstate ;
+  ] ;
+  sh:property [
+    sh:path schema:address ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:PostalAddressShape ;
+  ] ;
+  sh:property [
+    sh:path schema:yearBuilt ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:integer ;
+    sh:minInclusive 1600 ;
+    sh:maxInclusive 2100 ;
+  ] ;
+  sh:property [
+    sh:path schema:floorSize ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:FloorSizeShape ;
+  ] ;
+  sh:property [
+    sh:path schema:numberOfBedrooms ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:integer ;
+    sh:minInclusive 0 ;
+    sh:maxInclusive 50 ;
+  ] ;
+  sh:property [
+    sh:path schema:numberOfBathroomsTotal ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:integer ;
+    sh:minInclusive 0 ;
+    sh:maxInclusive 50 ;
+  ] ;
+  sh:property [
+    sh:path mort:constructionType ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:roofType ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:parcelNumber ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:legalDescription ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] .
+`,
+  support: `@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix sec: <https://w3id.org/security#> .
+@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix ldp: <http://www.w3.org/ns/ldp#> .
+@prefix pim: <http://www.w3.org/ns/pim/space#> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+
+# Support shapes of the static rebuild (decision 0017), referenced via sh:node.
+# None declares a target.
+# 
+# A party known only by name (a seller, a current title holder).
+mshape:NamedPartyShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:ignoredProperties ( rdf:type ) ;
+  sh:property [
+    sh:path schema:name ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] .
+
+# One named amount: a settlement charge or credit, or an escrow item.
+# A credit to the borrower is a negative value.
+mshape:LineItemShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue schema:MonetaryAmount ;
+  ] ;
+  sh:property [
+    sh:path schema:name ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path schema:value ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal ;
+  ] ;
+  sh:property [
+    sh:path schema:currency ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:in ( "USD" ) ;
+  ] .
+
+# Living area as a schema:QuantitativeValue in square feet (UN/CEFACT code FTK).
+mshape:FloorSizeShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue schema:QuantitativeValue ;
+  ] ;
+  sh:property [
+    sh:path schema:value ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive 1.0 ;
+  ] ;
+  sh:property [
+    sh:path schema:unitCode ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:in ( "FTK" ) ;
+  ] .
+
+# One disclosed credit score (15 U.S.C. 1681g(g)(1)(A)): the score, the model, the date it was
+# created, the file it came from and up to five key factors (four, plus inquiries when they count).
+mshape:ScoreDisclosureShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:ignoredProperties ( rdf:type ) ;
+  sh:property [
+    sh:path mort:creditScoreValue ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:integer ;
+    sh:minInclusive 300 ;
+    sh:maxInclusive 850 ;
+  ] ;
+  sh:property [
+    sh:path mort:scoreModel ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:in ( mort:ScoreModel-FICO8 mort:ScoreModel-ClassicFICO mort:ScoreModel-VantageScore4 ) ;
+  ] ;
+  sh:property [
+    # The consumer reporting agency file the score was calculated from.
+    sh:path schema:name ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path dcterms:created ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+  ] ;
+  sh:property [
+    sh:path mort:keyFactor ;
+    sh:maxCount 5 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] .
+
+# An ODRL constraint on a permission: its purpose (a DPV purpose), a fixed end (odrl:dateTime)
+# or an event that ends it (odrl:event with a concept from mort:GrantEndScheme).
+mshape:ConstraintShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:ignoredProperties ( rdf:type ) ;
+  sh:property [
+    sh:path odrl:leftOperand ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:in ( odrl:purpose odrl:dateTime odrl:event ) ;
+  ] ;
+  sh:property [
+    sh:path odrl:operator ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:in ( odrl:eq odrl:lt odrl:lteq ) ;
+  ] ;
+  sh:property [
+    sh:path odrl:rightOperand ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+  ] .
+
+# One ODRL permission: who (assignee) may do what (actions mapped to the WAC modes the wallet
+# writes: read, append, write) to which pod resources, under which constraints.
+mshape:PermissionShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:ignoredProperties ( rdf:type ) ;
+  sh:property [
+    sh:path odrl:target ;
+    sh:minCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path odrl:action ;
+    sh:minCount 1 ;
+    sh:maxCount 3 ;
+    sh:nodeKind sh:IRI ;
+    sh:in ( odrl:read odrl:append odrl:write ) ;
+  ] ;
+  sh:property [
+    sh:path odrl:assignee ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path odrl:constraint ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:ConstraintShape ;
+  ] .
+
+# The person or organisation a WebID profile document describes. sec:verificationMethod and
+# sec:assertionMethod point at the issuer's published Multikey (written by vc-kit).
+mshape:AgentShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:minCount 1 ;
+    sh:in ( schema:Person schema:Organization foaf:Agent ) ;
+  ] ;
+  sh:property [
+    sh:path schema:name ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path ldp:inbox ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path pim:storage ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path sec:verificationMethod ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path sec:assertionMethod ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path mort:titleVesting ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] .
+`,
   "title-clear-credential": `@prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
@@ -1101,6 +3065,132 @@ mshape:TitleClearSubjectShape
     sh:maxCount 1 ;
     sh:datatype xsd:date ;
     sh:message "searchedThrough is the effective xsd:date through which public records were searched" ;
+  ] .
+`,
+  "title-commitment-credential": `@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix cred: <https://www.w3.org/2018/credentials#> .
+@prefix sec: <https://w3id.org/security#> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+
+# Title commitment (replaces the title clear credential): an ALTA-shaped commitment with
+# Schedule A, Schedule B Part I requirements and Part II exceptions.
+mshape:TitleCommitmentCredentialShape
+  a sh:NodeShape ;
+  sh:targetClass mort:TitleCommitmentCredential ;
+  sh:closed true ;
+  sh:ignoredProperties ( sec:proof ) ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue cred:VerifiableCredential ;
+  ] ;
+  sh:property [
+    sh:path cred:issuer ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path cred:validFrom ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dateTime ;
+    sh:lessThan cred:validUntil ;
+  ] ;
+  sh:property [
+    sh:path cred:validUntil ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dateTime ;
+  ] ;
+  sh:property [
+    sh:path cred:credentialStatus ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+  ] ;
+  sh:property [
+    sh:path cred:credentialSubject ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:node mshape:TitleCommitmentSubjectShape ;
+  ] ;
+  sh:property [
+    sh:path cred:evidence ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+  ] ;
+  sh:property [
+    sh:path cred:credentialSchema ;
+    sh:nodeKind sh:IRI ;
+  ] .
+
+mshape:TitleCommitmentSubjectShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:ignoredProperties ( rdf:type ) ;
+  sh:property [
+    sh:path schema:identifier ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:subjectProperty ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:PropertyShape ;
+  ] ;
+  sh:property [
+    sh:path mort:searchedThrough ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+  ] ;
+  sh:property [
+    sh:path mort:vestedOwner ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:proposedInsured ;
+    sh:minCount 1 ;
+    sh:maxCount 2 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:ownerPolicyAmount ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path mort:loanPolicyAmount ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path mort:titleRequirement ;
+    sh:minCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:titleException ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
   ] .
 `,
   "underwriting-decision": `@prefix sh: <http://www.w3.org/ns/shacl#> .
@@ -1283,5 +3373,5 @@ export type ShapesDocumentKey = keyof typeof SHAPES_TURTLE;
 /** Every bundled shapes document, in one Turtle-parseable list. */
 export const ALL_SHAPES_DOCUMENTS: readonly string[] = Object.values(SHAPES_TURTLE);
 
-/** File stem of the 12 bundled shapes documents. */
+/** File stem of the 36 bundled shapes documents. */
 export const SHAPES_DOCUMENT_KEYS = Object.keys(SHAPES_TURTLE) as readonly ShapesDocumentKey[];

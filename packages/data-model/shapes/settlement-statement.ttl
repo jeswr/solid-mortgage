@@ -1,0 +1,104 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+@prefix fibo-fbc-dae-dbt: <https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Debt/> .
+@prefix fibo-loan-ln-ln: <https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/Loans/> .
+
+# mortgage/closing/settlement-statement: written by the settlement agent at closing.
+mshape:SettlementStatementShape
+  a sh:NodeShape ;
+  sh:targetClass mort:SettlementStatement ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue mort:SettlementStatement ;
+  ] ;
+  sh:property [
+    sh:path schema:name ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path schema:identifier ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:loanNumber ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path fibo-fbc-dae-dbt:hasBorrower ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path dcterms:creator ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path dcterms:issued ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+  ] ;
+  sh:property [
+    sh:path mort:closingDate ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+  ] ;
+  sh:property [
+    sh:path mort:disbursementDate ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+  ] ;
+  sh:property [
+    sh:path mort:purchasePrice ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path fibo-loan-ln-ln:hasPrincipalAmount ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path mort:lineItem ;
+    sh:minCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:LineItemShape ;
+  ] ;
+  sh:property [
+    sh:path mort:cashToClose ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path mort:subjectProperty ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:PropertyShape ;
+  ] .

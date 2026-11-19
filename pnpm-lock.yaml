@@ -1444,6 +1444,9 @@ importers:
         specifier: ^4.4.3
         version: 4.6.7
     devDependencies:
+      '@sparq-org/solid-server':
+        specifier: 0.1.8
+        version: 0.1.8
       '@types/n3':
         specifier: ^1.26.1
         version: 1.26.1
