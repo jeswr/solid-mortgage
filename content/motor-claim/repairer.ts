@@ -41,7 +41,6 @@ import {
   readGrantNotice,
   requestClaimGrant,
 } from "./grants.js";
-import { withAlexGrantLock } from "./lock.js";
 import { answerMotorOnce, readMotorMessage, send } from "./messages.js";
 import { PHOTO_TYPE } from "./photos.js";
 
@@ -235,7 +234,7 @@ export async function completeJob(world: World): Promise<Completion> {
   }
   // Alex's wallet applies the end: the invoice is the evidence that the job is complete. This is
   // the step's last write, so leaving the page once the tour marks it done cuts nothing short.
-  const expired = await withAlexGrantLock(() => applyMotorClaimExpiries(world, "16:05"));
+  const expired = await applyMotorClaimExpiries(world, "16:05");
   return { expired, invoice, job };
 }
 

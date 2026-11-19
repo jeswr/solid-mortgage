@@ -11,6 +11,7 @@
  * pod server's.
  */
 
+import { DPV } from "@mortgage/data-model";
 import { createDemoCalendar } from "@mortgage/demo-kit/calendar";
 import { type PodOwner, podOwners } from "@mortgage/demo-kit/registry";
 import { Authorization, Group } from "@solid/object";
@@ -26,9 +27,11 @@ import {
   readAcl,
   requestAccess,
   revokeGrant,
+  writeConsent,
 } from "../../mortgage/grants.js";
 import { podUrl, put, type World, webid } from "../../mortgage/world.js";
 import { ORGS } from "../../orgs.js";
+import { failingAcl } from "../failing-acl.js";
 
 const ORIGIN = "https://pods.demo.test";
 const DAY_ONE = "2026-08-03";
@@ -301,6 +304,67 @@ describe("rules the wallet keeps stay as they were", () => {
     expect(rules.filter((rule) => rule.agent.has(county)).map((rule) => [...rule.mode])).toEqual([
       [`${ACL}Read`],
     ]);
+    expect(await names("profile/card", "title")).toBe(true);
+  }, 120_000);
+});
+
+describe("grant changes that meet each other", () => {
+  test("two withdrawals at once, on a document both cover, end with neither grant restored", async () => {
+    // G5 (Plumb Line) and G6 (Sextant) both read the purchase agreement.
+    await grant("G5");
+    await grant("G6");
+    expect(await names("property/purchase-agreement", "appraisal")).toBe(true);
+    expect(await names("property/purchase-agreement", "title")).toBe(true);
+    // Each change takes the grant lock (content/mortgage/grant-lock.ts), so neither writes the
+    // document from a set of grants in which the other is still active.
+    await Promise.all([revokeGrant(world, "G5", "10:00"), revokeGrant(world, "G6", "10:00")]);
+    expect(await stateOf("G5")).toBe("revoked");
+    expect(await stateOf("G6")).toBe("revoked");
+    expect(await names("property/purchase-agreement", "appraisal")).toBe(false);
+    expect(await names("property/purchase-agreement", "title")).toBe(false);
+    expect(await status("appraisal", "property/purchase-agreement")).toBe(403);
+    expect(await status("title", "property/purchase-agreement")).toBe(403);
+  }, 120_000);
+
+  test("a write retried after 412 is recomputed from the grants on record then", async () => {
+    await grant("G5");
+    await grant("G6");
+    const county = webid(world, "county");
+    const target = `${alex("property/purchase-agreement")}.acl`;
+    let raced = 0;
+    const racing = intercepted(async (url, init) => {
+      if (url !== target || init?.method !== "PUT" || raced > 0) return;
+      raced++;
+      // Between the read and the write of G5's withdrawal, something outside this change ends
+      // G6 on record and adds the county's read to the document.
+      const g6 = (await grantRecords(world)).find((record) => record.code === "G6");
+      if (g6 === undefined) throw new Error("no G6");
+      await writeConsent(world, g6, DPV.ConsentWithdrawn, "withdrawn", "10:00");
+      await writeOwnAcl("property/purchase-agreement", [
+        { agent: county, inheritable: false, modes: ["Read"] },
+      ]);
+      return undefined;
+    });
+    await revokeGrant(racing, "G5", "10:01");
+    expect(raced).toBe(1);
+    // The retry read G6's end as well as the county's rule: neither grant's rule is written back.
+    expect(await names("property/purchase-agreement", "appraisal")).toBe(false);
+    expect(await names("property/purchase-agreement", "title")).toBe(false);
+    expect(await names("property/purchase-agreement", "county")).toBe(true);
+  }, 120_000);
+
+  test("an approval whose ACL write failed is finished by approving again", async () => {
+    const request = await requestAccess(world, "G6");
+    const failing = failingAcl(world, "alex", "PUT");
+    await expect(approveRequest(failing.world, request)).rejects.toThrow(/503/);
+    expect(failing.failed()).toBe(1);
+    // The consent is on record but Sextant has no rule yet.
+    expect(await stateOf("G6")).toBe("active");
+    expect(await status("title", "property/purchase-agreement")).toBe(403);
+    // Approving again writes the ACL documents instead of refusing an active grant.
+    const again = await approveRequest(world, request);
+    expect(again.acls.length).toBeGreaterThan(0);
+    expect(await status("title", "property/purchase-agreement")).toBe(200);
     expect(await names("profile/card", "title")).toBe(true);
   }, 120_000);
 });

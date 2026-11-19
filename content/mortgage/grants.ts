@@ -35,6 +35,7 @@ import { AclResource, type Authorization } from "@solid/object";
 import { DataFactory } from "n3";
 import { ACL, type AclMode, type AclRule, aclDataset, aclTurtle } from "./acl.js";
 import { DAY } from "./facts.js";
+import { locked } from "./grant-lock.js";
 import {
   at,
   dateOf,
@@ -566,19 +567,23 @@ async function currentAcl(
  * Write the ACL document for `target`: the owner, `rules`, and what {@link currentAcl} says must be
  * kept. The write is conditional on what was read (`If-Match` on the ETag, or `If-None-Match: *`
  * when there was no document), so a change made in between is never overwritten with a stale
- * copy: on 412 the documents are read again and the write retried.
+ * copy: on 412 the documents are read again, `refresh` recomputes `rules` from the grants as they
+ * are on record now (not as they were when the change began), and the write is retried.
  */
 export async function writeAclDocument(
   sync: AclSync,
   target: string,
   rules: readonly AclRule[],
+  refresh?: () => Promise<readonly AclRule[]>,
   attempts = 3,
 ): Promise<void> {
   const aclUrl = `${target}.acl`;
+  let wanted = rules;
   for (let attempt = 1; attempt <= attempts; attempt++) {
+    if (attempt > 1 && refresh !== undefined) wanted = await refresh();
     const { etag, kept } = await currentAcl(sync, target);
     const response = await sync.fetcher(aclUrl, {
-      body: await aclTurtle(aclDataset(sync.owner, target, [...rules, ...kept])),
+      body: await aclTurtle(aclDataset(sync.owner, target, [...wanted, ...kept])),
       headers: {
         "content-type": "text/turtle",
         ...(etag === undefined ? { "if-none-match": "*" } : { "if-match": etag }),
@@ -594,6 +599,22 @@ export async function writeAclDocument(
     sync.docs.clear();
   }
   throw new Error(`${aclUrl} kept changing while the wallet wrote it (${attempts} attempts)`);
+}
+
+/**
+ * `records` with the grants of `policies` taken as not yet in force. A sync from these to the
+ * records as they are writes every document those grants cover again: what an approval needs
+ * when its consent was recorded but its ACL write failed, and it is pressed again.
+ */
+export function notYetInForce<R extends { readonly policy: string; readonly state: string }>(
+  records: readonly R[],
+  policies: readonly string[],
+): R[] {
+  return records.map((record) =>
+    policies.includes(record.policy) && record.state === "active"
+      ? { ...record, state: "revoked" as R["state"] }
+      : record,
+  );
 }
 
 /** The state a grant is in once a consent record with `status` is its latest. */
@@ -630,13 +651,20 @@ export async function endGrantInOrder<
   before: readonly R[],
   ended: R,
   state: R["state"],
-  sync: (before: readonly R[], after: readonly R[]) => Promise<string[]>,
+  sync: (
+    before: readonly R[],
+    after: readonly R[],
+    reload: () => Promise<readonly R[]>,
+  ) => Promise<string[]>,
   record: () => Promise<unknown>,
+  /** The grants on record now, for a write that must be recomputed (a 412). */
+  load: () => Promise<readonly R[]>,
 ): Promise<string[]> {
-  const after = before.map((candidate) =>
-    candidate.policy === ended.policy ? { ...candidate, state } : candidate,
-  );
-  const written = await sync(before, after);
+  const end = (records: readonly R[]) =>
+    records.map((candidate) =>
+      candidate.policy === ended.policy ? { ...candidate, state } : candidate,
+    );
+  const written = await sync(before, end(before), async () => end(await load()));
   await record();
   return written;
 }
@@ -662,6 +690,8 @@ export async function syncAcls(
   after: readonly GrantRecord[],
   /** Policies approved by this change: their one-time rules are written (see `KeepOneTime`). */
   fresh: readonly string[] = [],
+  /** The grants on record now, as `after` would be: read again when a write must be recomputed. */
+  reload: () => Promise<readonly GrantRecord[]> = () => grantRecords(world),
 ): Promise<string[]> {
   const sync = aclSync(
     world.fetchAs("alex"),
@@ -671,16 +701,24 @@ export async function syncAcls(
   );
   const beforeTargets = targetsOf(before);
   const afterTargets = targetsOf(after);
-  const held = await oneTimeRulesInForce(sync, after);
+  let current = after;
+  let held = await oneTimeRulesInForce(sync, current);
   const keep: KeepOneTime = (policy, agent, target) =>
     fresh.includes(policy) || held.has(`${agent} ${target}`);
+  // After a 412 everything is recomputed from what is on record now, for this document and the
+  // ones after it: the grants, and the one-time rules the runtime may have closed since.
+  const refresh = (target: string) => async () => {
+    current = await reload();
+    held = await oneTimeRulesInForce(sync, current);
+    return rulesFor(current, targetsOf(current), target, keep);
+  };
   const written: string[] = [];
   for (const target of afterTargets) {
-    const rules = rulesFor(after, afterTargets, target, keep);
+    const rules = rulesFor(current, targetsOf(current), target, keep);
     const had = beforeTargets.includes(target);
     if (had && fingerprint(rulesFor(before, beforeTargets, target, keep)) === fingerprint(rules))
       continue;
-    await writeAclDocument(sync, target, rules);
+    await writeAclDocument(sync, target, rules, refresh(target));
     written.push(`${target}.acl`);
   }
   return written;
@@ -796,10 +834,10 @@ function assertOneTimeSupported(request: AccessRequest, options: ApproveOptions)
  * nothing and drops nothing. A permission limited to one use is registered with the runtime
  * before the ACL is written (`options.registerOneTime`), and refused without it.
  */
-export async function approveRequest(
+export const approveRequest = locked(async function approveRequest(
   world: World,
   requestUrl: string,
-  time = "09:05",
+  time: string = "09:05",
   options: ApproveOptions = {},
 ): Promise<ApprovalResult> {
   const alex = world.fetchAs("alex");
@@ -813,7 +851,10 @@ export async function approveRequest(
   const policy = alexUrl(world, `policies/${slugOf(code)}`);
   const before = await grantRecords(world);
   if (before.some((record) => record.policy === policy && record.state === "active")) {
-    throw new Error(`${code} is already active`);
+    // Approved before, but its ACL write may not have finished (a failed request): write the
+    // documents again. A one-time rule is not reopened: that happens only on the first approval.
+    const acls = await syncAcls(world, notYetInForce(before, [policy]), before);
+    return { acls, code, consent: alexUrl(world, `consents/${slugOf(code)}-given`), policy };
   }
   await putResource(
     alex,
@@ -849,9 +890,9 @@ export async function approveRequest(
   }
   const after = await grantRecords(world);
   return { acls: await syncAcls(world, before, after, [policy]), code, consent, policy };
-}
+});
 
-export async function endGrant(
+export const endGrant = locked(async function endGrant(
   world: World,
   code: string,
   status: string,
@@ -867,10 +908,11 @@ export async function endGrant(
     before,
     record,
     endedState(status),
-    (from, to) => syncAcls(world, from, to),
+    (from, to, reload) => syncAcls(world, from, to, [], reload),
     () => writeConsent(world, record, status, suffix, time),
+    () => grantRecords(world),
   );
-}
+});
 
 /** Alex withdraws a grant. The agreement stays on record; a "withdrawn" consent record is added. */
 export function revokeGrant(world: World, code: GrantCode, time = "09:00"): Promise<string[]> {
@@ -899,7 +941,10 @@ async function hasEnded(world: World, record: GrantRecord): Promise<boolean> {
  * has left its evidence in the pod, gets an "expired" consent record and loses its ACL entries.
  * Returns the codes that expired. The Lens labels this "expiry applied by Alex's wallet".
  */
-export async function applyExpiries(world: World, time = "00:05"): Promise<string[]> {
+export const applyExpiries = locked(async function applyExpiries(
+  world: World,
+  time: string = "00:05",
+): Promise<string[]> {
   const expired: string[] = [];
   for (const record of await grantRecords(world)) {
     if (record.state !== "active" || !(await hasEnded(world, record))) continue;
@@ -907,4 +952,4 @@ export async function applyExpiries(world: World, time = "00:05"): Promise<strin
     expired.push(record.code);
   }
   return expired;
-}
+});

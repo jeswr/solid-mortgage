@@ -19,6 +19,7 @@
 
 import { AccessRequest, type ClaimCase } from "@mortgage/data-model";
 import { DataFactory } from "n3";
+import { withGrantLock } from "../mortgage/grant-lock.js";
 import { membersOf } from "../mortgage/grants.js";
 import { answerOrAwait } from "../mortgage/messages.js";
 import { readDataset, type World } from "../mortgage/world.js";
@@ -35,7 +36,6 @@ import {
   noticeOfGrant,
   withdrawMotorGrant,
 } from "./grants.js";
-import { withAlexGrantLock } from "./lock.js";
 import { prepareMotorClaim } from "./prepare.js";
 import { readJob, takeGrantNotice } from "./repairer.js";
 
@@ -81,11 +81,12 @@ export async function claimRequests(world: World): Promise<ClaimRequest[]> {
  * complete. The wallet sends Anvil a copy of the agreement, and Anvil's back office opens the job.
  */
 export async function approveRepairer(world: World): Promise<ClaimCase> {
-  const approved = await withAlexGrantLock(async () => {
-    if ((await motorGrant(world, "C2")) !== undefined) return false;
-    const request = await findClaimRequest(world, "C2");
+  // Under the grant lock, so another tab's approval is seen before this one approves again.
+  const approved = await withGrantLock(world, async (held) => {
+    if ((await motorGrant(held, "C2")) !== undefined) return false;
+    const request = await findClaimRequest(held, "C2");
     if (request === undefined) throw new Error("Anvil has not asked for access yet");
-    await approveClaimGrant(world, request, "11:00");
+    await approveClaimGrant(held, request, "11:00");
     return true;
   });
   const job = await readJob(world);
@@ -105,8 +106,8 @@ export async function approveRepairer(world: World): Promise<ClaimCase> {
  * and maintains the motor policy. Returns the ACL documents rewritten (none when already closed).
  */
 export function closeClaim(world: World): Promise<string[]> {
-  return withAlexGrantLock(async () => {
-    if ((await motorGrant(world, "C1"))?.state !== "active") return [];
-    return withdrawMotorGrant(world, "C1", "10:00");
+  return withGrantLock(world, async (held) => {
+    if ((await motorGrant(held, "C1"))?.state !== "active") return [];
+    return withdrawMotorGrant(held, "C1", "10:00");
   });
 }

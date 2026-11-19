@@ -28,11 +28,13 @@ import type { HolderId } from "@mortgage/demo-kit/holders";
 import type { OrgSlug } from "@mortgage/demo-kit/registry";
 import { DataFactory } from "n3";
 import type { AclRule } from "../mortgage/acl.js";
+import { locked } from "../mortgage/grant-lock.js";
 import {
   aclSync,
   endGrantInOrder,
   managedAgents,
   membersOf,
+  notYetInForce,
   writeAclDocument,
 } from "../mortgage/grants.js";
 import {
@@ -261,6 +263,8 @@ async function syncAcls(
   world: World,
   before: readonly KybGrantRecord[],
   after: readonly KybGrantRecord[],
+  /** The grants on record now, as `after` would be: read again when a write must be recomputed. */
+  reload: () => Promise<readonly KybGrantRecord[]> = () => kybGrantRecords(world),
 ): Promise<string[]> {
   const holder = world.fetchAs(HOLDER);
   const had = targetsOf(before);
@@ -270,14 +274,19 @@ async function syncAcls(
     webid(world, HOLDER),
     managedAgents(before, after),
   );
+  let current = after;
+  const refresh = (target: string) => async () => {
+    current = await reload();
+    return rulesFor(current, target);
+  };
   const written: string[] = [];
   for (const target of targetsOf(after)) {
     if (target.endsWith("/")) throw new Error(`a KYB grant never covers a container: ${target}`);
-    const rules = rulesFor(after, target);
+    const rules = rulesFor(current, target);
     if (had.includes(target) && fingerprint(rulesFor(before, target)) === fingerprint(rules)) {
       continue;
     }
-    await writeAclDocument(sync, target, rules);
+    await writeAclDocument(sync, target, rules, refresh(target));
     written.push(`${target}.acl`);
   }
   return written;
@@ -328,10 +337,10 @@ export interface KybApproval {
  * The agreement repeats the request's permissions exactly. A request may name only the register
  * credentials of its grant: anything else (a container, an ACL, another drawer) is refused.
  */
-export async function approveKybRequest(
+export const approveKybRequest = locked(async function approveKybRequest(
   world: World,
   requestUrl: string,
-  time = "09:05",
+  time: string = "09:05",
 ): Promise<KybApproval> {
   const holder = world.fetchAs(HOLDER);
   const request = new AccessRequest(requestUrl, await readDataset(holder, requestUrl), DataFactory);
@@ -356,7 +365,14 @@ export async function approveKybRequest(
   const policy = kybPolicyUrl(world, code);
   const before = await kybGrantRecords(world);
   if (before.some((record) => record.policy === policy && record.state === "active")) {
-    throw new Error(`${code} is already active`);
+    // Approved before, but its ACL write may not have finished: write the documents again.
+    const acls = await syncAcls(world, notYetInForce(before, [policy]), before);
+    return {
+      acls,
+      code,
+      consent: holderUrl(world, `consents/${code.toLowerCase()}-given`),
+      policy,
+    };
   }
   await putResource(
     holder,
@@ -382,13 +398,13 @@ export async function approveKybRequest(
   );
   const acls = await syncAcls(world, before, await kybGrantRecords(world));
   return { acls, code, consent, policy };
-}
+});
 
 /** The holder withdraws a grant: a "withdrawn" consent record and the ACL change. */
-export async function withdrawKybGrant(
+export const withdrawKybGrant = locked(async function withdrawKybGrant(
   world: World,
   code: KybGrantCode,
-  time = "16:00",
+  time: string = "16:00",
 ): Promise<string[]> {
   const before = await kybGrantRecords(world);
   const record = before.find((candidate) => candidate.code === code);
@@ -399,10 +415,11 @@ export async function withdrawKybGrant(
     before,
     record,
     "revoked",
-    (from, to) => syncAcls(world, from, to),
+    (from, to, reload) => syncAcls(world, from, to, reload),
     () => writeConsent(world, record, DPV.ConsentWithdrawn, "withdrawn", time),
+    () => kybGrantRecords(world),
   );
-}
+});
 
 /** The organisation a grant goes to. */
 export function grantee(code: KybGrantCode): OrgSlug {

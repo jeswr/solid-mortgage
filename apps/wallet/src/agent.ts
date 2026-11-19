@@ -19,9 +19,9 @@ import { withGrantLock } from "./acl-lock.ts";
 export const handlers = defineAgent({
   async inbox(_message, ctx) {
     // The same lock as the wallet page's Approve and Revoke (src/acl-lock.ts).
-    await withGrantLock(async () => {
-      await agents.walletApplyExpiries(agentWorld(ctx));
-      await motorClaimWalletExpiries(ctx);
+    await withGrantLock(agentWorld(ctx), async (world) => {
+      await agents.walletApplyExpiries(world);
+      await motorClaimWalletExpiries(ctx, () => world);
     });
   },
 });

@@ -30,11 +30,13 @@ import {
   permissionInits,
 } from "@mortgage/data-model";
 import { DataFactory } from "n3";
+import { locked } from "../mortgage/grant-lock.js";
 import {
   approveRequest,
   endGrant,
   type GrantRecord,
   grantRecords,
+  notYetInForce,
   syncAcls,
   writeConsent,
 } from "../mortgage/grants.js";
@@ -169,10 +171,17 @@ export async function motorGrant(world: World, code: MotorCode): Promise<GrantRe
  * The standing policy grant P1, written as the wallet writes any grant. Part of the story's set-up
  * (`prepare.ts`): Alex gave it when taking the policy out. Does nothing when it is already active.
  */
-export async function ensurePolicyGrant(world: World, time: string): Promise<boolean> {
+export const ensurePolicyGrant = locked(async function ensurePolicyGrant(
+  world: World,
+  time: string,
+): Promise<boolean> {
   const before = await grantRecords(world);
   const policy = motorPolicyUrl(world, "P1");
-  if (before.some((record) => record.policy === policy && record.state === "active")) return false;
+  if (before.some((record) => record.policy === policy && record.state === "active")) {
+    // Given before, but its ACL write may not have finished: write the documents again.
+    await syncAcls(world, notYetInForce(before, [policy]), before);
+    return false;
+  }
   const spec = MOTOR_GRANTS.P1;
   const alex = world.fetchAs("alex");
   await putResource(
@@ -192,7 +201,7 @@ export async function ensurePolicyGrant(world: World, time: string): Promise<boo
   await writeConsent(world, { agreement, code: "P1", policy }, DPV.ConsentGiven, "given", time);
   await syncAcls(world, before, await grantRecords(world));
   return true;
-}
+});
 
 /**
  * The organisation asks: it appends an ODRL request to Alex's inbox, which any signed-in agent may
@@ -310,7 +319,10 @@ async function hasEnded(world: World, record: GrantRecord): Promise<boolean> {
  * expiry of its own. Run as Alex's wallet back office, so the Lens labels it an expiry. Returns
  * the codes that expired.
  */
-export async function applyMotorClaimExpiries(world: World, time = "00:05"): Promise<string[]> {
+export const applyMotorClaimExpiries = locked(async function applyMotorClaimExpiries(
+  world: World,
+  time: string = "00:05",
+): Promise<string[]> {
   // The wallet runs this on every write to Alex's inbox, in every demo: while no end event has
   // left its evidence, one HEAD per kind of evidence is all it costs.
   if (!(await anyEndEvidence(world))) return [];
@@ -321,6 +333,6 @@ export async function applyMotorClaimExpiries(world: World, time = "00:05"): Pro
     expired.push(record.code);
   }
   return expired;
-}
+});
 
 export type { GrantRecord };
