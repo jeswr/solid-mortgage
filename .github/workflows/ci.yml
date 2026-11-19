@@ -52,6 +52,11 @@ jobs:
       - name: Check RDF IRI dereferenceability
         run: pnpm run lint:iris
 
+      # The gate runs the video lane's tests (test:video), and video/test/published.test.ts probes
+      # the committed MP4s with ffprobe, which the runner image does not ship.
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
+
       - name: Run lint, build, typecheck, and tests
         run: pnpm run gate
 
