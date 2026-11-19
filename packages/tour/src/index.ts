@@ -11,6 +11,7 @@ export {
   type TourOptions,
   type TourParams,
 } from "./engine.js";
+export { demoHolder } from "./holder.js";
 export { completesByEntry, completesStep, matchesExpectation, matchesPartial } from "./match.js";
 export {
   CHIP_KINDS,

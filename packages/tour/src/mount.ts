@@ -6,7 +6,7 @@
  */
 import { createDemoCalendar } from "@mortgage/demo-kit/calendar";
 import type { LensEntry, TourStep } from "@mortgage/demo-kit/contracts";
-import type { AppSlug, OrgRegistry } from "@mortgage/demo-kit/registry";
+import type { AppSlug, HolderId, OrgRegistry } from "@mortgage/demo-kit/registry";
 import {
   defineSolidLens,
   type LedgerTotals,
@@ -18,6 +18,7 @@ import {
   type SolidLens,
 } from "@mortgage/lens";
 import { parseTourParams, TourEngine, type TourParams } from "./engine.js";
+import { demoHolder } from "./holder.js";
 import { validateTour } from "./schema.js";
 import { idbStore, type TourState, type TourStore } from "./store.js";
 
@@ -33,8 +34,13 @@ export interface MountOptions {
   app: AppSlug;
   registry: OrgRegistry;
   runtime: DemoRuntime;
-  holder?: { name: string };
-  tour?: { demo: string; steps: TourStep[]; sources?: Iterable<string> };
+  /**
+   * Whose pod the Lens centres on, and the name it uses. `id` defaults to the tour's `holder`,
+   * then `DEFAULT_HOLDER`; `name` to the registered holder's short name.
+   */
+  holder?: { id?: HolderId; name?: string };
+  /** The demo's tour. `holder` names the registered holder the demo is about (default Alex). */
+  tour?: { demo: string; holder?: HolderId; steps: TourStep[]; sources?: Iterable<string> };
   /** Lens layout and copy: drawers, grant handles, caveat, record drawers, links. */
   lens?: Omit<LensConfig, "registry" | "app" | "holder" | "calendar">;
   ledger?: LedgerViewOptions;
@@ -46,6 +52,8 @@ export interface MountOptions {
   /** URL to parse for tour parameters (default `location.href`). */
   href?: string;
 }
+
+export { demoHolder };
 
 export interface MountedDemo {
   lens: SolidLens;
@@ -117,6 +125,7 @@ function toLensStep(tour: TourEngine, step: TourStep): LensStep {
 }
 
 export async function mountDemo(opts: MountOptions): Promise<MountedDemo> {
+  const holder = demoHolder(opts);
   defineSolidLens();
   const doc = document;
   const url = new URL(opts.href ?? window.location.href);
@@ -151,7 +160,7 @@ export async function mountDemo(opts: MountOptions): Promise<MountedDemo> {
     registry: opts.registry,
     app: opts.app,
     calendar,
-    ...(opts.holder ? { holder: opts.holder } : {}),
+    holder,
   });
   lens.ledgerOptions = { ...opts.ledger };
 
