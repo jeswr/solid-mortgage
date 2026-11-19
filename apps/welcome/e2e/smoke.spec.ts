@@ -233,6 +233,11 @@ test("Try it yourself restarts the pods from the seed, then opens step 1 here", 
   test.setTimeout(240_000);
   // Start the pods from an organisation app and leave a resource the seed does not have.
   await open(page, "/payroll/?tour=off");
+  // A controlling worker is not yet a started runtime: wait until the app has connected, or the
+  // PUT can arrive first and get the runtime's 503.
+  await expect(page.getByRole("status").filter({ hasText: "Connecting" })).toHaveCount(0, {
+    timeout: 60_000,
+  });
   const marker = "alex/e2e-try-it-marker";
   const put = await podRequest(page, "wallet", marker, {
     body: "left by the welcome e2e suite",
