@@ -1,0 +1,150 @@
+/* AUTHORED-BY Claude Opus 5.5
+ * Cairn's motor-claim screens: the wallet's own tokens (tokens.css), a few layouts of their own. */
+.mc-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 18px 4px 8px;
+}
+
+.mc-nav a {
+  color: var(--teal);
+  font-weight: 700;
+}
+
+.mc-photos {
+  list-style: none;
+  margin: 12px 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: 10px;
+}
+
+.mc-photos li {
+  background: var(--card);
+  border-radius: var(--radius-s);
+  overflow: hidden;
+}
+
+.mc-photos img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.mc-photos span {
+  display: block;
+  padding: 6px 10px 8px;
+  font-size: 0.875rem;
+}
+
+.mc-list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.mc-code,
+.mc-state {
+  flex: none;
+  font-weight: 800;
+  font-size: 0.875rem;
+  color: var(--teal);
+}
+
+.mc-perms,
+.mc-added,
+.mc-not-seen {
+  margin: 10px 0 0;
+  padding-left: 1.2rem;
+}
+
+.mc-pill {
+  flex: none;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 0.8rem;
+  background: var(--teal-soft);
+  color: var(--teal);
+}
+
+.mc-pill-expired {
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+}
+
+.mc-pill-revoked {
+  background: var(--coral-soft);
+  color: var(--coral-ink);
+}
+
+.mc-pill-none {
+  background: var(--desk);
+  color: var(--ink-2);
+}
+
+.mc-seen {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+  background: var(--card);
+  border-radius: var(--radius-s);
+  overflow: hidden;
+}
+
+.mc-seen caption {
+  text-align: left;
+  font-weight: 800;
+  padding: 0 4px 8px;
+}
+
+.mc-seen th,
+.mc-seen td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+
+.mc-seen td {
+  font-weight: 700;
+  color: var(--teal);
+}
+
+.mc-heading {
+  margin: 24px 4px 4px;
+  font-size: 1.15rem;
+}
+
+.mc-totals {
+  list-style: none;
+  margin: 12px 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+  gap: 8px;
+}
+
+.mc-totals li {
+  background: var(--teal-soft);
+  border-radius: var(--radius-s);
+  padding: 10px 12px;
+}
+
+.mc-totals strong {
+  display: block;
+  font-size: 1.6rem;
+  color: var(--teal);
+}
+
+.mc-ledger {
+  margin-top: 12px;
+  min-width: 0;
+  overflow-x: auto;
+  /* The ledger's visually hidden labels are absolutely positioned: keep them in this scroller. */
+  position: relative;
+}

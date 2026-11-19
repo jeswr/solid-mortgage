@@ -1,0 +1,16 @@
+@prefix schema: <https://schema.org/>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#>.
+@prefix odrl: <http://www.w3.org/ns/odrl/2/>.
+@prefix cred: <https://www.w3.org/2018/credentials#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+# A telephone number outside the range kept for fiction.
+<https://pods.example/pods/alex/claims/CLM-1/other-party> a mort:OtherPartyDetails;
+  schema:name "Lee Navarro";
+  schema:telephone "(614) 555-2368";
+  mort:insurerName "Pellmore Insurance";
+  schema:identifier "PM-AU-30117";
+  mort:vehicle [ a schema:Car; schema:name "Calder Vane"; schema:identifier "DEMO 417" ];
+  dcterms:creator <https://pods.example/pods/alex/profile/card#me>;
+  dcterms:created "2026-09-23T15:00:00Z"^^xsd:dateTime.

@@ -1,0 +1,27 @@
+/* AUTHORED-BY Claude Opus 5.5
+ * Anvil Collision Repair's own tokens: workshop yellow on black, a concrete-grey floor, condensed
+ * signage type (Barlow Condensed) and a monospace for job numbers and money (JetBrains Mono),
+ * both self-hosted under the SIL Open Font License. Original values, no imagery (design.md §b.2). */
+:root {
+  --color-bar: #1f1d1a;
+  --color-bar-ink: #ffc21a;
+  --color-bar-muted: #e9e4d6;
+  --color-floor: #ece8dc;
+  --color-panel: #ffffff;
+  --color-ink: #1f1d1a;
+  --color-muted: #4a463f;
+  --color-line: #1f1d1a;
+  --color-yellow: #ffc21a;
+  --color-yellow-hover: #f0b000;
+  --color-ok: #1f5e2e;
+  --color-ok-bg: #e3f1e6;
+  --color-alert: #8f1d14;
+  --color-alert-bg: #fbe9e7;
+  --color-focus: #1565c0;
+  --font-body: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --radius: 4px;
+  --space: 1rem;
+  --measure: 64rem;
+  --touch: 4rem;
+}

@@ -3,9 +3,11 @@
 import { TOUR as BUSINESS_KYB_TOUR } from "@mortgage/content/business-kyb/tour";
 import { TOUR as MEDICATION_TOUR } from "@mortgage/content/medication-handover/tour";
 import { TOUR } from "@mortgage/content/mortgage/tour";
+import { TOUR as MOTOR_CLAIM_TOUR } from "@mortgage/content/motor-claim/tour";
 import { TOUR as MOVING_HOUSE_TOUR } from "@mortgage/content/moving-house/tour";
 import { ORGS } from "@mortgage/content/orgs";
 import { TOUR as REUSABLE_KYC_TOUR } from "@mortgage/content/reusable-kyc/tour";
+import { TOUR as SMALL_BUSINESS_LOAN_TOUR } from "@mortgage/content/small-business-loan/tour";
 import { TOUR as SMALL_DOLLAR_TOUR } from "@mortgage/content/small-dollar-lending/tour";
 import { isAppSlug, ORG_SLUGS } from "@mortgage/demo-kit/registry";
 import { appUrl } from "@mortgage/demo-kit/urls";
@@ -134,6 +136,36 @@ describe("the demo list", () => {
     });
     expect(tour === undefined ? "" : tourUrl(tour)).toBe(
       "/wallet/health?tour=medication-handover&step=health",
+    );
+  });
+
+  it("starts the motor-claim tour at its first step, in Alex's wallet", () => {
+    const tour = demoById("motor-claim")?.tour;
+    const first = MOTOR_CLAIM_TOUR[0];
+    expect(demoById("motor-claim")?.status).toBe("live");
+    expect(tour).toEqual({
+      demo: "motor-claim",
+      app: first?.app,
+      path: first?.path,
+      step: first?.id,
+    });
+    expect(tour === undefined ? "" : tourUrl(tour)).toBe(
+      "/wallet/claim?tour=motor-claim&step=new-claim",
+    );
+  });
+
+  it("starts the small business loan tour at its first step, on Alder Bank's business page", () => {
+    const tour = demoById("small-business-loan")?.tour;
+    const first = SMALL_BUSINESS_LOAN_TOUR[0];
+    expect(demoById("small-business-loan")?.status).toBe("live");
+    expect(tour).toEqual({
+      demo: "small-business-loan",
+      app: first?.app,
+      path: first?.path,
+      step: first?.id,
+    });
+    expect(tour === undefined ? "" : tourUrl(tour)).toBe(
+      "/bank/business?tour=small-business-loan&step=publish-cash-flow",
     );
   });
 

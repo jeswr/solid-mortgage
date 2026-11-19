@@ -46,6 +46,10 @@ export const GRANT_END_IRIS = [
   MORT.GrantEnd_PolicyLapses,
   MORT.GrantEnd_ServicingEnds,
   MORT.GrantEnd_LoanRepaid,
+  // Motor claim demo (flows.md section 7).
+  MORT.GrantEnd_ClaimClosed,
+  MORT.GrantEnd_JobCompleted,
+  MORT.GrantEnd_MotorPolicyLapses,
 ] as const;
 
 /** An ODRL `timeInterval`: an `xsd:duration` of whole years, months or days (e.g. P3M). */

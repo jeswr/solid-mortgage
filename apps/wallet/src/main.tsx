@@ -21,6 +21,12 @@ import {
 import { mortgageSeed, trackTourContext } from "@mortgage/content/mortgage/browser";
 import { MORTGAGE_HOLDER, mortgageLens, mortgageTour } from "@mortgage/content/mortgage/mount";
 import {
+  isMotorClaimPage,
+  MOTOR_CLAIM_HOLDER,
+  motorClaimLens,
+  motorClaimTour,
+} from "@mortgage/content/motor-claim/mount";
+import {
   isMovingHousePage,
   MOVING_HOUSE_HOLDER,
   movingHouseLens,
@@ -71,6 +77,14 @@ const movingHouse =
   !kyb &&
   !reusableKyc &&
   isMovingHousePage(location.pathname, "wallet", location.search);
+// A page under claim/ belongs to the motor claim (src/sections/motor-claim/).
+const motorClaim =
+  !medication &&
+  !loan &&
+  !kyb &&
+  !reusableKyc &&
+  !movingHouse &&
+  isMotorClaimPage(location.pathname, "wallet", location.search);
 
 // A page under lending/ belongs to the small-dollar lending demo (src/sections/small-dollar-lending/).
 const lending = isSmallDollarPage(location.pathname, "wallet", location.search);
@@ -88,7 +102,9 @@ const demo = lending
           ? reusableKycTour()
           : movingHouse
             ? movingHouseTour()
-            : mortgageTour();
+            : motorClaim
+              ? motorClaimTour()
+              : mortgageTour();
 const holder = initialHolder(window.location.href, demo.holder);
 
 configure({ app: "wallet", holder, registry: ORGS, seed: mortgageSeed() });
@@ -113,7 +129,9 @@ void mountDemo({
             ? REUSABLE_KYC_HOLDER
             : movingHouse
               ? MOVING_HOUSE_HOLDER
-              : MORTGAGE_HOLDER,
+              : motorClaim
+                ? MOTOR_CLAIM_HOLDER
+                : MORTGAGE_HOLDER,
   lens: lending
     ? smallDollarLens()
     : medication
@@ -126,7 +144,9 @@ void mountDemo({
             ? reusableKycLens()
             : movingHouse
               ? movingHouseLens()
-              : mortgageLens(),
+              : motorClaim
+                ? motorClaimLens()
+                : mortgageLens(),
   ...(loan
     ? { ledger: { compliance: [...LOAN_COMPLIANCE] } }
     : kyb

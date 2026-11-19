@@ -326,28 +326,48 @@ export const DEMOS: readonly Demo[] = [
       "The claimant holds the claim file; the insurer and the repairer each see only their part, and access ends with the job.",
     sectors: ["Insurance"],
     durationSeconds: 180,
-    status: "coming",
+    status: "live",
     media: mediaFor("motor-claim"),
+    // Step 1 of content/motor-claim/tour.ts: the claim file in Alex's wallet.
+    tour: { demo: "motor-claim", app: "wallet", path: "claim", step: "new-claim" },
     chapters: [
       {
         id: "intro",
         title: "A bump in a car park",
-        transcript: [],
+        transcript: [
+          "Someone has reversed into Alex's car. A claim involves a driver, an insurer and a repairer, and usually a lot of forwarded email.",
+          "Alex starts the claim in their own pod: what happened, photos, and the other driver's details.",
+        ],
       },
       {
         id: "insurer",
         title: "The insurer",
-        transcript: [],
+        transcript: [
+          "Alex reports it to the insurer and grants access to three things: the driving licence, the policy, and this claim.",
+          "The claims handler checks the licence and the cover. Both are signed credentials, so there is nobody to ring. Then they write a damage report into the claim.",
+        ],
       },
       {
         id: "repairer",
         title: "The repairer",
-        transcript: [],
+        transcript: [
+          "The car needs a body shop.",
+          "Alex gives the repairer the damage report and the photos, and nothing more, until the job is done.",
+          "The workshop opens the job, reads those two things, and writes its estimate back.",
+          "The repairer did not see the licence, the policy, or the other driver's details. It had no reason to.",
+          "The insurer reads the estimate where the repairer wrote it, and approves it.",
+        ],
       },
       {
         id: "revoke",
         title: "When the job ends, so does the access",
-        transcript: [],
+        transcript: [
+          "The repair is finished and the invoice is filed. The repairer's grant was for this job, so it ends here.",
+          "If the workshop opens the photos again, the pod refuses.",
+          "Alex closes the claim and withdraws the insurer's access to it. The insurer still reads the policy. It no longer reads the claim.",
+          "Three parties, two grants, each scoped to one job.",
+          "We are looking for insurers to help shape this model. Join the EDMA Solid Community of Practice.",
+        ],
       },
     ],
   },

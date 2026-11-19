@@ -1,0 +1,15 @@
+@prefix schema: <https://schema.org/>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#>.
+@prefix odrl: <http://www.w3.org/ns/odrl/2/>.
+@prefix cred: <https://www.w3.org/2018/credentials#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+<https://pods.example/pods/alex/claims/CLM-1/damage-report> a mort:DamageReport;
+  schema:name "Damage report";
+  schema:about <https://pods.example/pods/alex/claims/CLM-1/incident>;
+  mort:vehicle [ a schema:Car; schema:name "Larkspur Tern"; schema:color "Blue"; schema:vehicleIdentificationNumber "DEMOVIN0000000001" ];
+  mort:damageItem "Rear bumper: cracked, needs replacing", "Left tail light: lens broken";
+  schema:image <https://pods.example/pods/alex/claims/CLM-1/photos/rear-bumper.svg>;
+  dcterms:creator <https://pods.example/pods/insurer/profile/card#me>;
+  dcterms:created "2026-09-24T10:00:00Z"^^xsd:dateTime.

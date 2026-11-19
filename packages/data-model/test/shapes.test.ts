@@ -43,6 +43,7 @@ test("every shape document is bundled", () => {
     "asset-credential",
     "borrower-profile",
     "cash-flow-credential",
+    "claim-case",
     "closed-end-disclosure",
     "closing-disclosure",
     "closing-record",
@@ -52,6 +53,7 @@ test("every shape document is bundled", () => {
     "credential-pointer",
     "credit-report",
     "credit-score-credential",
+    "damage-report",
     "data-product",
     "discharge-summary",
     "document",
@@ -73,13 +75,18 @@ test("every shape document is bundled", () => {
     "medication-dispense",
     "medication-request",
     "medication-statement",
+    "motor-incident-report",
+    "motor-policy-credential",
     "odrl-policy",
+    "other-party-details",
     "payment-mandate",
     "payout-instruction",
     "provenance-record",
     "purchase-agreement",
     "recorded-instrument",
     "recording-receipt",
+    "repair-estimate",
+    "repair-invoice",
     "repayment-history-credential",
     "score-notice",
     "service-order",
@@ -92,6 +99,7 @@ test("every shape document is bundled", () => {
     "title-commitment-credential",
     "trusted-issuer-list",
     "underwriting-decision",
+    "vehicle",
     "zk-operand-anchor",
   ]);
 });
@@ -99,7 +107,7 @@ test("every shape document is bundled", () => {
 test("every targeted resource shape is closed", () => {
   const store = shapesStore();
   const targeted = store.getSubjects(`${SH}targetClass`, null, null);
-  expect(targeted.length).toBe(58);
+  expect(targeted.length).toBe(65);
   for (const shape of targeted) {
     const closed = store.getObjects(shape, `${SH}closed`, null);
     expect(
@@ -243,6 +251,26 @@ const cases: readonly {
   { name: "closed-end-disclosure", expectedViolations: ["MaxInclusiveConstraintComponent"] },
   { name: "adverse-action-notice", expectedViolations: ["MinCountConstraintComponent"] },
   { name: "payout-instruction", expectedViolations: ["PatternConstraintComponent"] },
+  // Motor claim demo (flows.md section 7).
+  {
+    name: "motor-incident-report",
+    expectedViolations: ["LessThanOrEqualsConstraintComponent", "MinCountConstraintComponent"],
+  },
+  { name: "other-party-details", expectedViolations: ["PatternConstraintComponent"] },
+  {
+    name: "damage-report",
+    expectedViolations: ["ClosedConstraintComponent", "MinCountConstraintComponent"],
+  },
+  {
+    name: "repair-estimate",
+    expectedViolations: ["MinCountConstraintComponent", "NodeConstraintComponent"],
+  },
+  { name: "repair-invoice", expectedViolations: ["NodeKindConstraintComponent"] },
+  { name: "claim-case", expectedViolations: ["InConstraintComponent"] },
+  {
+    name: "motor-policy-credential",
+    expectedViolations: ["NodeConstraintComponent"],
+  },
   // Business KYB (demo 3).
   {
     name: "organisational-identity-credential",

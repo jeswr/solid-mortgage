@@ -51,6 +51,7 @@ export {
   type IdentityCheckMethod,
   type IdentityClaims,
   type KycAttestationClaims,
+  type MotorPolicyClaims,
   type OrganizationClaims,
   type PostalAddressClaims,
   type PropertyClaims,
@@ -58,6 +59,7 @@ export {
   type TaxComplianceClaims,
   type TitleClearClaims,
   type TitleCommitmentClaims,
+  type VehicleClaims,
   type ZkOperandAnchorClaims,
 } from "./claims.js";
 export { type DayClock, instantOn, type ValidityOnOptions, validityOn } from "./clock.js";

@@ -19,6 +19,12 @@ import {
   MedSharing,
 } from "./medication-handover/Medication.tsx";
 import {
+  MotorClaimFile,
+  MotorClaimRequests,
+  MotorClaimSeen,
+  MotorClaimSharing,
+} from "./motor-claim/MotorClaim.tsx";
+import {
   MovingAddress,
   MovingHome,
   MovingLedger,
@@ -133,6 +139,15 @@ export const sections: readonly AppSection[] = [
     demo: "small-business-loan",
     path: "loan/ledger",
     title: "Journey ledger",
+  },
+  { Component: MotorClaimFile, demo: "motor-claim", path: "claim", title: "Claim CLM-1" },
+  { Component: MotorClaimRequests, demo: "motor-claim", path: "claim/requests", title: "Requests" },
+  { Component: MotorClaimSeen, demo: "motor-claim", path: "claim/seen", title: "Who saw what" },
+  {
+    Component: MotorClaimSharing,
+    demo: "motor-claim",
+    path: "claim/sharing",
+    title: "Grants and ledger",
   },
   { Component: KycHome, demo: "reusable-kyc", path: "kyc", title: "Verified identity" },
   { Component: KycConsent, demo: "reusable-kyc", path: "kyc/consent", title: "One-time request" },

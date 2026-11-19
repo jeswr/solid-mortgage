@@ -204,6 +204,17 @@ export const ORGS: OrgRegistry = Object.freeze({
     themeColor: "#0E1A2B",
     title: "Swiftline Payouts",
   },
+  // Demo 7, motor claim (flows.md §1 and §7): a collision repair workshop.
+  repairer: {
+    actsAs: "repairer",
+    organisation: "Anvil Collision Repair",
+    persona: { name: "Sam Okafor", role: "workshop manager" },
+    role: "Collision repair workshop Alex's insurer refers the car to",
+    short: "Anvil",
+    slug: "repairer",
+    themeColor: "#1F1D1A",
+    title: "Anvil Collision Repair",
+  },
   // Demo 3, business KYB (flows.md §1 and §3): the business register and LEI issuer.
   registry: {
     actsAs: "registry",
@@ -300,6 +311,7 @@ const LATER_DEMO_APPS: readonly OrgSlug[] = [
   "hospital",
   "pharmacy",
   "clinic",
+  "repairer",
   "card-issuer",
 ];
 
@@ -310,5 +322,6 @@ export const DEMO_APPS = Object.freeze({
   "business-kyb": ["wallet", "registry", "bank", "business-lender"],
   "medication-handover": ["wallet", "hospital", "pharmacy", "clinic"],
   "small-business-loan": ["wallet", "bank", "state", "business-lender"],
+  "motor-claim": ["wallet", "insurer", "repairer", "state"],
   "reusable-kyc": ["wallet", "bank", "card-issuer"],
 } satisfies Record<string, readonly OrgSlug[]>);
