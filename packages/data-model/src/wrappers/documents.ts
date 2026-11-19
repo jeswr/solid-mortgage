@@ -537,7 +537,7 @@ export interface ScoreDisclosureInit {
   keyFactors?: readonly string[];
 }
 
-function addScoreDisclosures(
+export function addScoreDisclosures(
   parent: MortgageResource,
   scores: readonly ScoreDisclosureInit[],
 ): void {

@@ -1,0 +1,47 @@
+@prefix as: <https://www.w3.org/ns/activitystreams#>.
+@prefix cred: <https://www.w3.org/2018/credentials#>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix dpv: <https://w3id.org/dpv#>.
+@prefix fibo-fbc-dae-dbt: <https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Debt/>.
+@prefix fibo-fnd-arr-asmt: <https://spec.edmcouncil.org/fibo/ontology/FND/Arrangements/Assessments/>.
+@prefix fibo-fnd-arr-rep: <https://spec.edmcouncil.org/fibo/ontology/FND/Arrangements/Reporting/>.
+@prefix fibo-fnd-plc-rp: <https://spec.edmcouncil.org/fibo/ontology/FND/Places/RealProperty/>.
+@prefix fibo-fnd-rel-rel: <https://spec.edmcouncil.org/fibo/ontology/FND/Relations/Relations/>.
+@prefix fibo-loan-ln-app: <https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoanApplications/>.
+@prefix fibo-loan-ln-ln: <https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/Loans/>.
+@prefix fibo-loan-reln-mtg: <https://spec.edmcouncil.org/fibo/ontology/LOAN/RealEstateLoans/Mortgages/>.
+@prefix fibo-loan-reln-org: <https://spec.edmcouncil.org/fibo/ontology/LOAN/RealEstateLoans/MortgageOrigination/>.
+@prefix foaf: <http://xmlns.com/foaf/0.1/>.
+@prefix ldp: <http://www.w3.org/ns/ldp#>.
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#>.
+@prefix odrl: <http://www.w3.org/ns/odrl/2/>.
+@prefix pim: <http://www.w3.org/ns/pim/space#>.
+@prefix schema: <https://schema.org/>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+<https://maya.pod.example/loans/finchly/disclosure> a mort:ClosedEndCreditDisclosure;
+    schema:name "Closed-end credit disclosure";
+    mort:loanNumber "FL-2048";
+    fibo-fbc-dae-dbt:hasBorrower <https://maya.pod.example/profile/card#me>;
+    dcterms:creator <https://fintech-lender.example/profile/card#me>;
+    dcterms:issued "2026-11-02T14:20:00.000Z"^^xsd:dateTime;
+    mort:amountFinanced _:amountFinanced;
+    mort:financeCharge _:financeCharge;
+    mort:totalOfPayments _:totalOfPayments;
+    mort:annualPercentageRate 40.0;
+    schema:numberOfLoanPayments 4;
+    schema:loanPaymentAmount _:loanPaymentAmount;
+    mort:paymentIntervalDays 14;
+    schema:description "You are not required to complete this agreement merely because you received it.".
+_:amountFinanced a schema:MonetaryAmount;
+    schema:value 2000.0;
+    schema:currency "USD".
+_:financeCharge a schema:MonetaryAmount;
+    schema:value 64.28;
+    schema:currency "USD".
+_:totalOfPayments a schema:MonetaryAmount;
+    schema:value 2064.28;
+    schema:currency "USD".
+_:loanPaymentAmount a schema:MonetaryAmount;
+    schema:value 516.07;
+    schema:currency "USD".

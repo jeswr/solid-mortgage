@@ -173,6 +173,37 @@ export const ORGS: OrgRegistry = Object.freeze({
     themeColor: "#17375E",
     title: "State Online Services",
   },
+  // Demo 4, small-dollar lending (flows.md §1 and §4). Maya Torres is the person signed in.
+  idv: {
+    actsAs: "idv",
+    organisation: "Trueline Identity",
+    persona: { name: HOLDERS.maya.name, role: "identity check" },
+    role: "Identity verification service: checks a person once and issues an identity credential",
+    short: "Trueline",
+    slug: "idv",
+    themeColor: "#101412",
+    title: "Trueline Identity",
+  },
+  "fintech-lender": {
+    actsAs: "fintech-lender",
+    organisation: "Finchly Loans",
+    persona: { name: HOLDERS.maya.name },
+    role: "Online instalment lender: quotes, decides, pays out and services small loans",
+    short: "Finchly",
+    slug: "fintech-lender",
+    themeColor: "#5B3FD1",
+    title: "Finchly Loans",
+  },
+  payout: {
+    actsAs: "payout",
+    organisation: "Swiftline Payouts",
+    persona: null,
+    role: "Payment service: pushes a loan's funds to the borrower's debit card",
+    short: "Swiftline",
+    slug: "payout",
+    themeColor: "#0E1A2B",
+    title: "Swiftline Payouts",
+  },
   // Demo 3, business KYB (flows.md §1 and §3): the business register and LEI issuer.
   registry: {
     actsAs: "registry",
@@ -197,16 +228,72 @@ export const ORGS: OrgRegistry = Object.freeze({
     themeColor: "#7A2335",
     title: "Brackenridge Bank Commercial Credit",
   },
+  // Demo 5, medication handover (flows.md §1 and §5): a ward system, a dispensing workstation and
+  // a consultation screen. Every clinician named here is fictional.
+  hospital: {
+    actsAs: "hospital",
+    organisation: "Riverbend General Hospital",
+    persona: { name: "Imani Brooks", role: "ward pharmacist" },
+    product: "ward system",
+    role: "Hospital: inpatient care, medicines reconciliation and discharge",
+    short: "Riverbend",
+    slug: "hospital",
+    themeColor: "#14558F",
+    title: "Riverbend General Hospital",
+  },
+  pharmacy: {
+    actsAs: "pharmacy",
+    organisation: "Corner Dispensary",
+    persona: { name: "Grace Liu", role: "pharmacist" },
+    role: "Community pharmacy: dispensing",
+    short: "Corner",
+    slug: "pharmacy",
+    themeColor: "#006B3C",
+    title: "Corner Dispensary",
+  },
+  clinic: {
+    actsAs: "clinic",
+    organisation: "Larch Lane Family Practice",
+    persona: { name: "Dr Lena Marsh", role: "family physician" },
+    role: "Primary care practice",
+    short: "Larch Lane",
+    slug: "clinic",
+    themeColor: "#5B4F7C",
+    title: "Larch Lane Family Practice",
+  },
 });
+
+/** The apps of demo 4 (flows.md §4): Maya's wallet, the three new apps and three mortgage apps. */
+const SMALL_DOLLAR_APPS: readonly OrgSlug[] = [
+  "wallet",
+  "idv",
+  "payroll",
+  "bank",
+  "bureau",
+  "fintech-lender",
+  "payout",
+];
 
 /**
  * The apps each demo uses. The registry grows as demos are added, so a demo's own count (the
  * mortgage video's "Thirteen applications.") is taken from its list here, never from `ORGS`.
  */
+const LATER_DEMO_APPS: readonly OrgSlug[] = [
+  "state",
+  "idv",
+  "fintech-lender",
+  "payout",
+  "registry",
+  "business-lender",
+  "hospital",
+  "pharmacy",
+  "clinic",
+];
+
 export const DEMO_APPS = Object.freeze({
-  mortgage: ORG_SLUGS.filter(
-    (slug) => slug !== "state" && slug !== "registry" && slug !== "business-lender",
-  ),
+  mortgage: ORG_SLUGS.filter((slug) => !LATER_DEMO_APPS.includes(slug)),
   "moving-house": ["wallet", "state", "county", "bank", "insurer", "payroll", "servicer"],
+  "small-dollar-lending": SMALL_DOLLAR_APPS,
   "business-kyb": ["wallet", "registry", "bank", "business-lender"],
+  "medication-handover": ["wallet", "hospital", "pharmacy", "clinic"],
 } satisfies Record<string, readonly OrgSlug[]>);

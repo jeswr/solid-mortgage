@@ -1,0 +1,10 @@
+@prefix fhir: <http://hl7.org/fhir/>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+# A copy of the medicine list does not belong in the practice's record, and the status is unknown.
+<https://pods.example/pods/clinic/consultations/rosa-day-60> a fhir:Encounter;
+  fhir:id [ fhir:v "rosa-day-60" ];
+  fhir:status [ fhir:v "done" ];
+  fhir:subject [ fhir:reference [ fhir:v "https://pods.example/pods/rosa/profile/card#me" ]; fhir:link <https://pods.example/pods/rosa/profile/card#me>; fhir:display [ fhir:v "Rosa Rivera" ] ];
+  fhir:serviceProvider [ fhir:reference [ fhir:v "https://pods.example/pods/clinic/profile/card#me" ]; fhir:link <https://pods.example/pods/clinic/profile/card#me>; fhir:display [ fhir:v "Larch Lane Family Practice" ] ];
+  fhir:actualPeriod [ fhir:start [ fhir:v "2026-09-17T09:30:00Z"^^xsd:dateTime ] ];
+  fhir:dosage ( [ fhir:text [ fhir:v "copied" ] ] ).

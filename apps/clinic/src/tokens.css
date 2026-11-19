@@ -1,0 +1,24 @@
+/* AUTHORED-BY Claude Opus 5.5
+ * Larch Lane Family Practice's own tokens: a calm consulting room, muted plum on warm paper, DM
+ * Sans for the notes and Source Serif 4 for headings (both self-hosted, SIL Open Font License).
+ * Original values, no imagery. */
+:root {
+  --ll-plum: #5b4f7c;
+  --ll-plum-deep: #3f3559;
+  --ll-plum-soft: #efebf6;
+  --ll-ink: #24212b;
+  --ll-muted: #57525f;
+  --ll-paper: #fffdf9;
+  --ll-panel: #f6f2ec;
+  --ll-line: #d9d2c7;
+  --ll-amber: #7a4a00;
+  --ll-amber-soft: #fff1d6;
+  --ll-red: #9b1c13;
+  --ll-red-soft: #fde8e6;
+  --ll-green: #23663d;
+  --ll-green-soft: #e4f2e8;
+  --ll-focus: #e0a100;
+  --ll-font: "DM Sans", system-ui, sans-serif;
+  --ll-serif: "Source Serif 4", Georgia, serif;
+  --ll-space: 1.25rem;
+}

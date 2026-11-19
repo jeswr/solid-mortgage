@@ -1,0 +1,114 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+@prefix fibo-fbc-dae-dbt: <https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Debt/> .
+
+# AUTHORED-BY Claude Opus 5.5
+# loans/<lender>/disclosure: the closed-end credit disclosure a small-dollar lender delivers
+# before the borrower accepts (12 CFR 1026.17-18; flows.md section 4, step 8). Ported from the
+# disclosure fields of jeswr/solid-lending's LoanOfferCredentialShape, as a document the lender
+# writes rather than a credential.
+mshape:ClosedEndCreditDisclosureShape
+  a sh:NodeShape ;
+  sh:targetClass mort:ClosedEndCreditDisclosure ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue mort:ClosedEndCreditDisclosure ;
+  ] ;
+  sh:property [
+    sh:path schema:name ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:loanNumber ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path fibo-fbc-dae-dbt:hasBorrower ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    # The creditor's WebID.
+    sh:path dcterms:creator ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path dcterms:issued ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dateTime ;
+  ] ;
+  sh:property [
+    sh:path mort:amountFinanced ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path mort:financeCharge ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path mort:totalOfPayments ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path mort:annualPercentageRate ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive 0.0 ;
+    sh:maxInclusive 36.0 ;
+    sh:message "the demo's small-dollar loans stay at or under a 36% APR" ;
+  ] ;
+  sh:property [
+    sh:path schema:numberOfLoanPayments ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:integer ;
+    sh:minInclusive 1 ;
+    sh:maxInclusive 60 ;
+  ] ;
+  sh:property [
+    sh:path schema:loanPaymentAmount ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path mort:paymentIntervalDays ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:integer ;
+    sh:minInclusive 1 ;
+    sh:maxInclusive 31 ;
+  ] ;
+  sh:property [
+    sh:path schema:description ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] .

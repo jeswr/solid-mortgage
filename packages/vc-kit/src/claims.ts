@@ -18,10 +18,12 @@ import {
   MORT,
   TypedNode,
   writeBeneficialOwnershipClaims,
+  writeCashFlowClaims,
   writeEvidenceOfInsuranceClaims,
   writeIdentityClaims,
   writeOfficerAuthorisationClaims,
   writeOrganisationalIdentityClaims,
+  writeRepaymentHistoryClaims,
   writeTitleCommitmentClaims,
 } from "@mortgage/data-model";
 import type { DataFactory, DatasetCore, Term } from "@rdfjs/types";
@@ -271,6 +273,41 @@ export interface EvidenceOfInsuranceClaims {
   readonly loanNumber?: string;
 }
 
+/**
+ * Cash-flow VC subject (`mshape:CashFlowSubjectShape`; small-dollar lending, ported from
+ * jeswr/solid-lending). `nsf90Count` and `cashFlowScoreValue` are ZK-provable fields.
+ */
+export interface CashFlowClaims {
+  readonly kind: "cash-flow-credential";
+  readonly bankName: string;
+  /** Masked display identifier - exactly four digits. */
+  readonly accountLast4: string;
+  readonly balanceUsd: number;
+  readonly depositStreams: readonly { readonly name: string; readonly monthlyAmountUsd: number }[];
+  readonly averageDailyBalanceUsd: number;
+  /** 1..36. */
+  readonly observationMonths: number;
+  /** Returned payments in the last 90 days, 0..99. */
+  readonly nsf90Count: number;
+  /** 300..850. */
+  readonly cashFlowScoreValue: number;
+}
+
+/** Repayment history VC subject (`mshape:RepaymentHistorySubjectShape`). */
+export interface RepaymentHistoryClaims {
+  readonly kind: "repayment-history-credential";
+  /** IRI of the loan's disclosure in the borrower's pod. */
+  readonly servicedLoan: string;
+  readonly loanNumber: string;
+  readonly onTime: number;
+  readonly late: number;
+  readonly scheduled: number;
+  /** Reporting period, `YYYY-MM-DD`. */
+  readonly start: string;
+  /** `YYYY-MM-DD`. */
+  readonly end: string;
+}
+
 /** Business KYB: the register's organisational identity of an entity (an illustrative LEI). */
 export interface OrganisationalIdentityClaims {
   readonly kind: "organisational-identity-credential";
@@ -306,6 +343,8 @@ export type CredentialClaims =
   | TitleCommitmentClaims
   | EvidenceOfInsuranceClaims
   | ZkOperandAnchorClaims
+  | CashFlowClaims
+  | RepaymentHistoryClaims
   | OrganisationalIdentityClaims
   | OfficerAuthorisationClaims
   | BeneficialOwnershipClaims;
@@ -597,6 +636,42 @@ export function writeSubjectClaims(
     case "zk-operand-anchor": {
       subject.setIri(MORT.field, claims.field, "field");
       subject.setString(MORT.operandEnc, claims.operandEnc);
+      return;
+    }
+    case "cash-flow-credential": {
+      try {
+        writeCashFlowClaims(typedSubject(subject), {
+          accountLast4: claims.accountLast4,
+          averageDailyBalanceUsd: claims.averageDailyBalanceUsd,
+          balanceUsd: claims.balanceUsd,
+          bankName: claims.bankName,
+          cashFlowScoreValue: claims.cashFlowScoreValue,
+          depositStreams: claims.depositStreams,
+          nsf90Count: claims.nsf90Count,
+          observationMonths: claims.observationMonths,
+        });
+      } catch (error) {
+        throw new ClaimInputError((error as Error).message);
+      }
+      return;
+    }
+    case "repayment-history-credential": {
+      const start = dateOf(claims.start, "start");
+      const end = dateOf(claims.end, "end");
+      try {
+        writeRepaymentHistoryClaims(typedSubject(subject), {
+          end,
+          late: claims.late,
+          loanNumber: claims.loanNumber,
+          onTime: claims.onTime,
+          scheduled: claims.scheduled,
+          servicedLoan: assertAbsoluteIri(claims.servicedLoan, "servicedLoan"),
+          start,
+        });
+      } catch (error) {
+        if (error instanceof ClaimInputError) throw error;
+        throw new ClaimInputError((error as Error).message);
+      }
       return;
     }
     default: {

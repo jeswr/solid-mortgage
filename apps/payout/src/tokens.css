@@ -1,0 +1,24 @@
+/* AUTHORED-BY Claude Opus 5.5
+ * Swiftline Payouts' own tokens: blue-black and signal blue, one status timeline and a receipt,
+ * Source Sans 3 for text and IBM Plex Mono for every figure (self-hosted, SIL Open Font
+ * License). Original values, no imagery (design.md section b.2). */
+:root {
+  --color-head: #0e1a2b;
+  --color-head-ink: #e8eef7;
+  --color-canvas: #eef2f7;
+  --color-paper: #ffffff;
+  --color-ink: #0e1a2b;
+  --color-muted: #4a5a70;
+  --color-line: #c3cedc;
+  --color-signal: #1f5fd6;
+  --color-signal-ink: #ffffff;
+  --color-done: #0f7a4a;
+  --color-alert: #8f1d1d;
+  --color-alert-bg: #fbe9e9;
+  --color-focus: #f5a623;
+  --font-body: "Source Sans 3", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --radius: 6px;
+  --space: 1rem;
+  --measure: 38rem;
+}

@@ -1,0 +1,26 @@
+/* AUTHORED-BY Claude Opus 5.5
+ * Finchly Loans' own tokens: violet and mint, big rounded cards in a stack, Manrope for the big
+ * numbers and DM Sans for text (self-hosted, SIL Open Font License). Original values, no imagery
+ * (design.md section b.2). */
+:root {
+  --color-canvas: #f6f3ff;
+  --color-card: #ffffff;
+  --color-ink: #1d1442;
+  --color-muted: #5a5378;
+  --color-line: #ddd5fb;
+  --color-violet: #5b3fd1;
+  --color-violet-deep: #3e2a99;
+  --color-on-violet: #ffffff;
+  --color-mint: #b8f2dc;
+  --color-mint-ink: #0b4a35;
+  --color-decline: #fde8ec;
+  --color-decline-ink: #8c1d36;
+  --color-alert: #8c1d36;
+  --color-alert-bg: #fde8ec;
+  --color-focus: #ff9f1c;
+  --font-display: "Manrope", "DM Sans", system-ui, sans-serif;
+  --font-body: "DM Sans", system-ui, sans-serif;
+  --radius-card: 24px;
+  --space: 1rem;
+  --measure: 46rem;
+}

@@ -252,43 +252,69 @@ export const DEMOS: readonly Demo[] = [
       "A hospital, a pharmacy and a family practice work from one medication list in the patient's pod, with provenance on every change.",
     sectors: ["Healthcare"],
     durationSeconds: 190,
-    status: "coming",
+    status: "live",
     media: mediaFor("medication-handover"),
+    // Step 1 of content/medication-handover/tour.ts: Rosa's Health screen in her wallet.
+    tour: { demo: "medication-handover", app: "wallet", path: "health", step: "health" },
     chapters: [
       {
         id: "intro",
         title: "Leaving hospital",
-        transcript: [],
+        transcript: [
+          "Rosa is going home from hospital. Her medicines have changed: one stopped, one dose raised, one new.",
+          "Usually that news travels by letter, and is typed again at the pharmacy and at her doctor's practice. Mistakes happen at each retyping.",
+          "Rosa's medication list is in her pod.",
+        ],
       },
       {
         id: "discharge",
         title: "Written once",
-        transcript: [],
+        transcript: [
+          "On the ward, the pharmacist records the three changes, with a reason for each. The list is written once, in a standard health format, where everyone else will read it.",
+        ],
       },
       {
         id: "grants",
         title: "Three grants, three scopes",
-        transcript: [],
+        transcript: [
+          "Rosa decides who can see it.",
+          "Her pharmacy can read her medicines and allergies. Her doctor's practice can read and update her health record. Her son, Alex, can read the list, because he helps with her care.",
+        ],
       },
       {
         id: "pharmacy",
         title: "The pharmacy",
-        transcript: [],
+        transcript: [
+          "The pharmacist opens the list and sees what changed since the last supply.",
+          "They dispense, and record it in the pod.",
+          "The pharmacy saw medicines and allergies. It did not see the discharge summary.",
+        ],
       },
       {
         id: "practice",
         title: "The practice",
-        transcript: [],
+        transcript: [
+          "A week later, Rosa's doctor opens the same list.",
+          "They stop a duplicate. That change is written to the same record, with the doctor's name against it.",
+          "The pharmacy sees it on its next read. The practice and the pharmacy never exchanged a message.",
+          "And Alex sees the current list in his own wallet, read-only.",
+        ],
       },
       {
         id: "revoke",
         title: "Changing pharmacy",
-        transcript: [],
+        transcript: [
+          "Rosa moves to a pharmacy nearer home, and withdraws the old one's access.",
+          "Its next read is refused. It keeps its own dispensing records, as it must. It no longer sees the live list.",
+        ],
       },
       {
         id: "ledger",
         title: "One list",
-        transcript: [],
+        transcript: [
+          "One list, three organisations writing to it, every change signed with a name and a reason.",
+          "If your organisation works with health data, help us shape this one. Join the EDMA Solid Community of Practice.",
+        ],
       },
     ],
   },
@@ -400,38 +426,63 @@ export const DEMOS: readonly Demo[] = [
       "Income, cash flow and a credit summary arrive as credentials; two lenders quote from a proof, and the chosen one reads under a 30-day grant.",
     sectors: ["Finance"],
     durationSeconds: 220,
-    status: "coming",
+    status: "live",
     media: mediaFor("small-dollar-lending"),
+    // Step 1 of content/small-dollar-lending/tour.ts: Maya's empty pod, in her wallet.
+    tour: { demo: "small-dollar-lending", app: "wallet", path: "lending", step: "vault" },
     chapters: [
       {
         id: "intro",
         title: "Two thousand dollars, this week",
-        transcript: [],
+        transcript: [
+          "Maya's car has broken down, and she needs two thousand dollars to fix it. Her credit file is thin. Her income and her bank account tell a better story.",
+          "Maya has a pod. It is empty.",
+        ],
       },
       {
         id: "fill",
         title: "Filling it",
-        transcript: [],
+        transcript: [
+          "An identity service checks who she is, once, and gives her a credential.",
+          "Her employer's payroll provider states her income. This is the same application you saw in the mortgage demo, issuing to a different person.",
+          "Her bank summarises her account: regular deposits, and no returned payments in ninety days.",
+          "And the credit bureau adds its view: a score of six hundred and twelve, from a short history.",
+        ],
       },
       {
         id: "shop",
         title: "Two quotes, nothing handed over",
-        transcript: [],
+        transcript: [
+          "Maya asks two lenders for a quote. Each receives a proof that she clears its thresholds. Neither receives her name, her income or her transactions.",
+        ],
       },
       {
         id: "decide",
         title: "One decision, two models",
-        transcript: [],
+        transcript: [
+          "She picks one and applies. The lender is granted her identity, income and cash-flow records for thirty days, and the consent is recorded before the first read.",
+          "The lender shows both ways of deciding. On the credit score alone, she is declined. With cash flow as well, she is approved.",
+          "The loan disclosure is written to her pod. It is hers to keep.",
+          "The bank that looked only at the score sends its decline, with reasons, to the same place.",
+        ],
       },
       {
         id: "payout",
         title: "Paid out",
-        transcript: [],
+        transcript: [
+          "A payment service sends the money to her card. It is granted one record, once: where to pay. It sees nothing else.",
+        ],
       },
       {
         id: "repay",
         title: "Repaying, and leaving",
-        transcript: [],
+        transcript: [
+          "Each payment made on time is added to a repayment credential in her pod, and reported to the bureau. The thin file gets thicker.",
+          "When the loan is paid off, Maya withdraws the lender's access.",
+          "The lender asks for her bank data again, and the pod refuses.",
+          "Five issuers, two lenders, one payment service. The next time Maya applies for anything, the pod is already full.",
+          "Try it from the welcome page, or join us at the EDMA Solid Community of Practice.",
+        ],
       },
     ],
   },

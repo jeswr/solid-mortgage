@@ -1,0 +1,14 @@
+@prefix fhir: <http://hl7.org/fhir/>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+<https://pods.example/pods/rosa/medications/lisinopril> a fhir:MedicationStatement;
+  fhir:nodeRole fhir:treeRoot;
+  fhir:id [ fhir:v "lisinopril" ];
+  fhir:status [ fhir:v "recorded" ];
+  fhir:medication [ fhir:concept [
+    fhir:coding ( [ fhir:system [ fhir:v "http://www.nlm.nih.gov/research/umls/rxnorm"^^xsd:anyURI ]; fhir:code [ fhir:v "29046" ]; fhir:display [ fhir:v "lisinopril" ] ] );
+    fhir:text [ fhir:v "Lisinopril 20 mg tablet" ] ] ];
+  fhir:subject [ fhir:reference [ fhir:v "https://pods.example/pods/rosa/profile/card#me" ]; fhir:link <https://pods.example/pods/rosa/profile/card#me>; fhir:display [ fhir:v "Rosa Rivera" ] ];
+  fhir:dateAsserted [ fhir:v "2026-09-10T11:00:00Z"^^xsd:dateTime ];
+  fhir:dosage ( [ fhir:text [ fhir:v "One tablet each morning" ] ] );
+  fhir:adherence [
+    fhir:code [ fhir:coding ( [ fhir:system [ fhir:v "http://hl7.org/fhir/CodeSystem/medication-statement-adherence"^^xsd:anyURI ]; fhir:code [ fhir:v "taking-as-directed" ] ] ) ] ].
