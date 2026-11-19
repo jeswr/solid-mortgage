@@ -13,6 +13,7 @@
  */
 
 import {
+  AccessRequest,
   AgentProfile,
   buildClosingDisclosure,
   buildClosingRecord,
@@ -85,7 +86,14 @@ import {
   sign,
   statusListOf,
 } from "./issuers.js";
-import { deliver, readMessage, shareInOwnPod } from "./messages.js";
+import {
+  awaitReply,
+  claimMessage,
+  deliver,
+  findMember,
+  readMessage,
+  shareInOwnPod,
+} from "./messages.js";
 import {
   openPrequalification,
   type PrequalifyingLender,
@@ -307,10 +315,24 @@ export const lenderBReceived = async (world: World): Promise<void> => {
 
 export const CREDIT_AUTHORISATION = "consents/g4-credit-report-authorisation";
 
-/** Step 7. Juniper asks; Alex approves the grant and signs the credit-report authorisation. */
-export const approveApplicationAccess = async (world: World): Promise<void> => {
-  const request = await requestAccess(world, "G4", "10:00");
-  await approveRequest(world, request, "10:02");
+/** Throw unless grant `code` is active: a completion half runs only after Alex approved. */
+async function requireActive(world: World, code: GrantCode): Promise<void> {
+  const record = (await grantRecords(world)).find((candidate) => candidate.code === code);
+  if (record?.state !== "active") {
+    throw new Error(`${code} is not active: Alex has to approve the request in the wallet first`);
+  }
+}
+
+/** Step 7, first half (Juniper's Start screen). Juniper asks for G4. Returns the request URL. */
+export const requestApplicationAccess = (world: World): Promise<string> =>
+  requestAccess(world, "G4", "10:00");
+
+/**
+ * Step 7, second half, after Alex approved G4 in the wallet: Alex's credit-report authorisation
+ * is recorded. Safe to call again while G4 is active: it rewrites the same record.
+ */
+export const completeApplicationAccess = async (world: World): Promise<void> => {
+  await requireActive(world, "G4");
   // The authorisation is a record of its own: the lender has a permissible purpose because
   // Alex asked for credit. The grant makes this one record readable by the bureau.
   await putResource(
@@ -326,6 +348,12 @@ export const approveApplicationAccess = async (world: World): Promise<void> => {
       target: webid(world, "bureau"),
     }),
   );
+};
+
+/** Step 7 in one call: Juniper asks; Alex approves the grant and signs the credit-report authorisation. */
+export const approveApplicationAccess = async (world: World): Promise<void> => {
+  await approveRequest(world, await requestApplicationAccess(world), "10:02");
+  await completeApplicationAccess(world);
 };
 
 /** The six pieces of information that make an application under Regulation Z. */
@@ -396,7 +424,8 @@ export const submitApplication = async (world: World): Promise<void> => {
 /** What the agents do when a message lands in their inbox. Each acts only as its organisation. */
 export const agents = {
   /** Quillon checks the borrower's authorisation in the pod, then releases the report to Juniper. */
-  async bureauFulfilCreditOrder(world: World, messageUrl: string): Promise<string> {
+  async bureauFulfilCreditOrder(world: World, messageUrl: string): Promise<string | undefined> {
+    if (!(await claimMessage(world, "bureau", messageUrl, "11:01"))) return undefined;
     const bureau = world.fetchAs("bureau");
     const message = await readMessage(world, "bureau", messageUrl);
     const authorisationUrl = alexUrl(world, CREDIT_AUTHORISATION);
@@ -449,7 +478,8 @@ export const agents = {
   },
 
   /** Castellan reads the three credentials at source, by reference, and returns its findings. */
-  async ausRunCasefile(world: World, messageUrl: string): Promise<string> {
+  async ausRunCasefile(world: World, messageUrl: string): Promise<string | undefined> {
+    if (!(await claimMessage(world, "aus", messageUrl, "11:16"))) return undefined;
     const aus = world.fetchAs("aus");
     const message = await readMessage(world, "aus", messageUrl);
     const casefile = `casefiles/${LOAN.loanNumber}/`;
@@ -502,13 +532,15 @@ export const agents = {
     world: World,
     owner: "appraisal" | "title",
     messageUrl: string,
-  ): Promise<string> {
+  ): Promise<string | undefined> {
+    if (!(await claimMessage(world, owner, messageUrl, "09:35"))) return undefined;
     await readMessage(world, owner, messageUrl);
     return requestAccess(world, owner === "appraisal" ? "G5" : "G6", "09:40");
   },
 
   /** Juniper, as creditor, gives the applicant a copy of the appraisal. */
   async lenderReceiveAppraisal(world: World, messageUrl: string): Promise<void> {
+    if (!(await claimMessage(world, "lender", messageUrl, "15:05"))) return;
     const lender = world.fetchAs("lender");
     const message = await readMessage(world, "lender", messageUrl);
     const [reportUrl] = [...message.objectIris];
@@ -533,7 +565,8 @@ export const agents = {
   },
 
   /** Ledgerly answers a refresh request from its own payroll record: a new credential, the old one revoked. */
-  async payrollRefresh(world: World, messageUrl: string): Promise<string> {
+  async payrollRefresh(world: World, messageUrl: string): Promise<string | undefined> {
+    if (!(await claimMessage(world, "payroll", messageUrl, "09:25"))) return undefined;
     const message = await readMessage(world, "payroll", messageUrl);
     const entry = CREDENTIALS["employment-income"];
     const credentialId = alexUrl(world, entry.path);
@@ -580,7 +613,8 @@ export const agents = {
   },
 
   /** The county records the two instruments. The register is public: no pod of Alex's is involved. */
-  async countyRecord(world: World, messageUrl: string): Promise<string> {
+  async countyRecord(world: World, messageUrl: string): Promise<string | undefined> {
+    if (!(await claimMessage(world, "county", messageUrl, "15:35"))) return undefined;
     const county = world.fetchAs("county");
     await readMessage(world, "county", messageUrl);
     const instruments = [
@@ -633,7 +667,8 @@ export const agents = {
   },
 
   /** Castellan accepts delivery of the closed loan and confirms the purchase. */
-  async ausPurchaseLoan(world: World, messageUrl: string): Promise<string> {
+  async ausPurchaseLoan(world: World, messageUrl: string): Promise<string | undefined> {
+    if (!(await claimMessage(world, "aus", messageUrl, "13:55"))) return undefined;
     const aus = world.fetchAs("aus");
     const message = await readMessage(world, "aus", messageUrl);
     for (const object of message.objectIris) await readDataset(aus, object);
@@ -664,6 +699,35 @@ export const agents = {
   /** The wallet applies expiry: grants whose end has been reached lose their ACL entries. */
   walletApplyExpiries: (world: World): Promise<string[]> => applyExpiries(world),
 } as const;
+
+/**
+ * The access request `code` waiting in Alex's inbox. Used when the asking organisation's agent
+ * found the order already claimed: whoever claimed it posts the request.
+ */
+async function awaitRequest(world: World, code: GrantCode, timeoutMs = 20_000): Promise<string> {
+  const alex = world.fetchAs("alex");
+  const inbox = alexUrl(world, "inbox/");
+  const until = Date.now() + timeoutMs;
+  for (;;) {
+    const found = await findMember(alex, inbox, async (url) =>
+      new AccessRequest(url, await readDataset(alex, url), DataFactory).grantCode === code
+        ? url
+        : undefined,
+    );
+    if (found !== undefined) return found;
+    if (Date.now() >= until) throw new Error(`no ${code} request reached Alex's inbox`);
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+}
+
+/** Wait until a document Alex holds exists: what another caller is writing has landed. */
+async function awaitAlexDocument(world: World, url: string, timeoutMs = 20_000): Promise<void> {
+  const until = Date.now() + timeoutMs;
+  while (!(await world.fetchAs("alex")(url, { method: "HEAD" })).ok) {
+    if (Date.now() >= until) throw new Error(`${url} did not appear`);
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+}
 
 function serviceOrder(
   world: World,
@@ -714,7 +778,9 @@ export const pullCreditAndRunAus = async (world: World): Promise<void> => {
     time: "11:00",
     to: "bureau",
   });
-  const delivery = await agents.bureauFulfilCreditOrder(world, orderMessage);
+  const delivery =
+    (await agents.bureauFulfilCreditOrder(world, orderMessage)) ??
+    (await awaitReply(world, "lender", orderMessage));
   const [reportUrl] = [...(await readMessage(world, "lender", delivery)).objectIris];
   if (reportUrl === undefined) throw new Error("the bureau delivered no report");
   await readDataset(lender, reportUrl);
@@ -759,7 +825,8 @@ export const pullCreditAndRunAus = async (world: World): Promise<void> => {
     time: "11:15",
     to: "aus",
   });
-  const findings = await agents.ausRunCasefile(world, casefile);
+  const findings =
+    (await agents.ausRunCasefile(world, casefile)) ?? (await awaitReply(world, "lender", casefile));
   for (const object of (await readMessage(world, "lender", findings)).objectIris) {
     await readDataset(lender, object);
   }
@@ -827,7 +894,10 @@ export const orderServices = async (world: World): Promise<void> => {
       time: "09:30",
       to: service,
     });
-    requests.push(await agents.requestFromOrder(world, service, message));
+    requests.push(
+      (await agents.requestFromOrder(world, service, message)) ??
+        (await awaitRequest(world, service === "appraisal" ? "G5" : "G6")),
+    );
   }
   world.note({
     kind: "no-solid",
@@ -883,6 +953,8 @@ export const submitAppraisal = async (world: World): Promise<void> => {
     to: "lender",
   });
   await agents.lenderReceiveAppraisal(world, delivery);
+  // When Juniper's own agent took the delivery in hand first, wait for the copy it writes.
+  await awaitAlexDocument(world, alexUrl(world, "mortgage/juniper/appraisal"));
   // The report is delivered, so Plumbline's access ends.
   await agents.walletApplyExpiries(world);
 };
@@ -995,7 +1067,8 @@ export const refreshEmploymentAndClear = async (world: World): Promise<void> => 
     time: "09:00",
     to: "payroll",
   });
-  const delivery = await agents.payrollRefresh(world, request);
+  const delivery =
+    (await agents.payrollRefresh(world, request)) ?? (await awaitReply(world, "lender", request));
   await readMessage(world, "lender", delivery);
   await keepPointer(
     world,
@@ -1187,7 +1260,9 @@ export const recordWithCounty = async (world: World): Promise<void> => {
     time: "15:30",
     to: "county",
   });
-  const confirmation = await agents.countyRecord(world, submission);
+  const confirmation =
+    (await agents.countyRecord(world, submission)) ??
+    (await awaitReply(world, "title", submission));
   const recorded = [...(await readMessage(world, "title", confirmation)).objectIris].sort();
   const references: string[] = [];
   for (const url of recorded) {
@@ -1253,7 +1328,9 @@ export const deliverLoan = async (world: World): Promise<void> => {
     time: "13:00",
     to: "aus",
   });
-  const purchase = await agents.ausPurchaseLoan(world, delivery);
+  const purchase =
+    (await agents.ausPurchaseLoan(world, delivery)) ??
+    (await awaitReply(world, "lender", delivery));
   for (const object of (await readMessage(world, "lender", purchase)).objectIris) {
     await readDataset(lender, object);
   }
@@ -1319,8 +1396,11 @@ export const announceServicingTransfer = async (world: World): Promise<void> => 
   );
 };
 
-/** Step 21. The new servicer asks for three things; Alex approves and sets up autopay. */
-export const connectServicer = async (world: World): Promise<void> => {
+/**
+ * Step 21, first half (Marigold's Connect screen). Juniper tells Marigold the loan is boarding,
+ * and Marigold asks Alex for G8. Returns the request URL.
+ */
+export const requestServicerAccess = async (world: World): Promise<string> => {
   await deliver(world, {
     from: "lender",
     kind: MORT.MessageKind_ServicingBoarding,
@@ -1329,8 +1409,16 @@ export const connectServicer = async (world: World): Promise<void> => {
     time: "08:00",
     to: "servicer",
   });
-  const request = await requestAccess(world, "G8", "10:00");
-  await approveRequest(world, request, "10:02");
+  return requestAccess(world, "G8", "10:00");
+};
+
+/**
+ * Step 21, second half, after Alex approved G8 in the wallet: Alex sets up autopay, Marigold
+ * reads what G8 gives it and writes its welcome notice and escrow statement. Safe to call again
+ * while G8 is active: every write replaces the same resource.
+ */
+export const completeServicerConnection = async (world: World): Promise<void> => {
+  await requireActive(world, "G8");
   await putResource(
     world.fetchAs("alex"),
     buildPaymentMandate({
@@ -1384,6 +1472,12 @@ export const connectServicer = async (world: World): Promise<void> => {
       name: "Escrow account as transferred",
     }),
   );
+};
+
+/** Step 21 in one call: the new servicer asks for three things; Alex approves and sets up autopay. */
+export const connectServicer = async (world: World): Promise<void> => {
+  await approveRequest(world, await requestServicerAccess(world), "10:02");
+  await completeServicerConnection(world);
 };
 
 /** Step 22. Alex withdraws Juniper's grant. */
