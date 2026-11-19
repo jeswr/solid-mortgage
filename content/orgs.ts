@@ -5,7 +5,12 @@
  * rename is a change to this file only. Theme colours are original values, never a real
  * organisation's palette.
  */
-import type { OrgRegistry, PodHolder } from "@mortgage/demo-kit/registry";
+import {
+  ORG_SLUGS,
+  type OrgRegistry,
+  type OrgSlug,
+  type PodHolder,
+} from "@mortgage/demo-kit/registry";
 
 export const POD_HOLDER: PodHolder = Object.freeze({ name: "Alex Rivera", owner: "alex" });
 
@@ -167,3 +172,12 @@ export const ORGS: OrgRegistry = Object.freeze({
     title: "State Online Services",
   },
 });
+
+/**
+ * The apps each demo uses. The registry grows as demos are added, so a demo's own count (the
+ * mortgage video's "Thirteen applications.") is taken from its list here, never from `ORGS`.
+ */
+export const DEMO_APPS = Object.freeze({
+  mortgage: ORG_SLUGS.filter((slug) => slug !== "state"),
+  "moving-house": ["wallet", "state", "county", "bank", "insurer", "payroll", "servicer"],
+} satisfies Record<string, readonly OrgSlug[]>);

@@ -1,7 +1,7 @@
 // AUTHORED-BY Claude Opus 5.5
 import { displayName, ORG_SLUGS, podOwners } from "@mortgage/demo-kit/registry";
 import { describe, expect, it } from "vitest";
-import { ORGS } from "../orgs.js";
+import { DEMO_APPS, ORGS } from "../orgs.js";
 
 describe("organisation registry", () => {
   it("has one record per organisation app, keyed by its own slug", () => {
@@ -29,5 +29,17 @@ describe("organisation registry", () => {
     expect(owners).not.toContain("wallet");
     expect(owners).not.toContain("lender-desk");
     expect(owners).toHaveLength(13); // Alex plus the twelve organisations other than Cairn
+  });
+});
+
+describe("the apps each demo uses", () => {
+  it("the mortgage keeps its thirteen applications and twelve organisations", () => {
+    expect(DEMO_APPS.mortgage).toHaveLength(13);
+    expect(new Set(DEMO_APPS.mortgage.map((slug) => ORGS[slug].organisation)).size).toBe(12);
+  });
+
+  it("moving house: Alex's wallet and the six organisations that read the address", () => {
+    expect(DEMO_APPS["moving-house"]).toHaveLength(7);
+    for (const slug of DEMO_APPS["moving-house"]) expect(ORGS[slug]).toBeDefined();
   });
 });
