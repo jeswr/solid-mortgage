@@ -740,9 +740,25 @@ export class SolidLens extends HTMLElement {
     );
   }
 
+  /**
+   * Pinned cards belong to the guided path: the withdrawal card shows in its step and the next
+   * one ("Next: see what … gets"), the before/after card only in the step of the refusal.
+   * Without a step (free play) they show until dismissed.
+   */
+  private pinnedVisible(p: Pinned): boolean {
+    const current = this.step?.id;
+    if (current === undefined || this.mode === "free") return true;
+    const at = p.rec.step;
+    if (at === undefined) return true;
+    if (p.type === "compare") return at === current;
+    const order = this.steps.map((s) => s.id);
+    const gap = order.indexOf(current) - order.indexOf(at);
+    return at === current || (order.includes(at) && order.includes(current) && gap === 1);
+  }
+
   private renderPinned(): HTMLElement | null {
     const p = this.pinned;
-    if (!p) return null;
+    if (!p || !this.pinnedVisible(p)) return null;
     const m = this.model;
     const name = m.nameOf(p.org);
     const dismiss = h(

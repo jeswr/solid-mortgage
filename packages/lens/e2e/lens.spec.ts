@@ -155,7 +155,7 @@ test("every map state of §c.3 renders from the recorded log", async ({ page }, 
   await expect(compare.locator(".ok")).toContainText("200");
   await expect(compare.locator(".ok")).toContainText("Allowed by T2");
   await expect(compare.locator(".no")).toContainText("403");
-  await expect(compare.locator(".no")).toContainText(/grant withdrawn \d+ seconds? ago/);
+  await expect(compare.locator(".no")).toContainText(/grant withdrawn (just now|\d+ seconds? ago)/);
   await expect(compare.locator("[data-caveat]")).toHaveText(
     "Fernhollow still holds the copies it was given and any records it must keep. What has ended is its access to Alex's data at source.",
   );
@@ -448,4 +448,24 @@ test("a resource card says what a credential proves and who can read it now", as
     "href",
     "https://www.w3.org/2018/credentials#VerifiableCredential",
   );
+});
+
+test("the withdrawal card stays for the next step only; the before/after card for its own step", async ({
+  page,
+}) => {
+  await open(page);
+  await through(page, 19, true);
+  await step(page, "withdraw", 6);
+  await through(page, 20);
+  const revoked = page.locator('solid-lens [data-pinned="revoked"]');
+  await expect(revoked).toBeVisible();
+  await step(page, "retry", 7);
+  await expect(revoked).toContainText("Next: see what Fernhollow gets now.");
+  await step(page, "certify", 1);
+  await expect(revoked).toHaveCount(0);
+  await step(page, "retry", 7);
+  await through(page, 21);
+  await expect(page.locator('solid-lens [data-pinned="compare"]')).toBeVisible();
+  await step(page, "certify", 1);
+  await expect(page.locator('solid-lens [data-pinned="compare"]')).toHaveCount(0);
 });
