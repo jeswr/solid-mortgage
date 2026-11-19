@@ -7,9 +7,15 @@
  * status entry, so a copy of the old licence fails its status check at source.
  */
 
-import { buildAgentProfile, RESOURCE_TARGET_CLASSES } from "@mortgage/data-model";
+import {
+  buildAgentProfile,
+  buildCredentialPointer,
+  CredentialPointer,
+  RESOURCE_TARGET_CLASSES,
+} from "@mortgage/data-model";
 import type { IssuedCredential, StatusListClient } from "@mortgage/vc-kit";
 import type { Quad } from "@rdfjs/types";
+import { DataFactory } from "n3";
 import { BORROWER, STATUS_LIST_LIFETIME_DAYS } from "../mortgage/facts.js";
 import { membersOf } from "../mortgage/grants.js";
 import { digestOf, keyId, statusListUrl } from "../mortgage/issuers.js";
@@ -20,14 +26,12 @@ import {
   podUrl,
   put,
   putResource,
+  readDataset,
   statusOf,
   type World,
   webid,
 } from "../mortgage/world.js";
 import { ORGS } from "../orgs.js";
-import { buildCredentialPointer, CredentialPointer } from "@mortgage/data-model";
-import { DataFactory } from "n3";
-import { readDataset } from "../mortgage/world.js";
 import { type AddressValue, streetLine } from "./facts.js";
 
 const STATE = "state" as const;

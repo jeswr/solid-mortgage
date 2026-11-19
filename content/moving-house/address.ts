@@ -13,13 +13,8 @@
  * (`mshape:AddressRecordShape`, `mshape:DataProductShape`) before anything is written.
  */
 
-import {
-  DCTERMS,
-  type MortgageResourceKind,
-  MortgageResource,
-  ODRL,
-  SCHEMA,
-} from "@mortgage/data-model";
+import { DCTERMS, MortgageResource, type MortgageResourceKind, SCHEMA } from "@mortgage/data-model";
+import type { DatasetCore } from "@rdfjs/types";
 import {
   LiteralAs,
   LiteralFrom,
@@ -32,7 +27,6 @@ import {
   SetFrom,
   TermWrapper,
 } from "@rdfjs/wrapper";
-import type { DatasetCore } from "@rdfjs/types";
 import { DataFactory, Store } from "n3";
 import { type AddressValue, fullAddress, streetLine } from "./facts.js";
 
@@ -71,6 +65,9 @@ export const DCAT = Object.freeze({
 });
 
 const DPV_HAS_PURPOSE = `${DPV_NS}hasPurpose`;
+const DCT_MODIFIED = "http://purl.org/dc/terms/modified";
+const DCT_TITLE = "http://purl.org/dc/terms/title";
+const ODRL_HAS_POLICY = "http://www.w3.org/ns/odrl/2/hasPolicy";
 const SCHEMA_NS = "https://schema.org/";
 const SCHEMA_ADDRESS_COUNTRY = `${SCHEMA_NS}addressCountry`;
 
@@ -159,7 +156,7 @@ export class AddressRecord extends MortgageResource {
     return xsdDate(this, SCHEMA.validFrom);
   }
   get modified(): Date {
-    return dateTime(this, DCTERMS.modified);
+    return dateTime(this, DCT_MODIFIED);
   }
   /** Evidence (Alex's record) or the source read (an organisation's copy). */
   get derivedFrom(): Set<string> {
@@ -181,13 +178,13 @@ export class AddressRecord extends MortgageResource {
   }
   /** The ODRL agreement an organisation's copy was read under. */
   get policy(): string | undefined {
-    return optIri(this, ODRL.hasPolicy);
+    return optIri(this, ODRL_HAS_POLICY);
   }
   set policy(value: string | undefined) {
-    setOptIri(this, ODRL.hasPolicy, value);
+    setOptIri(this, ODRL_HAS_POLICY, value);
   }
   /** The address as a plain value. */
-  get value(): AddressValue {
+  get address(): AddressValue {
     const unit = this.unit;
     return {
       country: this.country,
@@ -237,7 +234,7 @@ export function buildAddressRecord(init: AddressRecordInit): AddressRecord {
   setStr(record, LOCN.postName, a.locality);
   setStr(record, LOCN.postCode, a.postalCode);
   setXsdDate(record, SCHEMA.validFrom, init.validFrom);
-  setDateTime(record, DCTERMS.modified, init.modified);
+  setDateTime(record, DCT_MODIFIED, init.modified);
   for (const source of init.derivedFrom ?? []) record.derivedFrom.add(source);
   record.generatedAt = init.generatedAt;
   record.invalidatedAt = init.invalidatedAt;
@@ -251,7 +248,7 @@ export class DataProduct extends MortgageResource {
     return "data-product";
   }
   get title(): string {
-    return str(this, DCTERMS.title);
+    return str(this, DCT_TITLE);
   }
   get description(): string {
     return str(this, DCTERMS.description);
@@ -272,10 +269,10 @@ export class DataProduct extends MortgageResource {
   }
   /** The consumers' agreements. */
   get policies(): Set<string> {
-    return iriSet(this, ODRL.hasPolicy);
+    return iriSet(this, ODRL_HAS_POLICY);
   }
   get modified(): Date {
-    return dateTime(this, DCTERMS.modified);
+    return dateTime(this, DCT_MODIFIED);
   }
 }
 
@@ -294,7 +291,7 @@ export interface DataProductInit {
 export function buildDataProduct(init: DataProductInit): DataProduct {
   const product = root(DataProduct, init.iri);
   product.typeIris.add(DPROD.DataProduct);
-  setStr(product, DCTERMS.title, init.title);
+  setStr(product, DCT_TITLE, init.title);
   setStr(product, DCTERMS.description, init.description);
   setIri(product, DPROD.dataProductOwner, init.owner);
   setStr(product, DPROD.purpose, init.purpose);
@@ -303,9 +300,14 @@ export function buildDataProduct(init: DataProductInit): DataProduct {
   const portIri = `${init.iri}#output-port`;
   setIri(product, DPROD.outputPort, portIri);
   const port = new TermWrapper(portIri, product.dataset, product.factory);
-  RequiredAs.object(port, "http://www.w3.org/1999/02/22-rdf-syntax-ns#type", DCAT.DataService, NamedNodeFrom.string);
+  RequiredAs.object(
+    port,
+    "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+    DCAT.DataService,
+    NamedNodeFrom.string,
+  );
   setIri(port, DCAT.endpointURL, init.endpoint);
   for (const policy of init.policies) product.policies.add(policy);
-  setDateTime(product, DCTERMS.modified, init.modified);
+  setDateTime(product, DCT_MODIFIED, init.modified);
   return product;
 }
