@@ -1,0 +1,357 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix cred: <https://www.w3.org/2018/credentials#> .
+@prefix sec: <https://w3id.org/security#> .
+@prefix fibo-fbc-dae-dbt: <https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Debt/> .
+@prefix fibo-loan-ln-ln: <https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/Loans/> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+
+# AUTHORED-BY Claude Opus 5.5
+# Small business loan (demo 6, flows.md section 6): the revenue department's tax compliance
+# credential, the bank's cash flow record written into the business's pod, the loan terms with
+# their covenants, and the lender's own cash flow assessment.
+
+mshape:TaxComplianceCredentialShape
+  a sh:NodeShape ;
+  sh:targetClass mort:TaxComplianceCredential ;
+  sh:closed true ;
+  sh:ignoredProperties ( sec:proof ) ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue cred:VerifiableCredential ;
+  ] ;
+  sh:property [
+    sh:path cred:issuer ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path cred:validFrom ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dateTime ;
+    sh:lessThan cred:validUntil ;
+  ] ;
+  sh:property [
+    sh:path cred:validUntil ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dateTime ;
+  ] ;
+  sh:property [
+    sh:path cred:credentialStatus ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+  ] ;
+  sh:property [
+    sh:path cred:credentialSubject ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:node mshape:TaxComplianceSubjectShape ;
+  ] ;
+  sh:property [
+    sh:path cred:credentialSchema ;
+    sh:nodeKind sh:IRI ;
+  ] .
+
+mshape:TaxComplianceSubjectShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue schema:Organization ;
+  ] ;
+  sh:property [
+    sh:path schema:name ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:taxIdLast4 ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:pattern "^[0-9]{4}$" ;
+  ] ;
+  sh:property [
+    sh:path mort:taxComplianceStatus ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:in ( mort:TaxComplianceStatus-Compliant mort:TaxComplianceStatus-NotCompliant ) ;
+  ] ;
+  sh:property [
+    sh:path mort:filingsCurrentThrough ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+  ] ;
+  sh:property [
+    sh:path mort:annualTurnoverBand ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:in ( mort:TurnoverBand-Under500k mort:TurnoverBand-500kTo1M mort:TurnoverBand-1MTo5M mort:TurnoverBand-Over5M ) ;
+  ] .
+
+mshape:CashFlowRecordShape
+  a sh:NodeShape ;
+  sh:targetClass mort:CashFlowRecord ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue mort:CashFlowRecord ;
+  ] ;
+  sh:property [
+    sh:path schema:name ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path dcterms:subject ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:message "the account holder's WebID" ;
+  ] ;
+  sh:property [
+    sh:path dcterms:creator ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:message "the bank's WebID" ;
+  ] ;
+  sh:property [
+    sh:path dcterms:issued ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dateTime ;
+  ] ;
+  sh:property [
+    sh:path mort:accountLast4 ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:pattern "^[0-9]{4}$" ;
+  ] ;
+  sh:property [
+    sh:path mort:monthlyCashFlow ;
+    sh:minCount 1 ;
+    sh:maxCount 36 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonthlyCashFlowShape ;
+  ] .
+
+mshape:MonthlyCashFlowShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue mort:MonthlyCashFlow ;
+  ] ;
+  sh:property [
+    sh:path mort:periodStart ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+  ] ;
+  sh:property [
+    sh:path mort:inflowUsd ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive 0.0 ;
+  ] ;
+  sh:property [
+    sh:path mort:outflowUsd ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive 0.0 ;
+  ] ;
+  sh:property [
+    sh:path mort:debtServiceUsd ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive 0.0 ;
+  ] ;
+  sh:property [
+    sh:path mort:closingBalanceUsd ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal ;
+  ] .
+
+mshape:BusinessLoanTermsShape
+  a sh:NodeShape ;
+  sh:targetClass mort:BusinessLoanTerms ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue mort:BusinessLoanTerms ;
+  ] ;
+  sh:property [
+    sh:path schema:name ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:loanNumber ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path fibo-fbc-dae-dbt:hasBorrower ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path dcterms:creator ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path dcterms:issued ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dateTime ;
+  ] ;
+  sh:property [
+    sh:path fibo-loan-ln-ln:hasPrincipalAmount ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path schema:interestRate ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive 0.0 ;
+    sh:maxInclusive 25.0 ;
+    sh:message "interestRate is the note rate in percent (e.g. 8.25)" ;
+  ] ;
+  sh:property [
+    sh:path mort:loanTermMonths ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:integer ;
+    sh:minInclusive 6 ;
+    sh:maxInclusive 300 ;
+  ] ;
+  sh:property [
+    sh:path mort:monthlyPrincipalAndInterest ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:MonetaryAmountShape ;
+  ] ;
+  sh:property [
+    sh:path mort:covenant ;
+    sh:minCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:FinancialCovenantShape ;
+  ] .
+
+mshape:FinancialCovenantShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue mort:FinancialCovenant ;
+  ] ;
+  sh:property [
+    sh:path schema:name ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:covenantMetric ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:in ( mort:CovenantMetric-DebtServiceCoverage mort:CovenantMetric-MinimumAverageBalance ) ;
+  ] ;
+  sh:property [
+    sh:path mort:covenantThreshold ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive 0.0 ;
+  ] .
+
+mshape:CashFlowAssessmentShape
+  a sh:NodeShape ;
+  sh:targetClass mort:CashFlowAssessment ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue mort:CashFlowAssessment ;
+  ] ;
+  sh:property [
+    sh:path schema:name ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path dcterms:subject ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:message "the borrower's WebID" ;
+  ] ;
+  sh:property [
+    sh:path dcterms:creator ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path mort:checkedAt ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dateTime ;
+  ] ;
+  sh:property [
+    sh:path dcterms:source ;
+    sh:minCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:message "the pod resources the measures were taken from" ;
+  ] ;
+  sh:property [
+    sh:path mort:debtServiceCoverageRatio ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal ;
+  ] ;
+  sh:property [
+    sh:path mort:averageBalanceUsd ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal ;
+  ] ;
+  sh:property [
+    sh:path mort:covenantsMet ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:boolean ;
+  ] .

@@ -71,6 +71,7 @@ test("every shape document is bundled", () => {
     "service-order",
     "servicing-notice",
     "settlement-statement",
+    "small-business-loan",
     "subject-property",
     "support",
     "title-clear-credential",
@@ -83,7 +84,7 @@ test("every shape document is bundled", () => {
 test("every targeted resource shape is closed", () => {
   const store = shapesStore();
   const targeted = store.getSubjects(`${SH}targetClass`, null, null);
-  expect(targeted.length).toBe(40);
+  expect(targeted.length).toBe(44);
   for (const shape of targeted) {
     const closed = store.getObjects(shape, `${SH}closed`, null);
     expect(
@@ -223,6 +224,23 @@ const cases: readonly {
   {
     name: "cdd-decision-record",
     expectedViolations: ["InConstraintComponent", "MinCountConstraintComponent"],
+  },
+  // Small business loan (demo 6).
+  {
+    name: "tax-compliance-credential",
+    expectedViolations: ["InConstraintComponent", "PatternConstraintComponent"],
+  },
+  {
+    name: "cash-flow-record",
+    expectedViolations: ["MinInclusiveConstraintComponent", "MinCountConstraintComponent"],
+  },
+  {
+    name: "business-loan-terms",
+    expectedViolations: ["MaxInclusiveConstraintComponent", "InConstraintComponent"],
+  },
+  {
+    name: "cash-flow-assessment",
+    expectedViolations: ["MinCountConstraintComponent", "DatatypeConstraintComponent"],
   },
 ];
 

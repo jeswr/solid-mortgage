@@ -17,6 +17,7 @@ export const XSD = {
   date: `${XSD_NS}date`,
   dateTime: `${XSD_NS}dateTime`,
   decimal: `${XSD_NS}decimal`,
+  duration: `${XSD_NS}duration`,
 } as const;
 
 const SCHEMA_NS = "https://schema.org/";
@@ -145,6 +146,7 @@ export const ODRL = {
   read: `${ODRL_NS}read`,
   rightOperand: `${ODRL_NS}rightOperand`,
   target: `${ODRL_NS}target`,
+  timeInterval: `${ODRL_NS}timeInterval`,
   write: `${ODRL_NS}write`,
 } as const;
 

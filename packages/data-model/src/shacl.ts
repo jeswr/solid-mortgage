@@ -60,6 +60,11 @@ export const RESOURCE_TARGET_CLASSES = {
   // Moving-house demo (flows.md section 2).
   "address-record": "http://www.w3.org/ns/locn#Address",
   "data-product": "https://ekgf.github.io/dprod/DataProduct",
+  // Small business loan (demo 6, flows.md section 6).
+  "business-loan-terms": MORT.BusinessLoanTerms,
+  "cash-flow-assessment": MORT.CashFlowAssessment,
+  "cash-flow-record": MORT.CashFlowRecord,
+  "tax-compliance-credential": MORT.TaxComplianceCredential,
 } as const;
 
 /** The mortgage resource kinds validate() can be told to expect. */

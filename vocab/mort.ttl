@@ -1421,3 +1421,288 @@ mort:CddDecisionStatus-PendingReview
   skos:inScheme mort:CddDecisionStatusScheme ;
   skos:topConceptOf mort:CddDecisionStatusScheme ;
   rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+#################################################################
+# Small business loan (demo 6, flows.md section 6). A state
+# revenue department's tax compliance credential, a bank's
+# cash-flow record written into the business's pod, the loan
+# terms with their financial covenants, and the lender's own
+# cash-flow assessment. Amounts reuse schema:MonetaryAmount where
+# a shape already does; ratios and balances are xsd:decimal.
+#################################################################
+
+mort:TaxComplianceCredential
+  a owl:Class ;
+  rdfs:label "Tax compliance credential"@en ;
+  rdfs:comment "A verifiable credential in which a state revenue department attests that a business's tax filings are up to date and states the band its annual turnover falls in. The subject is the business's WebID."@en ;
+  skos:definition "A revenue department's attestation of a business's tax filing compliance and turnover band."@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:CashFlowRecord
+  a owl:Class ;
+  rdfs:label "Cash flow record"@en ;
+  rdfs:comment "A bank's monthly record of a business account's inflows, outflows, debt service and closing balance, written by the bank into the business's pod under a write-only grant. Not a credential: it carries no signature."@en ;
+  skos:definition "A bank's month-by-month cash flow record of a business account."@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:MonthlyCashFlow
+  a owl:Class ;
+  rdfs:label "Monthly cash flow"@en ;
+  rdfs:comment "One calendar month of a mort:CashFlowRecord."@en ;
+  skos:definition "One month of a business account's cash flow."@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:BusinessLoanTerms
+  a owl:Class ;
+  rdfs:label "Business loan terms"@en ;
+  rdfs:comment "The terms of an approved business loan as the lender sends them to the borrower: principal, rate, term, payment and the financial covenants the borrower agrees to meet while the loan is open."@en ;
+  skos:definition "The terms and financial covenants of an approved business loan."@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:FinancialCovenant
+  a owl:Class ;
+  rdfs:label "Financial covenant"@en ;
+  rdfs:comment "A financial condition a business borrower must keep meeting while a loan is open, tested at an interval, such as a minimum debt service coverage ratio."@en ;
+  skos:definition "A financial condition a borrower must keep meeting while a loan is open."@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:CashFlowAssessment
+  a owl:Class ;
+  rdfs:label "Cash flow assessment"@en ;
+  rdfs:comment "A lender's own record of the cash-flow measures it took from a borrower's cash flow record and which sources it read: at origination, or at a covenant test while the loan is open."@en ;
+  skos:definition "A lender's record of the cash-flow measures it took from a borrower's records."@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:taxComplianceStatus
+  a owl:ObjectProperty ;
+  rdfs:label "tax compliance status"@en ;
+  rdfs:comment "On a tax compliance credential's subject: whether the business's filings and payments are up to date, a concept of mort:TaxComplianceStatusScheme."@en ;
+  skos:definition "Whether a business's tax filings are up to date."@en ;
+  rdfs:range skos:Concept ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:filingsCurrentThrough
+  a owl:DatatypeProperty ;
+  rdfs:label "filings current through"@en ;
+  rdfs:comment "On a tax compliance credential's subject: the end of the last tax period for which every return was filed."@en ;
+  skos:definition "The end of the last tax period with every return filed."@en ;
+  rdfs:range xsd:date ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:annualTurnoverBand
+  a owl:ObjectProperty ;
+  rdfs:label "annual turnover band"@en ;
+  rdfs:comment "On a tax compliance credential's subject: the band the business's gross annual revenues fall in, a concept of mort:TurnoverBandScheme. The band, not the figure, is disclosed."@en ;
+  skos:definition "The band a business's gross annual revenues fall in."@en ;
+  rdfs:range skos:Concept ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:monthlyCashFlow
+  a owl:ObjectProperty ;
+  rdfs:label "monthly cash flow"@en ;
+  rdfs:comment "On a mort:CashFlowRecord: one of its months."@en ;
+  skos:definition "A month of a cash flow record."@en ;
+  rdfs:range mort:MonthlyCashFlow ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:periodStart
+  a owl:DatatypeProperty ;
+  rdfs:label "period start"@en ;
+  rdfs:comment "On a mort:MonthlyCashFlow: the first day of the month it covers."@en ;
+  skos:definition "The first day of the period a record covers."@en ;
+  rdfs:range xsd:date ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:inflowUsd
+  a owl:DatatypeProperty ;
+  rdfs:label "inflow (USD)"@en ;
+  rdfs:comment "On a mort:MonthlyCashFlow: money paid into the account in the month, in US dollars."@en ;
+  skos:definition "Money paid into an account in a period, in US dollars."@en ;
+  rdfs:range xsd:decimal ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:outflowUsd
+  a owl:DatatypeProperty ;
+  rdfs:label "outflow (USD)"@en ;
+  rdfs:comment "On a mort:MonthlyCashFlow: money paid out of the account in the month, debt service included, in US dollars."@en ;
+  skos:definition "Money paid out of an account in a period, in US dollars."@en ;
+  rdfs:range xsd:decimal ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:debtServiceUsd
+  a owl:DatatypeProperty ;
+  rdfs:label "debt service (USD)"@en ;
+  rdfs:comment "On a mort:MonthlyCashFlow: the part of the outflow that repaid existing debt (principal and interest), in US dollars."@en ;
+  skos:definition "Debt repayments in a period, in US dollars."@en ;
+  rdfs:range xsd:decimal ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:closingBalanceUsd
+  a owl:DatatypeProperty ;
+  rdfs:label "closing balance (USD)"@en ;
+  rdfs:comment "On a mort:MonthlyCashFlow: the account balance at the end of the month, in US dollars."@en ;
+  skos:definition "An account balance at the end of a period, in US dollars."@en ;
+  rdfs:range xsd:decimal ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:covenant
+  a owl:ObjectProperty ;
+  rdfs:label "covenant"@en ;
+  rdfs:comment "On a mort:BusinessLoanTerms: a financial covenant of the loan."@en ;
+  skos:definition "A financial covenant of a loan."@en ;
+  rdfs:range mort:FinancialCovenant ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:covenantMetric
+  a owl:ObjectProperty ;
+  rdfs:label "covenant metric"@en ;
+  rdfs:comment "On a mort:FinancialCovenant: what the covenant measures, a concept of mort:CovenantMetricScheme."@en ;
+  skos:definition "What a financial covenant measures."@en ;
+  rdfs:range skos:Concept ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:covenantThreshold
+  a owl:DatatypeProperty ;
+  rdfs:label "covenant threshold"@en ;
+  rdfs:comment "On a mort:FinancialCovenant: the least value of its metric that meets the covenant (a ratio, or US dollars for a balance)."@en ;
+  skos:definition "The least value of a covenant's metric that meets it."@en ;
+  rdfs:range xsd:decimal ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:debtServiceCoverageRatio
+  a owl:DatatypeProperty ;
+  rdfs:label "debt service coverage ratio"@en ;
+  rdfs:comment "On a mort:CashFlowAssessment: net operating cash flow divided by debt service, the new loan's payment included."@en ;
+  skos:definition "Net operating cash flow divided by debt service."@en ;
+  rdfs:range xsd:decimal ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:averageBalanceUsd
+  a owl:DatatypeProperty ;
+  rdfs:label "average balance (USD)"@en ;
+  rdfs:comment "On a mort:CashFlowAssessment: the mean of the monthly closing balances it read, in US dollars."@en ;
+  skos:definition "The mean monthly closing balance, in US dollars."@en ;
+  rdfs:range xsd:decimal ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:covenantsMet
+  a owl:DatatypeProperty ;
+  rdfs:label "covenants met"@en ;
+  rdfs:comment "On a mort:CashFlowAssessment: whether every covenant of the loan was met on the measures taken."@en ;
+  skos:definition "Whether every covenant was met."@en ;
+  rdfs:range xsd:boolean ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:TaxComplianceStatusScheme
+  a skos:ConceptScheme ;
+  rdfs:label "Tax compliance status scheme"@en ;
+  rdfs:comment "Whether a business's tax filings and payments are up to date."@en ;
+  skos:prefLabel "Tax compliance status scheme"@en ;
+  skos:definition "Whether a business's tax filings and payments are up to date."@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:TaxComplianceStatus-Compliant
+  a skos:Concept ;
+  rdfs:label "compliant"@en ;
+  rdfs:comment "Every return due has been filed and no assessed tax is unpaid."@en ;
+  skos:prefLabel "compliant"@en ;
+  skos:definition "Every return due has been filed and no assessed tax is unpaid."@en ;
+  skos:inScheme mort:TaxComplianceStatusScheme ;
+  skos:topConceptOf mort:TaxComplianceStatusScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:TaxComplianceStatus-NotCompliant
+  a skos:Concept ;
+  rdfs:label "not compliant"@en ;
+  rdfs:comment "A return is outstanding or assessed tax is unpaid."@en ;
+  skos:prefLabel "not compliant"@en ;
+  skos:definition "A return is outstanding or assessed tax is unpaid."@en ;
+  skos:inScheme mort:TaxComplianceStatusScheme ;
+  skos:topConceptOf mort:TaxComplianceStatusScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:TurnoverBandScheme
+  a skos:ConceptScheme ;
+  rdfs:label "Turnover band scheme"@en ;
+  rdfs:comment "Bands of a business's gross annual revenues."@en ;
+  skos:prefLabel "Turnover band scheme"@en ;
+  skos:definition "Bands of a business's gross annual revenues."@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:TurnoverBand-Under500k
+  a skos:Concept ;
+  rdfs:label "under $500,000"@en ;
+  rdfs:comment "Gross annual revenues under 500,000 US dollars."@en ;
+  skos:prefLabel "under $500,000"@en ;
+  skos:definition "Gross annual revenues under 500,000 US dollars."@en ;
+  skos:inScheme mort:TurnoverBandScheme ;
+  skos:topConceptOf mort:TurnoverBandScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:TurnoverBand-500kTo1M
+  a skos:Concept ;
+  rdfs:label "$500,000 to $1 million"@en ;
+  rdfs:comment "Gross annual revenues from 500,000 up to 1 million US dollars."@en ;
+  skos:prefLabel "$500,000 to $1 million"@en ;
+  skos:definition "Gross annual revenues from 500,000 up to 1 million US dollars."@en ;
+  skos:inScheme mort:TurnoverBandScheme ;
+  skos:topConceptOf mort:TurnoverBandScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:TurnoverBand-1MTo5M
+  a skos:Concept ;
+  rdfs:label "$1 million to $5 million"@en ;
+  rdfs:comment "Gross annual revenues over 1 million and up to 5 million US dollars."@en ;
+  skos:prefLabel "$1 million to $5 million"@en ;
+  skos:definition "Gross annual revenues over 1 million and up to 5 million US dollars."@en ;
+  skos:inScheme mort:TurnoverBandScheme ;
+  skos:topConceptOf mort:TurnoverBandScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:TurnoverBand-Over5M
+  a skos:Concept ;
+  rdfs:label "over $5 million"@en ;
+  rdfs:comment "Gross annual revenues over 5 million US dollars."@en ;
+  skos:prefLabel "over $5 million"@en ;
+  skos:definition "Gross annual revenues over 5 million US dollars."@en ;
+  skos:inScheme mort:TurnoverBandScheme ;
+  skos:topConceptOf mort:TurnoverBandScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:CovenantMetricScheme
+  a skos:ConceptScheme ;
+  rdfs:label "Covenant metric scheme"@en ;
+  rdfs:comment "What a financial covenant of a business loan measures."@en ;
+  skos:prefLabel "Covenant metric scheme"@en ;
+  skos:definition "What a financial covenant of a business loan measures."@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:CovenantMetric-DebtServiceCoverage
+  a skos:Concept ;
+  rdfs:label "debt service coverage ratio"@en ;
+  rdfs:comment "Net operating cash flow divided by debt service, the loan's own payment included."@en ;
+  skos:prefLabel "debt service coverage ratio"@en ;
+  skos:definition "Net operating cash flow divided by debt service, the loan's own payment included."@en ;
+  skos:inScheme mort:CovenantMetricScheme ;
+  skos:topConceptOf mort:CovenantMetricScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:CovenantMetric-MinimumAverageBalance
+  a skos:Concept ;
+  rdfs:label "minimum average balance"@en ;
+  rdfs:comment "The mean monthly closing balance of the business's operating account, in US dollars."@en ;
+  skos:prefLabel "minimum average balance"@en ;
+  skos:definition "The mean monthly closing balance of the business's operating account, in US dollars."@en ;
+  skos:inScheme mort:CovenantMetricScheme ;
+  skos:topConceptOf mort:CovenantMetricScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:GrantEnd-LoanRepaid
+  a skos:Concept ;
+  rdfs:label "loan repaid"@en ;
+  rdfs:comment "The loan is repaid in full and closed."@en ;
+  skos:prefLabel "loan repaid"@en ;
+  skos:definition "The loan is repaid in full and closed."@en ;
+  skos:inScheme mort:GrantEndScheme ;
+  skos:topConceptOf mort:GrantEndScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .

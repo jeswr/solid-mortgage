@@ -1,0 +1,16 @@
+@prefix cred: <https://www.w3.org/2018/credentials#>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#>.
+@prefix schema: <https://schema.org/>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix fibo-fbc-dae-dbt: <https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Debt/>.
+@prefix fibo-loan-ln-ln: <https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/Loans/>.
+
+<https://business-lender.pod.example/credit/northwind/assessment> a mort:CashFlowAssessment;
+    schema:name "Origination cash flow assessment: Northwind Logistics LLC";
+    dcterms:subject <https://northwind.pod.example/profile/card#me>;
+    dcterms:creator <https://business-lender.pod.example/profile/card#me>;
+    mort:checkedAt "2026-09-24T14:00:00.000Z"^^xsd:dateTime;
+    mort:debtServiceCoverageRatio "2.31"^^xsd:decimal;
+    mort:averageBalanceUsd "52400.00"^^xsd:decimal;
+    mort:covenantsMet "yes".
