@@ -209,4 +209,5 @@ export const DEMO_APPS = Object.freeze({
   ),
   "moving-house": ["wallet", "state", "county", "bank", "insurer", "payroll", "servicer"],
   "business-kyb": ["wallet", "registry", "bank", "business-lender"],
+  "small-business-loan": ["wallet", "bank", "state", "business-lender"],
 } satisfies Record<string, readonly OrgSlug[]>);

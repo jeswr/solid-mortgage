@@ -50,4 +50,16 @@ describe("the apps each demo uses", () => {
     expect(DEMO_APPS["business-kyb"]).toEqual(["wallet", "registry", "bank", "business-lender"]);
     expect(new Set(DEMO_APPS["business-kyb"].map((slug) => ORGS[slug].organisation)).size).toBe(4);
   });
+
+  it("small business loan: Northwind's wallet, its bank, the state and the lender", () => {
+    expect(DEMO_APPS["small-business-loan"]).toEqual([
+      "wallet",
+      "bank",
+      "state",
+      "business-lender",
+    ]);
+    expect(
+      new Set(DEMO_APPS["small-business-loan"].map((slug) => ORGS[slug].organisation)).size,
+    ).toBe(4);
+  });
 });
