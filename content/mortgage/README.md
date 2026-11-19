@@ -16,6 +16,7 @@ supply buttons and screens and call into this directory; the headless test in
 | `messages.ts` | Organisation-to-organisation inbox messages |
 | `prequalification.ts` | The threshold proof: challenge, presentation, verification |
 | `journey.ts` | One function per step (`JOURNEY`), and the agents that react to inbox messages (`agents`) |
+| `mount.ts` | What every app passes to `mountDemo()`: `mortgageLens()`, `mortgageTour()`, `MORTGAGE_HOLDER` |
 | `browser.ts` | The browser side: `createBrowserWorld`, `agentWorld`, the shared key store and `mortgageSeed()` for `configure({ seed })` |
 | `tour.ts` | The 24 `TourStep`s: copy, `data-tour` names, expected pod events, Lens text, real-world rule |
 
