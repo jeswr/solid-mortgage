@@ -1,0 +1,45 @@
+@prefix as: <https://www.w3.org/ns/activitystreams#>.
+@prefix cred: <https://www.w3.org/2018/credentials#>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix dpv: <https://w3id.org/dpv#>.
+@prefix fibo-fbc-dae-dbt: <https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Debt/>.
+@prefix fibo-fnd-arr-asmt: <https://spec.edmcouncil.org/fibo/ontology/FND/Arrangements/Assessments/>.
+@prefix fibo-fnd-arr-rep: <https://spec.edmcouncil.org/fibo/ontology/FND/Arrangements/Reporting/>.
+@prefix fibo-fnd-plc-rp: <https://spec.edmcouncil.org/fibo/ontology/FND/Places/RealProperty/>.
+@prefix fibo-fnd-rel-rel: <https://spec.edmcouncil.org/fibo/ontology/FND/Relations/Relations/>.
+@prefix fibo-loan-ln-app: <https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoanApplications/>.
+@prefix fibo-loan-ln-ln: <https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/Loans/>.
+@prefix fibo-loan-reln-mtg: <https://spec.edmcouncil.org/fibo/ontology/LOAN/RealEstateLoans/Mortgages/>.
+@prefix fibo-loan-reln-org: <https://spec.edmcouncil.org/fibo/ontology/LOAN/RealEstateLoans/MortgageOrigination/>.
+@prefix foaf: <http://xmlns.com/foaf/0.1/>.
+@prefix ldp: <http://www.w3.org/ns/ldp#>.
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#>.
+@prefix odrl: <http://www.w3.org/ns/odrl/2/>.
+@prefix pim: <http://www.w3.org/ns/pim/space#>.
+@prefix schema: <https://schema.org/>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+<https://alex.pod.example/property/purchase-agreement> a mort:PurchaseAgreement;
+    schema:name "Residential purchase agreement, 14 Larch Lane";
+    schema:customer <https://alex.pod.example/profile/card#me>;
+    schema:seller _:seller;
+    mort:purchasePrice _:purchasePrice;
+    mort:earnestMoneyDeposit _:earnestMoneyDeposit;
+    mort:subjectProperty _:subjectProperty;
+    dcterms:issued "2026-07-28"^^xsd:date;
+    mort:closingDate "next month".
+_:seller a schema:Person;
+    schema:name "Jordan Whitfield".
+_:purchasePrice a schema:MonetaryAmount;
+    schema:value 425000.0;
+    schema:currency "USD".
+_:earnestMoneyDeposit a schema:MonetaryAmount;
+    schema:value 8500.0;
+    schema:currency "USD".
+_:subjectProperty a fibo-fnd-plc-rp:RealEstate;
+    schema:address _:subjectProperty_address.
+_:subjectProperty_address a schema:PostalAddress;
+    schema:streetAddress "14 Larch Lane";
+    schema:addressLocality "Marlow";
+    schema:addressRegion "OH";
+    schema:postalCode "43004".

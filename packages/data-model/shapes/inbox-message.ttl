@@ -1,0 +1,60 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix as: <https://www.w3.org/ns/activitystreams#> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+
+# A message one organisation appends to another organisation's inbox/ (organisation to
+# organisation, never through the borrower's pod). as:object names the resources it is about.
+mshape:InboxMessageShape
+  a sh:NodeShape ;
+  sh:targetClass as:Announce ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue as:Announce ;
+  ] ;
+  sh:property [
+    sh:path dcterms:type ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:in ( mort:MessageKind-CreditReportOrder mort:MessageKind-CreditReportDelivery mort:MessageKind-CasefileSubmission mort:MessageKind-FindingsDelivery mort:MessageKind-ServiceOrder mort:MessageKind-AppraisalDelivery mort:MessageKind-CommitmentDelivery mort:MessageKind-RefreshRequest mort:MessageKind-RefreshDelivery mort:MessageKind-ClosingInstructions mort:MessageKind-ClosingConfirmation mort:MessageKind-RecordingSubmission mort:MessageKind-RecordingConfirmation mort:MessageKind-LoanDelivery mort:MessageKind-PurchaseConfirmation mort:MessageKind-ServicingBoarding ) ;
+    sh:message "dcterms:type must be a concept from mort:MessageKindScheme" ;
+  ] ;
+  sh:property [
+    sh:path as:actor ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path as:object ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path as:summary ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path as:published ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dateTime ;
+  ] ;
+  sh:property [
+    sh:path mort:loanNumber ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path as:inReplyTo ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] .

@@ -87,3 +87,61 @@ the shapes — the budget table and the shapes cannot drift.
 Shapes live in the `https://solid-mortgage-vocab.vercel.app/shapes#` hash
 namespace, served by the vocab site alongside `/mort` (decision 0010) so
 `cred:credentialSchema` can reference them once the site deploys.
+
+## Static rebuild shapes (decision 0017, design.md §d.9)
+
+Every RDF resource the 24-step mortgage tour reads or writes has a closed
+shape. `support` holds the node shapes they share (`NamedPartyShape`,
+`LineItemShape`, `FloorSizeShape`, `ScoreDisclosureShape`, `ConstraintShape`,
+`PermissionShape`, `AgentShape`).
+
+| Shape document | Target class | Where it lives |
+|---|---|---|
+| `agent-profile` | `foaf:PersonalProfileDocument` | `profile/card` in every pod |
+| `contact-details` | `schema:ContactPoint` | Alex `profile/contact` |
+| `identity-credential` | `mort:IdentityCredential` | Alex `credentials/identity` |
+| `purchase-agreement` | `mort:PurchaseAgreement` | Alex `property/purchase-agreement` |
+| `subject-property` | `schema:SingleFamilyResidence` | Alex `property/subject-property` |
+| `loan-estimate` | `mort:LoanEstimate` | Alex `mortgage/juniper/loan-estimate` |
+| `closing-disclosure` | `mort:ClosingDisclosure` | Alex `mortgage/juniper/closing-disclosure` |
+| `score-notice` | `mort:CreditScoreNotice` | Alex `mortgage/juniper/score-notice` |
+| `credit-report` | `mort:CreditReport` | bureau pod, read by the lender |
+| `title-commitment-credential` | `mort:TitleCommitmentCredential` | Alex `mortgage/closing/title-commitment` |
+| `evidence-of-insurance-credential` | `mort:EvidenceOfInsuranceCredential` | Alex `mortgage/closing/evidence-of-insurance` |
+| `settlement-statement` | `mort:SettlementStatement` | Alex `mortgage/closing/settlement-statement` |
+| `recording-receipt` | `mort:RecordingReceipt` | Alex `mortgage/closing/recording-receipt` |
+| `recorded-instrument` | `mort:RecordedInstrument` | county `records/` (public) |
+| `servicing-notice` | `mort:LoanTransferNotice` | Alex `mortgage/servicing/notices/` |
+| `escrow-statement` | `mort:EscrowAccountStatement` | Alex `mortgage/servicing/escrow-statement` |
+| `payment-mandate` | `mort:PaymentMandate` | Alex `mortgage/servicing/payment-mandate` |
+| `access-request` | `odrl:Request` | Alex `inbox/` |
+| `odrl-policy` | `odrl:Agreement` | Alex `policies/` |
+| `consent-receipt` (extended) | `dpv:ConsentRecord` | Alex `consents/` |
+| `service-order` | `schema:Order` | an organisation's own pod |
+| `inbox-message` | `as:Announce` | any organisation `inbox/` |
+| `credential-pointer` | `mort:CredentialPointer` | reader's record of a source check |
+| `document` | `schema:DigitalDocument` | generic delivered report (appraisal report, findings) |
+
+Decisions specific to these shapes:
+
+- **Title commitment replaces "title clear".** A title agent issues a
+  commitment with Schedule A (vested owner, proposed insured, policy amounts)
+  and Schedule B (requirements, then exceptions); nobody issues a "title clear"
+  credential. `title-clear-credential` stays only until the retired
+  `packages/solid-kit` that still imports it is deleted.
+- **Grants are three records.** The request (`odrl:Request`) and the agreement
+  (`odrl:Agreement`) share one permission shape: assignee, targets, actions
+  (`odrl:read`/`write`/`append` only), a DPV purpose, and exactly one end
+  constraint, either an `odrl:dateTime` bound or an `odrl:event` drawn from
+  `mort:GrantEndScheme`. A permission whose assignee is not the policy's
+  assignee is an onward recipient, named individually. The consent record
+  links the agreement with `dpv:hasPolicy` and may be `dpv:ConsentExpired`.
+- **No full tax identifier anywhere.** The identity credential carries
+  `mort:taxIdLast4` (four digits, pattern-checked) and nothing longer.
+- **Disclosures carry their clock dates.** `mort:applicationDate` on the Loan
+  Estimate, `mort:receivedDate` and `mort:closingDate` on the
+  Closing Disclosure, so a reader can re-derive the Regulation Z timing checks
+  from the pod alone.
+- **Inbox messages are pointers.** An `as:Announce` names its sender, a
+  `mort:MessageKindScheme` concept and the IRIs of the resources it is about.
+  The payload stays in the sender's pod under the sender's ACL.
