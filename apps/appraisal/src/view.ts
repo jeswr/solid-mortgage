@@ -53,7 +53,7 @@ export function shortDate(date: Date): string {
   });
 }
 
-/** The plain-word name of a `mort:MessageKind-…` IRI. */
+/** The plain-word name of a message-kind IRI (the part after the last hyphen). */
 export function messageKindLabel(iri: string): string {
   const name = iri.slice(iri.lastIndexOf("-") + 1);
   return name
