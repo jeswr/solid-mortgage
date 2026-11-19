@@ -1,0 +1,32 @@
+/* AUTHORED-BY Claude Opus 5.5
+ * Juniper Loan Desk tokens (design.md §b.3): slate and amber, 13 px compact, Inter Tight for
+ * text and JetBrains Mono for identifiers. Original values. */
+:root {
+  --desk-slate: #1e2530;
+  --desk-slate-2: #2a3341;
+  --desk-slate-line: #3b4656;
+  --desk-amber: #e0a100;
+  --desk-amber-ink: #7a5600;
+  --desk-canvas: #eef0f3;
+  --desk-surface: #ffffff;
+  --desk-line: #d5dae1;
+  --desk-ink: #161b22;
+  --desk-dim: #525c6b;
+  --desk-side-ink: #e6e9ee;
+  --desk-side-dim: #aab3c0;
+  --desk-ok: #146c43;
+  --desk-ok-bg: #dcf2e6;
+  --desk-warn: #7a4e00;
+  --desk-warn-bg: #fdf0cf;
+  --desk-bad: #a1191f;
+  --desk-bad-bg: #fbe0e1;
+  --desk-info: #23446e;
+  --desk-info-bg: #e2ebf7;
+  --desk-idle: #4b5563;
+  --desk-idle-bg: #e7e9ed;
+  --desk-focus: #c46a00;
+  --font-text: "Inter Tight", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --size: 13px;
+  --radius: 3px;
+}
