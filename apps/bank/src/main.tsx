@@ -20,6 +20,13 @@ import {
   movingHouseTour,
 } from "@mortgage/content/moving-house/mount";
 import { ORGS } from "@mortgage/content/orgs";
+import {
+  isSmallBusinessLoanPage,
+  LOAN_COMPLIANCE,
+  SMALL_BUSINESS_LOAN_HOLDER,
+  smallBusinessLoanLens,
+  smallBusinessLoanTour,
+} from "@mortgage/content/small-business-loan/mount";
 import { onEvent, resetDemo, setTourContext } from "@mortgage/pod-runtime";
 import { mountDemo } from "@mortgage/tour/mount";
 import { StrictMode } from "react";
@@ -32,6 +39,8 @@ const APP = "bank";
 const movingHouse = isMovingHousePage(location.pathname, "bank", location.search);
 // A page under kyb/ belongs to the business KYB demo (src/sections/business-kyb/).
 const kyb = isBusinessKybPage(location.pathname, "bank", location.search);
+// A page under business/ belongs to the small business loan (src/sections/small-business-loan/).
+const loan = isSmallBusinessLoanPage(location.pathname, "bank", location.search);
 const root = document.getElementById("root");
 if (root === null) throw new Error("index.html is missing #root");
 const view = createRoot(root);
@@ -52,24 +61,34 @@ startPods(APP).then(
     );
     const runtime = { onEvent, resetDemo, setTourContext: trackTourContext(setTourContext) };
     void mountDemo(
-      kyb
+      loan
         ? {
             app: APP,
-            holder: BUSINESS_KYB_HOLDER,
-            ledger: { compliance: [...KYB_COMPLIANCE] },
-            lens: businessKybLens(),
+            holder: SMALL_BUSINESS_LOAN_HOLDER,
+            ledger: { compliance: [...LOAN_COMPLIANCE] },
+            lens: smallBusinessLoanLens(),
             registry: ORGS,
             runtime,
-            tour: businessKybTour(),
+            tour: smallBusinessLoanTour(),
           }
-        : {
-            app: APP,
-            holder: movingHouse ? MOVING_HOUSE_HOLDER : MORTGAGE_HOLDER,
-            lens: movingHouse ? movingHouseLens() : mortgageLens(),
-            registry: ORGS,
-            runtime,
-            tour: movingHouse ? movingHouseTour() : mortgageTour(),
-          },
+        : kyb
+          ? {
+              app: APP,
+              holder: BUSINESS_KYB_HOLDER,
+              ledger: { compliance: [...KYB_COMPLIANCE] },
+              lens: businessKybLens(),
+              registry: ORGS,
+              runtime,
+              tour: businessKybTour(),
+            }
+          : {
+              app: APP,
+              holder: movingHouse ? MOVING_HOUSE_HOLDER : MORTGAGE_HOLDER,
+              lens: movingHouse ? movingHouseLens() : mortgageLens(),
+              registry: ORGS,
+              runtime,
+              tour: movingHouse ? movingHouseTour() : mortgageTour(),
+            },
     );
   },
   (error: unknown) => console.error("bank: the pods did not start", error),

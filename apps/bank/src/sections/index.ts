@@ -6,6 +6,7 @@
 import type { ComponentType } from "react";
 import { KybDueDiligence, KybOnboarding } from "./business-kyb/BusinessKyb.tsx";
 import { MovingAddressOnFile } from "./moving-house/MovingHouse.tsx";
+import { BusinessBanking } from "./small-business-loan/SmallBusinessLoan.tsx";
 
 export interface AppSection {
   /** The demo that owns this section, e.g. "moving-house". */
@@ -29,5 +30,11 @@ export const sections: readonly AppSection[] = [
     demo: "business-kyb",
     path: "kyb/due-diligence",
     title: "Customer due diligence",
+  },
+  {
+    Component: BusinessBanking,
+    demo: "small-business-loan",
+    path: "business",
+    title: "Business banking",
   },
 ];

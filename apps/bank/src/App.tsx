@@ -1,5 +1,8 @@
 // AUTHORED-BY Claude Opus 5.5
+import { isBusinessKybPage } from "@mortgage/content/business-kyb/mount";
 import { BORROWER } from "@mortgage/content/mortgage/facts";
+import { isSmallBusinessLoanPage } from "@mortgage/content/small-business-loan/mount";
+import { HOLDERS } from "@mortgage/demo-kit/holders";
 import { applyDocumentMeta, DemoTrust, TrustBanner } from "@mortgage/demo-kit/trust";
 import { appUrl } from "@mortgage/demo-kit/urls";
 import { useEffect } from "react";
@@ -29,8 +32,27 @@ const NAV = [
   },
 ] as const;
 
+/**
+ * On the business pages (business KYB under `kyb/`, the small business loan under `business/`)
+ * the customer is Northwind, whose pod Jordan Blake operates; elsewhere it is Alex, the registry's
+ * persona. Returns `undefined` for Alex, so the banner keeps the registry's own line.
+ */
+function useBusinessCustomer(): { name: string; role: string } | undefined {
+  const [location] = useLocation();
+  const path = `/bank${location}`;
+  if (!isBusinessKybPage(path, "bank") && !isSmallBusinessLoanPage(path, "bank")) return undefined;
+  const { name, operator } = HOLDERS.northwind;
+  return { name: operator ?? name, role: `for ${name}` };
+}
+
+function BankTrustBanner() {
+  const business = useBusinessCustomer();
+  return business === undefined ? <TrustBanner /> : <TrustBanner signedInAs={business} />;
+}
+
 function TopNav() {
   const [location] = useLocation();
+  const business = useBusinessCustomer();
   return (
     <header className="masthead">
       <div className="masthead-inner">
@@ -59,7 +81,14 @@ function TopNav() {
         </nav>
         <p className="signed-in">
           <span className="sr-only">Signed in as </span>
-          {BORROWER.name}
+          {business === undefined ? (
+            BORROWER.name
+          ) : (
+            <>
+              {business.name}
+              <span className="sr-only"> {business.role}</span>
+            </>
+          )}
         </p>
       </div>
     </header>
@@ -92,8 +121,8 @@ function Connecting() {
 export function App({ hook }: { hook?: BaseLocationHook }) {
   return (
     <DemoTrust org={org}>
-      <TrustBanner />
       <Router {...(hook === undefined ? { base: ROUTER_BASE } : { hook })}>
+        <BankTrustBanner />
         <TopNav />
         <main id="main">
           <Connecting />
