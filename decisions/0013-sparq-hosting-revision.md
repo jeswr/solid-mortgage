@@ -1,6 +1,6 @@
 # 0013 — Hosting revision: Fastify dev host (upstream) + read-only sparq pods on Vercel
 
-**Status:** accepted (Jesse-directed investigation, 2026-07-15) — amends decision 0011
+**Status:** superseded by [0017](0017-static-rebuild.md) (2026-11-19). Was: accepted (Jesse-directed investigation, 2026-07-15) — amends decision 0011
 **Inputs:** docs/research/fastify-host.md, vercel-sparq-hosting.md
 
 ## Localhost dev server → framework-mounted, upstream

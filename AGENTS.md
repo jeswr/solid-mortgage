@@ -8,65 +8,97 @@
 
 ## What this is
 
-The **Solid Mortgage Showcase**: one private pnpm + Turborepo monorepo containing every
-stakeholder application in a US mortgage-application journey rebuilt on Solid, branded to the
-EDMA member organisation (or best-fit US entity) that would own that role in the
-build-it-for-real partner phase. All apps deploy live to Vercel. `SPEC.md` is the design of
-record; research grounding lives in `docs/research/`; autonomous decisions are logged in
-`decisions/<slug>.md` for Jesse to veto.
+The **Solid mortgage demo**: one static site on which thirteen fictional organisation apps run a
+US purchase-mortgage journey against pods that live in the visitor's browser (sparq's wasm Solid
+server in a service worker). No server, no identity provider: sign-in is simulated, access
+control is real. Decision of record: [`decisions/0017-static-rebuild.md`](decisions/0017-static-rebuild.md),
+which summarises the rebuild design (`docs/rebuild/design.md`) and its lane plan (`docs/rebuild/build-plan.md`).
+Research grounding lives in `docs/research/`; autonomous decisions in `decisions/<nnnn>-<slug>.md`.
 
 ## Non-negotiable conventions
 
-1. **Stack**: Next.js (App Router) + shadcn/ui + Tailwind for every app; pnpm workspaces
-   (`packages/*`, `apps/*`) + Turbo; Biome for lint/format; Vitest for unit; Playwright for e2e.
-   Never hardcode ports.
+1. **Stack**: TypeScript, React 19, Vite (one build per app, `base: "/<slug>/"`), pnpm
+   workspaces (`packages/*`, `apps/*`, `content`) + Turbo, Biome, Vitest, Playwright. No Next.js
+   (only `apps/vocab`, a separate Vercel project, still uses it). Never hardcode ports.
 2. **RDF discipline (STRICT)**: all RDF through `@solid/object` + `@rdfjs/wrapper` typed
-   accessors; fetch+parse via `@jeswr/fetch-rdf`; Turtle + JSON-LD only. Never hand-parse or
-   string-concat `.acl`/`.acr` — use the access-control wrappers. SHACL shapes validate all
-   written data.
+   accessors; fetch+parse via `@jeswr/fetch-rdf`; serialise with `n3.Writer`. Never hand-parse
+   or string-concat `.acl` documents: use the access-control wrappers. SHACL shapes validate
+   all written data.
 3. **No minted IRIs**: only real, dereferenceable namespaces (FIBO, schema.org, W3C VC, DPV,
-   ODRL, …) or blank nodes; project-specific terms go in a vocab published at a real URL we
-   control. `pnpm run lint:iris` HEAD-checks every IRI (7-day cache) and gates CI.
-4. **Dev/test Solid server**: sparq's `@jeswr/solid-server` (the `sparq-lws-wasm` WASM
-   distribution) — NOT the Community Solid Server. Gaps are contributed upstream to
-   `sparq-org/sparq`, not worked around silently (log them in `docs/research/lws-gaps.md`).
-5. **Review**: roborev reviews every commit (`.roborev.toml`: codex / gpt-5.6-sol,
-   min severity low). Read verdicts and address findings. Agents run roborev async
-   (`--background`), never blocking foreground.
-6. **Delegate mechanical work to GPT-5.6 Sol** (decision 0008): apps scaffolding/CRUD, deploy,
-   infra, e2e grind run on Sol via `codex exec --json --full-auto -m gpt-5.6-sol` **from inside
-   this repo/worktree** (codex auto-caches its system prompt + this AGENTS.md as the prompt
-   prefix — 5–10 min TTL, so launch in bursts); briefs stay SHORT and point Sol at
-   `bd show <bead>`; commits prefixed `[GPT-5.6]`. Sol never touches security-critical
-   surfaces (vc-kit ZK, auth, ACL) and never owns its own acceptance tests — Claude verifies
-   every Sol diff.
-7. **Commits**: unsigned, author `63333554+jeswr@users.noreply.github.com`, trailer
-   `Co-Authored-By:` for the generating model. Sub-agents must never push to repos Jesse does
-   not own; upstream work stops at "ready to PR" for lead approval — sparq-org and jeswr repos
-   are Jesse's, PRs there are in-scope.
-7. **Demo integrity**: every branded surface carries a visible "concept demonstration — not
-   affiliated with or endorsed by <org>" disclaimer; every app ships `noindex` robots meta.
-   No real PII anywhere — demo personas only.
-8. **Skills routing (mandatory)**: before building any Solid surface, read the matching skill —
-   the solid-sdk skills (`solid-object`, `solid-fetch-rdf`, `solid-client-id`,
-   `solid-reactive-authentication`, `solid-test-infrastructure`, `solid-type-index`,
-   `solid-notifications`, `solid-server-matrix`, …) and any `packages/<pkg>/SKILL.md` in the
-   sparq/solid-sdk checkouts. Verify library APIs against npm dist / context7, not memory.
+   ODRL, …) or blank nodes; project terms go in `vocab/mort.ttl`, published at
+   `https://solid-mortgage-vocab.vercel.app/mort#`. `pnpm run lint:iris` checks every IRI.
+4. **Pod server**: `@sparq-org/solid-server@0.1.8` from npm (its `./wasm` export), never the
+   Community Solid Server. Gaps go upstream to `sparq-org/sparq`, not worked around silently.
+5. **Fictional organisations only**: every organisation and person is fictional
+   (`content/orgs.ts`). Every route of every app, including not-found pages, renders
+   `<TrustBanner />` from `@mortgage/demo-kit/trust` and ships `noindex`; each app sets its own
+   `<title>`, favicon and `theme-color`. `pnpm run check:insignia` bans regulatory insignia and
+   every real organisation named in `docs/` (roster: `tools/insignia-roster.mjs`) from app
+   source and from the built `dist/`.
+6. **Anti-template**: each app is its own package with its own tokens, self-hosted
+   open-licence font, layout archetype and voice (design.md §b.2). Shared code is limited to the
+   engine packages, `demo-kit`, `data-model`, `vc-kit` and headless primitives.
+7. **Review**: roborev reviews every commit (`.roborev.toml`). Read verdicts and address findings.
+8. **Commits**: unsigned, author `Jesse Wright <63333554+jeswr@users.noreply.github.com>`,
+   `Co-Authored-By:` trailer naming the generating model; new files carry an `AUTHORED-BY`
+   marker. Codex (GPT 6.2 Sol) work follows `build-plan.md` §3: it never owns its own acceptance
+   tests, nor access-control, credential or proof code.
+9. **Skills routing (mandatory)**: before building a Solid surface, read the matching solid-sdk
+   skill and any `packages/<pkg>/SKILL.md` (for the trust banner:
+   `solid-sdk/packages/solid-showcase-kit/SKILL.md`). Verify library APIs against the installed
+   dist, not memory.
 
 ## Supply chain
 
-`.npmrc`: `ignore-scripts=true`. Lockfile discipline: `pnpm install --frozen-lockfile` in CI;
-run a fresh install after any dependency change before trusting local lint results.
+`.npmrc`: `ignore-scripts=true`. CI installs with `pnpm install --frozen-lockfile`. Before adding
+any dependency run `node guardrails/scripts/check-packages.mjs <name>`. Only lanes L0 and L4 add
+dependencies (one root lockfile); every dependency stage 1 and 2 lanes need is already declared
+in their package manifests. `@jeswr` packages not on npm are vendored as packed tarballs in
+`vendor/` by `node tools/vendor-sdk.mjs <path-to-solid-sdk>` (never edit `vendor/` by hand).
 
 ## Layout
 
-- `apps/<stakeholder>` — branded Next.js apps (one Vercel project each; per-app `vercel.json`
-  + `npx turbo-ignore` so a push rebuilds only affected apps)
-- `packages/data-model` — vocab bindings (FIBO/MISMO-grounded), SHACL, typed wrappers
-- `packages/solid-kit` — auth, pod IO, access-control helpers, sparq dev-server harness
-- `packages/vc-kit` — VC issue/verify + sparq ZKP-over-VC hooks
-- `packages/ui` — shared shadcn-based component kit with per-org theming tokens
-- `e2e/` — cross-app journey tests (each suite boots its own in-memory sparq solid server)
+```
+apps/<slug>/          one Vite + React app per organisation (13) plus welcome; slugs in demo-kit
+apps/_template/       the starting point for an app: copy its files, keep the app's manifest
+apps/vocab/           the mort vocabulary site (its own Vercel project; do not move it)
+packages/demo-kit/    registry types, appUrl(), demo calendar, trust wiring, contract types
+packages/pod-runtime/ in-browser pods (lane L1)      packages/tour/, packages/lens/ (lane L2)
+packages/data-model/  vocab bindings, SHACL shapes, typed wrappers
+packages/vc-kit/      issue, verify, status, re-issue, threshold proof (security-critical)
+content/orgs.ts       the organisation registry; content/<demo>/ holds seed, tour and copy
+e2e/                  acceptance suite (lane T1), run against dist/ by playwright.config.ts
+tools/                build-site, serve-dist, site-routes (generates vercel.json),
+                      vercel-ignore, vendor-sdk, lint-iris, check-insignia, check-mort-terms
+vendor/               packed @jeswr tarballs not on npm (showcase-kit, app-shell)
+legacy/               the retired Next.js apps and their e2e suite; not in the workspace
+video/                recorder and narration (lane V1)
+```
+
+`packages/solid-kit`, `packages/ui` and `scripts/demo` are old code kept until lane L4 deletes
+them; do not build on them.
+
+## Building, serving, gating
+
+- `pnpm run build` builds every app (Turbo, dependencies first) and assembles `dist/`
+  (`dist/<slug>/`, `dist/pods-sw.js` from pod-runtime, `dist/agents/<slug>.js` from each app's
+  `src/agent.ts`, `dist/video/`). `pnpm run preview` serves it with production routing.
+- `vercel.json` is generated: change routing in `tools/site-routes.mjs`, then
+  `node tools/site-routes.mjs --write`. A test fails on drift.
+- `pnpm run gate` = lint, vocab and shape checks, build, insignia check, typecheck, tests.
+  `pnpm run test:e2e` adds the Playwright suites (root `e2e/` and each app's `e2e/`).
+- Cross-app links always go through `appUrl(slug, path, params)`; never write `/lender/…` by hand.
+- `/wallet/prove` is the only route with cross-origin isolation headers; reach it with a full
+  navigation, not a client-side route change.
+
+## Lanes
+
+Lanes and their paths are in `build-plan.md` §2. A lane edits only its own paths; if it needs a
+change elsewhere it stops and reports. The contract types in
+`packages/demo-kit/src/contracts/` (`PodEvent`, `AppNote`, `LensEntry`, `TourStep`) are copied
+from design.md §d.2 and §d.6: import them, never redefine them. A demo other than the mortgage
+adds to an existing app only under `apps/<slug>/src/sections/<demo>/`, registered in that app's
+`src/sections/index.ts`.
 
 ## Task tracking — beads
 

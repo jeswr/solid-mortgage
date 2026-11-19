@@ -5,8 +5,9 @@
  * SharedWorker→dedicated fallback selection, worker-scope detection, the simulated-login
  * honesty gate, and the 503 trap propagation.
  */
-import { SolidServer } from "@jeswr/solid-server/wasm";
+
 import type { Persona } from "@mortgage/data-model";
+import { SolidServer } from "@sparq-org/solid-server/wasm";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import {
   browserPodFetch,

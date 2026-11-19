@@ -1,0 +1,57 @@
+{
+  "name": "@mortgage/demo-kit",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Organisation registry types, appUrl(), the demo calendar, trust wiring over @jeswr/solid-showcase-kit, and the engine contract types (PodEvent, AppNote, LensEntry, TourStep).",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./calendar": {
+      "types": "./dist/calendar.d.ts",
+      "import": "./dist/calendar.js"
+    },
+    "./contracts": {
+      "types": "./dist/contracts/index.d.ts",
+      "import": "./dist/contracts/index.js"
+    },
+    "./registry": {
+      "types": "./dist/registry.d.ts",
+      "import": "./dist/registry.js"
+    },
+    "./urls": {
+      "types": "./dist/urls.d.ts",
+      "import": "./dist/urls.js"
+    },
+    "./trust": {
+      "types": "./dist/trust.d.ts",
+      "import": "./dist/trust.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "lint": "biome check src test package.json tsconfig.json tsconfig.test.json",
+    "test": "vitest run --root . --config ../../vitest.config.ts",
+    "typecheck": "tsc --project tsconfig.json --noEmit && tsc --project tsconfig.test.json"
+  },
+  "peerDependencies": {
+    "react": "^19.2.0"
+  },
+  "dependencies": {
+    "@jeswr/solid-showcase-kit": "file:../../vendor/jeswr-solid-showcase-kit-0.1.0.tgz"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.3.3",
+    "@types/node": "^25.9.2",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "jsdom": "^29.1.1",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9"
+  }
+}

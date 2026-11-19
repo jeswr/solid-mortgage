@@ -1,0 +1,10 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": ".",
+    "lib": ["ES2023", "DOM"]
+  },
+  "include": ["orgs.ts", "mortgage/**/*.ts"],
+  "exclude": ["dist", "node_modules", "test", "mortgage/**/*.test.ts"]
+}

@@ -1,0 +1,24 @@
+{
+  "name": "@mortgage/tour",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Guided tour engine and step schema. Scaffold manifest from lane L0: dependencies are fixed here so the lockfile is complete; lane L2 owns the package and adds scripts and source.",
+  "dependencies": {
+    "@mortgage/demo-kit": "workspace:*",
+    "@mortgage/lens": "workspace:*",
+    "idb": "^8.0.4",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9",
+    "@types/node": "^25.9.2",
+    "@axe-core/playwright": "^4.12.1",
+    "@playwright/test": "~1.63.0",
+    "axe-core": "^4.14.1",
+    "fake-indexeddb": "^6.2.8",
+    "jsdom": "^29.1.1",
+    "vite": "^8.3.0"
+  }
+}

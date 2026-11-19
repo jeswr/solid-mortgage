@@ -1,6 +1,6 @@
 # 0003 — Trusted branded pod host: Verizon ("Data Vault")
 
-**Status:** accepted (autonomous, 2026-07-15) — answers Jesse's direct request for guidance
+**Status:** superseded by [0017](0017-static-rebuild.md) (2026-11-19). Was: accepted (autonomous, 2026-07-15) — answers Jesse's direct request for guidance
 **Input:** docs/research/pod-host.md
 
 The borrower's pod + wallet is branded **"Data Vault — modelled on Verizon"**. Verizon is the

@@ -1,6 +1,6 @@
 # 0011 — Deployed demo infrastructure: in-browser pods by default, one hosted server for live mode
 
-**Status:** accepted (autonomous, 2026-07-15) — resolves research-gaps Q1/Q2/M1/M9
+**Status:** superseded by [0017](0017-static-rebuild.md) (2026-11-19). Was: accepted (autonomous, 2026-07-15) — resolves research-gaps Q1/Q2/M1/M9
 **Input:** docs/research/deployed-infra.md
 
 **Mode 1 (default visitor experience, $0):** per-visitor sparq-wasm pods in the browser — the

@@ -1,7 +1,8 @@
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "vitest";
-import { defaultTargetDirectories, scanInsignia } from "../scripts/check-insignia.mjs";
+import { defaultTargetDirectories, scanInsignia } from "../tools/check-insignia.mjs";
+import { INSIGNIA_ROSTER } from "../tools/insignia-roster.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const FIXTURES = resolve(HERE, "fixtures", "insignia");
@@ -43,11 +44,36 @@ test("does not flag the clean fixture (word-boundary and casing negatives)", () 
   expect(findings.filter((finding) => finding.file.endsWith("clean.txt"))).toEqual([]);
 });
 
-test("rendered-source directories are clean (the R2 gate itself)", () => {
-  const directories = defaultTargetDirectories() as string[];
-  expect(directories.length).toBeGreaterThanOrEqual(9);
-  expect(directories.some((directory) => directory.endsWith(join("packages", "ui", "src")))).toBe(
-    true,
+test("flags real organisation names, case-sensitively for acronyms", () => {
+  const findings = scanInsignia([join(FIXTURES, "..", "organisations")]) as Array<{
+    file: string;
+    id: string;
+  }>;
+  const flagged = new Set(
+    findings.filter((finding) => finding.file.endsWith("real.txt")).map((finding) => finding.id),
   );
+  for (const id of [
+    "org-equifax",
+    "org-freddie-mac",
+    "org-bank-of-america",
+    "org-adp",
+    "org-mers",
+  ]) {
+    expect(flagged).toContain(id);
+  }
+  expect(findings.filter((finding) => finding.file.endsWith("fictional.txt"))).toEqual([]);
+});
+
+test("every roster entry has a unique id and compiles", () => {
+  const ids = INSIGNIA_ROSTER.map((entry) => entry.id);
+  expect(new Set(ids).size).toBe(ids.length);
+  for (const entry of INSIGNIA_ROSTER) expect(() => new RegExp(entry.pattern)).not.toThrow();
+  expect(ids.filter((id) => id.startsWith("org-")).length).toBeGreaterThanOrEqual(80);
+});
+
+test("rendered-source directories are clean (the gate itself)", () => {
+  const directories = defaultTargetDirectories() as string[];
+  expect(directories.some((directory) => directory.endsWith(join("apps", "_template")))).toBe(true);
+  expect(directories.some((directory) => directory.endsWith("content"))).toBe(true);
   expect(scanInsignia(directories)).toEqual([]);
 });

@@ -1,8 +1,8 @@
 /**
  * Mode-1 in-browser pod runtime — the WORKER-SIDE host (sm-23, decisions 0011 + 0013):
  * one seeded, WRITABLE borrower pod per visitor, served by the sparq-lws-wasm `SolidServer`
- * (`@jeswr/solid-server/wasm`, the `--target web` artifact the vendored tarball ships — see
- * `vendor/PROVENANCE.md`) inside a SharedWorker, with a dedicated-worker fallback.
+ * (`@sparq-org/solid-server/wasm`, the `--target web` artifact the npm package ships) inside a
+ * SharedWorker, with a dedicated-worker fallback.
  *
  * This module runs inside the worker. It must stay browser-safe (no `node:` imports) and is
  * the ONLY browser-pod module that touches wasm — the page-side client (`client.ts`) never
@@ -17,7 +17,7 @@
  *   the NEXT request re-provisions a fresh pod — reseeded from the same fixtures, because a
  *   trap wipes in-memory state (deployed-infra.md §3: "trap-recycle-wipes-state ⇒ reseed").
  */
-import initWasm, { type InitInput, SolidServer } from "@jeswr/solid-server/wasm";
+import initWasm, { type InitInput, SolidServer } from "@sparq-org/solid-server/wasm";
 import { type ResourceFixture, seedPod } from "../seed.js";
 import {
   createPodFetch,
@@ -34,7 +34,7 @@ import {
 
 /**
  * Host-side request-body ceiling: parity with the Node host's `MAX_BODY_BYTES`
- * (`@jeswr/solid-server/http`, not importable here — it pulls `node:buffer`).
+ * (`@sparq-org/solid-server/http`, not importable here — it pulls `node:buffer`).
  */
 export const MAX_POD_BODY_BYTES = 2 * 1024 * 1024;
 

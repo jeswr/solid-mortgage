@@ -4,8 +4,9 @@
  * round-trip (Mode 1 pods are writable, unlike the Mode-2a org pods), 413 body-cap parity,
  * the 503 trap-recycle contract with reseeding, and the origin fail-close.
  */
-import { SolidServer } from "@jeswr/solid-server/wasm";
+
 import type { Persona } from "@mortgage/data-model";
+import { SolidServer } from "@sparq-org/solid-server/wasm";
 import { beforeAll, describe, expect, test } from "vitest";
 import {
   type BrowserPodHost,
