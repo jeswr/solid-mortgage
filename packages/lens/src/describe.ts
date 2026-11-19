@@ -301,6 +301,25 @@ export function describe(model: LensModel, rec: Received): Sentence {
   }
 }
 
+/** The resource an ACL document is about, by its label. */
+function aclSubject(model: LensModel, e: PodEntry): string {
+  return model.labelOf(e.path.replace(/\.acl$/, ""), e.pod);
+}
+
+/**
+ * True when every organisation this change took rules from keeps others in the same document
+ * (a mode removed, or an origin-limited rule removed beside an unlimited one): a narrowing, never
+ * said as a withdrawal or the end of sharing.
+ */
+function narrowedOnly(
+  model: LensModel,
+  rec: Received,
+  revoked: Map<string, AccessRule[]>,
+): boolean {
+  const narrowed = model.narrowed(rec.seq);
+  return [...revoked.keys()].every((org) => narrowed.has(org));
+}
+
 function describeAcl(model: LensModel, rec: Received): Sentence {
   const e = rec.entry;
   if (!isPod(e) || !e.acl) throw new Error("not an ACL event");
@@ -308,7 +327,7 @@ function describeAcl(model: LensModel, rec: Received): Sentence {
   const granted = groupByOrg(model, e.acl.granted);
   const revoked = groupByOrg(model, e.acl.revoked);
   if (e.pod !== model.holder && !isHolderId(e.pod))
-    return describeShare(model, e, granted, revoked);
+    return describeShare(model, rec, granted, revoked);
   const publicRules = e.acl.granted.filter((r) => PUBLIC_AGENTS.has(r.agent));
   const meta: string[] = [];
   for (const [org, rules] of granted) meta.push(describeRules(model, org, rules));
@@ -320,6 +339,15 @@ function describeAcl(model: LensModel, rec: Received): Sentence {
   if (granted.size > 0) {
     const names = listWords([...granted.keys()].map((o) => model.nameOf(o)));
     return sentence("grant", "pod", [{ b: actor }, " gave ", { b: names }, " access"], meta);
+  }
+  if (revoked.size > 0 && narrowedOnly(model, rec, revoked)) {
+    const names = listWords([...revoked.keys()].map((o) => possessive(model.nameOf(o))));
+    return sentence(
+      "grant",
+      "pod",
+      [{ b: actor }, " narrowed ", { b: names }, " access to ", { b: aclSubject(model, e) }],
+      meta,
+    );
   }
   if (revoked.size > 0) {
     const names = listWords([...revoked.keys()].map((o) => possessive(model.nameOf(o))));
@@ -345,11 +373,7 @@ function describeAcl(model: LensModel, rec: Received): Sentence {
   return sentence(
     "grant",
     "pod",
-    [
-      { b: actor },
-      " changed the access rules for ",
-      { b: model.labelOf(e.path.replace(/\.acl$/, ""), e.pod) },
-    ],
+    [{ b: actor }, " changed the access rules for ", { b: aclSubject(model, e) }],
     meta,
   );
 }
@@ -360,10 +384,12 @@ function describeAcl(model: LensModel, rec: Received): Sentence {
  */
 function describeShare(
   model: LensModel,
-  e: PodEntry,
+  rec: Received,
   granted: Map<string, AccessRule[]>,
   revoked: Map<string, AccessRule[]>,
 ): Sentence {
+  const e = rec.entry;
+  if (!isPod(e)) throw new Error("not a pod event");
   const actor = model.nameOf(e.actor.org);
   const owner = model.nameOf(e.pod);
   const what = e.resource?.label ?? model.labelOf(e.path.replace(/\.acl$/, ""), e.pod);
@@ -380,6 +406,15 @@ function describeShare(
       "grant",
       "pod",
       [{ b: actor }, " shared ", { b: what }, " with ", { b: names }],
+      meta,
+    );
+  }
+  if (revoked.size > 0 && narrowedOnly(model, rec, revoked)) {
+    const names = listWords([...revoked.keys()].map((o) => model.nameOf(o)));
+    return sentence(
+      "grant",
+      "pod",
+      [{ b: actor }, " narrowed what ", { b: names }, " may do with ", { b: what }],
       meta,
     );
   }

@@ -527,7 +527,9 @@ export class LensMap {
         }
         this.opts.onCaption(
           kind === "grant"
-            ? "access granted"
+            ? (e.acl?.granted.length ?? 0) > 0
+              ? "access granted"
+              : "access changed"
             : kind === "expire"
               ? "access expired"
               : "access withdrawn",

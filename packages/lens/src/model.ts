@@ -100,7 +100,40 @@ export function entryKey(entry: LensEntry): string {
   return `${entry.source}:${entry.id}`;
 }
 
-const ruleKey = (r: AccessRule) => `${r.agent} ${podRelative(r.resource)} ${r.inherited}`;
+/** The runtime's rules also carry their `acl:origin` limits (an `AccessRule` subtype). */
+type LimitedRule = AccessRule & { readonly origins?: readonly string[] };
+
+/**
+ * One rule's identity, as the pod runtime diffs rules: agent, resource, scope and origin limits.
+ * A rule limited to some origins is a different rule from the same agent's unlimited one.
+ */
+const ruleKey = (r: LimitedRule) =>
+  JSON.stringify([r.agent, podRelative(r.resource), r.inherited, [...(r.origins ?? [])].sort()]);
+
+/** `rules` with `removed`'s modes taken away; a rule left with no mode is dropped. */
+function withoutModes<R extends AccessRule>(rules: R[], removed: AccessRule): R[] {
+  const k = ruleKey(removed);
+  const out: R[] = [];
+  for (const rule of rules) {
+    if (ruleKey(rule) !== k) {
+      out.push(rule);
+      continue;
+    }
+    const modes = rule.modes.filter((m) => !removed.modes.includes(m));
+    if (modes.length > 0) out.push({ ...rule, modes });
+  }
+  return out;
+}
+
+/** `rules` with `added`'s modes joined to its rule, or `added` appended as a new rule. */
+function withModes(rules: AccessRule[], added: AccessRule): AccessRule[] {
+  const k = ruleKey(added);
+  const existing = rules.find((r) => ruleKey(r) === k);
+  if (existing === undefined) return [...rules, { ...added, modes: [...added.modes] }];
+  return rules.map((r) =>
+    r === existing ? { ...r, modes: [...new Set<AccessMode>([...r.modes, ...added.modes])] } : r,
+  );
+}
 
 export class LensModel {
   readonly config: LensConfig;
@@ -121,6 +154,10 @@ export class LensModel {
   private readonly oneTimeOpen = new Map<string, number>();
   /** Seq of a revoke event → the organisation whose one-time grant it closed. */
   private readonly oneTimeClosed = new Map<number, string>();
+  /** `pod acl-path` → the rules that ACL document holds, as the log's diffs build it up. */
+  private readonly docRules = new Map<string, AccessRule[]>();
+  /** Seq of an ACL event → the organisations it took rules from that keep others in it. */
+  private readonly narrowedAt = new Map<number, Set<string>>();
 
   constructor(config: LensConfig) {
     this.config = config;
@@ -203,6 +240,7 @@ export class LensModel {
   private foldAcl(e: PodEntry, rec: Received): void {
     const acl = e.acl;
     if (!acl) return;
+    this.foldDocument(e, rec);
     // Grants are the holder's: what organisations may do in the holder's pod. Organisations
     // also share their own files with each other (an ACL write on their own pod); those agents
     // take part, but the rules are not the holder's grants and never end with them.
@@ -223,10 +261,10 @@ export class LensModel {
       }
       const g = this.grantMap.get(org);
       if (!g) continue;
-      const k = ruleKey(rule);
-      const before = g.active.length;
-      g.active = g.active.filter((r) => ruleKey(r) !== k);
-      if (g.active.length !== before) {
+      // The event lists only the modes it removed: a rule keeps the modes it still has.
+      const before = JSON.stringify(g.active);
+      g.active = withoutModes(g.active, rule);
+      if (JSON.stringify(g.active) !== before) {
         g.removed.push(rule);
         touched.add(org);
       }
@@ -248,16 +286,11 @@ export class LensModel {
         };
         this.grantMap.set(org, g);
       }
-      const k = ruleKey(rule);
-      const existing = g.active.find((r) => ruleKey(r) === k);
-      if (existing) {
-        existing.modes = [...new Set<AccessMode>([...existing.modes, ...rule.modes])];
-      } else {
-        g.active.push({ ...rule, modes: [...rule.modes] });
-      }
+      g.active = withModes(g.active, rule);
       for (const d of this.coverage(rule, rec.seq)) g.everCovered.add(d);
       touched.delete(org);
     }
+    // A grant ends only when no rule of it is left anywhere in the holder's pod.
     for (const org of touched) {
       const g = this.grantMap.get(org);
       if (!g || g.active.length > 0) continue;
@@ -265,6 +298,28 @@ export class LensModel {
       g.endedSeq = rec.seq;
       g.endedAt = rec.receivedAt;
     }
+  }
+
+  /** Apply an ACL event to its document's rules, and note who it narrowed rather than ended. */
+  private foldDocument(e: PodEntry, rec: Received): void {
+    const acl = e.acl;
+    if (!acl) return;
+    const doc = `${e.pod} ${podRelative(e.path)}`;
+    let rules = this.docRules.get(doc) ?? [];
+    for (const rule of acl.revoked) rules = withoutModes(rules, rule);
+    for (const rule of acl.granted) rules = withModes(rules, rule);
+    this.docRules.set(doc, rules);
+    const kept = new Set<string>();
+    for (const rule of rules) {
+      const org = this.orgOfAgent(rule.agent);
+      if (org !== undefined) kept.add(org);
+    }
+    const narrowed = new Set<string>();
+    for (const rule of acl.revoked) {
+      const org = this.orgOfAgent(rule.agent);
+      if (org !== undefined && kept.has(org)) narrowed.add(org);
+    }
+    if (narrowed.size > 0) this.narrowedAt.set(rec.seq, narrowed);
   }
 
   private meet(slug: string, seq: number): void {
@@ -330,6 +385,14 @@ export class LensModel {
    */
   closedOneTime(seq: number): string | undefined {
     return this.oneTimeClosed.get(seq);
+  }
+
+  /**
+   * The organisations an access change took something from but that still have rules in the
+   * same ACL document afterwards (one mode removed, or one of two rules): narrowed, not ended.
+   */
+  narrowed(seq: number): ReadonlySet<string> {
+    return this.narrowedAt.get(seq) ?? new Set();
   }
 
   /** The organisation node an ACL agent IRI belongs to; undefined for the holder or the public. */

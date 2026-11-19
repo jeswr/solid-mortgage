@@ -62,7 +62,11 @@ const stop = onEvent((entry) => lens.push(entry), { replay: true });
   organisation's last rule is removed, the grant is **expired** if the removing request has
   `actor.viaAgent: true` (the holder's app applying expiry automatically, design.md §b.4) and
   **withdrawn** otherwise. The wallet must therefore apply expiry through its agent and a
-  visitor's Revoke through a normal request.
+  visitor's Revoke through a normal request. A rule is identified by agent, resource, scope and
+  `acl:origin` limits, and an event lists only the modes it removed, so a rule keeps the modes it
+  still has: taking one mode away, or an origin-limited rule beside an unlimited one, narrows a
+  grant without ending it, and the entry reads "{holder} narrowed {org}'s access to {resource}"
+  ("{org} narrowed what {other org} may do with {resource}" between organisations).
 - **Untagged entries** (app notes carry no `tour`) belong to the current step when they arrive
   live, and to the step of the latest tagged entry when replayed.
 - **Organisation-to-organisation notes** name the other party in `refs`, as an org slug or a

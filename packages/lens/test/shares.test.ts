@@ -136,3 +136,93 @@ suite("organisations sharing their own files", () => {
     expect(LensMap.motionOf(granted, describe(m, granted), m.holder)).toBe("grant");
   });
 });
+
+/** A rule with its own modes and, optionally, the runtime's `acl:origin` limits. */
+const ruleWith = (
+  owner: PodOwner,
+  resource: string,
+  modes: AccessRule["modes"],
+  origins?: string[],
+): AccessRule => ({ ...rule(owner, resource), modes, ...(origins ? { origins } : {}) });
+
+suite("an access change that takes away only part of a rule", () => {
+  it("narrows a grant of the holder's without ending it, folded by the modes left", () => {
+    const m = new LensModel(CONFIG);
+    const recs = [
+      acl("alex", "alex", "/certificates/.acl", {
+        granted: [ruleWith("bank", "/certificates/", ["Read", "Write"])],
+        revoked: [],
+      }),
+      // Alex takes Write away; the runtime's event lists only the mode it removed.
+      acl("alex", "alex", "/certificates/.acl", {
+        granted: [],
+        revoked: [ruleWith("bank", "/certificates/", ["Write"])],
+      }),
+    ].map((e) => m.push(e, { replayed: true }));
+    expect(m.grant("bank")?.state).toBe("active");
+    expect(m.grant("bank")?.active.map((r) => r.modes)).toEqual([["Read"]]);
+    expect(computeTotals(m).grants).toEqual({ active: 1, expired: 0, revoked: 0 });
+    const narrowed = recs[1];
+    if (!narrowed) throw new Error("no change");
+    const s = describe(m, narrowed);
+    expect(s.text).toBe("Alex narrowed Sorrel's access to Certificates");
+    expect(s.kind).not.toBe("revoke");
+    expect(LensMap.motionOf(narrowed, s, m.holder)).toBe("grant");
+    // Taking the last mode away ends the grant, and says so.
+    const ended = m.push(
+      acl("alex", "alex", "/certificates/.acl", {
+        granted: [],
+        revoked: [ruleWith("bank", "/certificates/", ["Read"])],
+      }),
+      { replayed: true },
+    );
+    expect(m.grant("bank")?.state).toBe("revoked");
+    expect(describe(m, ended).text).toBe("Alex withdrew Sorrel's access");
+  });
+
+  it("keeps a grant whose origin-limited rule goes while its unlimited rule stays", () => {
+    const m = new LensModel(CONFIG);
+    const recs = [
+      acl("alex", "alex", "/certificates/.acl", {
+        granted: [
+          ruleWith("bank", "/certificates/", ["Read"]),
+          ruleWith("bank", "/certificates/", ["Read"], ["https://app.example"]),
+        ],
+        revoked: [],
+      }),
+      acl("alex", "alex", "/certificates/.acl", {
+        granted: [],
+        revoked: [ruleWith("bank", "/certificates/", ["Read"], ["https://app.example"])],
+      }),
+    ].map((e) => m.push(e, { replayed: true }));
+    expect(m.grant("bank")?.state).toBe("active");
+    expect(m.grant("bank")?.active).toHaveLength(1);
+    const narrowed = recs[1];
+    if (!narrowed) throw new Error("no change");
+    expect(describe(m, narrowed).text).not.toMatch(/withdrew/);
+  });
+
+  it("between organisations, is said as narrowing, not as stopping sharing", () => {
+    const m = new LensModel(CONFIG);
+    const recs = [
+      acl("bureau", "bureau", "/orders/.acl", {
+        granted: [ruleWith("aus", "/orders/", ["Read", "Append"])],
+        revoked: [],
+      }),
+      acl("bureau", "bureau", "/orders/.acl", {
+        granted: [],
+        revoked: [ruleWith("aus", "/orders/", ["Append"])],
+      }),
+      acl("bureau", "bureau", "/orders/.acl", {
+        granted: [],
+        revoked: [ruleWith("aus", "/orders/", ["Read"])],
+      }),
+    ].map((e) => m.push(e, { replayed: true }));
+    const [, narrowed, stopped] = recs;
+    if (!narrowed || !stopped) throw new Error("no change");
+    expect(describe(m, narrowed).text).toBe(
+      "Cobble Huts narrowed what Kestrel may do with Hut orders",
+    );
+    expect(describe(m, stopped).text).toBe("Cobble Huts stopped sharing Hut orders with Kestrel");
+  });
+});
