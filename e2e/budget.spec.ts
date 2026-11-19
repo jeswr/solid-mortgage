@@ -17,7 +17,8 @@
  */
 import { gzipSync } from "node:zlib";
 import { type BrowserContext, expect, type Page, type Response, test } from "@playwright/test";
-import { waitForSeed } from "./support/pod.ts";
+import { MEDICATION_PAGES } from "../content/medication-handover/mount.ts";
+import { isOk, isPodEntry, podLogSoon, podRelative, waitForSeed } from "./support/pod.ts";
 import {
   APP_SLUGS,
   type AppSlug,
@@ -47,13 +48,45 @@ function collect(context: BrowserContext): { responses: Response[] } {
  * written, not just the worker in control. A page that finds the pods unseeded builds the seed
  * itself (pod-runtime `ready()`), loading the SHACL validator, which is not the next app's
  * first load.
+ *
+ * An app whose every page belongs to the medication handover is reached only from an earlier
+ * step of that demo, whose first page brings Rosa's pod to the morning of the discharge
+ * (content/medication-handover/prepare.ts, once per browser, like the seed; any of the demo's
+ * pages that reads Rosa's pod runs it). So it is started from such a page of another app of that
+ * demo, and measured once the preparation has landed: both access requests in Rosa's inbox, its
+ * last part.
  */
 async function startPodsElsewhere(page: Page, slug: AppSlug): Promise<void> {
-  const other: AppSlug = slug === "payroll" ? "bank" : "payroll";
+  const medicationOnly = MEDICATION_PAGES[slug] === "";
+  // A page of the demo that reads Rosa's pod as it loads, which prepares it.
+  const [other, path]: [AppSlug, string] = medicationOnly
+    ? slug === "pharmacy"
+      ? ["hospital", "discharge"]
+      : ["pharmacy", ""]
+    : [slug === "payroll" ? "bank" : "payroll", ""];
   requireApps([other]);
-  await page.goto(appPath(other));
+  await page.goto(appPath(other, path));
   await waitForRuntime(page, { tour: false });
   await waitForSeed(page);
+  if (medicationOnly) {
+    await expect
+      .poll(
+        async () =>
+          (await podLogSoon(page)).filter(
+            (e) =>
+              isPodEntry(e) &&
+              e.pod === "rosa" &&
+              e.kind === "write" &&
+              isOk(e.status) &&
+              /^\/inbox\/[^/]+$/.test(podRelative(e.path, e.pod)),
+          ).length,
+        {
+          message: `the medication handover never prepared Rosa's pod from /${other}/`,
+          timeout: 60_000,
+        },
+      )
+      .toBeGreaterThanOrEqual(2);
+  }
   await page.waitForLoadState("networkidle");
 }
 
