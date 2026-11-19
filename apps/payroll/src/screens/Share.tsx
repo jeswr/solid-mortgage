@@ -1,5 +1,5 @@
 // AUTHORED-BY Claude Opus 5.5
-import { EMPLOYMENT } from "@mortgage/content/mortgage/facts";
+import { EMPLOYMENT, FIGURE_TAG } from "@mortgage/content/mortgage/facts";
 import { shareEmployment } from "@mortgage/content/mortgage/journey";
 import { applyDocumentMeta } from "@mortgage/demo-kit/trust";
 import { useEffect, useState } from "react";
@@ -54,6 +54,7 @@ export function Share() {
               <dd>{usd(EMPLOYMENT.monthlyGrossIncomeUsd)} a month, gross</dd>
             </div>
           </dl>
+          <p className="figure-tag">{FIGURE_TAG}</p>
           <p className="small">
             Kept by Ledgerly and not shared: payslips, pay history, year-to-date totals, tax and
             bank details.

@@ -1,5 +1,5 @@
 // AUTHORED-BY Claude Opus 5.5
-import { EMPLOYMENT } from "@mortgage/content/mortgage/facts";
+import { EMPLOYMENT, FIGURE_TAG } from "@mortgage/content/mortgage/facts";
 import { applyDocumentMeta } from "@mortgage/demo-kit/trust";
 import { useEffect } from "react";
 import { org } from "../org.ts";
@@ -45,6 +45,7 @@ export function Pay() {
             </tbody>
           </table>
         </div>
+        <p className="figure-tag">Every amount: {FIGURE_TAG}.</p>
       </section>
     </div>
   );

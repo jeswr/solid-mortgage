@@ -1,5 +1,5 @@
 // AUTHORED-BY Claude Opus 5.5
-import { EMPLOYMENT } from "@mortgage/content/mortgage/facts";
+import { EMPLOYMENT, FIGURE_TAG } from "@mortgage/content/mortgage/facts";
 import { applyDocumentMeta } from "@mortgage/demo-kit/trust";
 import { useEffect } from "react";
 import { Link } from "wouter";
@@ -38,6 +38,7 @@ export function Dashboard() {
           <p className="small">
             {latest === undefined ? "" : `${latest.period}, paid ${shortDate(latest.payDate)}`}
           </p>
+          <p className="figure-tag">{FIGURE_TAG}</p>
           <Link href="/pay">All payslips</Link>
         </section>
         <section className="tile" aria-labelledby="issued-heading">

@@ -441,3 +441,10 @@ tbody th {
     gap: 0;
   }
 }
+
+.figure-tag {
+  margin: 0.25rem 0 0;
+  font-size: 0.75rem;
+  font-style: italic;
+  color: var(--lg-muted);
+}
