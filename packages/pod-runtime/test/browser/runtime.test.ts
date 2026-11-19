@@ -18,7 +18,7 @@ let origin = "";
 let out = "";
 let skipReason: string | undefined;
 /** Pod owners in the padded cold-start test (`POD_RUNTIME_PAD` overrides it, to measure). */
-const PADDED_OWNERS = Number(process.env.POD_RUNTIME_PAD ?? 30);
+const PADDED_OWNERS = Number(process.env.POD_RUNTIME_PAD ?? 40);
 
 beforeAll(async () => {
   if (!existsSync(SW)) {
@@ -91,7 +91,7 @@ describe("pod runtime in Chrome", () => {
     await context.close();
   });
 
-  it("starts cold within 3 s with 30 pod owners, and every pod is there", async (ctx) => {
+  it("starts cold within 3 s with 40 pod owners, and every pod is there", async (ctx) => {
     if (skipReason) return ctx.skip(skipReason);
     const context = await (browser as Browser).newContext();
     // The registry grows with every demo; hold the budget at a size it has not reached yet.
