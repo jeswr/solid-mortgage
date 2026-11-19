@@ -84,6 +84,7 @@ test("step 2: Sign and send writes a signed credential into Alex's pod", async (
   await page.getByRole("button", { name: "Try to read it back from Alex's pod" }).click();
   await expect(page.locator(".refusal")).toContainText("403 Forbidden");
   expect((await asOwner(page, "payroll", "alex/credentials/employment-income")).status).toBe(403);
+  await noAxeViolations(page);
 });
 
 test("the back office answers a refresh request: new credential, old one revoked", async ({

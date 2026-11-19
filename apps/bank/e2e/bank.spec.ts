@@ -67,6 +67,7 @@ test("step 3: Send writes a signed account summary into Alex's pod", async ({ pa
   await receipt.getByRole("button", { name: /Try to read it back/ }).click();
   await expect(receipt.locator(".refusal")).toContainText("403 Forbidden");
   expect((await asOwner(page, "bank", "alex/credentials/assets")).status).toBe(403);
+  await noAxeViolations(page);
 });
 
 test("Connected services: the seeded identity credential, and no access to read it", async ({
