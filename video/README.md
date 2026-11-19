@@ -68,6 +68,19 @@ when the step is shown, so the request is on screen while the
 narration describes it. `--rehearse` runs every action fast with no capture; `--only a,b` records
 some scenes.
 
+The recorder waits for the app (an agent, a proof, a page load) as long as it takes, so a
+paragraph's clip can end well before the next one starts. It logs, per paragraph, when the clip
+starts and ends, when the screen was done with it and when the next paragraph starts
+(`report.json` `timeline`), and post-production (`lib/tighten.ts`) fast-forwards every silence
+longer than its break: 0.15 s at normal speed after the words, the wait played in 0.25 s, then the
+rest of the break at normal speed into the next paragraph. The break is 0.85 s (plus any
+`[pause: s]`); the end card is held 1.5 s after the last word. One ffmpeg pass retimes the picture
+and the same time map moves the clips, captions and chapters, so they stay in sync
+(`report.json` `tightened` lists each wait, as recorded and as kept). Nothing in the app is
+changed for visitors, and no new voice is needed. `video/test/published.test.ts` measures the
+published audio: no silence longer than 1.5 s between paragraphs (a deliberate break measures
+about 1.3 s at -40 dB).
+
 Output in `video/dist/<demo>/` (not in git; `tools/build-site.mjs` copies it to the site's
 `/video/<demo>/`): `video.mp4`, `captions.vtt`, `chapters.vtt` (cue id = scene id, which the
 welcome page's player seeks by), `poster.jpg`, `report.json` (duration, chapter times, the live

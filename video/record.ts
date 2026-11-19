@@ -15,10 +15,12 @@
  * (tools/serve-dist.mjs) unless `--site <url>` points at one already running. Narration clips are
  * `<voice>/clips/<scene>-<n>.mp3` (see voice.ts); a paragraph with no clip yet is held for its
  * estimated speaking time and captioned, so a draft can be cut before the scene is voiced.
+ * Every wait that outlasts the words is fast-forwarded afterwards (lib/tighten.ts), so the
+ * narrator is never silent for longer than a paragraph break.
  *
  * Output, in `video/dist/<demo>/` (copied to the site's `/video/<demo>/` by tools/build-site.mjs):
  * video.mp4 (1920x1080, H.264, AAC, soft subtitles, chapters), captions.vtt, chapters.vtt (cue id
- * = scene id), poster.jpg, report.json.
+ * = scene id), poster.jpg, report.json (with each paragraph's timeline and the waits taken out).
  */
 import { execFile } from "node:child_process";
 import { existsSync } from "node:fs";
@@ -48,6 +50,7 @@ import { chaptersVtt, mux, type Placed } from "./lib/mux.ts";
 import type { Action, Scene } from "./lib/narration.ts";
 import type { PageGlobals } from "./lib/page-globals.ts";
 import { startStatic } from "./lib/server.ts";
+import { BREAK, mapTime, plan, retime, type Spoken } from "./lib/tighten.ts";
 import { actions, type Ctx, presentation } from "./scenes.ts";
 
 const run = promisify(execFile);
@@ -228,6 +231,9 @@ async function record() {
   await cap.start();
   d.nav = cap;
   const placed: Placed[] = [];
+  // Per paragraph: when its clip starts and ends, when the screen was done with it, and the
+  // silence allowed after it (the break plus any [pause]); the post-production reads this.
+  const timeline: (Spoken & { scene: string; done: number })[] = [];
   const chapters: { id: string; at: number; title: string }[] = [];
   const LEAD = 0.35;
   const GAP = 0.5;
@@ -248,18 +254,41 @@ async function record() {
       const speaking = clip ? sleep((LEAD + clip.duration) * 1000) : Promise.resolve();
       await Promise.all([runActions(ctx, scene, step.actions), speaking]);
       await runActions(ctx, scene, step.after);
+      const last = timeline.at(-1);
+      if (clip)
+        timeline.push({
+          scene: scene.id,
+          at: start + LEAD,
+          end: start + LEAD + clip.duration,
+          done: cap.now(),
+          allowed: BREAK + step.pause,
+        });
+      else if (last) last.allowed += step.pause;
       await sleep((GAP + step.pause) * 1000);
     }
   }
   await sleep(1200);
-  const seconds = await cap.stop();
+  const recorded = await cap.stop();
   await close();
+
+  // Fast-forward every wait that outlasts the words, so no silence is longer than its break.
+  const tight = plan(timeline, recorded);
+  const seconds = tight.duration;
+  const at = (t: number) => mapTime(tight.spans, t);
+  log(
+    `Tightening: ${tight.gaps.length} wait(s) fast-forwarded, ${fmt(recorded)} -> ${fmt(seconds)}`,
+  );
+  const picture = path.join(out, "picture.mp4");
+  await retime(raw, picture, tight.spans, { fps: 30, crf: 18 });
+  await rm(raw, { force: true });
+  for (const p of placed) p.at = at(p.at);
+  for (const c of chapters) c.at = at(c.at);
 
   log("Mixing…");
   const video = path.join(out, "video.mp4");
   const audio = placed.filter((p) => p.file);
   await mux({
-    video: raw,
+    video: picture,
     videoSeconds: seconds,
     clips: audio,
     captionClips: placed,
@@ -268,7 +297,7 @@ async function record() {
     chapters,
     title: demo.narration.meta.title,
   });
-  await rm(raw, { force: true });
+  await rm(picture, { force: true });
   await writeFile(path.join(out, "chapters.vtt"), chaptersVtt(chapters, seconds));
   await writeFile(
     path.join(out, "report.json"),
@@ -277,6 +306,19 @@ async function record() {
         demo: id,
         recordedAt: new Date().toISOString(),
         duration: Math.round(seconds),
+        recordedDuration: Math.round(recorded),
+        tightened: tight.gaps.map((g) => ({
+          after: Number(g.after.toFixed(2)),
+          was: Number(g.was.toFixed(2)),
+          now: Number(g.now.toFixed(2)),
+        })),
+        timeline: timeline.map((t, i) => ({
+          scene: t.scene,
+          clipStart: Number(t.at.toFixed(2)),
+          clipEnd: Number(t.end.toFixed(2)),
+          done: Number(t.done.toFixed(2)),
+          nextStart: Number((timeline[i + 1]?.at ?? recorded).toFixed(2)),
+        })),
         voiced,
         drafted,
         scenes: kept.map((s) => s.id),
