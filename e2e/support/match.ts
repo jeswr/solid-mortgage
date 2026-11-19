@@ -6,9 +6,11 @@
  *
  * Rules: every key the pattern names must match. Strings and numbers are equal; a `path`
  * matches when equal after both are made pod-relative, or when the entry's path ends with the
- * pattern. Objects match partially; an array pattern matches when each of its items matches
- * some item of the entry's array. App-note kinds only match app notes; everything else only
- * matches pod events.
+ * pattern. A POST whose pattern path is a container (`/inbox/`) matches an entry for a resource
+ * created directly in it: the runtime logs a POST under the `Location` it created
+ * (packages/pod-runtime), while content/mortgage/tour.ts names the container posted to. Objects
+ * match partially; an array pattern matches when each of its items matches some item of the
+ * entry's array. App-note kinds only match app notes; everything else only matches pod events.
  */
 import type { AppNote, LensEntry, PodEvent } from "../../packages/demo-kit/src/contracts/index.ts";
 import { podRelative } from "./pod.ts";
@@ -57,11 +59,26 @@ function matchValue(pattern: unknown, value: unknown, key: string, entry: LensEn
   return pattern === value;
 }
 
+/** The container a pod path sits in (`/inbox/x` → `/inbox/`). */
+function containerOf(path: string): string {
+  return path.replace(/[^/]+\/?$/, "");
+}
+
 export function matchesExpectation(item: Expectation, entry: LensEntry): boolean {
   if (isNoteExpectation(item) !== (entry.source === "app")) return false;
-  return Object.entries(item).every(([key, pattern]) =>
-    matchValue(pattern, (entry as unknown as Record<string, unknown>)[key], key, entry),
-  );
+  const postToContainer =
+    entry.source === "pod" &&
+    (item as Partial<PodEvent>).method === "POST" &&
+    typeof (item as Partial<PodEvent>).path === "string" &&
+    ((item as Partial<PodEvent>).path as string).endsWith("/");
+  return Object.entries(item).every(([key, pattern]) => {
+    const value = (entry as unknown as Record<string, unknown>)[key];
+    if (postToContainer && key === "path" && typeof value === "string") {
+      const created = podRelative(value, entry.source === "pod" ? entry.pod : undefined);
+      return created === pattern || containerOf(created) === pattern;
+    }
+    return matchValue(pattern, value, key, entry);
+  });
 }
 
 /** One line describing an expectation, for failure messages. */
