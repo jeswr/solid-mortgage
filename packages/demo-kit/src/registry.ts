@@ -1,4 +1,9 @@
 // AUTHORED-BY Claude Opus 5.5
+import { HOLDER_IDS, type HolderId, isHolderId } from "./holders.js";
+
+/** The holder registry is part of the registry module too. */
+export * from "./holders.js";
+
 /**
  * Organisation registry types (design.md §b.1). The data lives in `content/orgs.ts`; renaming a
  * fictional organisation is a change to that one file. Slugs are role names and stay fixed.
@@ -27,8 +32,12 @@ export type OrgSlug = (typeof ORG_SLUGS)[number];
 export const APP_SLUGS = [...ORG_SLUGS, "welcome"] as const;
 export type AppSlug = (typeof APP_SLUGS)[number];
 
-/** Whose pod a request is addressed to or made as: an organisation's, or Alex's. */
-export type PodOwner = OrgSlug | "alex";
+/** Whose pod a request is addressed to or made as: an organisation's, or a registered holder's. */
+export type PodOwner = OrgSlug | HolderId;
+
+export function isPodOwner(value: unknown): value is PodOwner {
+  return isHolderId(value) || (typeof value === "string" && isOrgSlug(value));
+}
 
 export function isOrgSlug(value: string): value is OrgSlug {
   return (ORG_SLUGS as readonly string[]).includes(value);
@@ -62,8 +71,9 @@ export interface OrgRecord {
   altPersonas?: Persona[];
   /**
    * The pod this app's requests are made as. Usually its own slug; an app that is a second view
-   * of an organisation names the first app's slug (the Loan Desk acts as `lender`), and Alex's
-   * wallet acts as `alex`.
+   * of an organisation names the first app's slug (the Loan Desk acts as `lender`), and the
+   * wallet acts as its default holder, `alex` (it may act for every registered holder:
+   * `holdersActedFor`).
    */
   actsAs: PodOwner;
   /** `<meta name="theme-color">` and the Lens map colour; an original value (design.md §b.2). */
@@ -75,9 +85,9 @@ export interface OrgRecord {
 /** The registry: one record per organisation app. */
 export type OrgRegistry = Readonly<Record<OrgSlug, OrgRecord>>;
 
-/** The person whose pod sits at the centre of the demo. */
+/** The holder whose pod sits at the centre of a demo (`HOLDERS` in `./holders.ts`). */
 export interface PodHolder {
-  owner: "alex";
+  owner: HolderId;
   name: string;
 }
 
@@ -98,9 +108,19 @@ export function webidFor(owner: PodOwner, podOrigin: string): string {
   return new URL(webidPath(owner), podOrigin).href;
 }
 
-/** The pods the registry implies: Alex's plus one per distinct `actsAs` organisation. */
+/** The pods the registry implies: every registered holder's, then one per distinct `actsAs` organisation. */
 export function podOwners(registry: OrgRegistry): PodOwner[] {
-  const owners = new Set<PodOwner>(["alex"]);
+  const owners = new Set<PodOwner>(HOLDER_IDS);
   for (const slug of ORG_SLUGS) owners.add(registry[slug].actsAs);
   return [...owners];
+}
+
+/**
+ * The holders an app may act for. An app that acts as a holder (the wallet) holds every
+ * registered holder's pod (docs/rebuild/flows.md §1: one wallet for all of them); any other app
+ * acts only as its own organisation and gets none.
+ */
+export function holdersActedFor(registry: OrgRegistry, app: string): readonly HolderId[] {
+  if (!isOrgSlug(app)) return [];
+  return isHolderId(registry[app].actsAs) ? HOLDER_IDS : [];
 }
