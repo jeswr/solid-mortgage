@@ -61,7 +61,8 @@ DevTools screencast. `step` deep-links to the step's page with `?tour=<demo>&ste
 `data-tour` target, clicks it, and waits until the tour marks the step done from the pod's
 events. A step whose target first shows a hand-off instead of the step's own action (the
 wallet's "Have Juniper Home Loans ask now" before Approve, when the request starts in another
-app) has the hand-off pressed when the step is shown, so the request is on screen while the
+app; the target sits in a `.handoff` card or under `[data-handoff]`) has the hand-off pressed
+when the step is shown, so the request is on screen while the
 narration describes it. `--rehearse` runs every action fast with no capture; `--only a,b` records
 some scenes.
 

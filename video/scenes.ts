@@ -43,15 +43,27 @@ async function chip(c: Ctx, text?: string) {
     .catch(() => {});
 }
 
-/** The app path of a step in path mode (`appUrl` in @mortgage/demo-kit/urls). */
-function stepPath(s: TourStepLite) {
-  return `/${s.app}/${s.path.replace(/^\/+/, "")}`.replace(/\/+$/, "") || "/";
+/** A step's page: its app path and its own query (`health/shared?holder=alex`). */
+function stepTarget(c: Ctx, s: TourStepLite): URL {
+  return new URL(`${c.site}/${s.app}/${s.path.replace(/^\/+/, "")}`);
 }
 const trim = (p: string) => (p.length > 1 ? p.replace(/\/+$/, "") : p);
 
+/** The deep link to a step: its page, with the tour's parameters added to the step's own. */
 function stepUrl(c: Ctx, s: TourStepLite) {
-  const q = new URLSearchParams({ tour: c.demo.id, step: s.id, present: "1" });
-  return `${c.site}/${s.app}/${s.path.replace(/^\/+/, "")}?${q}`;
+  const url = stepTarget(c, s);
+  url.searchParams.set("tour", c.demo.id);
+  url.searchParams.set("step", s.id);
+  url.searchParams.set("present", "1");
+  return url.href;
+}
+
+/** Is the page already on the step's page (same path, and the step's own query holds)? */
+function onStepPage(c: Ctx, s: TourStepLite, here: URL) {
+  const want = stepTarget(c, s);
+  if (here.origin !== want.origin || trim(here.pathname) !== trim(want.pathname)) return false;
+  for (const [k, v] of want.searchParams) if (here.searchParams.get(k) !== v) return false;
+  return true;
 }
 
 function findStep(c: Ctx, id: string) {
@@ -86,46 +98,41 @@ async function until(ms: number, test: () => Promise<boolean>) {
 const targetOf = (c: Ctx, s: TourStepLite) =>
   page(c).locator(`[data-tour="${s.action?.target}"]`).filter({ visible: true });
 
-const words = (t: string) => t.replace(/\s+/g, " ").trim().toLowerCase();
+/** Where a page marks a hand-off: the wallet's "Waiting for …" card (`section.handoff`). */
+const HANDOFF = ".handoff, [data-handoff]";
 
-/** The target's visible label (its accessible name where it sets one). */
-async function labelOf(c: Ctx, s: TourStepLite): Promise<string | undefined> {
-  return targetOf(c, s)
+/** The target's text, if it is on screen inside a hand-off; undefined otherwise. */
+async function handOffLabel(c: Ctx, s: TourStepLite): Promise<string | undefined> {
+  const text = await targetOf(c, s)
     .first()
-    .evaluate((el) => el.getAttribute("aria-label") ?? el.textContent ?? "", undefined, {
-      timeout: 1000,
-    })
-    .catch(() => undefined);
+    .evaluate(
+      (el, sel) => (el.closest(sel) ? (el.textContent ?? "").replace(/\s+/g, " ").trim() : null),
+      HANDOFF,
+      { timeout: 1000 },
+    )
+    .catch(() => null);
+  return text ?? undefined;
 }
 
 /**
  * Presses a hand-off before the step's own action, when the page shows one. Some steps start in
- * another app: the wallet's consent steps show "Have <organisation> ask now" on the step's target
- * until the organisation's request arrives, and only then the step's own button ("Approve",
- * apps/wallet/src/screens/Requests.tsx). The pointer presses the hand-off and waits until the
- * target carries the step's label, so the request is on screen while the narration describes it.
- * Returns false when there is nothing to press: the target is missing or already the action.
+ * another app: the wallet's consent steps put the step's target on "Have <organisation> ask now"
+ * in a "Waiting for …" card until the organisation's request arrives, and only then on the step's
+ * own button (Approve, apps/wallet/src/screens/Requests.tsx). The pointer presses the hand-off
+ * and waits until the target is the step's own button, so the request is on screen while the
+ * narration describes it. Returns false when there is no hand-off on the page.
  */
 async function handOff(c: Ctx, s: TourStepLite): Promise<boolean> {
   if (!s.action) return false;
-  const label = words(s.action.label);
-  const now = await labelOf(c, s);
-  if (now === undefined || words(now).includes(label)) return false;
-  if (
-    await targetOf(c, s)
-      .first()
-      .isDisabled()
-      .catch(() => true)
-  )
-    return false;
-  console.log(`  · ${s.id}: pressing the hand-off "${now.trim()}" before "${s.action.label}"`);
-  if (!(await c.d.click(targetOf(c, s), `${now.trim()} [data-tour="${s.action.target}"]`)))
-    return false;
+  const now = await handOffLabel(c, s);
+  if (now === undefined) return false;
+  console.log(`  · ${s.id}: pressing the hand-off "${now}" before "${s.action.label}"`);
+  if (!(await c.d.click(targetOf(c, s), `${now} [data-tour="${s.action.target}"]`))) return false;
   const ready = await until(60_000, async () => {
-    const after = await labelOf(c, s);
-    return after !== undefined && words(after).includes(label);
+    if (!(await targetOf(c, s).first().isVisible())) return false;
+    return (await handOffLabel(c, s)) === undefined;
   });
-  if (!ready) c.d.warn(`step ${s.id}: "${s.action.label}" never appeared after "${now.trim()}"`);
+  if (!ready) c.d.warn(`step ${s.id}: "${s.action.label}" never appeared after "${now}"`);
   return ready;
 }
 
@@ -321,10 +328,8 @@ export const actions: Record<string, Action> = {
     const s = findStep(c, id as string);
     await c.d.clearHighlight();
     c.state.step = s.id;
-    const here = new URL(page(c).url());
     const samePage =
-      here.origin === c.site &&
-      trim(here.pathname) === trim(stepPath(s)) &&
+      onStepPage(c, s, new URL(page(c).url())) &&
       (await page(c)
         .evaluate(() => !!(window as unknown as PageGlobals).__demo)
         .catch(() => false));
