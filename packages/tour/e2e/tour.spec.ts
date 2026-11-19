@@ -115,6 +115,11 @@ test("present mode hides the step card and enlarges the Lens; window.__demo driv
   await expect(card(page)).toBeVisible();
   await page.evaluate(() => window.__demo?.lens("grants"));
   await expect(page.locator("solid-lens [role=tab][aria-selected=true]")).toHaveText("Grants");
+  // The examiner view of the journey ledger is reachable the same way.
+  await page.evaluate(() => window.__demo?.lens("examiner"));
+  const examiner = page.locator('solid-lens dialog [role="tab"][data-tab="examiner"]');
+  await expect(examiner).toHaveAttribute("aria-selected", "true");
+  await page.locator("solid-lens dialog").getByRole("button", { name: "Close the ledger" }).click();
   await page.evaluate(() => window.__demo?.act());
   await expect(page.locator("#status")).toHaveText("Certificate sent.");
   const totals = await page.evaluate(() => window.__demo?.totals());
