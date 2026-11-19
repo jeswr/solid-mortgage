@@ -67,13 +67,14 @@ mshape:ZkOperandAnchorSubjectShape
   sh:closed true ;
   sh:ignoredProperties ( rdf:type ) ;
   sh:property [
-    # Only decision 0005's ZK scaled-unit fields are anchorable. This list must
+    # Only decision 0005's ZK scaled-unit fields (and the small-dollar lending demo's two
+    # cash-flow fields) are anchorable. This list must
     # stay equal to ZK_FIELD_BUDGETS in src/zk-budgets.ts (test-enforced).
     sh:path mort:field ;
     sh:minCount 1 ;
     sh:maxCount 1 ;
     sh:nodeKind sh:IRI ;
-    sh:in ( mort:monthlyGrossIncomeUsd mort:totalMonthlyDebtUsd mort:creditScoreValue mort:ownershipPercentageBps mort:beneficialOwnershipArrayCommitment ) ;
+    sh:in ( mort:monthlyGrossIncomeUsd mort:totalMonthlyDebtUsd mort:creditScoreValue mort:cashFlowScoreValue mort:nsf90Count mort:ownershipPercentageBps mort:beneficialOwnershipArrayCommitment ) ;
     sh:message "field must be one of decision 0005's ZK scaled-unit field IRIs, or a business KYB ownership field" ;
   ] ;
   sh:property [

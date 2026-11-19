@@ -29,6 +29,12 @@ const KybOnboarding = lazySection(
 const KybDueDiligence = lazySection(
   async () => (await import("./business-kyb/BusinessKyb.tsx")).KybDueDiligence,
 );
+const LendingCashFlow = lazySection(
+  async () => (await import("./small-dollar-lending/CashFlow.tsx")).LendingCashFlow,
+);
+const LendingLoans = lazySection(
+  async () => (await import("./small-dollar-lending/Loans.tsx")).LendingLoans,
+);
 
 export interface AppSection {
   /** The demo that owns this section, e.g. "moving-house". */
@@ -45,6 +51,18 @@ export const sections: readonly AppSection[] = [
     demo: "moving-house",
     path: "moving/address",
     title: "Address on file",
+  },
+  {
+    Component: LendingCashFlow,
+    demo: "small-dollar-lending",
+    path: "lending/cash-flow",
+    title: "Cash-flow summary",
+  },
+  {
+    Component: LendingLoans,
+    demo: "small-dollar-lending",
+    path: "lending/loans",
+    title: "Personal loans",
   },
   { Component: KybOnboarding, demo: "business-kyb", path: "kyb", title: "Business onboarding" },
   {

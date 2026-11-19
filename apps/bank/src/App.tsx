@@ -1,5 +1,10 @@
 // AUTHORED-BY Claude Opus 5.5
+
 import { BORROWER } from "@mortgage/content/mortgage/facts";
+import {
+  isSmallDollarPage,
+  smallDollarPersona,
+} from "@mortgage/content/small-dollar-lending/pages";
 import { applyDocumentMeta, DemoTrust, TrustBanner } from "@mortgage/demo-kit/trust";
 import { appUrl } from "@mortgage/demo-kit/urls";
 import { useEffect } from "react";
@@ -90,9 +95,15 @@ function Connecting() {
 
 /** `hook` swaps the browser location for another (tests pass wouter's `memoryLocation`). */
 export function App({ hook }: { hook?: BaseLocationHook }) {
+  // On a lending page the consumer is Maya, not the mortgage's Alex.
+  const lending = isSmallDollarPage(
+    globalThis.location.pathname,
+    "bank",
+    globalThis.location.search,
+  );
   return (
     <DemoTrust org={org}>
-      <TrustBanner />
+      <TrustBanner {...(lending ? { signedInAs: smallDollarPersona("online banking") } : {})} />
       <Router {...(hook === undefined ? { base: ROUTER_BASE } : { hook })}>
         <TopNav />
         <main id="main">

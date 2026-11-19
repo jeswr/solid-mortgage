@@ -9,6 +9,7 @@ import { trackTourContext } from "@mortgage/content/mortgage/browser";
 import { MORTGAGE_HOLDER, mortgageLens, mortgageTour } from "@mortgage/content/mortgage/mount";
 import { isMovingHousePage } from "@mortgage/content/moving-house/pages";
 import { ORGS } from "@mortgage/content/orgs";
+import { isSmallDollarPage } from "@mortgage/content/small-dollar-lending/pages";
 import { onEvent, resetDemo, setTourContext } from "@mortgage/pod-runtime";
 import { mountDemo } from "@mortgage/tour/mount";
 import { StrictMode } from "react";
@@ -19,6 +20,8 @@ import { PodsProvider, startPods } from "./pods.tsx";
 const APP = "bank";
 // A page under moving/ belongs to the moving-house demo (src/sections/moving-house/).
 const movingHouse = isMovingHousePage(location.pathname, "bank", location.search);
+// A page under lending/ belongs to the small-dollar lending demo (src/sections/small-dollar-lending/).
+const lending = isSmallDollarPage(location.pathname, "bank", location.search);
 // A page under kyb/ belongs to the business KYB demo (src/sections/business-kyb/).
 const kyb = isBusinessKybPage(location.pathname, "bank", location.search);
 const root = document.getElementById("root");
@@ -31,8 +34,9 @@ view.render(
 );
 
 /**
- * The demo this page belongs to. The moving-house and business KYB demos load only on their own
- * pages, so neither adds to the first load of the bank's mortgage screens (acceptance test 15).
+ * The demo this page belongs to. The moving-house, business KYB and small-dollar lending demos
+ * load only on their own pages, so none adds to the first load of the bank's mortgage screens
+ * (acceptance test 15).
  */
 async function demoOptions() {
   if (kyb) {
@@ -43,6 +47,10 @@ async function demoOptions() {
       lens: k.businessKybLens(),
       tour: k.businessKybTour(),
     };
+  }
+  if (lending) {
+    const l = await import("@mortgage/content/small-dollar-lending/mount");
+    return { holder: l.SMALL_DOLLAR_HOLDER, lens: l.smallDollarLens(), tour: l.smallDollarTour() };
   }
   if (movingHouse) {
     const moving = await import("@mortgage/content/moving-house/mount");

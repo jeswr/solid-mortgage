@@ -24,15 +24,24 @@ export const PINNED_NARGO_VERSION = "1.0.0-beta.21";
 export const PINNED_NOIR_JS_VERSION = "1.0.0-beta.21";
 export const PINNED_BB_JS_VERSION = "5.0.0-nightly.20260324";
 
-/** The Tier A filter members this package commits (decision 0005 statements). */
-export type FilterIntMember = "filter_int_d2" | "filter_int_d3" | "filter_int_d4";
+/**
+ * The Tier A filter members this package commits (decision 0005 statements, plus the one-digit
+ * member the small-dollar lending demo's zero returned-payment proof needs). Which members a
+ * field may use is the field's budget (`digits` and `minDigits` in @mortgage/data-model), checked
+ * by the prover and the verifier.
+ */
+export type FilterIntMember = "filter_int_d1" | "filter_int_d2" | "filter_int_d3" | "filter_int_d4";
 
 interface MemberEntry {
-  readonly digits: 2 | 3 | 4;
+  readonly digits: 1 | 2 | 3 | 4;
   readonly load: () => Promise<CompiledCircuitArtifact>;
 }
 
 const MEMBERS: Readonly<Record<FilterIntMember, MemberEntry>> = {
+  filter_int_d1: {
+    digits: 1,
+    load: async () => (await import("./filter-int-d1.js")).FilterIntD1,
+  },
   filter_int_d2: {
     digits: 2,
     load: async () => (await import("./filter-int-d2.js")).FilterIntD2,
@@ -49,6 +58,7 @@ const MEMBERS: Readonly<Record<FilterIntMember, MemberEntry>> = {
 
 /** The committed member names, in digit order. */
 export const COMMITTED_MEMBERS: readonly FilterIntMember[] = [
+  "filter_int_d1",
   "filter_int_d2",
   "filter_int_d3",
   "filter_int_d4",
@@ -64,7 +74,7 @@ export function asCommittedMember(name: string): FilterIntMember | undefined {
 }
 
 /** Decimal-digit count of a committed member's private witness. */
-export function memberDigits(member: FilterIntMember): 2 | 3 | 4 {
+export function memberDigits(member: FilterIntMember): 1 | 2 | 3 | 4 {
   return MEMBERS[member].digits;
 }
 
