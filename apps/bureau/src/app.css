@@ -1,0 +1,227 @@
+/* AUTHORED-BY Claude Opus 5.5 */
+@import "./tokens.css";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--qc-ground);
+  color: var(--qc-ink);
+  font-family: var(--qc-serif);
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+a {
+  color: var(--qc-blue-deep);
+}
+
+:focus-visible {
+  outline: 2px solid var(--qc-blue-deep);
+  outline-offset: 2px;
+}
+
+.sheet {
+  max-width: 46rem;
+  margin: 0 auto;
+  background: var(--qc-paper);
+  border-left: 1px solid var(--qc-rule);
+  border-right: 1px solid var(--qc-rule);
+  min-height: calc(100vh - 3rem);
+  padding: 0 1.25rem;
+}
+
+.masthead {
+  border-bottom: 2px solid var(--qc-blue);
+  padding: 1rem 0 0.75rem;
+}
+
+.masthead .name {
+  margin: 0 0 0.25rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.masthead .name a {
+  color: var(--qc-blue);
+  text-decoration: none;
+}
+
+.masthead nav {
+  font-size: 0.95rem;
+  color: var(--qc-muted);
+}
+
+.masthead nav a[aria-current="page"] {
+  font-weight: 700;
+  text-decoration: none;
+  color: var(--qc-ink);
+}
+
+main {
+  padding: 1rem 0 2rem;
+}
+
+.page.wide {
+  margin: 0 -1.25rem;
+  padding: 0 1.25rem;
+}
+
+h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0.5rem 0 0.75rem;
+}
+
+h2 {
+  font-size: 1.15rem;
+  margin: 1.5rem 0 0.5rem;
+}
+
+fieldset {
+  border: 1px solid var(--qc-rule);
+  margin: 1rem 0;
+  padding: 0.5rem 1rem 1rem;
+}
+
+legend {
+  font-weight: 700;
+  padding: 0 0.35rem;
+  color: var(--qc-blue);
+}
+
+dl.form {
+  display: grid;
+  grid-template-columns: minmax(8rem, 14rem) 1fr;
+  gap: 0.35rem 1rem;
+  margin: 0.5rem 0 0;
+}
+
+dl.form dt {
+  color: var(--qc-muted);
+}
+
+dl.form dd {
+  margin: 0;
+}
+
+.figure {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.note,
+.sub {
+  font-size: 0.85rem;
+  color: var(--qc-muted);
+}
+
+.sub {
+  display: block;
+}
+
+button {
+  font: inherit;
+  background: var(--qc-blue);
+  color: #fff;
+  border: 1px solid var(--qc-blue-deep);
+  padding: 0.4rem 1rem;
+  cursor: pointer;
+}
+
+button:disabled {
+  background: #d5d9df;
+  color: #3a3f47;
+  border-color: var(--qc-rule);
+  cursor: not-allowed;
+}
+
+button.small {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.85rem;
+  padding: 0.2rem 0.6rem;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.95rem;
+}
+
+caption {
+  text-align: left;
+  font-weight: 700;
+  padding: 0.5rem 0;
+}
+
+th,
+td {
+  border: 1px solid var(--qc-rule);
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+thead th {
+  background: var(--qc-ground);
+}
+
+tbody th {
+  font-weight: 400;
+}
+
+table.orders {
+  font-size: 0.875rem;
+}
+
+.mono {
+  font-family: var(--qc-mono);
+  font-size: 0.85em;
+  overflow-wrap: anywhere;
+}
+
+.readback {
+  margin-top: 1rem;
+}
+
+.refusal {
+  border: 1px solid var(--qc-red);
+  color: var(--qc-red);
+  padding: 0.4rem 0.6rem;
+  margin: 0.5rem 0 0;
+}
+
+.error {
+  color: var(--qc-red);
+}
+
+.index {
+  padding-left: 1.25rem;
+}
+
+.footer {
+  border-top: 1px solid var(--qc-rule);
+  padding: 0.75rem 0 1.5rem;
+  font-size: 0.85rem;
+  color: var(--qc-muted);
+}
+
+@media (max-width: 560px) {
+  dl.form {
+    grid-template-columns: 1fr;
+  }
+
+  dl.form dd {
+    margin-bottom: 0.5rem;
+  }
+}
