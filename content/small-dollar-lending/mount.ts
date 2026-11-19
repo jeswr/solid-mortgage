@@ -99,6 +99,14 @@ export function isSmallDollarPage(pathname: string, app: AppSlug, search = ""): 
   return inApp === prefix || inApp.startsWith(`${prefix}/`);
 }
 
+/**
+ * Who an organisation app's trust banner says is signed in on a lending page: Maya, in the role
+ * the app gives its consumer ("online banking"), not the app's mortgage persona.
+ */
+export function smallDollarPersona(role?: string): { name: string; role?: string } {
+  return role === undefined ? { name: HOLDERS.maya.name } : { name: HOLDERS.maya.name, role };
+}
+
 /** The simulated day of a tour step (pages follow it in the guided tour). */
 export function dayOfStep(stepId: string | undefined): number | undefined {
   return TOUR.find((step) => step.id === stepId)?.clock?.day;

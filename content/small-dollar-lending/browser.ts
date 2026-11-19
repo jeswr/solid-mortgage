@@ -4,6 +4,9 @@
  * runtime is passed in (typed structurally), so content does not depend on the pod runtime.
  *
  *   const world = await lendingWorld(runtime, "fintech-lender", DAY.apply);
+ *
+ * `lendingPages` adds the story's starting point: the first world a page asks for prepares the
+ * pods once (`prepare.ts`), so any lending page works when it is the first one opened.
  */
 
 import type { AppNote } from "@mortgage/demo-kit/contracts";
@@ -37,4 +40,26 @@ export async function lendingWorld(
     note: (entry) => runtime.note(entry),
     podFetch: runtime.podFetch,
   });
+}
+
+/**
+ * A page's worlds, acting as `actsAs`, with the story prepared before the first one is handed out.
+ * The preparing code (and the data model it writes with) is loaded only then.
+ */
+export function lendingPages(
+  runtime: LendingRuntime,
+  actsAs: PodOwner,
+): (day?: number) => Promise<World> {
+  let prepared: Promise<unknown> | undefined;
+  return async (day) => {
+    const world = await lendingWorld(runtime, actsAs, day);
+    prepared ??= import("./prepare.js")
+      .then(({ prepareSmallDollarLending }) => prepareSmallDollarLending(world))
+      .catch((error: unknown) => {
+        prepared = undefined;
+        throw error;
+      });
+    await prepared;
+    return world;
+  };
 }

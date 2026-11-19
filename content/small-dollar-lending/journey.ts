@@ -239,6 +239,13 @@ export function shareCreditSummary(world: World): Promise<boolean> {
  * may deliver its decision into `loans/alder/`). Returns the two quotes.
  */
 export async function proveToTwoLenders(world: World): Promise<LendingQuote[]> {
+  const quotes = await prequalifyWithBoth(world);
+  await authoriseAlderCheck(world);
+  return quotes;
+}
+
+/** Step 6's proofs and quotes. Grants nothing, so the wallet may run it outside its grant queue. */
+export async function prequalifyWithBoth(world: World): Promise<LendingQuote[]> {
   const quotes: LendingQuote[] = [];
   for (const [index, lender] of PREQUALIFYING_LENDERS.entries()) {
     await openChallenge(world, lender);
@@ -247,8 +254,12 @@ export async function proveToTwoLenders(world: World): Promise<LendingQuote[]> {
     if (!quote.qualified) throw new Error(`${lender}: ${quote.errors.join("; ")}`);
     quotes.push(quote);
   }
-  await askAndApprove(world, "A1", ["10:23", "10:24"]);
   return quotes;
+}
+
+/** Step 6's grant: A1, so Quillon may answer Alder's credit check and Alder may deliver into `loans/alder/`. */
+export async function authoriseAlderCheck(world: World): Promise<void> {
+  await askAndApprove(world, "A1", ["10:23", "10:24"]);
 }
 
 // --- Step 7 --------------------------------------------------------------------------------------
