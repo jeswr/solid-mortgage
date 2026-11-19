@@ -25,8 +25,12 @@ async function used(): Promise<PodStorage> {
   const storage = memoryStorage();
   const host = makeHost({ seed, storage });
   await host.ready;
-  expect((await put(host.fetchAs("bank"), url("bank", "/later/x"), await doc("x"))).status).toBe(201);
-  expect((await put(host.fetchAs("alex"), url("alex", "/later/y"), await doc("y"))).status).toBe(201);
+  expect((await put(host.fetchAs("bank"), url("bank", "/later/x"), await doc("x"))).status).toBe(
+    201,
+  );
+  expect((await put(host.fetchAs("alex"), url("alex", "/later/y"), await doc("y"))).status).toBe(
+    201,
+  );
   return storage;
 }
 
@@ -91,7 +95,7 @@ describe("corrupt snapshots", () => {
     let broken = true;
     const flaky: PodStorage = {
       ...storage,
-      getMeta: async <T,>(key: string) => {
+      getMeta: async <T>(key: string) => {
         if (broken) throw new Error("storage unavailable");
         return storage.getMeta<T>(key);
       },

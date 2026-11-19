@@ -298,6 +298,53 @@ describe("pod runtime in Chrome", () => {
     await context.close();
   });
 
+  it("in fallback mode one tab hosts; the others share its pods and its event ids", async (ctx) => {
+    if (skipReason) return ctx.skip(skipReason);
+    const context = await (browser as Browser).newContext();
+    const one = await open(context, "?mode=worker");
+    expect((await one.evaluate(() => rt.ready())).mode).toBe("worker");
+    const two = await open(context, "?mode=worker");
+    expect((await two.evaluate(() => rt.ready())).mode).toBe("worker");
+    const text = { "content-type": "text/plain" };
+    // Each tab sees the other's writes at once: there is one host, not one per tab.
+    expect((await call(one, "PUT", "/pods/bank/f/one.txt", "from one", text)).status).toBe(201);
+    expect(await call(two, "GET", "/pods/bank/f/one.txt")).toEqual({
+      body: "from one",
+      status: 200,
+    });
+    expect((await call(two, "PUT", "/pods/bank/f/two.txt", "from two", text)).status).toBe(201);
+    expect(await call(one, "GET", "/pods/bank/f/two.txt")).toEqual({
+      body: "from two",
+      status: 200,
+    });
+    // One event log: every tab sees the same entries, and no id is used twice.
+    const writes = (page: Page) =>
+      page.evaluate(() =>
+        events
+          .filter((e) => e.source === "pod" && e.kind === "write")
+          .map((e) => [(e as unknown as { id: number }).id, e.path]),
+      );
+    await one.waitForFunction(() => events.filter((e) => e.kind === "write").length >= 2);
+    await two.waitForFunction(() => events.filter((e) => e.kind === "write").length >= 2);
+    const seen = await writes(one);
+    expect(seen.map(([, path]) => path)).toEqual(["/f/one.txt", "/f/two.txt"]);
+    expect(await writes(two)).toEqual(seen);
+    expect(new Set(seen.map(([id]) => id)).size).toBe(2);
+    // The hosting tab goes away; the other takes over from the saved snapshots.
+    await one.close();
+    expect(await call(two, "GET", "/pods/bank/f/one.txt")).toEqual({
+      body: "from one",
+      status: 200,
+    });
+    expect((await call(two, "PUT", "/pods/bank/f/three.txt", "from three", text)).status).toBe(201);
+    const three = await open(context, "?mode=worker");
+    expect(await call(three, "GET", "/pods/bank/f/three.txt")).toEqual({
+      body: "from three",
+      status: 200,
+    });
+    await context.close();
+  });
+
   it("returns to the seed on resetDemo", async (ctx) => {
     if (skipReason) return ctx.skip(skipReason);
     const context = await (browser as Browser).newContext();

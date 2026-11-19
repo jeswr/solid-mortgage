@@ -37,8 +37,14 @@ test("refused state changes are 'denied'; other failed ones emit no event", asyn
   // 409 from the ACL policy, 400 from the guard.
   expect((await put(alex, url("alex", "/notes/.acl"), await doc(webid("alex")))).status).toBe(409);
   expect(
-    (await put(alex, url("alex", "/notes/b"), `${"[".repeat(500)}${"]".repeat(500)}`, "application/ld+json"))
-      .status,
+    (
+      await put(
+        alex,
+        url("alex", "/notes/b"),
+        `${"[".repeat(500)}${"]".repeat(500)}`,
+        "application/ld+json",
+      )
+    ).status,
   ).toBe(400);
 
   expect(log.events.map((e) => [e.method, e.status, e.kind])).toEqual([["PUT", 403, "denied"]]);

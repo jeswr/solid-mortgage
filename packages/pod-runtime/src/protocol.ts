@@ -12,6 +12,10 @@ export const EVENTS_CHANNEL = "pod-runtime-events";
 /** `new Worker(swUrl, { name })` names that pick the bundle's role outside a service worker. */
 export const HOST_WORKER_NAME = "pod-host";
 export const AGENTS_WORKER_NAME = "pod-agents";
+/** Fallback mode: Web Lock held by the one dedicated worker that hosts the pods for all tabs. */
+export const HOST_LOCK = "pod-runtime-host";
+/** Fallback mode: BroadcastChannel over which the other tabs' workers reach the hosting one. */
+export const HOST_RPC_CHANNEL = "pod-runtime-host-rpc";
 /** Web Lock held by the one tab whose agent worker runs the organisation agents. */
 export const AGENTS_LOCK = "pod-runtime-agents";
 
