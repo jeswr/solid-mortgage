@@ -19,11 +19,14 @@ Apps normally get the Lens through `@mortgage/tour/mount`, not directly.
 import "@mortgage/lens";
 const lens = document.createElement("solid-lens");
 document.body.append(lens);
-lens.configure({ registry: ORGS, holder: { name: "Alex" }, app: "bank", drawers, grants });
+lens.configure({ registry: ORGS, holder: { id: "alex", name: "Alex" }, app: "bank", drawers, grants });
 const stop = onEvent((entry) => lens.push(entry), { replay: true });
 ```
 
-- `configure(config)` resets the log. `LensConfig` (src/types.ts): `registry`, `holder`, `app`
+- `configure(config)` resets the log. `LensConfig` (src/types.ts): `registry`, `holder`
+  (`{ id?, name? }`: the registered holder whose pod is the cabinet, default `alex`; `name`
+  defaults to the registry's `short`; an unregistered id throws. Other holders appear on the map
+  like organisations, and their pods' ACLs never become this holder's grants), `app`
   (drawn larger on the map), `drawers` (cabinet order and plain-word labels), `grants` (policy
   handles keyed by IRI or IRI suffix: `{ label, purpose?, until? }`), `revokeCaveat` (template
   with `{org}` and `{holder}`), `recordDrawers` (default `["/inbox/"]`), `calendar`
