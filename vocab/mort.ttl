@@ -1463,3 +1463,23 @@ mort:MessageKind-PayoutConfirmation
   skos:inScheme mort:MessageKindScheme ;
   skos:topConceptOf mort:MessageKindScheme ;
   rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:MessageKind-ScoreInquiry
+  a skos:Concept ;
+  rdfs:label "score inquiry"@en ;
+  rdfs:comment "A lender asks a consumer reporting agency for a consumer's credit score, citing the consumer's authorisation."@en ;
+  skos:definition "A lender asks a consumer reporting agency for a consumer's credit score, citing the consumer's authorisation."@en ;
+  skos:prefLabel "score inquiry"@en ;
+  skos:inScheme mort:MessageKindScheme ;
+  skos:topConceptOf mort:MessageKindScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:MessageKind-ScoreDelivery
+  a skos:Concept ;
+  rdfs:label "score delivery"@en ;
+  rdfs:comment "A consumer reporting agency answers a score inquiry with the score and its key factors."@en ;
+  skos:definition "A consumer reporting agency answers a score inquiry with the score and its key factors."@en ;
+  skos:prefLabel "score delivery"@en ;
+  skos:inScheme mort:MessageKindScheme ;
+  skos:topConceptOf mort:MessageKindScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .

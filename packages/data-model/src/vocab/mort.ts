@@ -118,6 +118,9 @@ export const MORT = {
     "https://solid-mortgage-vocab.vercel.app/mort#MessageKind-RefreshRequest",
   MessageKind_RepaymentFurnishing:
     "https://solid-mortgage-vocab.vercel.app/mort#MessageKind-RepaymentFurnishing",
+  MessageKind_ScoreDelivery:
+    "https://solid-mortgage-vocab.vercel.app/mort#MessageKind-ScoreDelivery",
+  MessageKind_ScoreInquiry: "https://solid-mortgage-vocab.vercel.app/mort#MessageKind-ScoreInquiry",
   MessageKind_ServiceOrder: "https://solid-mortgage-vocab.vercel.app/mort#MessageKind-ServiceOrder",
   MessageKind_ServicingBoarding:
     "https://solid-mortgage-vocab.vercel.app/mort#MessageKind-ServicingBoarding",
