@@ -28,7 +28,8 @@ export const INSIGNIA_ROSTER = [
   {
     id: "tell-us-once",
     pattern: "\\b[Tt]ell [Uu]s [Oo]nce\\b",
-    reason: "The name of a real UK government service (flows.md §2); the moving-house demo avoids it",
+    reason:
+      "The name of a real UK government service (flows.md §2); the moving-house demo avoids it",
   },
   // --- Regulatory insignia and product marks -------------------------------------------------
   {
