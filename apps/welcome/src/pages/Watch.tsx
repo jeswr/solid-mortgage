@@ -3,6 +3,7 @@
  * `/welcome/watch/<demo>`: one video with its transcript, for sharing and for people who cannot
  * play audio (design.md §e). A demo that is not live yet gets a "Coming next" page.
  */
+import { appUrl } from "@mortgage/demo-kit/urls";
 import { useEffect } from "react";
 import { Link } from "wouter";
 import { ArrowIcon } from "../components/icons.tsx";
@@ -61,6 +62,11 @@ export function Watch({ demo, probe }: { demo: Demo; probe?: (url: string) => Pr
                 </a>
               </p>
             )}
+            <p className="watch__feedback">
+              <a href={appUrl("feedback", "", { from: "welcome", demo: demo.id })}>
+                Give feedback on this demo
+              </a>
+            </p>
             <section className="transcript" aria-labelledby="transcript-title">
               <h2 id="transcript-title">Transcript</h2>
               {demo.chapters.map((chapter, index) => (

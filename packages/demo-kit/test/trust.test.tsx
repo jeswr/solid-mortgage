@@ -8,6 +8,7 @@ import {
   DemoTrust,
   demoDocumentMeta,
   demoPack,
+  feedbackHref,
   fictionalLine,
   TrustBanner,
   useDemoOrg,
@@ -47,6 +48,29 @@ describe("trust wiring", () => {
     expect(screen.getByText("Signed in as Pat Example, processor (simulated)")).toBeTruthy();
     const about = banner.querySelector("a");
     expect(about?.getAttribute("href")).toBe("/welcome/honesty");
+  });
+
+  it("links every banner to the feedback page, remembering the app", () => {
+    window.history.pushState({}, "", "/lender-desk/pipeline");
+    render(
+      <DemoTrust org={ORG}>
+        <TrustBanner />
+      </DemoTrust>,
+    );
+    const link = screen.getByRole("link", { name: "Give feedback" });
+    expect(link.getAttribute("href")).toBe("/feedback/?from=lender-desk");
+    expect(feedbackHref("/nowhere")).toBe("/feedback/");
+    expect(feedbackHref()).toBe("/feedback/");
+    cleanup();
+    // The feedback page's own banner does not link to itself.
+    window.history.pushState({}, "", "/feedback/");
+    render(
+      <DemoTrust org={ORG}>
+        <TrustBanner />
+      </DemoTrust>,
+    );
+    expect(screen.queryByRole("link", { name: "Give feedback" })).toBeNull();
+    window.history.pushState({}, "", "/");
   });
 
   it("omits the sign-in line on a public page", () => {

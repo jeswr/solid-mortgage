@@ -226,6 +226,12 @@ export function Home({ probe }: { probe?: (url: string) => Promise<boolean> }) {
             <a href={LINKS.forum} className="button button--ghost-light" rel="noopener">
               Join the forum <ExternalIcon />
             </a>
+            <a
+              href={appUrl("feedback", "", { from: "welcome" })}
+              className="button button--ghost-light"
+            >
+              Give feedback on the demos
+            </a>
             <a href={LINKS.source} className="join__source" rel="noopener">
               Read the source code on GitHub
             </a>

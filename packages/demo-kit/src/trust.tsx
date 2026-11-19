@@ -14,7 +14,7 @@ import {
 } from "@jeswr/solid-showcase-kit";
 import { type CSSProperties, createContext, type ReactNode, useContext } from "react";
 import type { OrgRecord } from "./registry.js";
-import { appUrl } from "./urls.js";
+import { appSlugOfPath, appUrl } from "./urls.js";
 
 /** The one branding config every app uses. Copy changes here reach every banner at once. */
 export const DEMO_BRANDING: BrandingConfig = Object.freeze({
@@ -114,6 +114,27 @@ const LINE_STYLE: CSSProperties = {
   textAlign: "center",
 };
 
+const FEEDBACK_LINK_STYLE: CSSProperties = {
+  color: "#bfdbfe",
+  fontWeight: 600,
+  marginLeft: "0.5rem",
+  textDecoration: "underline",
+  textUnderlineOffset: "2px",
+  whiteSpace: "nowrap",
+};
+
+/** The feedback page's slug; its own banner carries no link to itself. */
+export const FEEDBACK_SLUG = "feedback";
+
+/**
+ * The URL of the feedback page, remembering which app the visitor came from (`from=<slug>`) so
+ * the page can say so. Browser-only callers pass `window.location.pathname`.
+ */
+export function feedbackHref(pathname?: string): string {
+  const from = pathname === undefined ? undefined : appSlugOfPath(pathname);
+  return appUrl(FEEDBACK_SLUG, "", { from: from === FEEDBACK_SLUG ? undefined : from });
+}
+
 export interface TrustBannerProps {
   /** Overrides the persona from the registry (the engine passes the current session's). */
   signedInAs?: { name: string; role?: string } | null;
@@ -121,11 +142,15 @@ export interface TrustBannerProps {
 
 /**
  * The concept-demo banner, the fictional-organisation line and, when someone is shown as signed
- * in, the simulated sign-in line. Its own inline styles, so it renders even if app CSS fails.
+ * in, the simulated sign-in line, then a "Give feedback" link to the feedback page (on every
+ * route of every app: a plain link, so no app's first load grows). Its own inline styles, so it
+ * renders even if app CSS fails.
  */
 export function TrustBanner({ signedInAs }: TrustBannerProps) {
   const org = useDemoOrg();
   const persona = signedInAs === undefined ? org.persona : signedInAs;
+  const pathname = typeof window === "undefined" ? undefined : window.location.pathname;
+  const onFeedbackPage = pathname !== undefined && appSlugOfPath(pathname) === FEEDBACK_SLUG;
   return (
     <div data-demo-trust="">
       <ConceptDemoBanner
@@ -142,6 +167,11 @@ export function TrustBanner({ signedInAs }: TrustBannerProps) {
             {" "}
             <span data-demo-signed-in="">{signedInLine(persona)}</span>
           </>
+        )}
+        {onFeedbackPage ? null : (
+          <a data-demo-feedback="" href={feedbackHref(pathname)} style={FEEDBACK_LINK_STYLE}>
+            Give feedback
+          </a>
         )}
       </p>
     </div>
