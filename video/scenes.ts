@@ -188,9 +188,39 @@ export function liveMetric(c: Ctx, t: LiveTotals, metric: string): number | unde
   }
 }
 
+/**
+ * Shows the journey ledger: on the ledger page itself (`<journey-ledger>`), or opened from the
+ * Lens, which either navigates to the demo's ledger page or opens it as a dialog.
+ */
+async function openLedger(c: Ctx): Promise<Locator> {
+  const onPage = page(c).locator("journey-ledger");
+  if (!(await onPage.count())) {
+    const before = page(c).url();
+    await demoApi(c, "lens", "ledger");
+    await sleep(500);
+    if (page(c).url() !== before) await c.d.settle();
+  }
+  if (await onPage.count()) {
+    await onPage
+      .first()
+      .scrollIntoViewIfNeeded()
+      .catch(() => {});
+    return onPage.first();
+  }
+  return lensPart(c, ".ledger-dialog");
+}
+
 /** Compares every spoken total with the journey ledger the Lens computed from the pod's events. */
 async function checkTotals(c: Ctx) {
-  const t = await demoApi<LiveTotals>(c, "totals");
+  // The ledger page computes from the same log as the Lens; prefer what is on screen.
+  const t = (await page(c).evaluate(() => {
+    const ledger = document.querySelector("journey-ledger") as
+      | (Element & { totals?: () => unknown })
+      | null;
+    const fromPage = ledger?.totals?.();
+    return fromPage ?? (window as unknown as PageGlobals).__demo?.totals();
+  })) as LiveTotals | undefined;
+  if (!t) return c.d.warn("no journey ledger totals on this page");
   c.state.totals = t;
   const bad = c.demo.claims
     .map((claim: Claim) => ({ claim, live: liveMetric(c, t, claim.metric) }))
@@ -215,6 +245,7 @@ export const actions: Record<string, Action> = {
 
   async step(c, id) {
     const s = findStep(c, id as string);
+    await c.d.clearHighlight();
     c.state.step = s.id;
     const here = new URL(page(c).url());
     const samePage =
@@ -260,6 +291,7 @@ export const actions: Record<string, Action> = {
   },
 
   async lens(c, view) {
+    await c.d.clearHighlight();
     await lensOpen(c);
     switch (view) {
       case "map":
@@ -270,14 +302,15 @@ export const actions: Record<string, Action> = {
           .catch(() => {});
         return;
       case "ledger":
-        await demoApi(c, "lens", "ledger");
+        await openLedger(c);
         return;
-      case "totals":
-        await demoApi(c, "lens", "ledger");
+      case "totals": {
+        const where = await openLedger(c);
         await sleep(600);
-        await ringExact(c, lensPart(c, ".ledger .totals"), "the ledger totals");
+        await ringExact(c, where.locator(".totals"), "the ledger totals");
         await checkTotals(c);
         return;
+      }
       case "examiner":
         return c.d.warn("the Lens has no examiner view yet");
       default:
@@ -305,8 +338,17 @@ export const actions: Record<string, Action> = {
     } else if (part === "map") await ringExact(c, lensPart(c, ".map-zone"), "the Lens map");
     else if (part === "headline")
       await ringExact(c, lensPart(c, ".zone.where .headline"), "the Lens headline");
-    else if (part === "last") await ringExact(c, lensPart(c, ".card-wrap"), "the newest entry");
-    else c.d.warn(`unknown Lens part ${part}`);
+    else if (part === "last") {
+      // The newest entry in the step's log: the highest sequence number.
+      await demoApi(c, "lens", "step");
+      await sleep(300);
+      const entries = lensPart(c, ".tabpanel:not([hidden]) .entry");
+      const seqs = await entries.evaluateAll((els) =>
+        els.map((e) => Number(e.getAttribute("data-seq"))),
+      );
+      if (!seqs.length) return c.d.warn("the Lens has no entry to ring");
+      await ringExact(c, entries.nth(seqs.indexOf(Math.max(...seqs))), "the newest entry");
+    } else c.d.warn(`unknown Lens part ${part}`);
   },
 
   async chip(c, ...words) {
