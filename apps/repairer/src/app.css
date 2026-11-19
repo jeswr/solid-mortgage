@@ -1,0 +1,375 @@
+/* AUTHORED-BY Claude Opus 5.5 */
+@import "./tokens.css";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--color-floor);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: 1.15rem;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+a {
+  color: var(--color-ink);
+  font-weight: 700;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  overflow-wrap: anywhere;
+}
+
+/* The tablet's top bar: black, the shop's name in yellow, a hazard stripe below. */
+.bar {
+  background: var(--color-bar);
+  color: var(--color-bar-muted);
+}
+
+.bar::after {
+  content: "";
+  display: block;
+  height: 10px;
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--color-yellow) 0 14px,
+    var(--color-bar) 14px 28px
+  );
+}
+
+.bar-inner,
+.bar-nav {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 0 var(--space);
+}
+
+.bar-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+  padding-top: 1rem;
+}
+
+.bar-name {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0;
+  color: var(--color-bar-ink);
+  font-size: 1.9rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.bar-mark {
+  width: 1.4rem;
+  height: 1.4rem;
+  background: var(--color-yellow);
+  clip-path: polygon(0 20%, 100% 20%, 100% 50%, 80% 50%, 70% 75%, 30% 75%, 20% 50%, 0 50%);
+}
+
+.bar-who {
+  margin: 0;
+}
+
+.bar-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.75rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.75rem;
+}
+
+.bar-nav a {
+  color: var(--color-bar-muted);
+  font-size: 1.2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+main {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 1.5rem var(--space) 4rem;
+}
+
+h1 {
+  margin: 0 0 0.75rem;
+  font-size: 2.4rem;
+  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.muted {
+  color: var(--color-muted);
+}
+
+/* The job board: tickets pinned in a grid. */
+.board {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  gap: 1rem;
+  margin: 0 0 1.5rem;
+  padding: 0;
+  list-style: none;
+}
+
+.ticket {
+  display: grid;
+  gap: 0.4rem;
+  justify-items: start;
+  padding: 1rem;
+  background: var(--color-panel);
+  border: 3px solid var(--color-line);
+  border-top-width: 12px;
+  border-radius: var(--radius);
+}
+
+.ticket p {
+  margin: 0;
+}
+
+.ticket-no {
+  font-family: var(--font-mono);
+  font-size: 1.4rem;
+}
+
+.ticket-car {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.ticket-from {
+  color: var(--color-muted);
+}
+
+/* Large controls for a tablet in a workshop. */
+.big {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--touch);
+  min-width: 12rem;
+  margin-top: 0.75rem;
+  padding: 0.5rem 1.5rem;
+  background: var(--color-panel);
+  color: var(--color-ink);
+  border: 3px solid var(--color-line);
+  border-radius: var(--radius);
+  font-family: var(--font-body);
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.big.primary {
+  background: var(--color-yellow);
+}
+
+.big.primary:hover:not(:disabled) {
+  background: var(--color-yellow-hover);
+}
+
+.big:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.pill {
+  display: inline-block;
+  padding: 0.15rem 0.7rem;
+  border: 2px solid var(--color-line);
+  border-radius: 999px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.95rem;
+  background: var(--color-panel);
+}
+
+.pill-open,
+.pill-estimate {
+  background: var(--color-yellow);
+}
+
+.pill-complete {
+  background: var(--color-bar);
+  color: var(--color-bar-ink);
+}
+
+.job-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.job-car {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.grant {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--color-bar);
+  color: var(--color-bar-muted);
+  border-left: 10px solid var(--color-yellow);
+}
+
+.panel {
+  margin: 0 0 1rem;
+  padding: 1rem;
+  background: var(--color-panel);
+  border: 3px solid var(--color-line);
+  border-radius: var(--radius);
+}
+
+.damage {
+  margin: 0 0 1rem;
+  padding-left: 1.25rem;
+  font-size: 1.25rem;
+}
+
+/* The photo grid: square tiles, captions under them. */
+.photos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  gap: 0.75rem;
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.photos li {
+  border: 3px solid var(--color-line);
+  background: var(--color-floor);
+}
+
+.photos img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.photos p {
+  margin: 0;
+  padding: 0.35rem 0.6rem;
+  background: var(--color-panel);
+}
+
+.lines {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 0.5rem;
+}
+
+.lines caption {
+  text-align: left;
+  font-weight: 700;
+  padding-bottom: 0.4rem;
+}
+
+.lines th,
+.lines td {
+  padding: 0.45rem 0.25rem;
+  border-bottom: 2px solid var(--color-floor);
+  text-align: left;
+  font-weight: 500;
+}
+
+.lines td {
+  text-align: right;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+.lines tfoot th,
+.lines tfoot td {
+  border-top: 3px solid var(--color-line);
+  font-weight: 700;
+}
+
+.ok {
+  margin: 0.75rem 0 0;
+  padding: 0.6rem 0.9rem;
+  background: var(--color-ok-bg);
+  color: var(--color-ok);
+  border-left: 8px solid var(--color-ok);
+}
+
+.alert {
+  margin: 0.75rem 0 0;
+  padding: 0.6rem 0.9rem;
+  background: var(--color-alert-bg);
+  color: var(--color-alert);
+  border-left: 8px solid var(--color-alert);
+}
+
+/* A refusal by the pod: the status as large as a bay number. */
+.refused {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin: 0.75rem 0 0;
+  padding: 0.75rem 1rem;
+  background: var(--color-alert-bg);
+  color: var(--color-alert);
+  border: 3px solid var(--color-alert);
+}
+
+.refused p {
+  margin: 0;
+  flex: 1 1 16rem;
+}
+
+.refused .refused-code {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 2.6rem;
+  font-weight: 500;
+  line-height: 1;
+}
+
+@media (max-width: 30rem) {
+  h1 {
+    font-size: 2rem;
+  }
+
+  .big {
+    width: 100%;
+    min-width: 0;
+  }
+}

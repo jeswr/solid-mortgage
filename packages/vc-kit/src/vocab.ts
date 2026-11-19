@@ -97,6 +97,7 @@ const SHAPE_LOCAL_NAMES: Readonly<Record<CredentialKind, string>> = {
   "identity-credential": "IdentityCredentialShape",
   "title-commitment-credential": "TitleCommitmentCredentialShape",
   "evidence-of-insurance-credential": "EvidenceOfInsuranceCredentialShape",
+  "motor-policy-credential": "MotorPolicyCredentialShape",
   "kyc-attestation-credential": "KycAttestationCredentialShape",
   "zk-operand-anchor": "ZkOperandAnchorShape",
   // Small-dollar lending (flows.md section 4).
@@ -118,6 +119,7 @@ export type CredentialKind =
   | "identity-credential"
   | "title-commitment-credential"
   | "evidence-of-insurance-credential"
+  | "motor-policy-credential"
   | "kyc-attestation-credential"
   | "zk-operand-anchor"
   | "cash-flow-credential"

@@ -7,8 +7,8 @@
 /**
  * The organisation apps: the thirteen of design.md §b.1 in that order, then the apps later demos
  * add (flows.md §1: `state` from demo 2; `registry` and `business-lender` from demo 3; `idv`,
- * `fintech-lender` and `payout` from demo 4; `hospital`, `pharmacy` and `clinic` from demo 5).
- * Also the app directory names.
+ * `fintech-lender` and `payout` from demo 4; `hospital`, `pharmacy` and `clinic` from demo 5;
+ * `repairer` from demo 7). Also the app directory names.
  */
 export const ORG_SLUGS = [
   "wallet",
@@ -34,6 +34,7 @@ export const ORG_SLUGS = [
   "pharmacy",
   "clinic",
   "card-issuer",
+  "repairer",
 ] as const;
 
 export type OrgSlug = (typeof ORG_SLUGS)[number];

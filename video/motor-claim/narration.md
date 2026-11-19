@@ -3,7 +3,6 @@ title: A motor claim where everyone sees only their part
 script: Motor claim
 target: 3:00 · about 390 words
 steps: new-claim, report, claims-desk, repairer-consent, job-card, not-shared, approve-estimate, complete, refused, close
-note: provisional until the apps exist.
 ---
 <!-- AUTHORED-BY Claude Fable 5.2 (words, from docs/rebuild/video-scripts.md); Claude Opus 5.5 (split for the recorder) -->
 <!-- Spoken words must stay equal to docs/rebuild/video-scripts.md: `record.ts --check` compares them. -->

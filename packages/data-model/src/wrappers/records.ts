@@ -166,6 +166,10 @@ export const MESSAGE_KIND_IRIS = [
   MORT.MessageKind_PayoutConfirmation,
   MORT.MessageKind_ScoreInquiry,
   MORT.MessageKind_ScoreDelivery,
+  // Motor claim demo (flows.md section 7).
+  MORT.MessageKind_RepairReferral,
+  MORT.MessageKind_RepairAuthorisation,
+  MORT.MessageKind_RepairCompletion,
 ] as const;
 
 export type MessageKindIri = (typeof MESSAGE_KIND_IRIS)[number];

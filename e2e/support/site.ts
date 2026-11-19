@@ -59,6 +59,7 @@ export const APP_LANE: Readonly<Record<AppSlug, string>> = Object.freeze({
   hospital: "F5",
   pharmacy: "F5",
   clinic: "F5",
+  repairer: "F7",
   "card-issuer": "F8",
 });
 

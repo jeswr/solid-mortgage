@@ -717,6 +717,76 @@ _:n3-136 sh:path schema:amount;
     sh:node mshape:MonetaryAmountShape.
 mshape:DepositStreamShape sh:property _:n3-136.
 `,
+  "claim-case": `@prefix sh: <http://www.w3.org/ns/shacl#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix schema: <https://schema.org/>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#>.
+@prefix odrl: <http://www.w3.org/ns/odrl/2/>.
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#>.
+
+mshape:ClaimCaseShape a sh:NodeShape;
+    sh:targetClass mort:ClaimCase;
+    sh:closed true.
+_:n3-137 sh:path rdf:type;
+    sh:hasValue mort:ClaimCase.
+mshape:ClaimCaseShape sh:property _:n3-137.
+_:n3-138 sh:path schema:identifier;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:datatype xsd:string;
+    sh:minLength 1.
+mshape:ClaimCaseShape sh:property _:n3-138.
+_:n3-139 sh:path dcterms:type;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:nodeKind sh:IRI.
+_:n3-140 rdf:first mort:CaseKind-InsuranceClaim;
+    rdf:rest _:n3-141.
+_:n3-141 rdf:first mort:CaseKind-RepairJob;
+    rdf:rest rdf:nil.
+_:n3-139 sh:in _:n3-140.
+mshape:ClaimCaseShape sh:property _:n3-139.
+_:n3-142 sh:path schema:customer;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:nodeKind sh:IRI.
+mshape:ClaimCaseShape sh:property _:n3-142.
+_:n3-143 sh:path schema:about;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:nodeKind sh:IRI.
+mshape:ClaimCaseShape sh:property _:n3-143.
+_:n3-144 sh:path schema:actionStatus;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:nodeKind sh:IRI.
+_:n3-145 rdf:first schema:ActiveActionStatus;
+    rdf:rest _:n3-146.
+_:n3-146 rdf:first schema:CompletedActionStatus;
+    rdf:rest rdf:nil.
+_:n3-144 sh:in _:n3-145.
+mshape:ClaimCaseShape sh:property _:n3-144.
+_:n3-147 sh:path dcterms:modified;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:datatype xsd:dateTime.
+mshape:ClaimCaseShape sh:property _:n3-147.
+_:n3-148 sh:path schema:acceptedOffer;
+    sh:maxCount 1;
+    sh:nodeKind sh:IRI.
+mshape:ClaimCaseShape sh:property _:n3-148.
+_:n3-149 sh:path odrl:hasPolicy;
+    sh:maxCount 1;
+    sh:nodeKind sh:IRI.
+mshape:ClaimCaseShape sh:property _:n3-149.
+_:n3-150 sh:path schema:description;
+    sh:maxCount 1;
+    sh:datatype xsd:string;
+    sh:minLength 1.
+mshape:ClaimCaseShape sh:property _:n3-150.
+`,
   "closed-end-disclosure": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
@@ -729,87 +799,87 @@ mshape:DepositStreamShape sh:property _:n3-136.
 mshape:ClosedEndCreditDisclosureShape a sh:NodeShape;
     sh:targetClass mort:ClosedEndCreditDisclosure;
     sh:closed true.
-_:n3-137 sh:path rdf:type;
+_:n3-151 sh:path rdf:type;
     sh:hasValue mort:ClosedEndCreditDisclosure.
-mshape:ClosedEndCreditDisclosureShape sh:property _:n3-137.
-_:n3-138 sh:path schema:name;
+mshape:ClosedEndCreditDisclosureShape sh:property _:n3-151.
+_:n3-152 sh:path schema:name;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:ClosedEndCreditDisclosureShape sh:property _:n3-138.
-_:n3-139 sh:path mort:loanNumber;
+mshape:ClosedEndCreditDisclosureShape sh:property _:n3-152.
+_:n3-153 sh:path mort:loanNumber;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:ClosedEndCreditDisclosureShape sh:property _:n3-139.
-_:n3-140 sh:path fibo-fbc-dae-dbt:hasBorrower;
+mshape:ClosedEndCreditDisclosureShape sh:property _:n3-153.
+_:n3-154 sh:path fibo-fbc-dae-dbt:hasBorrower;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:ClosedEndCreditDisclosureShape sh:property _:n3-140.
-_:n3-141 sh:path dcterms:creator;
+mshape:ClosedEndCreditDisclosureShape sh:property _:n3-154.
+_:n3-155 sh:path dcterms:creator;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:ClosedEndCreditDisclosureShape sh:property _:n3-141.
-_:n3-142 sh:path dcterms:issued;
+mshape:ClosedEndCreditDisclosureShape sh:property _:n3-155.
+_:n3-156 sh:path dcterms:issued;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:dateTime.
-mshape:ClosedEndCreditDisclosureShape sh:property _:n3-142.
-_:n3-143 sh:path mort:amountFinanced;
+mshape:ClosedEndCreditDisclosureShape sh:property _:n3-156.
+_:n3-157 sh:path mort:amountFinanced;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:MonetaryAmountShape.
-mshape:ClosedEndCreditDisclosureShape sh:property _:n3-143.
-_:n3-144 sh:path mort:financeCharge;
+mshape:ClosedEndCreditDisclosureShape sh:property _:n3-157.
+_:n3-158 sh:path mort:financeCharge;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:MonetaryAmountShape.
-mshape:ClosedEndCreditDisclosureShape sh:property _:n3-144.
-_:n3-145 sh:path mort:totalOfPayments;
+mshape:ClosedEndCreditDisclosureShape sh:property _:n3-158.
+_:n3-159 sh:path mort:totalOfPayments;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:MonetaryAmountShape.
-mshape:ClosedEndCreditDisclosureShape sh:property _:n3-145.
-_:n3-146 sh:path mort:annualPercentageRate;
+mshape:ClosedEndCreditDisclosureShape sh:property _:n3-159.
+_:n3-160 sh:path mort:annualPercentageRate;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:decimal;
     sh:minInclusive 0.0;
     sh:maxInclusive 36.0;
     sh:message "the demo's small-dollar loans stay at or under a 36% APR".
-mshape:ClosedEndCreditDisclosureShape sh:property _:n3-146.
-_:n3-147 sh:path schema:numberOfLoanPayments;
+mshape:ClosedEndCreditDisclosureShape sh:property _:n3-160.
+_:n3-161 sh:path schema:numberOfLoanPayments;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:integer;
     sh:minInclusive 1;
     sh:maxInclusive 60.
-mshape:ClosedEndCreditDisclosureShape sh:property _:n3-147.
-_:n3-148 sh:path schema:loanPaymentAmount;
+mshape:ClosedEndCreditDisclosureShape sh:property _:n3-161.
+_:n3-162 sh:path schema:loanPaymentAmount;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:MonetaryAmountShape.
-mshape:ClosedEndCreditDisclosureShape sh:property _:n3-148.
-_:n3-149 sh:path mort:paymentIntervalDays;
+mshape:ClosedEndCreditDisclosureShape sh:property _:n3-162.
+_:n3-163 sh:path mort:paymentIntervalDays;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:integer;
     sh:minInclusive 1;
     sh:maxInclusive 31.
-mshape:ClosedEndCreditDisclosureShape sh:property _:n3-149.
-_:n3-150 sh:path schema:description;
+mshape:ClosedEndCreditDisclosureShape sh:property _:n3-163.
+_:n3-164 sh:path schema:description;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:ClosedEndCreditDisclosureShape sh:property _:n3-150.
+mshape:ClosedEndCreditDisclosureShape sh:property _:n3-164.
 `,
   "closing-disclosure": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -824,107 +894,107 @@ mshape:ClosedEndCreditDisclosureShape sh:property _:n3-150.
 mshape:ClosingDisclosureShape a sh:NodeShape;
     sh:targetClass mort:ClosingDisclosure;
     sh:closed true.
-_:n3-151 sh:path rdf:type;
+_:n3-165 sh:path rdf:type;
     sh:hasValue mort:ClosingDisclosure.
-mshape:ClosingDisclosureShape sh:property _:n3-151.
-_:n3-152 sh:path schema:name;
+mshape:ClosingDisclosureShape sh:property _:n3-165.
+_:n3-166 sh:path schema:name;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:ClosingDisclosureShape sh:property _:n3-152.
-_:n3-153 sh:path mort:loanNumber;
+mshape:ClosingDisclosureShape sh:property _:n3-166.
+_:n3-167 sh:path mort:loanNumber;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:ClosingDisclosureShape sh:property _:n3-153.
-_:n3-154 sh:path fibo-fbc-dae-dbt:hasBorrower;
+mshape:ClosingDisclosureShape sh:property _:n3-167.
+_:n3-168 sh:path fibo-fbc-dae-dbt:hasBorrower;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:ClosingDisclosureShape sh:property _:n3-154.
-_:n3-155 sh:path dcterms:creator;
+mshape:ClosingDisclosureShape sh:property _:n3-168.
+_:n3-169 sh:path dcterms:creator;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:ClosingDisclosureShape sh:property _:n3-155.
-_:n3-156 sh:path dcterms:issued;
+mshape:ClosingDisclosureShape sh:property _:n3-169.
+_:n3-170 sh:path dcterms:issued;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:date.
-mshape:ClosingDisclosureShape sh:property _:n3-156.
-_:n3-157 sh:path mort:receivedDate;
+mshape:ClosingDisclosureShape sh:property _:n3-170.
+_:n3-171 sh:path mort:receivedDate;
     sh:maxCount 1;
     sh:datatype xsd:date.
-mshape:ClosingDisclosureShape sh:property _:n3-157.
-_:n3-158 sh:path mort:closingDate;
+mshape:ClosingDisclosureShape sh:property _:n3-171.
+_:n3-172 sh:path mort:closingDate;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:date.
-mshape:ClosingDisclosureShape sh:property _:n3-158.
-_:n3-159 sh:path mort:disbursementDate;
+mshape:ClosingDisclosureShape sh:property _:n3-172.
+_:n3-173 sh:path mort:disbursementDate;
     sh:maxCount 1;
     sh:datatype xsd:date.
-mshape:ClosingDisclosureShape sh:property _:n3-159.
-_:n3-160 sh:path fibo-loan-ln-ln:hasPrincipalAmount;
+mshape:ClosingDisclosureShape sh:property _:n3-173.
+_:n3-174 sh:path fibo-loan-ln-ln:hasPrincipalAmount;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:MonetaryAmountShape.
-mshape:ClosingDisclosureShape sh:property _:n3-160.
-_:n3-161 sh:path schema:interestRate;
+mshape:ClosingDisclosureShape sh:property _:n3-174.
+_:n3-175 sh:path schema:interestRate;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:decimal;
     sh:minInclusive 0.0;
     sh:maxInclusive 25.0;
     sh:message "interestRate is the note rate in percent (e.g. 6.5)".
-mshape:ClosingDisclosureShape sh:property _:n3-161.
-_:n3-162 sh:path mort:loanTermMonths;
+mshape:ClosingDisclosureShape sh:property _:n3-175.
+_:n3-176 sh:path mort:loanTermMonths;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:integer;
     sh:minInclusive 12;
     sh:maxInclusive 480.
-mshape:ClosingDisclosureShape sh:property _:n3-162.
-_:n3-163 sh:path mort:annualPercentageRate;
+mshape:ClosingDisclosureShape sh:property _:n3-176.
+_:n3-177 sh:path mort:annualPercentageRate;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:decimal;
     sh:minInclusive 0.0;
     sh:maxInclusive 40.0.
-mshape:ClosingDisclosureShape sh:property _:n3-163.
-_:n3-164 sh:path mort:monthlyPrincipalAndInterest;
+mshape:ClosingDisclosureShape sh:property _:n3-177.
+_:n3-178 sh:path mort:monthlyPrincipalAndInterest;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:MonetaryAmountShape.
-mshape:ClosingDisclosureShape sh:property _:n3-164.
-_:n3-165 sh:path mort:estimatedTotalMonthlyPayment;
+mshape:ClosingDisclosureShape sh:property _:n3-178.
+_:n3-179 sh:path mort:estimatedTotalMonthlyPayment;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:MonetaryAmountShape.
-mshape:ClosingDisclosureShape sh:property _:n3-165.
-_:n3-166 sh:path fibo-loan-ln-ln:hasTotalClosingCosts;
+mshape:ClosingDisclosureShape sh:property _:n3-179.
+_:n3-180 sh:path fibo-loan-ln-ln:hasTotalClosingCosts;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:MonetaryAmountShape.
-mshape:ClosingDisclosureShape sh:property _:n3-166.
-_:n3-167 sh:path mort:cashToClose;
+mshape:ClosingDisclosureShape sh:property _:n3-180.
+_:n3-181 sh:path mort:cashToClose;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:MonetaryAmountShape.
-mshape:ClosingDisclosureShape sh:property _:n3-167.
-_:n3-168 sh:path mort:subjectProperty;
+mshape:ClosingDisclosureShape sh:property _:n3-181.
+_:n3-182 sh:path mort:subjectProperty;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:PropertyShape.
-mshape:ClosingDisclosureShape sh:property _:n3-168.
+mshape:ClosingDisclosureShape sh:property _:n3-182.
 `,
   "closing-record": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -939,69 +1009,69 @@ mshape:ClosingDisclosureShape sh:property _:n3-168.
 mshape:ClosingRecordShape a sh:NodeShape;
     sh:targetClass fibo-loan-reln-mtg:Mortgage;
     sh:closed true.
-_:n3-169 sh:path rdf:type;
+_:n3-183 sh:path rdf:type;
     sh:hasValue fibo-loan-reln-mtg:Mortgage.
-mshape:ClosingRecordShape sh:property _:n3-169.
-_:n3-170 sh:path fibo-fbc-dae-dbt:hasBorrower;
+mshape:ClosingRecordShape sh:property _:n3-183.
+_:n3-184 sh:path fibo-fbc-dae-dbt:hasBorrower;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:ClosingRecordShape sh:property _:n3-170.
-_:n3-171 sh:path mort:subjectProperty;
+mshape:ClosingRecordShape sh:property _:n3-184.
+_:n3-185 sh:path mort:subjectProperty;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:PropertyShape.
-mshape:ClosingRecordShape sh:property _:n3-171.
-_:n3-172 sh:path fibo-loan-ln-ln:hasPrincipalAmount;
+mshape:ClosingRecordShape sh:property _:n3-185.
+_:n3-186 sh:path fibo-loan-ln-ln:hasPrincipalAmount;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:MonetaryAmountShape.
-mshape:ClosingRecordShape sh:property _:n3-172.
-_:n3-173 sh:path fibo-loan-ln-ln:hasTotalClosingCosts;
+mshape:ClosingRecordShape sh:property _:n3-186.
+_:n3-187 sh:path fibo-loan-ln-ln:hasTotalClosingCosts;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:MonetaryAmountShape.
-mshape:ClosingRecordShape sh:property _:n3-173.
-_:n3-174 sh:path schema:interestRate;
+mshape:ClosingRecordShape sh:property _:n3-187.
+_:n3-188 sh:path schema:interestRate;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:decimal;
     sh:minInclusive 0.0;
     sh:maxInclusive 25.0;
     sh:message "interestRate is the note rate in percent (e.g. 6.125)".
-mshape:ClosingRecordShape sh:property _:n3-174.
-_:n3-175 sh:path mort:loanTermMonths;
+mshape:ClosingRecordShape sh:property _:n3-188.
+_:n3-189 sh:path mort:loanTermMonths;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:integer;
     sh:minInclusive 12;
     sh:maxInclusive 480.
-mshape:ClosingRecordShape sh:property _:n3-175.
-_:n3-176 sh:path mort:closingDate;
+mshape:ClosingRecordShape sh:property _:n3-189.
+_:n3-190 sh:path mort:closingDate;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:date.
-mshape:ClosingRecordShape sh:property _:n3-176.
-_:n3-177 sh:path mort:recordingReference;
+mshape:ClosingRecordShape sh:property _:n3-190.
+_:n3-191 sh:path mort:recordingReference;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:ClosingRecordShape sh:property _:n3-177.
-_:n3-178 sh:path mort:eNoteReference;
+mshape:ClosingRecordShape sh:property _:n3-191.
+_:n3-192 sh:path mort:eNoteReference;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:ClosingRecordShape sh:property _:n3-178.
-_:n3-179 sh:path fibo-loan-ln-ln:isServicedBy;
+mshape:ClosingRecordShape sh:property _:n3-192.
+_:n3-193 sh:path fibo-loan-ln-ln:isServicedBy;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:OrganizationShape.
-mshape:ClosingRecordShape sh:property _:n3-179.
+mshape:ClosingRecordShape sh:property _:n3-193.
 `,
   common: `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -1013,107 +1083,107 @@ mshape:ClosingRecordShape sh:property _:n3-179.
 
 mshape:PostalAddressShape a sh:NodeShape;
     sh:closed true.
-_:n3-180 sh:path rdf:type;
+_:n3-194 sh:path rdf:type;
     sh:hasValue schema:PostalAddress.
-mshape:PostalAddressShape sh:property _:n3-180.
-_:n3-181 sh:path schema:streetAddress;
+mshape:PostalAddressShape sh:property _:n3-194.
+_:n3-195 sh:path schema:streetAddress;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:PostalAddressShape sh:property _:n3-181.
-_:n3-182 sh:path schema:addressLocality;
+mshape:PostalAddressShape sh:property _:n3-195.
+_:n3-196 sh:path schema:addressLocality;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:PostalAddressShape sh:property _:n3-182.
-_:n3-183 sh:path schema:addressRegion;
+mshape:PostalAddressShape sh:property _:n3-196.
+_:n3-197 sh:path schema:addressRegion;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:pattern "^[A-Z]{2}$";
     sh:message "addressRegion must be a two-letter US state code".
-mshape:PostalAddressShape sh:property _:n3-183.
-_:n3-184 sh:path schema:postalCode;
+mshape:PostalAddressShape sh:property _:n3-197.
+_:n3-198 sh:path schema:postalCode;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:pattern "^[0-9]{5}(-[0-9]{4})?$";
     sh:message "postalCode must be a US ZIP or ZIP+4".
-mshape:PostalAddressShape sh:property _:n3-184.
+mshape:PostalAddressShape sh:property _:n3-198.
 mshape:OrganizationShape a sh:NodeShape;
     sh:closed true.
-_:n3-185 sh:path rdf:type;
+_:n3-199 sh:path rdf:type;
     sh:hasValue schema:Organization.
-mshape:OrganizationShape sh:property _:n3-185.
-_:n3-186 sh:path schema:name;
+mshape:OrganizationShape sh:property _:n3-199.
+_:n3-200 sh:path schema:name;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:OrganizationShape sh:property _:n3-186.
+mshape:OrganizationShape sh:property _:n3-200.
 mshape:MonetaryAmountShape a sh:NodeShape;
     sh:closed true.
-_:n3-187 sh:path rdf:type;
+_:n3-201 sh:path rdf:type;
     sh:hasValue schema:MonetaryAmount.
-mshape:MonetaryAmountShape sh:property _:n3-187.
-_:n3-188 sh:path schema:value;
+mshape:MonetaryAmountShape sh:property _:n3-201.
+_:n3-202 sh:path schema:value;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:decimal;
     sh:minInclusive 0.0.
-mshape:MonetaryAmountShape sh:property _:n3-188.
-_:n3-189 sh:path schema:currency;
+mshape:MonetaryAmountShape sh:property _:n3-202.
+_:n3-203 sh:path schema:currency;
     sh:minCount 1;
     sh:maxCount 1.
-_:n3-190 rdf:first "USD";
+_:n3-204 rdf:first "USD";
     rdf:rest rdf:nil.
-_:n3-189 sh:in _:n3-190.
-mshape:MonetaryAmountShape sh:property _:n3-189.
+_:n3-203 sh:in _:n3-204.
+mshape:MonetaryAmountShape sh:property _:n3-203.
 mshape:AppraisedValueShape a sh:NodeShape;
     sh:closed true.
-_:n3-191 sh:path rdf:type;
+_:n3-205 sh:path rdf:type;
     sh:hasValue fibo-fnd-arr-asmt:AppraisedValue.
-mshape:AppraisedValueShape sh:property _:n3-191.
-_:n3-192 sh:path rdf:type;
+mshape:AppraisedValueShape sh:property _:n3-205.
+_:n3-206 sh:path rdf:type;
     sh:hasValue schema:MonetaryAmount.
-mshape:AppraisedValueShape sh:property _:n3-192.
-_:n3-193 sh:path schema:value;
+mshape:AppraisedValueShape sh:property _:n3-206.
+_:n3-207 sh:path schema:value;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:decimal;
     sh:minInclusive 0.0.
-mshape:AppraisedValueShape sh:property _:n3-193.
-_:n3-194 sh:path schema:currency;
+mshape:AppraisedValueShape sh:property _:n3-207.
+_:n3-208 sh:path schema:currency;
     sh:minCount 1;
     sh:maxCount 1.
-_:n3-195 rdf:first "USD";
+_:n3-209 rdf:first "USD";
     rdf:rest rdf:nil.
-_:n3-194 sh:in _:n3-195.
-mshape:AppraisedValueShape sh:property _:n3-194.
+_:n3-208 sh:in _:n3-209.
+mshape:AppraisedValueShape sh:property _:n3-208.
 mshape:PropertyShape a sh:NodeShape;
     sh:closed true.
-_:n3-196 sh:path rdf:type;
+_:n3-210 sh:path rdf:type;
     sh:hasValue fibo-fnd-plc-rp:RealEstate.
-mshape:PropertyShape sh:property _:n3-196.
-_:n3-197 sh:path schema:address;
+mshape:PropertyShape sh:property _:n3-210.
+_:n3-211 sh:path schema:address;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:PostalAddressShape.
-mshape:PropertyShape sh:property _:n3-197.
-_:n3-198 sh:path fibo-fnd-arr-asmt:hasEstimatedValue;
+mshape:PropertyShape sh:property _:n3-211.
+_:n3-212 sh:path fibo-fnd-arr-asmt:hasEstimatedValue;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:AppraisedValueShape.
-mshape:PropertyShape sh:property _:n3-198.
+mshape:PropertyShape sh:property _:n3-212.
 mshape:AppraisedPropertyShape a sh:NodeShape;
     sh:node mshape:PropertyShape.
-_:n3-199 sh:path fibo-fnd-arr-asmt:hasEstimatedValue;
+_:n3-213 sh:path fibo-fnd-arr-asmt:hasEstimatedValue;
     sh:minCount 1;
     sh:message "an appraised property must carry its appraised value".
-mshape:AppraisedPropertyShape sh:property _:n3-199.
+mshape:AppraisedPropertyShape sh:property _:n3-213.
 `,
   "consent-receipt": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -1126,48 +1196,48 @@ mshape:AppraisedPropertyShape sh:property _:n3-199.
 mshape:ConsentReceiptShape a sh:NodeShape;
     sh:targetClass dpv:ConsentReceipt;
     sh:closed true.
-_:n3-200 sh:path rdf:type;
+_:n3-214 sh:path rdf:type;
     sh:hasValue dpv:ConsentReceipt.
-mshape:ConsentReceiptShape sh:property _:n3-200.
-_:n3-201 sh:path dpv:hasDataSubject;
+mshape:ConsentReceiptShape sh:property _:n3-214.
+_:n3-215 sh:path dpv:hasDataSubject;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:ConsentReceiptShape sh:property _:n3-201.
-_:n3-202 sh:path dpv:hasDataController;
+mshape:ConsentReceiptShape sh:property _:n3-215.
+_:n3-216 sh:path dpv:hasDataController;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:ConsentReceiptShape sh:property _:n3-202.
-_:n3-203 sh:path odrl:target;
+mshape:ConsentReceiptShape sh:property _:n3-216.
+_:n3-217 sh:path odrl:target;
     sh:minCount 1;
     sh:nodeKind sh:IRI.
-mshape:ConsentReceiptShape sh:property _:n3-203.
-_:n3-204 sh:path dpv:hasPolicy;
+mshape:ConsentReceiptShape sh:property _:n3-217.
+_:n3-218 sh:path dpv:hasPolicy;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:ConsentReceiptShape sh:property _:n3-204.
-_:n3-205 sh:path dpv:hasPurpose;
+mshape:ConsentReceiptShape sh:property _:n3-218.
+_:n3-219 sh:path dpv:hasPurpose;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:ConsentReceiptShape sh:property _:n3-205.
-_:n3-206 sh:path dpv:hasConsentStatus;
+mshape:ConsentReceiptShape sh:property _:n3-219.
+_:n3-220 sh:path dpv:hasConsentStatus;
     sh:minCount 1;
     sh:maxCount 1.
-_:n3-207 rdf:first dpv:ConsentGiven;
-    rdf:rest _:n3-208.
-_:n3-208 rdf:first dpv:ConsentWithdrawn;
-    rdf:rest _:n3-209.
-_:n3-209 rdf:first dpv:ConsentExpired;
+_:n3-221 rdf:first dpv:ConsentGiven;
+    rdf:rest _:n3-222.
+_:n3-222 rdf:first dpv:ConsentWithdrawn;
+    rdf:rest _:n3-223.
+_:n3-223 rdf:first dpv:ConsentExpired;
     rdf:rest rdf:nil.
-_:n3-206 sh:in _:n3-207;
+_:n3-220 sh:in _:n3-221;
     sh:nodeKind sh:IRI.
-mshape:ConsentReceiptShape sh:property _:n3-206.
-_:n3-210 sh:path dcterms:issued;
+mshape:ConsentReceiptShape sh:property _:n3-220.
+_:n3-224 sh:path dcterms:issued;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:dateTime.
-mshape:ConsentReceiptShape sh:property _:n3-210.
+mshape:ConsentReceiptShape sh:property _:n3-224.
 `,
   "contact-details": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -1178,25 +1248,25 @@ mshape:ConsentReceiptShape sh:property _:n3-210.
 mshape:ContactDetailsShape a sh:NodeShape;
     sh:targetClass schema:ContactPoint;
     sh:closed true.
-_:n3-211 sh:path rdf:type;
+_:n3-225 sh:path rdf:type;
     sh:hasValue schema:ContactPoint.
-mshape:ContactDetailsShape sh:property _:n3-211.
-_:n3-212 sh:path schema:email;
+mshape:ContactDetailsShape sh:property _:n3-225.
+_:n3-226 sh:path schema:email;
     sh:minCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:ContactDetailsShape sh:property _:n3-212.
-_:n3-213 sh:path schema:telephone;
+mshape:ContactDetailsShape sh:property _:n3-226.
+_:n3-227 sh:path schema:telephone;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:ContactDetailsShape sh:property _:n3-213.
-_:n3-214 sh:path schema:address;
+mshape:ContactDetailsShape sh:property _:n3-227.
+_:n3-228 sh:path schema:address;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:PostalAddressShape.
-mshape:ContactDetailsShape sh:property _:n3-214.
+mshape:ContactDetailsShape sh:property _:n3-228.
 `,
   "credential-pointer": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -1209,53 +1279,53 @@ mshape:ContactDetailsShape sh:property _:n3-214.
 mshape:CredentialPointerShape a sh:NodeShape;
     sh:targetClass mort:CredentialPointer;
     sh:closed true.
-_:n3-215 sh:path rdf:type;
+_:n3-229 sh:path rdf:type;
     sh:hasValue mort:CredentialPointer.
-mshape:CredentialPointerShape sh:property _:n3-215.
-_:n3-216 sh:path schema:url;
+mshape:CredentialPointerShape sh:property _:n3-229.
+_:n3-230 sh:path schema:url;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:CredentialPointerShape sh:property _:n3-216.
-_:n3-217 sh:path dcterms:type;
+mshape:CredentialPointerShape sh:property _:n3-230.
+_:n3-231 sh:path dcterms:type;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:CredentialPointerShape sh:property _:n3-217.
-_:n3-218 sh:path dcterms:creator;
+mshape:CredentialPointerShape sh:property _:n3-231.
+_:n3-232 sh:path dcterms:creator;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:CredentialPointerShape sh:property _:n3-218.
-_:n3-219 sh:path schema:sha256;
+mshape:CredentialPointerShape sh:property _:n3-232.
+_:n3-233 sh:path schema:sha256;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:pattern "^[0-9a-f]{64}$";
     sh:minLength 1.
-mshape:CredentialPointerShape sh:property _:n3-219.
-_:n3-220 sh:path mort:asOf;
+mshape:CredentialPointerShape sh:property _:n3-233.
+_:n3-234 sh:path mort:asOf;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:dateTime.
-mshape:CredentialPointerShape sh:property _:n3-220.
-_:n3-221 sh:path mort:signatureVerified;
+mshape:CredentialPointerShape sh:property _:n3-234.
+_:n3-235 sh:path mort:signatureVerified;
     sh:maxCount 1;
     sh:datatype xsd:boolean.
-mshape:CredentialPointerShape sh:property _:n3-221.
-_:n3-222 sh:path mort:statusChecked;
+mshape:CredentialPointerShape sh:property _:n3-235.
+_:n3-236 sh:path mort:statusChecked;
     sh:maxCount 1;
     sh:datatype xsd:boolean.
-mshape:CredentialPointerShape sh:property _:n3-222.
-_:n3-223 sh:path mort:checkedAt;
+mshape:CredentialPointerShape sh:property _:n3-236.
+_:n3-237 sh:path mort:checkedAt;
     sh:maxCount 1;
     sh:datatype xsd:dateTime.
-mshape:CredentialPointerShape sh:property _:n3-223.
-_:n3-224 sh:path mort:loanNumber;
+mshape:CredentialPointerShape sh:property _:n3-237.
+_:n3-238 sh:path mort:loanNumber;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:CredentialPointerShape sh:property _:n3-224.
+mshape:CredentialPointerShape sh:property _:n3-238.
 `,
   "credit-report": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -1269,59 +1339,59 @@ mshape:CredentialPointerShape sh:property _:n3-224.
 mshape:CreditReportShape a sh:NodeShape;
     sh:targetClass mort:CreditReport;
     sh:closed true.
-_:n3-225 sh:path rdf:type;
+_:n3-239 sh:path rdf:type;
     sh:hasValue mort:CreditReport.
-mshape:CreditReportShape sh:property _:n3-225.
-_:n3-226 sh:path schema:identifier;
+mshape:CreditReportShape sh:property _:n3-239.
+_:n3-240 sh:path schema:identifier;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:CreditReportShape sh:property _:n3-226.
-_:n3-227 sh:path mort:loanNumber;
+mshape:CreditReportShape sh:property _:n3-240.
+_:n3-241 sh:path mort:loanNumber;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:CreditReportShape sh:property _:n3-227.
-_:n3-228 sh:path fibo-fbc-dae-dbt:hasBorrower;
+mshape:CreditReportShape sh:property _:n3-241.
+_:n3-242 sh:path fibo-fbc-dae-dbt:hasBorrower;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:CreditReportShape sh:property _:n3-228.
-_:n3-229 sh:path dcterms:creator;
+mshape:CreditReportShape sh:property _:n3-242.
+_:n3-243 sh:path dcterms:creator;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:CreditReportShape sh:property _:n3-229.
-_:n3-230 sh:path dcterms:issued;
+mshape:CreditReportShape sh:property _:n3-243.
+_:n3-244 sh:path dcterms:issued;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:date.
-mshape:CreditReportShape sh:property _:n3-230.
-_:n3-231 sh:path mort:permissiblePurpose;
+mshape:CreditReportShape sh:property _:n3-244.
+_:n3-245 sh:path mort:permissiblePurpose;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:CreditReportShape sh:property _:n3-231.
-_:n3-232 sh:path mort:authorisedBy;
+mshape:CreditReportShape sh:property _:n3-245.
+_:n3-246 sh:path mort:authorisedBy;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:CreditReportShape sh:property _:n3-232.
-_:n3-233 sh:path mort:scoreDisclosure;
+mshape:CreditReportShape sh:property _:n3-246.
+_:n3-247 sh:path mort:scoreDisclosure;
     sh:minCount 1;
     sh:maxCount 3;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:ScoreDisclosureShape.
-mshape:CreditReportShape sh:property _:n3-233.
-_:n3-234 sh:path mort:totalMonthlyDebtUsd;
+mshape:CreditReportShape sh:property _:n3-247.
+_:n3-248 sh:path mort:totalMonthlyDebtUsd;
     sh:maxCount 1;
     sh:datatype xsd:integer;
     sh:minInclusive 0;
     sh:maxInclusive 9999.
-mshape:CreditReportShape sh:property _:n3-234.
+mshape:CreditReportShape sh:property _:n3-248.
 `,
   "credit-score-credential": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -1334,72 +1404,128 @@ mshape:CreditReportShape sh:property _:n3-234.
 mshape:CreditScoreCredentialShape a sh:NodeShape;
     sh:targetClass mort:CreditScoreCredential;
     sh:closed true.
-_:n3-235 rdf:first sec:proof;
+_:n3-249 rdf:first sec:proof;
     rdf:rest rdf:nil.
-mshape:CreditScoreCredentialShape sh:ignoredProperties _:n3-235.
-_:n3-236 sh:path rdf:type;
+mshape:CreditScoreCredentialShape sh:ignoredProperties _:n3-249.
+_:n3-250 sh:path rdf:type;
     sh:hasValue cred:VerifiableCredential.
-mshape:CreditScoreCredentialShape sh:property _:n3-236.
-_:n3-237 sh:path cred:issuer;
+mshape:CreditScoreCredentialShape sh:property _:n3-250.
+_:n3-251 sh:path cred:issuer;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:CreditScoreCredentialShape sh:property _:n3-237.
-_:n3-238 sh:path cred:validFrom;
+mshape:CreditScoreCredentialShape sh:property _:n3-251.
+_:n3-252 sh:path cred:validFrom;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:dateTime;
     sh:lessThan cred:validUntil.
-mshape:CreditScoreCredentialShape sh:property _:n3-238.
-_:n3-239 sh:path cred:validUntil;
+mshape:CreditScoreCredentialShape sh:property _:n3-252.
+_:n3-253 sh:path cred:validUntil;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:dateTime.
-mshape:CreditScoreCredentialShape sh:property _:n3-239.
-_:n3-240 sh:path cred:credentialStatus;
+mshape:CreditScoreCredentialShape sh:property _:n3-253.
+_:n3-254 sh:path cred:credentialStatus;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI.
-mshape:CreditScoreCredentialShape sh:property _:n3-240.
-_:n3-241 sh:path cred:credentialSubject;
+mshape:CreditScoreCredentialShape sh:property _:n3-254.
+_:n3-255 sh:path cred:credentialSubject;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI;
     sh:node mshape:CreditScoreSubjectShape.
-mshape:CreditScoreCredentialShape sh:property _:n3-241.
-_:n3-242 sh:path cred:credentialSchema;
+mshape:CreditScoreCredentialShape sh:property _:n3-255.
+_:n3-256 sh:path cred:credentialSchema;
     sh:nodeKind sh:IRI.
-mshape:CreditScoreCredentialShape sh:property _:n3-242.
+mshape:CreditScoreCredentialShape sh:property _:n3-256.
 mshape:CreditScoreSubjectShape a sh:NodeShape;
     sh:closed true.
-_:n3-243 rdf:first rdf:type;
+_:n3-257 rdf:first rdf:type;
     rdf:rest rdf:nil.
-mshape:CreditScoreSubjectShape sh:ignoredProperties _:n3-243.
-_:n3-244 sh:path mort:creditScoreValue;
+mshape:CreditScoreSubjectShape sh:ignoredProperties _:n3-257.
+_:n3-258 sh:path mort:creditScoreValue;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:integer;
     sh:minInclusive 300;
     sh:maxInclusive 850;
     sh:message "creditScoreValue must fit decision 0005's 3-digit budget (300..850)".
-mshape:CreditScoreSubjectShape sh:property _:n3-244.
-_:n3-245 sh:path mort:totalMonthlyDebtUsd;
+mshape:CreditScoreSubjectShape sh:property _:n3-258.
+_:n3-259 sh:path mort:totalMonthlyDebtUsd;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:integer;
     sh:minInclusive 0;
     sh:maxInclusive 9999;
     sh:message "totalMonthlyDebtUsd must fit decision 0005's 4-digit budget (0..9999 whole USD/month)".
-mshape:CreditScoreSubjectShape sh:property _:n3-245.
-_:n3-246 sh:path mort:scoreModel;
+mshape:CreditScoreSubjectShape sh:property _:n3-259.
+_:n3-260 sh:path mort:scoreModel;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-_:n3-247 rdf:first mort:ScoreModel-FICO8;
+_:n3-261 rdf:first mort:ScoreModel-FICO8;
     rdf:rest rdf:nil.
-_:n3-246 sh:in _:n3-247;
+_:n3-260 sh:in _:n3-261;
     sh:message "scoreModel must be a concept from mort:ScoreModelScheme".
-mshape:CreditScoreSubjectShape sh:property _:n3-246.
+mshape:CreditScoreSubjectShape sh:property _:n3-260.
+`,
+  "damage-report": `@prefix sh: <http://www.w3.org/ns/shacl#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix schema: <https://schema.org/>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#>.
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#>.
+
+mshape:DamageReportShape a sh:NodeShape;
+    sh:targetClass mort:DamageReport;
+    sh:closed true.
+_:n3-262 sh:path rdf:type;
+    sh:hasValue mort:DamageReport.
+mshape:DamageReportShape sh:property _:n3-262.
+_:n3-263 sh:path schema:name;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:datatype xsd:string;
+    sh:minLength 1.
+mshape:DamageReportShape sh:property _:n3-263.
+_:n3-264 sh:path schema:about;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:nodeKind sh:IRI.
+mshape:DamageReportShape sh:property _:n3-264.
+_:n3-265 sh:path mort:vehicle;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:nodeKind sh:BlankNodeOrIRI;
+    sh:node mshape:VehicleShape.
+mshape:DamageReportShape sh:property _:n3-265.
+_:n3-266 sh:path mort:damageItem;
+    sh:minCount 1;
+    sh:datatype xsd:string;
+    sh:minLength 1.
+mshape:DamageReportShape sh:property _:n3-266.
+_:n3-267 sh:path schema:image;
+    sh:minCount 1;
+    sh:nodeKind sh:IRI.
+mshape:DamageReportShape sh:property _:n3-267.
+_:n3-268 sh:path schema:description;
+    sh:maxCount 1;
+    sh:datatype xsd:string;
+    sh:minLength 1.
+mshape:DamageReportShape sh:property _:n3-268.
+_:n3-269 sh:path dcterms:creator;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:nodeKind sh:IRI.
+mshape:DamageReportShape sh:property _:n3-269.
+_:n3-270 sh:path dcterms:created;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:datatype xsd:dateTime.
+mshape:DamageReportShape sh:property _:n3-270.
 `,
   "data-product": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -1414,61 +1540,61 @@ mshape:CreditScoreSubjectShape sh:property _:n3-246.
 mshape:DataProductShape a sh:NodeShape;
     sh:targetClass dprod:DataProduct;
     sh:closed true.
-_:n3-248 sh:path rdf:type;
+_:n3-271 sh:path rdf:type;
     sh:hasValue dprod:DataProduct.
-mshape:DataProductShape sh:property _:n3-248.
-_:n3-249 sh:path dcterms:title;
+mshape:DataProductShape sh:property _:n3-271.
+_:n3-272 sh:path dcterms:title;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:DataProductShape sh:property _:n3-249.
-_:n3-250 sh:path dcterms:description;
+mshape:DataProductShape sh:property _:n3-272.
+_:n3-273 sh:path dcterms:description;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:DataProductShape sh:property _:n3-250.
-_:n3-251 sh:path dprod:dataProductOwner;
+mshape:DataProductShape sh:property _:n3-273.
+_:n3-274 sh:path dprod:dataProductOwner;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:DataProductShape sh:property _:n3-251.
-_:n3-252 sh:path dprod:purpose;
+mshape:DataProductShape sh:property _:n3-274.
+_:n3-275 sh:path dprod:purpose;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:DataProductShape sh:property _:n3-252.
-_:n3-253 sh:path dpv:hasPurpose;
+mshape:DataProductShape sh:property _:n3-275.
+_:n3-276 sh:path dpv:hasPurpose;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:DataProductShape sh:property _:n3-253.
-_:n3-254 sh:path dprod:outputPort;
+mshape:DataProductShape sh:property _:n3-276.
+_:n3-277 sh:path dprod:outputPort;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:DataServiceShape.
-mshape:DataProductShape sh:property _:n3-254.
-_:n3-255 sh:path odrl:hasPolicy;
+mshape:DataProductShape sh:property _:n3-277.
+_:n3-278 sh:path odrl:hasPolicy;
     sh:nodeKind sh:IRI.
-mshape:DataProductShape sh:property _:n3-255.
-_:n3-256 sh:path dcterms:modified;
+mshape:DataProductShape sh:property _:n3-278.
+_:n3-279 sh:path dcterms:modified;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:dateTime.
-mshape:DataProductShape sh:property _:n3-256.
+mshape:DataProductShape sh:property _:n3-279.
 mshape:DataServiceShape a sh:NodeShape;
     sh:closed true.
-_:n3-257 sh:path rdf:type;
+_:n3-280 sh:path rdf:type;
     sh:hasValue dcat:DataService.
-mshape:DataServiceShape sh:property _:n3-257.
-_:n3-258 sh:path dcat:endpointURL;
+mshape:DataServiceShape sh:property _:n3-280.
+_:n3-281 sh:path dcat:endpointURL;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:DataServiceShape sh:property _:n3-258.
+mshape:DataServiceShape sh:property _:n3-281.
 `,
   "discharge-summary": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -1479,152 +1605,152 @@ mshape:DataServiceShape sh:property _:n3-258.
 mshape:DischargeSummaryShape a sh:NodeShape;
     sh:targetClass fhir:Composition;
     sh:closed true.
-_:n3-259 sh:path rdf:type.
-_:n3-260 rdf:first fhir:Composition;
+_:n3-282 sh:path rdf:type.
+_:n3-283 rdf:first fhir:Composition;
     rdf:rest rdf:nil.
-_:n3-259 sh:in _:n3-260.
-mshape:DischargeSummaryShape sh:property _:n3-259.
-_:n3-261 sh:path fhir:nodeRole;
+_:n3-282 sh:in _:n3-283.
+mshape:DischargeSummaryShape sh:property _:n3-282.
+_:n3-284 sh:path fhir:nodeRole;
     sh:maxCount 1.
-_:n3-262 rdf:first fhir:treeRoot;
+_:n3-285 rdf:first fhir:treeRoot;
     rdf:rest rdf:nil.
-_:n3-261 sh:in _:n3-262.
-mshape:DischargeSummaryShape sh:property _:n3-261.
-_:n3-263 sh:path fhir:id;
+_:n3-284 sh:in _:n3-285.
+mshape:DischargeSummaryShape sh:property _:n3-284.
+_:n3-286 sh:path fhir:id;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirIdShape.
-mshape:DischargeSummaryShape sh:property _:n3-263.
-_:n3-264 sh:path fhir:status;
+mshape:DischargeSummaryShape sh:property _:n3-286.
+_:n3-287 sh:path fhir:status;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirStringShape.
-mshape:DischargeSummaryShape sh:property _:n3-264.
-_:n3-266 rdf:first fhir:status;
-    rdf:rest _:n3-267.
-_:n3-267 rdf:first fhir:v;
+mshape:DischargeSummaryShape sh:property _:n3-287.
+_:n3-289 rdf:first fhir:status;
+    rdf:rest _:n3-290.
+_:n3-290 rdf:first fhir:v;
     rdf:rest rdf:nil.
-_:n3-265 sh:path _:n3-266.
-_:n3-268 rdf:first "preliminary";
-    rdf:rest _:n3-269.
-_:n3-269 rdf:first "final";
-    rdf:rest _:n3-270.
-_:n3-270 rdf:first "amended";
+_:n3-288 sh:path _:n3-289.
+_:n3-291 rdf:first "preliminary";
+    rdf:rest _:n3-292.
+_:n3-292 rdf:first "final";
+    rdf:rest _:n3-293.
+_:n3-293 rdf:first "amended";
     rdf:rest rdf:nil.
-_:n3-265 sh:in _:n3-268.
-mshape:DischargeSummaryShape sh:property _:n3-265.
-_:n3-271 sh:path fhir:type;
+_:n3-288 sh:in _:n3-291.
+mshape:DischargeSummaryShape sh:property _:n3-288.
+_:n3-294 sh:path fhir:type;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirCodeableConceptShape.
-mshape:DischargeSummaryShape sh:property _:n3-271.
-_:n3-273 rdf:first fhir:type;
-    rdf:rest _:n3-274.
-_:n3-274 rdf:first fhir:coding;
-    rdf:rest _:n3-275.
-_:n3-275 rdf:first _:n3-276.
-_:n3-276 sh:zeroOrMorePath rdf:rest.
-_:n3-275 rdf:rest _:n3-277.
-_:n3-277 rdf:first rdf:first;
-    rdf:rest _:n3-278.
-_:n3-278 rdf:first fhir:code;
-    rdf:rest _:n3-279.
-_:n3-279 rdf:first fhir:v;
-    rdf:rest rdf:nil.
-_:n3-272 sh:path _:n3-273;
-    sh:minCount 1.
-_:n3-280 rdf:first "18842-5";
-    rdf:rest rdf:nil.
-_:n3-272 sh:in _:n3-280.
-mshape:DischargeSummaryShape sh:property _:n3-272.
-_:n3-281 sh:path fhir:subject;
-    sh:minCount 1;
-    sh:maxCount 1.
-mshape:DischargeSummaryShape sh:property _:n3-281.
-_:n3-283 rdf:first fhir:subject;
-    rdf:rest _:n3-284.
-_:n3-284 rdf:first _:n3-285.
-_:n3-285 sh:zeroOrMorePath rdf:rest.
-_:n3-284 rdf:rest _:n3-286.
-_:n3-286 rdf:first rdf:first;
-    rdf:rest rdf:nil.
-_:n3-282 sh:path _:n3-283;
-    sh:minCount 1;
-    sh:node mshape:FhirLinkedReferenceShape.
-mshape:DischargeSummaryShape sh:property _:n3-282.
-_:n3-287 sh:path fhir:date;
-    sh:minCount 1;
-    sh:maxCount 1;
-    sh:node mshape:FhirDateTimeShape.
-mshape:DischargeSummaryShape sh:property _:n3-287.
-_:n3-288 sh:path fhir:author;
-    sh:minCount 1;
-    sh:maxCount 1.
-mshape:DischargeSummaryShape sh:property _:n3-288.
-_:n3-290 rdf:first fhir:author;
-    rdf:rest _:n3-291.
-_:n3-291 rdf:first _:n3-292.
-_:n3-292 sh:zeroOrMorePath rdf:rest.
-_:n3-291 rdf:rest _:n3-293.
-_:n3-293 rdf:first rdf:first;
-    rdf:rest rdf:nil.
-_:n3-289 sh:path _:n3-290;
-    sh:minCount 1;
-    sh:node mshape:FhirReferenceShape.
-mshape:DischargeSummaryShape sh:property _:n3-289.
-_:n3-294 sh:path fhir:title;
-    sh:minCount 1;
-    sh:maxCount 1;
-    sh:node mshape:FhirStringShape.
 mshape:DischargeSummaryShape sh:property _:n3-294.
-_:n3-295 sh:path fhir:note;
-    sh:maxCount 1.
-mshape:DischargeSummaryShape sh:property _:n3-295.
-_:n3-297 rdf:first fhir:note;
+_:n3-296 rdf:first fhir:type;
+    rdf:rest _:n3-297.
+_:n3-297 rdf:first fhir:coding;
     rdf:rest _:n3-298.
 _:n3-298 rdf:first _:n3-299.
 _:n3-299 sh:zeroOrMorePath rdf:rest.
 _:n3-298 rdf:rest _:n3-300.
 _:n3-300 rdf:first rdf:first;
+    rdf:rest _:n3-301.
+_:n3-301 rdf:first fhir:code;
+    rdf:rest _:n3-302.
+_:n3-302 rdf:first fhir:v;
     rdf:rest rdf:nil.
-_:n3-296 sh:path _:n3-297;
-    sh:node mshape:FhirAnnotationShape.
-mshape:DischargeSummaryShape sh:property _:n3-296.
-_:n3-301 sh:path fhir:section;
+_:n3-295 sh:path _:n3-296;
+    sh:minCount 1.
+_:n3-303 rdf:first "18842-5";
+    rdf:rest rdf:nil.
+_:n3-295 sh:in _:n3-303.
+mshape:DischargeSummaryShape sh:property _:n3-295.
+_:n3-304 sh:path fhir:subject;
     sh:minCount 1;
     sh:maxCount 1.
-mshape:DischargeSummaryShape sh:property _:n3-301.
-_:n3-303 rdf:first fhir:section;
-    rdf:rest _:n3-304.
-_:n3-304 rdf:first _:n3-305.
-_:n3-305 sh:zeroOrMorePath rdf:rest.
-_:n3-304 rdf:rest _:n3-306.
-_:n3-306 rdf:first rdf:first;
+mshape:DischargeSummaryShape sh:property _:n3-304.
+_:n3-306 rdf:first fhir:subject;
+    rdf:rest _:n3-307.
+_:n3-307 rdf:first _:n3-308.
+_:n3-308 sh:zeroOrMorePath rdf:rest.
+_:n3-307 rdf:rest _:n3-309.
+_:n3-309 rdf:first rdf:first;
     rdf:rest rdf:nil.
-_:n3-302 sh:path _:n3-303;
+_:n3-305 sh:path _:n3-306;
     sh:minCount 1;
-    sh:node mshape:CompositionSectionShape.
-mshape:DischargeSummaryShape sh:property _:n3-302.
-mshape:CompositionSectionShape a sh:NodeShape;
-    sh:closed true.
-_:n3-307 sh:path fhir:title;
+    sh:node mshape:FhirLinkedReferenceShape.
+mshape:DischargeSummaryShape sh:property _:n3-305.
+_:n3-310 sh:path fhir:date;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:node mshape:FhirDateTimeShape.
+mshape:DischargeSummaryShape sh:property _:n3-310.
+_:n3-311 sh:path fhir:author;
+    sh:minCount 1;
+    sh:maxCount 1.
+mshape:DischargeSummaryShape sh:property _:n3-311.
+_:n3-313 rdf:first fhir:author;
+    rdf:rest _:n3-314.
+_:n3-314 rdf:first _:n3-315.
+_:n3-315 sh:zeroOrMorePath rdf:rest.
+_:n3-314 rdf:rest _:n3-316.
+_:n3-316 rdf:first rdf:first;
+    rdf:rest rdf:nil.
+_:n3-312 sh:path _:n3-313;
+    sh:minCount 1;
+    sh:node mshape:FhirReferenceShape.
+mshape:DischargeSummaryShape sh:property _:n3-312.
+_:n3-317 sh:path fhir:title;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirStringShape.
-mshape:CompositionSectionShape sh:property _:n3-307.
-_:n3-308 sh:path fhir:entry;
+mshape:DischargeSummaryShape sh:property _:n3-317.
+_:n3-318 sh:path fhir:note;
     sh:maxCount 1.
-mshape:CompositionSectionShape sh:property _:n3-308.
-_:n3-310 rdf:first fhir:entry;
-    rdf:rest _:n3-311.
-_:n3-311 rdf:first _:n3-312.
-_:n3-312 sh:zeroOrMorePath rdf:rest.
-_:n3-311 rdf:rest _:n3-313.
-_:n3-313 rdf:first rdf:first;
+mshape:DischargeSummaryShape sh:property _:n3-318.
+_:n3-320 rdf:first fhir:note;
+    rdf:rest _:n3-321.
+_:n3-321 rdf:first _:n3-322.
+_:n3-322 sh:zeroOrMorePath rdf:rest.
+_:n3-321 rdf:rest _:n3-323.
+_:n3-323 rdf:first rdf:first;
     rdf:rest rdf:nil.
-_:n3-309 sh:path _:n3-310;
+_:n3-319 sh:path _:n3-320;
+    sh:node mshape:FhirAnnotationShape.
+mshape:DischargeSummaryShape sh:property _:n3-319.
+_:n3-324 sh:path fhir:section;
+    sh:minCount 1;
+    sh:maxCount 1.
+mshape:DischargeSummaryShape sh:property _:n3-324.
+_:n3-326 rdf:first fhir:section;
+    rdf:rest _:n3-327.
+_:n3-327 rdf:first _:n3-328.
+_:n3-328 sh:zeroOrMorePath rdf:rest.
+_:n3-327 rdf:rest _:n3-329.
+_:n3-329 rdf:first rdf:first;
+    rdf:rest rdf:nil.
+_:n3-325 sh:path _:n3-326;
+    sh:minCount 1;
+    sh:node mshape:CompositionSectionShape.
+mshape:DischargeSummaryShape sh:property _:n3-325.
+mshape:CompositionSectionShape a sh:NodeShape;
+    sh:closed true.
+_:n3-330 sh:path fhir:title;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:node mshape:FhirStringShape.
+mshape:CompositionSectionShape sh:property _:n3-330.
+_:n3-331 sh:path fhir:entry;
+    sh:maxCount 1.
+mshape:CompositionSectionShape sh:property _:n3-331.
+_:n3-333 rdf:first fhir:entry;
+    rdf:rest _:n3-334.
+_:n3-334 rdf:first _:n3-335.
+_:n3-335 sh:zeroOrMorePath rdf:rest.
+_:n3-334 rdf:rest _:n3-336.
+_:n3-336 rdf:first rdf:first;
+    rdf:rest rdf:nil.
+_:n3-332 sh:path _:n3-333;
     sh:node mshape:FhirLinkedReferenceShape.
-mshape:CompositionSectionShape sh:property _:n3-309.
+mshape:CompositionSectionShape sh:property _:n3-332.
 `,
   document: `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -1637,56 +1763,56 @@ mshape:CompositionSectionShape sh:property _:n3-309.
 mshape:DocumentShape a sh:NodeShape;
     sh:targetClass schema:DigitalDocument;
     sh:closed true.
-_:n3-314 sh:path rdf:type;
+_:n3-337 sh:path rdf:type;
     sh:hasValue schema:DigitalDocument.
-mshape:DocumentShape sh:property _:n3-314.
-_:n3-315 sh:path schema:name;
+mshape:DocumentShape sh:property _:n3-337.
+_:n3-338 sh:path schema:name;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:DocumentShape sh:property _:n3-315.
-_:n3-316 sh:path schema:description;
+mshape:DocumentShape sh:property _:n3-338.
+_:n3-339 sh:path schema:description;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:DocumentShape sh:property _:n3-316.
-_:n3-317 sh:path dcterms:creator;
+mshape:DocumentShape sh:property _:n3-339.
+_:n3-340 sh:path dcterms:creator;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:DocumentShape sh:property _:n3-317.
-_:n3-318 sh:path dcterms:issued;
+mshape:DocumentShape sh:property _:n3-340.
+_:n3-341 sh:path dcterms:issued;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:dateTime.
-mshape:DocumentShape sh:property _:n3-318.
-_:n3-319 sh:path schema:identifier;
+mshape:DocumentShape sh:property _:n3-341.
+_:n3-342 sh:path schema:identifier;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:DocumentShape sh:property _:n3-319.
-_:n3-320 sh:path schema:about;
+mshape:DocumentShape sh:property _:n3-342.
+_:n3-343 sh:path schema:about;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:DocumentShape sh:property _:n3-320.
-_:n3-321 sh:path schema:sha256;
+mshape:DocumentShape sh:property _:n3-343.
+_:n3-344 sh:path schema:sha256;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:pattern "^[0-9a-f]{64}$";
     sh:minLength 1.
-mshape:DocumentShape sh:property _:n3-321.
-_:n3-322 sh:path mort:loanNumber;
+mshape:DocumentShape sh:property _:n3-344.
+_:n3-345 sh:path mort:loanNumber;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:DocumentShape sh:property _:n3-322.
-_:n3-323 sh:path mort:subjectProperty;
+mshape:DocumentShape sh:property _:n3-345.
+_:n3-346 sh:path mort:subjectProperty;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:PropertyShape.
-mshape:DocumentShape sh:property _:n3-323.
+mshape:DocumentShape sh:property _:n3-346.
 `,
   "employment-income-credential": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -1701,77 +1827,77 @@ mshape:DocumentShape sh:property _:n3-323.
 mshape:EmploymentIncomeCredentialShape a sh:NodeShape;
     sh:targetClass mort:EmploymentIncomeCredential;
     sh:closed true.
-_:n3-324 rdf:first sec:proof;
+_:n3-347 rdf:first sec:proof;
     rdf:rest rdf:nil.
-mshape:EmploymentIncomeCredentialShape sh:ignoredProperties _:n3-324.
-_:n3-325 sh:path rdf:type;
+mshape:EmploymentIncomeCredentialShape sh:ignoredProperties _:n3-347.
+_:n3-348 sh:path rdf:type;
     sh:hasValue cred:VerifiableCredential.
-mshape:EmploymentIncomeCredentialShape sh:property _:n3-325.
-_:n3-326 sh:path cred:issuer;
+mshape:EmploymentIncomeCredentialShape sh:property _:n3-348.
+_:n3-349 sh:path cred:issuer;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:EmploymentIncomeCredentialShape sh:property _:n3-326.
-_:n3-327 sh:path cred:validFrom;
+mshape:EmploymentIncomeCredentialShape sh:property _:n3-349.
+_:n3-350 sh:path cred:validFrom;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:dateTime;
     sh:lessThan cred:validUntil.
-mshape:EmploymentIncomeCredentialShape sh:property _:n3-327.
-_:n3-328 sh:path cred:validUntil;
+mshape:EmploymentIncomeCredentialShape sh:property _:n3-350.
+_:n3-351 sh:path cred:validUntil;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:dateTime.
-mshape:EmploymentIncomeCredentialShape sh:property _:n3-328.
-_:n3-329 sh:path cred:credentialStatus;
+mshape:EmploymentIncomeCredentialShape sh:property _:n3-351.
+_:n3-352 sh:path cred:credentialStatus;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI.
-mshape:EmploymentIncomeCredentialShape sh:property _:n3-329.
-_:n3-330 sh:path cred:credentialSubject;
+mshape:EmploymentIncomeCredentialShape sh:property _:n3-352.
+_:n3-353 sh:path cred:credentialSubject;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI;
     sh:node mshape:EmploymentIncomeSubjectShape;
     sh:message "credentialSubject must be the borrower WebID (holder binding, decision 0012)".
-mshape:EmploymentIncomeCredentialShape sh:property _:n3-330.
-_:n3-331 sh:path cred:evidence;
+mshape:EmploymentIncomeCredentialShape sh:property _:n3-353.
+_:n3-354 sh:path cred:evidence;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI.
-mshape:EmploymentIncomeCredentialShape sh:property _:n3-331.
-_:n3-332 sh:path cred:credentialSchema;
+mshape:EmploymentIncomeCredentialShape sh:property _:n3-354.
+_:n3-355 sh:path cred:credentialSchema;
     sh:nodeKind sh:IRI.
-mshape:EmploymentIncomeCredentialShape sh:property _:n3-332.
+mshape:EmploymentIncomeCredentialShape sh:property _:n3-355.
 mshape:EmploymentIncomeSubjectShape a sh:NodeShape;
     sh:closed true.
-_:n3-333 rdf:first rdf:type;
+_:n3-356 rdf:first rdf:type;
     rdf:rest rdf:nil.
-mshape:EmploymentIncomeSubjectShape sh:ignoredProperties _:n3-333.
-_:n3-334 sh:path schema:worksFor;
+mshape:EmploymentIncomeSubjectShape sh:ignoredProperties _:n3-356.
+_:n3-357 sh:path schema:worksFor;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:OrganizationShape.
-mshape:EmploymentIncomeSubjectShape sh:property _:n3-334.
-_:n3-335 sh:path schema:jobTitle;
+mshape:EmploymentIncomeSubjectShape sh:property _:n3-357.
+_:n3-358 sh:path schema:jobTitle;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:EmploymentIncomeSubjectShape sh:property _:n3-335.
-_:n3-336 sh:path schema:startDate;
+mshape:EmploymentIncomeSubjectShape sh:property _:n3-358.
+_:n3-359 sh:path schema:startDate;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:date.
-mshape:EmploymentIncomeSubjectShape sh:property _:n3-336.
-_:n3-337 sh:path mort:monthlyGrossIncomeUsd;
+mshape:EmploymentIncomeSubjectShape sh:property _:n3-359.
+_:n3-360 sh:path mort:monthlyGrossIncomeUsd;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:integer;
     sh:minInclusive 0;
     sh:maxInclusive 9999;
     sh:message "monthlyGrossIncomeUsd must fit decision 0005's 4-digit budget (0..9999 whole USD/month)".
-mshape:EmploymentIncomeSubjectShape sh:property _:n3-337.
+mshape:EmploymentIncomeSubjectShape sh:property _:n3-360.
 `,
   "encounter-record": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -1782,57 +1908,57 @@ mshape:EmploymentIncomeSubjectShape sh:property _:n3-337.
 mshape:EncounterRecordShape a sh:NodeShape;
     sh:targetClass fhir:Encounter;
     sh:closed true.
-_:n3-338 sh:path rdf:type.
-_:n3-339 rdf:first fhir:Encounter;
+_:n3-361 sh:path rdf:type.
+_:n3-362 rdf:first fhir:Encounter;
     rdf:rest rdf:nil.
-_:n3-338 sh:in _:n3-339.
-mshape:EncounterRecordShape sh:property _:n3-338.
-_:n3-340 sh:path fhir:nodeRole;
+_:n3-361 sh:in _:n3-362.
+mshape:EncounterRecordShape sh:property _:n3-361.
+_:n3-363 sh:path fhir:nodeRole;
     sh:maxCount 1.
-_:n3-341 rdf:first fhir:treeRoot;
+_:n3-364 rdf:first fhir:treeRoot;
     rdf:rest rdf:nil.
-_:n3-340 sh:in _:n3-341.
-mshape:EncounterRecordShape sh:property _:n3-340.
-_:n3-342 sh:path fhir:id;
+_:n3-363 sh:in _:n3-364.
+mshape:EncounterRecordShape sh:property _:n3-363.
+_:n3-365 sh:path fhir:id;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirIdShape.
-mshape:EncounterRecordShape sh:property _:n3-342.
-_:n3-343 sh:path fhir:status;
+mshape:EncounterRecordShape sh:property _:n3-365.
+_:n3-366 sh:path fhir:status;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirStringShape.
-mshape:EncounterRecordShape sh:property _:n3-343.
-_:n3-345 rdf:first fhir:status;
-    rdf:rest _:n3-346.
-_:n3-346 rdf:first fhir:v;
+mshape:EncounterRecordShape sh:property _:n3-366.
+_:n3-368 rdf:first fhir:status;
+    rdf:rest _:n3-369.
+_:n3-369 rdf:first fhir:v;
     rdf:rest rdf:nil.
-_:n3-344 sh:path _:n3-345.
-_:n3-347 rdf:first "planned";
-    rdf:rest _:n3-348.
-_:n3-348 rdf:first "in-progress";
-    rdf:rest _:n3-349.
-_:n3-349 rdf:first "completed";
-    rdf:rest _:n3-350.
-_:n3-350 rdf:first "cancelled";
+_:n3-367 sh:path _:n3-368.
+_:n3-370 rdf:first "planned";
+    rdf:rest _:n3-371.
+_:n3-371 rdf:first "in-progress";
+    rdf:rest _:n3-372.
+_:n3-372 rdf:first "completed";
+    rdf:rest _:n3-373.
+_:n3-373 rdf:first "cancelled";
     rdf:rest rdf:nil.
-_:n3-344 sh:in _:n3-347.
-mshape:EncounterRecordShape sh:property _:n3-344.
-_:n3-351 sh:path fhir:subject;
+_:n3-367 sh:in _:n3-370.
+mshape:EncounterRecordShape sh:property _:n3-367.
+_:n3-374 sh:path fhir:subject;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirLinkedReferenceShape.
-mshape:EncounterRecordShape sh:property _:n3-351.
-_:n3-352 sh:path fhir:serviceProvider;
+mshape:EncounterRecordShape sh:property _:n3-374.
+_:n3-375 sh:path fhir:serviceProvider;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirLinkedReferenceShape.
-mshape:EncounterRecordShape sh:property _:n3-352.
-_:n3-353 sh:path fhir:actualPeriod;
+mshape:EncounterRecordShape sh:property _:n3-375.
+_:n3-376 sh:path fhir:actualPeriod;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirPeriodShape.
-mshape:EncounterRecordShape sh:property _:n3-353.
+mshape:EncounterRecordShape sh:property _:n3-376.
 `,
   "escrow-statement": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -1846,47 +1972,47 @@ mshape:EncounterRecordShape sh:property _:n3-353.
 mshape:EscrowAccountStatementShape a sh:NodeShape;
     sh:targetClass mort:EscrowAccountStatement;
     sh:closed true.
-_:n3-354 sh:path rdf:type;
+_:n3-377 sh:path rdf:type;
     sh:hasValue mort:EscrowAccountStatement.
-mshape:EscrowAccountStatementShape sh:property _:n3-354.
-_:n3-355 sh:path schema:name;
+mshape:EscrowAccountStatementShape sh:property _:n3-377.
+_:n3-378 sh:path schema:name;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:EscrowAccountStatementShape sh:property _:n3-355.
-_:n3-356 sh:path mort:loanNumber;
+mshape:EscrowAccountStatementShape sh:property _:n3-378.
+_:n3-379 sh:path mort:loanNumber;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:EscrowAccountStatementShape sh:property _:n3-356.
-_:n3-357 sh:path fibo-fbc-dae-dbt:hasBorrower;
+mshape:EscrowAccountStatementShape sh:property _:n3-379.
+_:n3-380 sh:path fibo-fbc-dae-dbt:hasBorrower;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:EscrowAccountStatementShape sh:property _:n3-357.
-_:n3-358 sh:path dcterms:creator;
+mshape:EscrowAccountStatementShape sh:property _:n3-380.
+_:n3-381 sh:path dcterms:creator;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:EscrowAccountStatementShape sh:property _:n3-358.
-_:n3-359 sh:path dcterms:issued;
+mshape:EscrowAccountStatementShape sh:property _:n3-381.
+_:n3-382 sh:path dcterms:issued;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:date.
-mshape:EscrowAccountStatementShape sh:property _:n3-359.
-_:n3-360 sh:path mort:monthlyEscrowPayment;
+mshape:EscrowAccountStatementShape sh:property _:n3-382.
+_:n3-383 sh:path mort:monthlyEscrowPayment;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:MonetaryAmountShape.
-mshape:EscrowAccountStatementShape sh:property _:n3-360.
-_:n3-361 sh:path mort:lineItem;
+mshape:EscrowAccountStatementShape sh:property _:n3-383.
+_:n3-384 sh:path mort:lineItem;
     sh:minCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:LineItemShape.
-mshape:EscrowAccountStatementShape sh:property _:n3-361.
+mshape:EscrowAccountStatementShape sh:property _:n3-384.
 `,
   "evidence-of-insurance-credential": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -1900,103 +2026,103 @@ mshape:EscrowAccountStatementShape sh:property _:n3-361.
 mshape:EvidenceOfInsuranceCredentialShape a sh:NodeShape;
     sh:targetClass mort:EvidenceOfInsuranceCredential;
     sh:closed true.
-_:n3-362 rdf:first sec:proof;
+_:n3-385 rdf:first sec:proof;
     rdf:rest rdf:nil.
-mshape:EvidenceOfInsuranceCredentialShape sh:ignoredProperties _:n3-362.
-_:n3-363 sh:path rdf:type;
+mshape:EvidenceOfInsuranceCredentialShape sh:ignoredProperties _:n3-385.
+_:n3-386 sh:path rdf:type;
     sh:hasValue cred:VerifiableCredential.
-mshape:EvidenceOfInsuranceCredentialShape sh:property _:n3-363.
-_:n3-364 sh:path cred:issuer;
+mshape:EvidenceOfInsuranceCredentialShape sh:property _:n3-386.
+_:n3-387 sh:path cred:issuer;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:EvidenceOfInsuranceCredentialShape sh:property _:n3-364.
-_:n3-365 sh:path cred:validFrom;
+mshape:EvidenceOfInsuranceCredentialShape sh:property _:n3-387.
+_:n3-388 sh:path cred:validFrom;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:dateTime;
     sh:lessThan cred:validUntil.
-mshape:EvidenceOfInsuranceCredentialShape sh:property _:n3-365.
-_:n3-366 sh:path cred:validUntil;
+mshape:EvidenceOfInsuranceCredentialShape sh:property _:n3-388.
+_:n3-389 sh:path cred:validUntil;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:dateTime.
-mshape:EvidenceOfInsuranceCredentialShape sh:property _:n3-366.
-_:n3-367 sh:path cred:credentialStatus;
+mshape:EvidenceOfInsuranceCredentialShape sh:property _:n3-389.
+_:n3-390 sh:path cred:credentialStatus;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI.
-mshape:EvidenceOfInsuranceCredentialShape sh:property _:n3-367.
-_:n3-368 sh:path cred:credentialSubject;
+mshape:EvidenceOfInsuranceCredentialShape sh:property _:n3-390.
+_:n3-391 sh:path cred:credentialSubject;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI;
     sh:node mshape:EvidenceOfInsuranceSubjectShape.
-mshape:EvidenceOfInsuranceCredentialShape sh:property _:n3-368.
-_:n3-369 sh:path cred:evidence;
+mshape:EvidenceOfInsuranceCredentialShape sh:property _:n3-391.
+_:n3-392 sh:path cred:evidence;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI.
-mshape:EvidenceOfInsuranceCredentialShape sh:property _:n3-369.
-_:n3-370 sh:path cred:credentialSchema;
+mshape:EvidenceOfInsuranceCredentialShape sh:property _:n3-392.
+_:n3-393 sh:path cred:credentialSchema;
     sh:nodeKind sh:IRI.
-mshape:EvidenceOfInsuranceCredentialShape sh:property _:n3-370.
+mshape:EvidenceOfInsuranceCredentialShape sh:property _:n3-393.
 mshape:EvidenceOfInsuranceSubjectShape a sh:NodeShape;
     sh:closed true.
-_:n3-371 rdf:first rdf:type;
+_:n3-394 rdf:first rdf:type;
     rdf:rest rdf:nil.
-mshape:EvidenceOfInsuranceSubjectShape sh:ignoredProperties _:n3-371.
-_:n3-372 sh:path schema:identifier;
+mshape:EvidenceOfInsuranceSubjectShape sh:ignoredProperties _:n3-394.
+_:n3-395 sh:path schema:identifier;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:EvidenceOfInsuranceSubjectShape sh:property _:n3-372.
-_:n3-373 sh:path mort:subjectProperty;
+mshape:EvidenceOfInsuranceSubjectShape sh:property _:n3-395.
+_:n3-396 sh:path mort:subjectProperty;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:PropertyShape.
-mshape:EvidenceOfInsuranceSubjectShape sh:property _:n3-373.
-_:n3-374 sh:path mort:dwellingCoverage;
+mshape:EvidenceOfInsuranceSubjectShape sh:property _:n3-396.
+_:n3-397 sh:path mort:dwellingCoverage;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:MonetaryAmountShape.
-mshape:EvidenceOfInsuranceSubjectShape sh:property _:n3-374.
-_:n3-375 sh:path mort:annualPremium;
+mshape:EvidenceOfInsuranceSubjectShape sh:property _:n3-397.
+_:n3-398 sh:path mort:annualPremium;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:MonetaryAmountShape.
-mshape:EvidenceOfInsuranceSubjectShape sh:property _:n3-375.
-_:n3-376 sh:path mort:deductible;
+mshape:EvidenceOfInsuranceSubjectShape sh:property _:n3-398.
+_:n3-399 sh:path mort:deductible;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:MonetaryAmountShape.
-mshape:EvidenceOfInsuranceSubjectShape sh:property _:n3-376.
-_:n3-377 sh:path schema:validFrom;
+mshape:EvidenceOfInsuranceSubjectShape sh:property _:n3-399.
+_:n3-400 sh:path schema:validFrom;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:date;
     sh:lessThan schema:validThrough.
-mshape:EvidenceOfInsuranceSubjectShape sh:property _:n3-377.
-_:n3-378 sh:path schema:validThrough;
+mshape:EvidenceOfInsuranceSubjectShape sh:property _:n3-400.
+_:n3-401 sh:path schema:validThrough;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:date.
-mshape:EvidenceOfInsuranceSubjectShape sh:property _:n3-378.
-_:n3-379 sh:path mort:mortgageeClause;
+mshape:EvidenceOfInsuranceSubjectShape sh:property _:n3-401.
+_:n3-402 sh:path mort:mortgageeClause;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:EvidenceOfInsuranceSubjectShape sh:property _:n3-379.
-_:n3-380 sh:path mort:loanNumber;
+mshape:EvidenceOfInsuranceSubjectShape sh:property _:n3-402.
+_:n3-403 sh:path mort:loanNumber;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:EvidenceOfInsuranceSubjectShape sh:property _:n3-380.
+mshape:EvidenceOfInsuranceSubjectShape sh:property _:n3-403.
 `,
   "fhir-support": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -2006,181 +2132,181 @@ mshape:EvidenceOfInsuranceSubjectShape sh:property _:n3-380.
 
 mshape:FhirStringShape a sh:NodeShape;
     sh:closed true.
-_:n3-381 sh:path fhir:v;
+_:n3-404 sh:path fhir:v;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:FhirStringShape sh:property _:n3-381.
+mshape:FhirStringShape sh:property _:n3-404.
 mshape:FhirIdShape a sh:NodeShape;
     sh:closed true.
-_:n3-382 sh:path fhir:v;
+_:n3-405 sh:path fhir:v;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:pattern "^[A-Za-z0-9.-]{1,64}$".
-mshape:FhirIdShape sh:property _:n3-382.
+mshape:FhirIdShape sh:property _:n3-405.
 mshape:FhirDateTimeShape a sh:NodeShape;
     sh:closed true.
-_:n3-383 sh:path fhir:v;
+_:n3-406 sh:path fhir:v;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:dateTime.
-mshape:FhirDateTimeShape sh:property _:n3-383.
+mshape:FhirDateTimeShape sh:property _:n3-406.
 mshape:FhirUriShape a sh:NodeShape;
     sh:closed true.
-_:n3-384 sh:path fhir:v;
+_:n3-407 sh:path fhir:v;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:anyURI.
-mshape:FhirUriShape sh:property _:n3-384.
+mshape:FhirUriShape sh:property _:n3-407.
 mshape:FhirDecimalShape a sh:NodeShape;
     sh:closed true.
-_:n3-385 sh:path fhir:v;
+_:n3-408 sh:path fhir:v;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:decimal;
     sh:minInclusive 0.
-mshape:FhirDecimalShape sh:property _:n3-385.
+mshape:FhirDecimalShape sh:property _:n3-408.
 mshape:FhirCodingShape a sh:NodeShape;
     sh:closed true.
-_:n3-386 sh:path fhir:system;
+_:n3-409 sh:path fhir:system;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirUriShape.
-mshape:FhirCodingShape sh:property _:n3-386.
-_:n3-387 sh:path fhir:code;
+mshape:FhirCodingShape sh:property _:n3-409.
+_:n3-410 sh:path fhir:code;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirStringShape.
-mshape:FhirCodingShape sh:property _:n3-387.
-_:n3-388 sh:path fhir:display;
+mshape:FhirCodingShape sh:property _:n3-410.
+_:n3-411 sh:path fhir:display;
     sh:maxCount 1;
     sh:node mshape:FhirStringShape.
-mshape:FhirCodingShape sh:property _:n3-388.
+mshape:FhirCodingShape sh:property _:n3-411.
 mshape:FhirCodeableConceptShape a sh:NodeShape;
     sh:closed true.
-_:n3-389 sh:path fhir:coding;
+_:n3-412 sh:path fhir:coding;
     sh:maxCount 1.
-mshape:FhirCodeableConceptShape sh:property _:n3-389.
-_:n3-391 rdf:first fhir:coding;
-    rdf:rest _:n3-392.
-_:n3-392 rdf:first _:n3-393.
-_:n3-393 sh:zeroOrMorePath rdf:rest.
-_:n3-392 rdf:rest _:n3-394.
-_:n3-394 rdf:first rdf:first;
+mshape:FhirCodeableConceptShape sh:property _:n3-412.
+_:n3-414 rdf:first fhir:coding;
+    rdf:rest _:n3-415.
+_:n3-415 rdf:first _:n3-416.
+_:n3-416 sh:zeroOrMorePath rdf:rest.
+_:n3-415 rdf:rest _:n3-417.
+_:n3-417 rdf:first rdf:first;
     rdf:rest rdf:nil.
-_:n3-390 sh:path _:n3-391;
+_:n3-413 sh:path _:n3-414;
     sh:node mshape:FhirCodingShape.
-mshape:FhirCodeableConceptShape sh:property _:n3-390.
-_:n3-395 sh:path fhir:text;
+mshape:FhirCodeableConceptShape sh:property _:n3-413.
+_:n3-418 sh:path fhir:text;
     sh:maxCount 1;
     sh:node mshape:FhirStringShape.
-mshape:FhirCodeableConceptShape sh:property _:n3-395.
+mshape:FhirCodeableConceptShape sh:property _:n3-418.
 mshape:FhirRxNormConceptShape a sh:NodeShape;
     sh:closed true.
-_:n3-396 sh:path fhir:coding;
+_:n3-419 sh:path fhir:coding;
     sh:minCount 1;
     sh:maxCount 1.
-mshape:FhirRxNormConceptShape sh:property _:n3-396.
-_:n3-398 rdf:first fhir:coding;
-    rdf:rest _:n3-399.
-_:n3-399 rdf:first _:n3-400.
-_:n3-400 sh:zeroOrMorePath rdf:rest.
-_:n3-399 rdf:rest _:n3-401.
-_:n3-401 rdf:first rdf:first;
+mshape:FhirRxNormConceptShape sh:property _:n3-419.
+_:n3-421 rdf:first fhir:coding;
+    rdf:rest _:n3-422.
+_:n3-422 rdf:first _:n3-423.
+_:n3-423 sh:zeroOrMorePath rdf:rest.
+_:n3-422 rdf:rest _:n3-424.
+_:n3-424 rdf:first rdf:first;
     rdf:rest rdf:nil.
-_:n3-397 sh:path _:n3-398;
+_:n3-420 sh:path _:n3-421;
     sh:minCount 1;
     sh:node mshape:FhirCodingShape.
-mshape:FhirRxNormConceptShape sh:property _:n3-397.
-_:n3-403 rdf:first fhir:coding;
-    rdf:rest _:n3-404.
-_:n3-404 rdf:first _:n3-405.
-_:n3-405 sh:zeroOrMorePath rdf:rest.
-_:n3-404 rdf:rest _:n3-406.
-_:n3-406 rdf:first rdf:first;
-    rdf:rest _:n3-407.
-_:n3-407 rdf:first fhir:system;
-    rdf:rest _:n3-408.
-_:n3-408 rdf:first fhir:v;
+mshape:FhirRxNormConceptShape sh:property _:n3-420.
+_:n3-426 rdf:first fhir:coding;
+    rdf:rest _:n3-427.
+_:n3-427 rdf:first _:n3-428.
+_:n3-428 sh:zeroOrMorePath rdf:rest.
+_:n3-427 rdf:rest _:n3-429.
+_:n3-429 rdf:first rdf:first;
+    rdf:rest _:n3-430.
+_:n3-430 rdf:first fhir:system;
+    rdf:rest _:n3-431.
+_:n3-431 rdf:first fhir:v;
     rdf:rest rdf:nil.
-_:n3-402 sh:path _:n3-403.
-_:n3-409 rdf:first "http://www.nlm.nih.gov/research/umls/rxnorm"^^xsd:anyURI;
+_:n3-425 sh:path _:n3-426.
+_:n3-432 rdf:first "http://www.nlm.nih.gov/research/umls/rxnorm"^^xsd:anyURI;
     rdf:rest rdf:nil.
-_:n3-402 sh:in _:n3-409.
-mshape:FhirRxNormConceptShape sh:property _:n3-402.
-_:n3-410 sh:path fhir:text;
+_:n3-425 sh:in _:n3-432.
+mshape:FhirRxNormConceptShape sh:property _:n3-425.
+_:n3-433 sh:path fhir:text;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirStringShape.
-mshape:FhirRxNormConceptShape sh:property _:n3-410.
+mshape:FhirRxNormConceptShape sh:property _:n3-433.
 mshape:FhirReferenceShape a sh:NodeShape;
     sh:closed true.
-_:n3-411 sh:path fhir:reference;
+_:n3-434 sh:path fhir:reference;
     sh:maxCount 1;
     sh:node mshape:FhirStringShape.
-mshape:FhirReferenceShape sh:property _:n3-411.
-_:n3-412 sh:path fhir:link;
+mshape:FhirReferenceShape sh:property _:n3-434.
+_:n3-435 sh:path fhir:link;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:FhirReferenceShape sh:property _:n3-412.
-_:n3-413 sh:path fhir:display;
+mshape:FhirReferenceShape sh:property _:n3-435.
+_:n3-436 sh:path fhir:display;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirStringShape.
-mshape:FhirReferenceShape sh:property _:n3-413.
+mshape:FhirReferenceShape sh:property _:n3-436.
 mshape:FhirLinkedReferenceShape a sh:NodeShape;
     sh:node mshape:FhirReferenceShape.
-_:n3-414 sh:path fhir:link;
+_:n3-437 sh:path fhir:link;
     sh:minCount 1.
-mshape:FhirLinkedReferenceShape sh:property _:n3-414.
-_:n3-415 sh:path fhir:reference;
+mshape:FhirLinkedReferenceShape sh:property _:n3-437.
+_:n3-438 sh:path fhir:reference;
     sh:minCount 1.
-mshape:FhirLinkedReferenceShape sh:property _:n3-415.
+mshape:FhirLinkedReferenceShape sh:property _:n3-438.
 mshape:FhirMedicineShape a sh:NodeShape;
     sh:closed true.
-_:n3-416 sh:path fhir:concept;
+_:n3-439 sh:path fhir:concept;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirRxNormConceptShape.
-mshape:FhirMedicineShape sh:property _:n3-416.
+mshape:FhirMedicineShape sh:property _:n3-439.
 mshape:FhirDosageShape a sh:NodeShape;
     sh:closed true.
-_:n3-417 sh:path fhir:text;
+_:n3-440 sh:path fhir:text;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirStringShape.
-mshape:FhirDosageShape sh:property _:n3-417.
+mshape:FhirDosageShape sh:property _:n3-440.
 mshape:FhirAnnotationShape a sh:NodeShape;
     sh:closed true.
-_:n3-418 sh:path fhir:text;
+_:n3-441 sh:path fhir:text;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirStringShape.
-mshape:FhirAnnotationShape sh:property _:n3-418.
+mshape:FhirAnnotationShape sh:property _:n3-441.
 mshape:FhirQuantityShape a sh:NodeShape;
     sh:closed true.
-_:n3-419 sh:path fhir:value;
+_:n3-442 sh:path fhir:value;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirDecimalShape.
-mshape:FhirQuantityShape sh:property _:n3-419.
-_:n3-420 sh:path fhir:unit;
+mshape:FhirQuantityShape sh:property _:n3-442.
+_:n3-443 sh:path fhir:unit;
     sh:maxCount 1;
     sh:node mshape:FhirStringShape.
-mshape:FhirQuantityShape sh:property _:n3-420.
+mshape:FhirQuantityShape sh:property _:n3-443.
 mshape:FhirPeriodShape a sh:NodeShape;
     sh:closed true.
-_:n3-421 sh:path fhir:start;
+_:n3-444 sh:path fhir:start;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirDateTimeShape.
-mshape:FhirPeriodShape sh:property _:n3-421.
-_:n3-422 sh:path fhir:end;
+mshape:FhirPeriodShape sh:property _:n3-444.
+_:n3-445 sh:path fhir:end;
     sh:maxCount 1;
     sh:node mshape:FhirDateTimeShape.
-mshape:FhirPeriodShape sh:property _:n3-422.
+mshape:FhirPeriodShape sh:property _:n3-445.
 `,
   "identity-credential": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -2194,75 +2320,75 @@ mshape:FhirPeriodShape sh:property _:n3-422.
 mshape:IdentityCredentialShape a sh:NodeShape;
     sh:targetClass mort:IdentityCredential;
     sh:closed true.
-_:n3-423 rdf:first sec:proof;
+_:n3-446 rdf:first sec:proof;
     rdf:rest rdf:nil.
-mshape:IdentityCredentialShape sh:ignoredProperties _:n3-423.
-_:n3-424 sh:path rdf:type;
+mshape:IdentityCredentialShape sh:ignoredProperties _:n3-446.
+_:n3-447 sh:path rdf:type;
     sh:hasValue cred:VerifiableCredential.
-mshape:IdentityCredentialShape sh:property _:n3-424.
-_:n3-425 sh:path cred:issuer;
+mshape:IdentityCredentialShape sh:property _:n3-447.
+_:n3-448 sh:path cred:issuer;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:IdentityCredentialShape sh:property _:n3-425.
-_:n3-426 sh:path cred:validFrom;
+mshape:IdentityCredentialShape sh:property _:n3-448.
+_:n3-449 sh:path cred:validFrom;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:dateTime;
     sh:lessThan cred:validUntil.
-mshape:IdentityCredentialShape sh:property _:n3-426.
-_:n3-427 sh:path cred:validUntil;
+mshape:IdentityCredentialShape sh:property _:n3-449.
+_:n3-450 sh:path cred:validUntil;
     sh:maxCount 1;
     sh:datatype xsd:dateTime.
-mshape:IdentityCredentialShape sh:property _:n3-427.
-_:n3-428 sh:path cred:credentialStatus;
+mshape:IdentityCredentialShape sh:property _:n3-450.
+_:n3-451 sh:path cred:credentialStatus;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI.
-mshape:IdentityCredentialShape sh:property _:n3-428.
-_:n3-429 sh:path cred:credentialSubject;
+mshape:IdentityCredentialShape sh:property _:n3-451.
+_:n3-452 sh:path cred:credentialSubject;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI;
     sh:node mshape:IdentitySubjectShape.
-mshape:IdentityCredentialShape sh:property _:n3-429.
-_:n3-430 sh:path cred:evidence;
+mshape:IdentityCredentialShape sh:property _:n3-452.
+_:n3-453 sh:path cred:evidence;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI.
-mshape:IdentityCredentialShape sh:property _:n3-430.
-_:n3-431 sh:path cred:credentialSchema;
+mshape:IdentityCredentialShape sh:property _:n3-453.
+_:n3-454 sh:path cred:credentialSchema;
     sh:nodeKind sh:IRI.
-mshape:IdentityCredentialShape sh:property _:n3-431.
+mshape:IdentityCredentialShape sh:property _:n3-454.
 mshape:IdentitySubjectShape a sh:NodeShape;
     sh:closed true.
-_:n3-432 rdf:first rdf:type;
+_:n3-455 rdf:first rdf:type;
     rdf:rest rdf:nil.
-mshape:IdentitySubjectShape sh:ignoredProperties _:n3-432.
-_:n3-433 sh:path schema:name;
+mshape:IdentitySubjectShape sh:ignoredProperties _:n3-455.
+_:n3-456 sh:path schema:name;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:IdentitySubjectShape sh:property _:n3-433.
-_:n3-434 sh:path schema:birthDate;
+mshape:IdentitySubjectShape sh:property _:n3-456.
+_:n3-457 sh:path schema:birthDate;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:date.
-mshape:IdentitySubjectShape sh:property _:n3-434.
-_:n3-435 sh:path schema:address;
+mshape:IdentitySubjectShape sh:property _:n3-457.
+_:n3-458 sh:path schema:address;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:PostalAddressShape.
-mshape:IdentitySubjectShape sh:property _:n3-435.
-_:n3-436 sh:path mort:taxIdLast4;
+mshape:IdentitySubjectShape sh:property _:n3-458.
+_:n3-459 sh:path mort:taxIdLast4;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:pattern "^[0-9]{4}$";
     sh:minLength 1;
     sh:message "taxIdLast4 is exactly four digits; the full identifier never enters the pod".
-mshape:IdentitySubjectShape sh:property _:n3-436.
+mshape:IdentitySubjectShape sh:property _:n3-459.
 `,
   "inbox-message": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -2275,84 +2401,90 @@ mshape:IdentitySubjectShape sh:property _:n3-436.
 mshape:InboxMessageShape a sh:NodeShape;
     sh:targetClass as:Announce;
     sh:closed true.
-_:n3-437 sh:path rdf:type;
+_:n3-460 sh:path rdf:type;
     sh:hasValue as:Announce.
-mshape:InboxMessageShape sh:property _:n3-437.
-_:n3-438 sh:path dcterms:type;
-    sh:minCount 1;
-    sh:maxCount 1;
-    sh:nodeKind sh:IRI.
-_:n3-439 rdf:first mort:MessageKind-CreditReportOrder;
-    rdf:rest _:n3-440.
-_:n3-440 rdf:first mort:MessageKind-CreditReportDelivery;
-    rdf:rest _:n3-441.
-_:n3-441 rdf:first mort:MessageKind-CasefileSubmission;
-    rdf:rest _:n3-442.
-_:n3-442 rdf:first mort:MessageKind-FindingsDelivery;
-    rdf:rest _:n3-443.
-_:n3-443 rdf:first mort:MessageKind-ServiceOrder;
-    rdf:rest _:n3-444.
-_:n3-444 rdf:first mort:MessageKind-AppraisalDelivery;
-    rdf:rest _:n3-445.
-_:n3-445 rdf:first mort:MessageKind-CommitmentDelivery;
-    rdf:rest _:n3-446.
-_:n3-446 rdf:first mort:MessageKind-RefreshRequest;
-    rdf:rest _:n3-447.
-_:n3-447 rdf:first mort:MessageKind-RefreshDelivery;
-    rdf:rest _:n3-448.
-_:n3-448 rdf:first mort:MessageKind-ClosingInstructions;
-    rdf:rest _:n3-449.
-_:n3-449 rdf:first mort:MessageKind-ClosingConfirmation;
-    rdf:rest _:n3-450.
-_:n3-450 rdf:first mort:MessageKind-RecordingSubmission;
-    rdf:rest _:n3-451.
-_:n3-451 rdf:first mort:MessageKind-RecordingConfirmation;
-    rdf:rest _:n3-452.
-_:n3-452 rdf:first mort:MessageKind-LoanDelivery;
-    rdf:rest _:n3-453.
-_:n3-453 rdf:first mort:MessageKind-PurchaseConfirmation;
-    rdf:rest _:n3-454.
-_:n3-454 rdf:first mort:MessageKind-ServicingBoarding;
-    rdf:rest _:n3-455.
-_:n3-455 rdf:first mort:MessageKind-RepaymentFurnishing;
-    rdf:rest _:n3-456.
-_:n3-456 rdf:first mort:MessageKind-PayoutConfirmation;
-    rdf:rest _:n3-457.
-_:n3-457 rdf:first mort:MessageKind-ScoreInquiry;
-    rdf:rest _:n3-458.
-_:n3-458 rdf:first mort:MessageKind-ScoreDelivery;
-    rdf:rest rdf:nil.
-_:n3-438 sh:in _:n3-439;
-    sh:message "dcterms:type must be a concept from mort:MessageKindScheme".
-mshape:InboxMessageShape sh:property _:n3-438.
-_:n3-459 sh:path as:actor;
-    sh:minCount 1;
-    sh:maxCount 1;
-    sh:nodeKind sh:IRI.
-mshape:InboxMessageShape sh:property _:n3-459.
-_:n3-460 sh:path as:object;
-    sh:nodeKind sh:IRI.
 mshape:InboxMessageShape sh:property _:n3-460.
-_:n3-461 sh:path as:summary;
+_:n3-461 sh:path dcterms:type;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:nodeKind sh:IRI.
+_:n3-462 rdf:first mort:MessageKind-CreditReportOrder;
+    rdf:rest _:n3-463.
+_:n3-463 rdf:first mort:MessageKind-CreditReportDelivery;
+    rdf:rest _:n3-464.
+_:n3-464 rdf:first mort:MessageKind-CasefileSubmission;
+    rdf:rest _:n3-465.
+_:n3-465 rdf:first mort:MessageKind-FindingsDelivery;
+    rdf:rest _:n3-466.
+_:n3-466 rdf:first mort:MessageKind-ServiceOrder;
+    rdf:rest _:n3-467.
+_:n3-467 rdf:first mort:MessageKind-AppraisalDelivery;
+    rdf:rest _:n3-468.
+_:n3-468 rdf:first mort:MessageKind-CommitmentDelivery;
+    rdf:rest _:n3-469.
+_:n3-469 rdf:first mort:MessageKind-RefreshRequest;
+    rdf:rest _:n3-470.
+_:n3-470 rdf:first mort:MessageKind-RefreshDelivery;
+    rdf:rest _:n3-471.
+_:n3-471 rdf:first mort:MessageKind-ClosingInstructions;
+    rdf:rest _:n3-472.
+_:n3-472 rdf:first mort:MessageKind-ClosingConfirmation;
+    rdf:rest _:n3-473.
+_:n3-473 rdf:first mort:MessageKind-RecordingSubmission;
+    rdf:rest _:n3-474.
+_:n3-474 rdf:first mort:MessageKind-RecordingConfirmation;
+    rdf:rest _:n3-475.
+_:n3-475 rdf:first mort:MessageKind-LoanDelivery;
+    rdf:rest _:n3-476.
+_:n3-476 rdf:first mort:MessageKind-PurchaseConfirmation;
+    rdf:rest _:n3-477.
+_:n3-477 rdf:first mort:MessageKind-ServicingBoarding;
+    rdf:rest _:n3-478.
+_:n3-478 rdf:first mort:MessageKind-RepaymentFurnishing;
+    rdf:rest _:n3-479.
+_:n3-479 rdf:first mort:MessageKind-PayoutConfirmation;
+    rdf:rest _:n3-480.
+_:n3-480 rdf:first mort:MessageKind-ScoreInquiry;
+    rdf:rest _:n3-481.
+_:n3-481 rdf:first mort:MessageKind-ScoreDelivery;
+    rdf:rest _:n3-482.
+_:n3-482 rdf:first mort:MessageKind-RepairReferral;
+    rdf:rest _:n3-483.
+_:n3-483 rdf:first mort:MessageKind-RepairAuthorisation;
+    rdf:rest _:n3-484.
+_:n3-484 rdf:first mort:MessageKind-RepairCompletion;
+    rdf:rest rdf:nil.
+_:n3-461 sh:in _:n3-462;
+    sh:message "dcterms:type must be a concept from mort:MessageKindScheme".
+mshape:InboxMessageShape sh:property _:n3-461.
+_:n3-485 sh:path as:actor;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:nodeKind sh:IRI.
+mshape:InboxMessageShape sh:property _:n3-485.
+_:n3-486 sh:path as:object;
+    sh:nodeKind sh:IRI.
+mshape:InboxMessageShape sh:property _:n3-486.
+_:n3-487 sh:path as:summary;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:InboxMessageShape sh:property _:n3-461.
-_:n3-462 sh:path as:published;
+mshape:InboxMessageShape sh:property _:n3-487.
+_:n3-488 sh:path as:published;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:dateTime.
-mshape:InboxMessageShape sh:property _:n3-462.
-_:n3-463 sh:path mort:loanNumber;
+mshape:InboxMessageShape sh:property _:n3-488.
+_:n3-489 sh:path mort:loanNumber;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:InboxMessageShape sh:property _:n3-463.
-_:n3-464 sh:path as:inReplyTo;
+mshape:InboxMessageShape sh:property _:n3-489.
+_:n3-490 sh:path as:inReplyTo;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:InboxMessageShape sh:property _:n3-464.
+mshape:InboxMessageShape sh:property _:n3-490.
 `,
   "kyb-beneficial-ownership-credential": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -2372,59 +2504,59 @@ mshape:InboxMessageShape sh:property _:n3-464.
 mshape:BeneficialOwnershipCredentialShape a sh:NodeShape;
     sh:targetClass mort:BeneficialOwnershipCredential;
     sh:closed true.
-_:n3-465 rdf:first sec:proof;
+_:n3-491 rdf:first sec:proof;
     rdf:rest rdf:nil.
-mshape:BeneficialOwnershipCredentialShape sh:ignoredProperties _:n3-465.
-_:n3-466 sh:path rdf:type;
+mshape:BeneficialOwnershipCredentialShape sh:ignoredProperties _:n3-491.
+_:n3-492 sh:path rdf:type;
     sh:hasValue cred:VerifiableCredential.
-mshape:BeneficialOwnershipCredentialShape sh:property _:n3-466.
-_:n3-467 sh:path cred:issuer;
+mshape:BeneficialOwnershipCredentialShape sh:property _:n3-492.
+_:n3-493 sh:path cred:issuer;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:BeneficialOwnershipCredentialShape sh:property _:n3-467.
-_:n3-468 sh:path cred:validFrom;
+mshape:BeneficialOwnershipCredentialShape sh:property _:n3-493.
+_:n3-494 sh:path cred:validFrom;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:dateTime;
     sh:lessThan cred:validUntil.
-mshape:BeneficialOwnershipCredentialShape sh:property _:n3-468.
-_:n3-469 sh:path cred:validUntil;
+mshape:BeneficialOwnershipCredentialShape sh:property _:n3-494.
+_:n3-495 sh:path cred:validUntil;
     sh:maxCount 1;
     sh:datatype xsd:dateTime.
-mshape:BeneficialOwnershipCredentialShape sh:property _:n3-469.
-_:n3-470 sh:path cred:credentialStatus;
+mshape:BeneficialOwnershipCredentialShape sh:property _:n3-495.
+_:n3-496 sh:path cred:credentialStatus;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI.
-mshape:BeneficialOwnershipCredentialShape sh:property _:n3-470.
-_:n3-471 sh:path cred:credentialSubject;
+mshape:BeneficialOwnershipCredentialShape sh:property _:n3-496.
+_:n3-497 sh:path cred:credentialSubject;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI;
     sh:node mshape:BeneficialOwnershipSubjectShape.
-mshape:BeneficialOwnershipCredentialShape sh:property _:n3-471.
-_:n3-472 sh:path cred:credentialSchema;
+mshape:BeneficialOwnershipCredentialShape sh:property _:n3-497.
+_:n3-498 sh:path cred:credentialSchema;
     sh:nodeKind sh:IRI.
-mshape:BeneficialOwnershipCredentialShape sh:property _:n3-472.
+mshape:BeneficialOwnershipCredentialShape sh:property _:n3-498.
 mshape:BeneficialOwnershipSubjectShape a sh:NodeShape;
     sh:closed true.
-_:n3-473 rdf:first rdf:type;
+_:n3-499 rdf:first rdf:type;
     rdf:rest rdf:nil.
-mshape:BeneficialOwnershipSubjectShape sh:ignoredProperties _:n3-473.
-_:n3-474 sh:path schema:name;
+mshape:BeneficialOwnershipSubjectShape sh:ignoredProperties _:n3-499.
+_:n3-500 sh:path schema:name;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:BeneficialOwnershipSubjectShape sh:property _:n3-474.
-_:n3-475 sh:path fibo-be-oac-opty:hasDirectOwnership;
+mshape:BeneficialOwnershipSubjectShape sh:property _:n3-500.
+_:n3-501 sh:path fibo-be-oac-opty:hasDirectOwnership;
     sh:minCount 1;
     sh:maxCount 8;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:EntityOwnershipShape;
     sh:message "between one and eight direct owners (the completeness circuit has eight slots)".
-mshape:BeneficialOwnershipSubjectShape sh:property _:n3-475.
+mshape:BeneficialOwnershipSubjectShape sh:property _:n3-501.
 `,
   "kyb-cdd-decision-record": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -2437,56 +2569,56 @@ mshape:BeneficialOwnershipSubjectShape sh:property _:n3-475.
 mshape:CddDecisionRecordShape a sh:NodeShape;
     sh:targetClass mort:CddDecisionRecord;
     sh:closed true.
-_:n3-476 sh:path rdf:type;
+_:n3-502 sh:path rdf:type;
     sh:hasValue mort:CddDecisionRecord.
-mshape:CddDecisionRecordShape sh:property _:n3-476.
-_:n3-477 sh:path dcterms:subject;
+mshape:CddDecisionRecordShape sh:property _:n3-502.
+_:n3-503 sh:path dcterms:subject;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI;
     sh:message "the customer entity's WebID".
-mshape:CddDecisionRecordShape sh:property _:n3-477.
-_:n3-478 sh:path dcterms:creator;
+mshape:CddDecisionRecordShape sh:property _:n3-503.
+_:n3-504 sh:path dcterms:creator;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:CddDecisionRecordShape sh:property _:n3-478.
-_:n3-479 sh:path schema:name;
+mshape:CddDecisionRecordShape sh:property _:n3-504.
+_:n3-505 sh:path schema:name;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:CddDecisionRecordShape sh:property _:n3-479.
-_:n3-480 sh:path mort:cddDecisionStatus;
+mshape:CddDecisionRecordShape sh:property _:n3-505.
+_:n3-506 sh:path mort:cddDecisionStatus;
     sh:minCount 1;
     sh:maxCount 1.
-_:n3-481 rdf:first mort:CddDecisionStatus-Opened;
-    rdf:rest _:n3-482.
-_:n3-482 rdf:first mort:CddDecisionStatus-Declined;
-    rdf:rest _:n3-483.
-_:n3-483 rdf:first mort:CddDecisionStatus-PendingReview;
+_:n3-507 rdf:first mort:CddDecisionStatus-Opened;
+    rdf:rest _:n3-508.
+_:n3-508 rdf:first mort:CddDecisionStatus-Declined;
+    rdf:rest _:n3-509.
+_:n3-509 rdf:first mort:CddDecisionStatus-PendingReview;
     rdf:rest rdf:nil.
-_:n3-480 sh:in _:n3-481.
-mshape:CddDecisionRecordShape sh:property _:n3-480.
-_:n3-484 sh:path mort:cddCheckDate;
+_:n3-506 sh:in _:n3-507.
+mshape:CddDecisionRecordShape sh:property _:n3-506.
+_:n3-510 sh:path mort:cddCheckDate;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:date.
-mshape:CddDecisionRecordShape sh:property _:n3-484.
-_:n3-485 sh:path mort:checkedCredential;
+mshape:CddDecisionRecordShape sh:property _:n3-510.
+_:n3-511 sh:path mort:checkedCredential;
     sh:minCount 1;
     sh:nodeKind sh:IRI.
-mshape:CddDecisionRecordShape sh:property _:n3-485.
-_:n3-486 sh:path mort:identifiedBeneficialOwner;
+mshape:CddDecisionRecordShape sh:property _:n3-511.
+_:n3-512 sh:path mort:identifiedBeneficialOwner;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:CddDecisionRecordShape sh:property _:n3-486.
-_:n3-487 sh:path mort:controlPerson;
+mshape:CddDecisionRecordShape sh:property _:n3-512.
+_:n3-513 sh:path mort:controlPerson;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:CddDecisionRecordShape sh:property _:n3-487.
+mshape:CddDecisionRecordShape sh:property _:n3-513.
 `,
   "kyb-common": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -2503,82 +2635,82 @@ mshape:CddDecisionRecordShape sh:property _:n3-487.
 
 mshape:LegalEntityIdentifierShape a sh:NodeShape;
     sh:closed true.
-_:n3-488 sh:path rdf:type;
+_:n3-514 sh:path rdf:type;
     sh:hasValue fibo-be-le-lei:LegalEntityIdentifier.
-mshape:LegalEntityIdentifierShape sh:property _:n3-488.
-_:n3-489 sh:path cmns-txt:hasTextValue;
+mshape:LegalEntityIdentifierShape sh:property _:n3-514.
+_:n3-515 sh:path cmns-txt:hasTextValue;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:pattern "^[0-9A-Z]{18}[0-9]{2}$";
     sh:message "an LEI is 20 characters (ISO 17442): 18 alphanumerics and two check digits".
-mshape:LegalEntityIdentifierShape sh:property _:n3-489.
-_:n3-490 sh:path mort:isIllustrativeLei;
+mshape:LegalEntityIdentifierShape sh:property _:n3-515.
+_:n3-516 sh:path mort:isIllustrativeLei;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:boolean;
     sh:hasValue true;
     sh:message "every LEI in the demo is a flagged illustrative value, never a real GLEIF-issued one".
-mshape:LegalEntityIdentifierShape sh:property _:n3-490.
+mshape:LegalEntityIdentifierShape sh:property _:n3-516.
 mshape:EntityOwnershipShape a sh:NodeShape;
     sh:closed true.
-_:n3-491 sh:path rdf:type;
+_:n3-517 sh:path rdf:type;
     sh:hasValue fibo-be-oac-opty:EntityOwnership.
-mshape:EntityOwnershipShape sh:property _:n3-491.
-_:n3-492 sh:path fibo-be-oac-opty:hasOwningEntity;
+mshape:EntityOwnershipShape sh:property _:n3-517.
+_:n3-518 sh:path fibo-be-oac-opty:hasOwningEntity;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:EntityOwnerShape.
-mshape:EntityOwnershipShape sh:property _:n3-492.
-_:n3-493 sh:path fibo-be-le-lei:hasOwnershipPercentage;
+mshape:EntityOwnershipShape sh:property _:n3-518.
+_:n3-519 sh:path fibo-be-le-lei:hasOwnershipPercentage;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:decimal;
     sh:minInclusive 0.0;
     sh:maxInclusive 100.0.
-mshape:EntityOwnershipShape sh:property _:n3-493.
-_:n3-494 sh:path mort:ownershipPercentageBps;
+mshape:EntityOwnershipShape sh:property _:n3-519.
+_:n3-520 sh:path mort:ownershipPercentageBps;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:integer;
     sh:minInclusive 0;
     sh:maxInclusive 10000.
-mshape:EntityOwnershipShape sh:property _:n3-494.
+mshape:EntityOwnershipShape sh:property _:n3-520.
 mshape:EntityOwnerShape a sh:NodeShape;
     sh:closed true.
-_:n3-495 sh:path rdf:type;
+_:n3-521 sh:path rdf:type;
     sh:hasValue schema:Person.
-mshape:EntityOwnerShape sh:property _:n3-495.
-_:n3-496 sh:path schema:name;
+mshape:EntityOwnerShape sh:property _:n3-521.
+_:n3-522 sh:path schema:name;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:EntityOwnerShape sh:property _:n3-496.
+mshape:EntityOwnerShape sh:property _:n3-522.
 mshape:AuthorisedOfficerShape a sh:NodeShape;
     sh:closed true.
-_:n3-497 sh:path rdf:type;
+_:n3-523 sh:path rdf:type;
     sh:hasValue fibo-be-oac-exec:CorporateOfficer.
-mshape:AuthorisedOfficerShape sh:property _:n3-497.
-_:n3-498 sh:path rdf:type;
+mshape:AuthorisedOfficerShape sh:property _:n3-523.
+_:n3-524 sh:path rdf:type;
     sh:hasValue fibo-be-oac-exec:Signatory.
-mshape:AuthorisedOfficerShape sh:property _:n3-498.
-_:n3-499 sh:path rdf:type;
+mshape:AuthorisedOfficerShape sh:property _:n3-524.
+_:n3-525 sh:path rdf:type;
     sh:hasValue schema:Person.
-mshape:AuthorisedOfficerShape sh:property _:n3-499.
-_:n3-500 sh:path schema:name;
+mshape:AuthorisedOfficerShape sh:property _:n3-525.
+_:n3-526 sh:path schema:name;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:AuthorisedOfficerShape sh:property _:n3-500.
-_:n3-501 sh:path schema:jobTitle;
+mshape:AuthorisedOfficerShape sh:property _:n3-526.
+_:n3-527 sh:path schema:jobTitle;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:AuthorisedOfficerShape sh:property _:n3-501.
+mshape:AuthorisedOfficerShape sh:property _:n3-527.
 `,
   "kyb-officer-authorisation-credential": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -2598,57 +2730,57 @@ mshape:AuthorisedOfficerShape sh:property _:n3-501.
 mshape:OfficerAuthorisationCredentialShape a sh:NodeShape;
     sh:targetClass mort:OfficerAuthorisationCredential;
     sh:closed true.
-_:n3-502 rdf:first sec:proof;
+_:n3-528 rdf:first sec:proof;
     rdf:rest rdf:nil.
-mshape:OfficerAuthorisationCredentialShape sh:ignoredProperties _:n3-502.
-_:n3-503 sh:path rdf:type;
+mshape:OfficerAuthorisationCredentialShape sh:ignoredProperties _:n3-528.
+_:n3-529 sh:path rdf:type;
     sh:hasValue cred:VerifiableCredential.
-mshape:OfficerAuthorisationCredentialShape sh:property _:n3-503.
-_:n3-504 sh:path cred:issuer;
+mshape:OfficerAuthorisationCredentialShape sh:property _:n3-529.
+_:n3-530 sh:path cred:issuer;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:OfficerAuthorisationCredentialShape sh:property _:n3-504.
-_:n3-505 sh:path cred:validFrom;
+mshape:OfficerAuthorisationCredentialShape sh:property _:n3-530.
+_:n3-531 sh:path cred:validFrom;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:dateTime;
     sh:lessThan cred:validUntil.
-mshape:OfficerAuthorisationCredentialShape sh:property _:n3-505.
-_:n3-506 sh:path cred:validUntil;
+mshape:OfficerAuthorisationCredentialShape sh:property _:n3-531.
+_:n3-532 sh:path cred:validUntil;
     sh:maxCount 1;
     sh:datatype xsd:dateTime.
-mshape:OfficerAuthorisationCredentialShape sh:property _:n3-506.
-_:n3-507 sh:path cred:credentialStatus;
+mshape:OfficerAuthorisationCredentialShape sh:property _:n3-532.
+_:n3-533 sh:path cred:credentialStatus;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI.
-mshape:OfficerAuthorisationCredentialShape sh:property _:n3-507.
-_:n3-508 sh:path cred:credentialSubject;
+mshape:OfficerAuthorisationCredentialShape sh:property _:n3-533.
+_:n3-534 sh:path cred:credentialSubject;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI;
     sh:node mshape:OfficerAuthorisationSubjectShape.
-mshape:OfficerAuthorisationCredentialShape sh:property _:n3-508.
-_:n3-509 sh:path cred:credentialSchema;
+mshape:OfficerAuthorisationCredentialShape sh:property _:n3-534.
+_:n3-535 sh:path cred:credentialSchema;
     sh:nodeKind sh:IRI.
-mshape:OfficerAuthorisationCredentialShape sh:property _:n3-509.
+mshape:OfficerAuthorisationCredentialShape sh:property _:n3-535.
 mshape:OfficerAuthorisationSubjectShape a sh:NodeShape;
     sh:closed true.
-_:n3-510 rdf:first rdf:type;
+_:n3-536 rdf:first rdf:type;
     rdf:rest rdf:nil.
-mshape:OfficerAuthorisationSubjectShape sh:ignoredProperties _:n3-510.
-_:n3-511 sh:path schema:name;
+mshape:OfficerAuthorisationSubjectShape sh:ignoredProperties _:n3-536.
+_:n3-537 sh:path schema:name;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:OfficerAuthorisationSubjectShape sh:property _:n3-511.
-_:n3-512 sh:path fibo-be-oac-exec:hasCorporateOfficer;
+mshape:OfficerAuthorisationSubjectShape sh:property _:n3-537.
+_:n3-538 sh:path fibo-be-oac-exec:hasCorporateOfficer;
     sh:minCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:AuthorisedOfficerShape.
-mshape:OfficerAuthorisationSubjectShape sh:property _:n3-512.
+mshape:OfficerAuthorisationSubjectShape sh:property _:n3-538.
 `,
   "kyb-organisational-identity-credential": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -2668,82 +2800,82 @@ mshape:OfficerAuthorisationSubjectShape sh:property _:n3-512.
 mshape:OrganisationalIdentityCredentialShape a sh:NodeShape;
     sh:targetClass mort:OrganisationalIdentityCredential;
     sh:closed true.
-_:n3-513 rdf:first sec:proof;
+_:n3-539 rdf:first sec:proof;
     rdf:rest rdf:nil.
-mshape:OrganisationalIdentityCredentialShape sh:ignoredProperties _:n3-513.
-_:n3-514 sh:path rdf:type;
+mshape:OrganisationalIdentityCredentialShape sh:ignoredProperties _:n3-539.
+_:n3-540 sh:path rdf:type;
     sh:hasValue cred:VerifiableCredential.
-mshape:OrganisationalIdentityCredentialShape sh:property _:n3-514.
-_:n3-515 sh:path cred:issuer;
+mshape:OrganisationalIdentityCredentialShape sh:property _:n3-540.
+_:n3-541 sh:path cred:issuer;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:OrganisationalIdentityCredentialShape sh:property _:n3-515.
-_:n3-516 sh:path cred:validFrom;
+mshape:OrganisationalIdentityCredentialShape sh:property _:n3-541.
+_:n3-542 sh:path cred:validFrom;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:dateTime;
     sh:lessThan cred:validUntil.
-mshape:OrganisationalIdentityCredentialShape sh:property _:n3-516.
-_:n3-517 sh:path cred:validUntil;
+mshape:OrganisationalIdentityCredentialShape sh:property _:n3-542.
+_:n3-543 sh:path cred:validUntil;
     sh:maxCount 1;
     sh:datatype xsd:dateTime.
-mshape:OrganisationalIdentityCredentialShape sh:property _:n3-517.
-_:n3-518 sh:path cred:credentialStatus;
+mshape:OrganisationalIdentityCredentialShape sh:property _:n3-543.
+_:n3-544 sh:path cred:credentialStatus;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI.
-mshape:OrganisationalIdentityCredentialShape sh:property _:n3-518.
-_:n3-519 sh:path cred:credentialSubject;
+mshape:OrganisationalIdentityCredentialShape sh:property _:n3-544.
+_:n3-545 sh:path cred:credentialSubject;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI;
     sh:node mshape:OrganisationalIdentitySubjectShape.
-mshape:OrganisationalIdentityCredentialShape sh:property _:n3-519.
-_:n3-520 sh:path cred:credentialSchema;
+mshape:OrganisationalIdentityCredentialShape sh:property _:n3-545.
+_:n3-546 sh:path cred:credentialSchema;
     sh:nodeKind sh:IRI.
-mshape:OrganisationalIdentityCredentialShape sh:property _:n3-520.
+mshape:OrganisationalIdentityCredentialShape sh:property _:n3-546.
 mshape:OrganisationalIdentitySubjectShape a sh:NodeShape;
     sh:closed true.
-_:n3-521 sh:path rdf:type;
+_:n3-547 sh:path rdf:type;
     sh:hasValue fibo-be-le-lei:LEIRegisteredEntity.
-mshape:OrganisationalIdentitySubjectShape sh:property _:n3-521.
-_:n3-522 sh:path rdf:type;
+mshape:OrganisationalIdentitySubjectShape sh:property _:n3-547.
+_:n3-548 sh:path rdf:type;
     sh:hasValue fibo-be-le-lp:BusinessEntity.
-mshape:OrganisationalIdentitySubjectShape sh:property _:n3-522.
-_:n3-523 sh:path rdf:type;
+mshape:OrganisationalIdentitySubjectShape sh:property _:n3-548.
+_:n3-549 sh:path rdf:type;
     sh:hasValue schema:Organization.
-mshape:OrganisationalIdentitySubjectShape sh:property _:n3-523.
-_:n3-524 sh:path schema:name;
+mshape:OrganisationalIdentitySubjectShape sh:property _:n3-549.
+_:n3-550 sh:path schema:name;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:OrganisationalIdentitySubjectShape sh:property _:n3-524.
-_:n3-525 sh:path schema:address;
+mshape:OrganisationalIdentitySubjectShape sh:property _:n3-550.
+_:n3-551 sh:path schema:address;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:PostalAddressShape.
-mshape:OrganisationalIdentitySubjectShape sh:property _:n3-525.
-_:n3-526 sh:path cmns-id:isIdentifiedBy;
+mshape:OrganisationalIdentitySubjectShape sh:property _:n3-551.
+_:n3-552 sh:path cmns-id:isIdentifiedBy;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:LegalEntityIdentifierShape.
-mshape:OrganisationalIdentitySubjectShape sh:property _:n3-526.
-_:n3-527 sh:path fibo-be-le-lei:hasLegalForm;
+mshape:OrganisationalIdentitySubjectShape sh:property _:n3-552.
+_:n3-553 sh:path fibo-be-le-lei:hasLegalForm;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-_:n3-528 rdf:first mort:EntityLegalForm-LLC;
-    rdf:rest _:n3-529.
-_:n3-529 rdf:first mort:EntityLegalForm-Corp;
-    rdf:rest _:n3-530.
-_:n3-530 rdf:first mort:EntityLegalForm-LLP;
+_:n3-554 rdf:first mort:EntityLegalForm-LLC;
+    rdf:rest _:n3-555.
+_:n3-555 rdf:first mort:EntityLegalForm-Corp;
+    rdf:rest _:n3-556.
+_:n3-556 rdf:first mort:EntityLegalForm-LLP;
     rdf:rest rdf:nil.
-_:n3-527 sh:in _:n3-528.
-mshape:OrganisationalIdentitySubjectShape sh:property _:n3-527.
+_:n3-553 sh:in _:n3-554.
+mshape:OrganisationalIdentitySubjectShape sh:property _:n3-553.
 `,
   "kyc-attestation-credential": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -2758,118 +2890,118 @@ mshape:OrganisationalIdentitySubjectShape sh:property _:n3-527.
 mshape:KycAttestationCredentialShape a sh:NodeShape;
     sh:targetClass mort:KycAttestationCredential;
     sh:closed true.
-_:n3-531 rdf:first sec:proof;
+_:n3-557 rdf:first sec:proof;
     rdf:rest rdf:nil.
-mshape:KycAttestationCredentialShape sh:ignoredProperties _:n3-531.
-_:n3-532 sh:path rdf:type;
+mshape:KycAttestationCredentialShape sh:ignoredProperties _:n3-557.
+_:n3-558 sh:path rdf:type;
     sh:hasValue cred:VerifiableCredential.
-mshape:KycAttestationCredentialShape sh:property _:n3-532.
-_:n3-533 sh:path cred:issuer;
+mshape:KycAttestationCredentialShape sh:property _:n3-558.
+_:n3-559 sh:path cred:issuer;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:KycAttestationCredentialShape sh:property _:n3-533.
-_:n3-534 sh:path cred:validFrom;
+mshape:KycAttestationCredentialShape sh:property _:n3-559.
+_:n3-560 sh:path cred:validFrom;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:dateTime;
     sh:lessThan cred:validUntil.
-mshape:KycAttestationCredentialShape sh:property _:n3-534.
-_:n3-535 sh:path cred:validUntil;
+mshape:KycAttestationCredentialShape sh:property _:n3-560.
+_:n3-561 sh:path cred:validUntil;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:dateTime;
     sh:message "a KYC attestation must say when it lapses".
-mshape:KycAttestationCredentialShape sh:property _:n3-535.
-_:n3-536 sh:path cred:credentialStatus;
+mshape:KycAttestationCredentialShape sh:property _:n3-561.
+_:n3-562 sh:path cred:credentialStatus;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:message "a KYC attestation must carry a status entry so its issuer can withdraw it".
-mshape:KycAttestationCredentialShape sh:property _:n3-536.
-_:n3-537 sh:path cred:credentialSubject;
+mshape:KycAttestationCredentialShape sh:property _:n3-562.
+_:n3-563 sh:path cred:credentialSubject;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI;
     sh:node mshape:KycAttestationSubjectShape.
-mshape:KycAttestationCredentialShape sh:property _:n3-537.
-_:n3-538 sh:path cred:credentialSchema;
+mshape:KycAttestationCredentialShape sh:property _:n3-563.
+_:n3-564 sh:path cred:credentialSchema;
     sh:nodeKind sh:IRI.
-mshape:KycAttestationCredentialShape sh:property _:n3-538.
+mshape:KycAttestationCredentialShape sh:property _:n3-564.
 mshape:KycAttestationSubjectShape a sh:NodeShape;
     sh:closed true.
-_:n3-539 rdf:first rdf:type;
+_:n3-565 rdf:first rdf:type;
     rdf:rest rdf:nil.
-mshape:KycAttestationSubjectShape sh:ignoredProperties _:n3-539.
-_:n3-540 sh:path schema:name;
+mshape:KycAttestationSubjectShape sh:ignoredProperties _:n3-565.
+_:n3-566 sh:path schema:name;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:KycAttestationSubjectShape sh:property _:n3-540.
-_:n3-541 sh:path schema:birthDate;
+mshape:KycAttestationSubjectShape sh:property _:n3-566.
+_:n3-567 sh:path schema:birthDate;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:date.
-mshape:KycAttestationSubjectShape sh:property _:n3-541.
-_:n3-542 sh:path schema:address;
+mshape:KycAttestationSubjectShape sh:property _:n3-567.
+_:n3-568 sh:path schema:address;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:PostalAddressShape.
-mshape:KycAttestationSubjectShape sh:property _:n3-542.
-_:n3-543 sh:path mort:identityCheck;
+mshape:KycAttestationSubjectShape sh:property _:n3-568.
+_:n3-569 sh:path mort:identityCheck;
     sh:minCount 1;
     sh:maxCount 8;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:IdentityCheckShape;
     sh:message "a KYC attestation names at least one check it ran".
-mshape:KycAttestationSubjectShape sh:property _:n3-543.
+mshape:KycAttestationSubjectShape sh:property _:n3-569.
 mshape:IdentityCheckShape a sh:NodeShape;
     sh:closed true.
-_:n3-544 sh:path rdf:type;
+_:n3-570 sh:path rdf:type;
     sh:minCount 1;
     sh:maxCount 1;
     sh:hasValue mort:IdentityCheck.
-mshape:IdentityCheckShape sh:property _:n3-544.
-_:n3-545 sh:path mort:checkMethod;
+mshape:IdentityCheckShape sh:property _:n3-570.
+_:n3-571 sh:path mort:checkMethod;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-_:n3-546 rdf:first mort:IdentityCheckMethod-Documentary;
-    rdf:rest _:n3-547.
-_:n3-547 rdf:first mort:IdentityCheckMethod-NonDocumentary;
-    rdf:rest _:n3-548.
-_:n3-548 rdf:first mort:IdentityCheckMethod-GovernmentList;
+_:n3-572 rdf:first mort:IdentityCheckMethod-Documentary;
+    rdf:rest _:n3-573.
+_:n3-573 rdf:first mort:IdentityCheckMethod-NonDocumentary;
+    rdf:rest _:n3-574.
+_:n3-574 rdf:first mort:IdentityCheckMethod-GovernmentList;
     rdf:rest rdf:nil.
-_:n3-545 sh:in _:n3-546.
-mshape:IdentityCheckShape sh:property _:n3-545.
-_:n3-549 sh:path mort:checkedAttribute;
+_:n3-571 sh:in _:n3-572.
+mshape:IdentityCheckShape sh:property _:n3-571.
+_:n3-575 sh:path mort:checkedAttribute;
     sh:minCount 1;
     sh:maxCount 4;
     sh:nodeKind sh:IRI.
-_:n3-550 rdf:first schema:name;
-    rdf:rest _:n3-551.
-_:n3-551 rdf:first schema:birthDate;
-    rdf:rest _:n3-552.
-_:n3-552 rdf:first schema:address;
-    rdf:rest _:n3-553.
-_:n3-553 rdf:first mort:taxIdLast4;
+_:n3-576 rdf:first schema:name;
+    rdf:rest _:n3-577.
+_:n3-577 rdf:first schema:birthDate;
+    rdf:rest _:n3-578.
+_:n3-578 rdf:first schema:address;
+    rdf:rest _:n3-579.
+_:n3-579 rdf:first mort:taxIdLast4;
     rdf:rest rdf:nil.
-_:n3-549 sh:in _:n3-550.
-mshape:IdentityCheckShape sh:property _:n3-549.
-_:n3-554 sh:path dcterms:date;
+_:n3-575 sh:in _:n3-576.
+mshape:IdentityCheckShape sh:property _:n3-575.
+_:n3-580 sh:path dcterms:date;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:date.
-mshape:IdentityCheckShape sh:property _:n3-554.
-_:n3-555 sh:path schema:description;
+mshape:IdentityCheckShape sh:property _:n3-580.
+_:n3-581 sh:path schema:description;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1;
     sh:maxLength 200.
-mshape:IdentityCheckShape sh:property _:n3-555.
+mshape:IdentityCheckShape sh:property _:n3-581.
 `,
   "loan-application": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -2884,171 +3016,171 @@ mshape:IdentityCheckShape sh:property _:n3-555.
 mshape:LoanApplicationShape a sh:NodeShape;
     sh:targetClass fibo-loan-ln-app:LoanApplication;
     sh:closed true.
-_:n3-556 sh:path rdf:type;
+_:n3-582 sh:path rdf:type;
     sh:hasValue fibo-loan-ln-app:LoanApplication.
-mshape:LoanApplicationShape sh:property _:n3-556.
-_:n3-557 sh:path dcterms:created;
+mshape:LoanApplicationShape sh:property _:n3-582.
+_:n3-583 sh:path dcterms:created;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:date.
-mshape:LoanApplicationShape sh:property _:n3-557.
-_:n3-558 sh:path fibo-fnd-arr-rep:isSubmittedBy;
+mshape:LoanApplicationShape sh:property _:n3-583.
+_:n3-584 sh:path fibo-fnd-arr-rep:isSubmittedBy;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:LoanApplicationShape sh:property _:n3-558.
-_:n3-559 sh:path fibo-loan-ln-app:hasRequestedAmount;
+mshape:LoanApplicationShape sh:property _:n3-584.
+_:n3-585 sh:path fibo-loan-ln-app:hasRequestedAmount;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:MonetaryAmountShape.
-mshape:LoanApplicationShape sh:property _:n3-559.
-_:n3-560 sh:path mort:loanTermMonths;
+mshape:LoanApplicationShape sh:property _:n3-585.
+_:n3-586 sh:path mort:loanTermMonths;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:integer;
     sh:minInclusive 12;
     sh:maxInclusive 480.
-mshape:LoanApplicationShape sh:property _:n3-560.
-_:n3-561 sh:path mort:subjectProperty;
+mshape:LoanApplicationShape sh:property _:n3-586.
+_:n3-587 sh:path mort:subjectProperty;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:PropertyShape.
-mshape:LoanApplicationShape sh:property _:n3-561.
-_:n3-562 sh:path dcterms:type;
+mshape:LoanApplicationShape sh:property _:n3-587.
+_:n3-588 sh:path dcterms:type;
     sh:minCount 3;
     sh:maxCount 4;
     sh:nodeKind sh:IRI.
-_:n3-563 rdf:first fibo-loan-reln-org:MortgageLoanPurpose-BusinessOrCommercial;
-    rdf:rest _:n3-564.
-_:n3-564 rdf:first fibo-loan-reln-org:MortgageLoanPurpose-DwellingConstruction;
-    rdf:rest _:n3-565.
-_:n3-565 rdf:first fibo-loan-reln-org:MortgageLoanPurpose-HomeImprovement;
-    rdf:rest _:n3-566.
-_:n3-566 rdf:first fibo-loan-reln-org:MortgageLoanPurpose-LoanRefinancing;
-    rdf:rest _:n3-567.
-_:n3-567 rdf:first fibo-loan-reln-org:MortgageLoanPurpose-MortgageModification;
-    rdf:rest _:n3-568.
-_:n3-568 rdf:first fibo-loan-reln-org:MortgageLoanPurpose-RealPropertyPurchase;
-    rdf:rest _:n3-569.
-_:n3-569 rdf:first fibo-loan-reln-org:PropertyUsage-investment;
-    rdf:rest _:n3-570.
-_:n3-570 rdf:first fibo-loan-reln-org:PropertyUsage-primaryResidence;
-    rdf:rest _:n3-571.
-_:n3-571 rdf:first fibo-loan-reln-org:PropertyUsage-secondHome;
-    rdf:rest _:n3-572.
-_:n3-572 rdf:first fibo-loan-reln-org:AmortizationType-adjustableRate;
-    rdf:rest _:n3-573.
-_:n3-573 rdf:first fibo-loan-reln-org:AmortizationType-fixedRate;
-    rdf:rest _:n3-574.
-_:n3-574 rdf:first fibo-loan-reln-org:AmortizationType-graduatedPayment;
-    rdf:rest _:n3-575.
-_:n3-575 rdf:first fibo-loan-reln-org:AmortizationType-graduatedPaymentAdjustable;
-    rdf:rest _:n3-576.
-_:n3-576 rdf:first fibo-loan-reln-org:AmortizationType-growingEquity;
-    rdf:rest _:n3-577.
-_:n3-577 rdf:first fibo-loan-reln-org:AmortizationType-rateImprovement;
-    rdf:rest _:n3-578.
-_:n3-578 rdf:first fibo-loan-reln-org:AmortizationType-step;
-    rdf:rest _:n3-579.
-_:n3-579 rdf:first fibo-loan-reln-org:CashOutStatus-CashOut;
-    rdf:rest _:n3-580.
-_:n3-580 rdf:first fibo-loan-reln-org:CashOutStatus-LimitedCashOut;
-    rdf:rest _:n3-581.
-_:n3-581 rdf:first fibo-loan-reln-org:CashOutStatus-NoCashOut;
+_:n3-589 rdf:first fibo-loan-reln-org:MortgageLoanPurpose-BusinessOrCommercial;
+    rdf:rest _:n3-590.
+_:n3-590 rdf:first fibo-loan-reln-org:MortgageLoanPurpose-DwellingConstruction;
+    rdf:rest _:n3-591.
+_:n3-591 rdf:first fibo-loan-reln-org:MortgageLoanPurpose-HomeImprovement;
+    rdf:rest _:n3-592.
+_:n3-592 rdf:first fibo-loan-reln-org:MortgageLoanPurpose-LoanRefinancing;
+    rdf:rest _:n3-593.
+_:n3-593 rdf:first fibo-loan-reln-org:MortgageLoanPurpose-MortgageModification;
+    rdf:rest _:n3-594.
+_:n3-594 rdf:first fibo-loan-reln-org:MortgageLoanPurpose-RealPropertyPurchase;
+    rdf:rest _:n3-595.
+_:n3-595 rdf:first fibo-loan-reln-org:PropertyUsage-investment;
+    rdf:rest _:n3-596.
+_:n3-596 rdf:first fibo-loan-reln-org:PropertyUsage-primaryResidence;
+    rdf:rest _:n3-597.
+_:n3-597 rdf:first fibo-loan-reln-org:PropertyUsage-secondHome;
+    rdf:rest _:n3-598.
+_:n3-598 rdf:first fibo-loan-reln-org:AmortizationType-adjustableRate;
+    rdf:rest _:n3-599.
+_:n3-599 rdf:first fibo-loan-reln-org:AmortizationType-fixedRate;
+    rdf:rest _:n3-600.
+_:n3-600 rdf:first fibo-loan-reln-org:AmortizationType-graduatedPayment;
+    rdf:rest _:n3-601.
+_:n3-601 rdf:first fibo-loan-reln-org:AmortizationType-graduatedPaymentAdjustable;
+    rdf:rest _:n3-602.
+_:n3-602 rdf:first fibo-loan-reln-org:AmortizationType-growingEquity;
+    rdf:rest _:n3-603.
+_:n3-603 rdf:first fibo-loan-reln-org:AmortizationType-rateImprovement;
+    rdf:rest _:n3-604.
+_:n3-604 rdf:first fibo-loan-reln-org:AmortizationType-step;
+    rdf:rest _:n3-605.
+_:n3-605 rdf:first fibo-loan-reln-org:CashOutStatus-CashOut;
+    rdf:rest _:n3-606.
+_:n3-606 rdf:first fibo-loan-reln-org:CashOutStatus-LimitedCashOut;
+    rdf:rest _:n3-607.
+_:n3-607 rdf:first fibo-loan-reln-org:CashOutStatus-NoCashOut;
     rdf:rest rdf:nil.
-_:n3-562 sh:in _:n3-563;
+_:n3-588 sh:in _:n3-589;
     sh:message "dcterms:type values must be URLA-aligned FIBO named individuals".
-mshape:LoanApplicationShape sh:property _:n3-562.
-_:n3-582 sh:path dcterms:type.
-_:n3-584 rdf:first fibo-loan-reln-org:MortgageLoanPurpose-BusinessOrCommercial;
-    rdf:rest _:n3-585.
-_:n3-585 rdf:first fibo-loan-reln-org:MortgageLoanPurpose-DwellingConstruction;
-    rdf:rest _:n3-586.
-_:n3-586 rdf:first fibo-loan-reln-org:MortgageLoanPurpose-HomeImprovement;
-    rdf:rest _:n3-587.
-_:n3-587 rdf:first fibo-loan-reln-org:MortgageLoanPurpose-LoanRefinancing;
-    rdf:rest _:n3-588.
-_:n3-588 rdf:first fibo-loan-reln-org:MortgageLoanPurpose-MortgageModification;
-    rdf:rest _:n3-589.
-_:n3-589 rdf:first fibo-loan-reln-org:MortgageLoanPurpose-RealPropertyPurchase;
+mshape:LoanApplicationShape sh:property _:n3-588.
+_:n3-608 sh:path dcterms:type.
+_:n3-610 rdf:first fibo-loan-reln-org:MortgageLoanPurpose-BusinessOrCommercial;
+    rdf:rest _:n3-611.
+_:n3-611 rdf:first fibo-loan-reln-org:MortgageLoanPurpose-DwellingConstruction;
+    rdf:rest _:n3-612.
+_:n3-612 rdf:first fibo-loan-reln-org:MortgageLoanPurpose-HomeImprovement;
+    rdf:rest _:n3-613.
+_:n3-613 rdf:first fibo-loan-reln-org:MortgageLoanPurpose-LoanRefinancing;
+    rdf:rest _:n3-614.
+_:n3-614 rdf:first fibo-loan-reln-org:MortgageLoanPurpose-MortgageModification;
+    rdf:rest _:n3-615.
+_:n3-615 rdf:first fibo-loan-reln-org:MortgageLoanPurpose-RealPropertyPurchase;
     rdf:rest rdf:nil.
-_:n3-583 sh:in _:n3-584.
-_:n3-582 sh:qualifiedValueShape _:n3-583;
+_:n3-609 sh:in _:n3-610.
+_:n3-608 sh:qualifiedValueShape _:n3-609;
     sh:qualifiedMinCount 1;
     sh:qualifiedMaxCount 1;
     sh:message "exactly one FIBO MortgageLoanPurpose individual is required".
-mshape:LoanApplicationShape sh:property _:n3-582.
-_:n3-590 sh:path dcterms:type.
-_:n3-592 rdf:first fibo-loan-reln-org:PropertyUsage-investment;
-    rdf:rest _:n3-593.
-_:n3-593 rdf:first fibo-loan-reln-org:PropertyUsage-primaryResidence;
-    rdf:rest _:n3-594.
-_:n3-594 rdf:first fibo-loan-reln-org:PropertyUsage-secondHome;
-    rdf:rest rdf:nil.
-_:n3-591 sh:in _:n3-592.
-_:n3-590 sh:qualifiedValueShape _:n3-591;
-    sh:qualifiedMinCount 1;
-    sh:qualifiedMaxCount 1;
-    sh:message "exactly one FIBO PropertyUsage individual is required".
-mshape:LoanApplicationShape sh:property _:n3-590.
-_:n3-595 sh:path dcterms:type.
-_:n3-597 rdf:first fibo-loan-reln-org:AmortizationType-adjustableRate;
-    rdf:rest _:n3-598.
-_:n3-598 rdf:first fibo-loan-reln-org:AmortizationType-fixedRate;
-    rdf:rest _:n3-599.
-_:n3-599 rdf:first fibo-loan-reln-org:AmortizationType-graduatedPayment;
-    rdf:rest _:n3-600.
-_:n3-600 rdf:first fibo-loan-reln-org:AmortizationType-graduatedPaymentAdjustable;
-    rdf:rest _:n3-601.
-_:n3-601 rdf:first fibo-loan-reln-org:AmortizationType-growingEquity;
-    rdf:rest _:n3-602.
-_:n3-602 rdf:first fibo-loan-reln-org:AmortizationType-rateImprovement;
-    rdf:rest _:n3-603.
-_:n3-603 rdf:first fibo-loan-reln-org:AmortizationType-step;
-    rdf:rest rdf:nil.
-_:n3-596 sh:in _:n3-597.
-_:n3-595 sh:qualifiedValueShape _:n3-596;
-    sh:qualifiedMinCount 1;
-    sh:qualifiedMaxCount 1;
-    sh:message "exactly one FIBO AmortizationType individual is required".
-mshape:LoanApplicationShape sh:property _:n3-595.
-_:n3-604 rdf:first _:n3-605.
-_:n3-606 sh:path dcterms:type;
-    sh:hasValue fibo-loan-reln-org:MortgageLoanPurpose-LoanRefinancing.
-_:n3-605 sh:property _:n3-606.
-_:n3-607 sh:path dcterms:type.
-_:n3-609 rdf:first fibo-loan-reln-org:CashOutStatus-CashOut;
-    rdf:rest _:n3-610.
-_:n3-610 rdf:first fibo-loan-reln-org:CashOutStatus-LimitedCashOut;
-    rdf:rest _:n3-611.
-_:n3-611 rdf:first fibo-loan-reln-org:CashOutStatus-NoCashOut;
-    rdf:rest rdf:nil.
-_:n3-608 sh:in _:n3-609.
-_:n3-607 sh:qualifiedValueShape _:n3-608;
-    sh:qualifiedMinCount 1;
-    sh:qualifiedMaxCount 1.
-_:n3-605 sh:property _:n3-607.
-_:n3-604 rdf:rest _:n3-612.
-_:n3-612 rdf:first _:n3-613.
-_:n3-615 sh:path dcterms:type;
-    sh:hasValue fibo-loan-reln-org:MortgageLoanPurpose-LoanRefinancing.
-_:n3-614 sh:property _:n3-615.
-_:n3-613 sh:not _:n3-614.
+mshape:LoanApplicationShape sh:property _:n3-608.
 _:n3-616 sh:path dcterms:type.
-_:n3-618 rdf:first fibo-loan-reln-org:CashOutStatus-CashOut;
+_:n3-618 rdf:first fibo-loan-reln-org:PropertyUsage-investment;
     rdf:rest _:n3-619.
-_:n3-619 rdf:first fibo-loan-reln-org:CashOutStatus-LimitedCashOut;
+_:n3-619 rdf:first fibo-loan-reln-org:PropertyUsage-primaryResidence;
     rdf:rest _:n3-620.
-_:n3-620 rdf:first fibo-loan-reln-org:CashOutStatus-NoCashOut;
+_:n3-620 rdf:first fibo-loan-reln-org:PropertyUsage-secondHome;
     rdf:rest rdf:nil.
 _:n3-617 sh:in _:n3-618.
 _:n3-616 sh:qualifiedValueShape _:n3-617;
+    sh:qualifiedMinCount 1;
+    sh:qualifiedMaxCount 1;
+    sh:message "exactly one FIBO PropertyUsage individual is required".
+mshape:LoanApplicationShape sh:property _:n3-616.
+_:n3-621 sh:path dcterms:type.
+_:n3-623 rdf:first fibo-loan-reln-org:AmortizationType-adjustableRate;
+    rdf:rest _:n3-624.
+_:n3-624 rdf:first fibo-loan-reln-org:AmortizationType-fixedRate;
+    rdf:rest _:n3-625.
+_:n3-625 rdf:first fibo-loan-reln-org:AmortizationType-graduatedPayment;
+    rdf:rest _:n3-626.
+_:n3-626 rdf:first fibo-loan-reln-org:AmortizationType-graduatedPaymentAdjustable;
+    rdf:rest _:n3-627.
+_:n3-627 rdf:first fibo-loan-reln-org:AmortizationType-growingEquity;
+    rdf:rest _:n3-628.
+_:n3-628 rdf:first fibo-loan-reln-org:AmortizationType-rateImprovement;
+    rdf:rest _:n3-629.
+_:n3-629 rdf:first fibo-loan-reln-org:AmortizationType-step;
+    rdf:rest rdf:nil.
+_:n3-622 sh:in _:n3-623.
+_:n3-621 sh:qualifiedValueShape _:n3-622;
+    sh:qualifiedMinCount 1;
+    sh:qualifiedMaxCount 1;
+    sh:message "exactly one FIBO AmortizationType individual is required".
+mshape:LoanApplicationShape sh:property _:n3-621.
+_:n3-630 rdf:first _:n3-631.
+_:n3-632 sh:path dcterms:type;
+    sh:hasValue fibo-loan-reln-org:MortgageLoanPurpose-LoanRefinancing.
+_:n3-631 sh:property _:n3-632.
+_:n3-633 sh:path dcterms:type.
+_:n3-635 rdf:first fibo-loan-reln-org:CashOutStatus-CashOut;
+    rdf:rest _:n3-636.
+_:n3-636 rdf:first fibo-loan-reln-org:CashOutStatus-LimitedCashOut;
+    rdf:rest _:n3-637.
+_:n3-637 rdf:first fibo-loan-reln-org:CashOutStatus-NoCashOut;
+    rdf:rest rdf:nil.
+_:n3-634 sh:in _:n3-635.
+_:n3-633 sh:qualifiedValueShape _:n3-634;
+    sh:qualifiedMinCount 1;
+    sh:qualifiedMaxCount 1.
+_:n3-631 sh:property _:n3-633.
+_:n3-630 rdf:rest _:n3-638.
+_:n3-638 rdf:first _:n3-639.
+_:n3-641 sh:path dcterms:type;
+    sh:hasValue fibo-loan-reln-org:MortgageLoanPurpose-LoanRefinancing.
+_:n3-640 sh:property _:n3-641.
+_:n3-639 sh:not _:n3-640.
+_:n3-642 sh:path dcterms:type.
+_:n3-644 rdf:first fibo-loan-reln-org:CashOutStatus-CashOut;
+    rdf:rest _:n3-645.
+_:n3-645 rdf:first fibo-loan-reln-org:CashOutStatus-LimitedCashOut;
+    rdf:rest _:n3-646.
+_:n3-646 rdf:first fibo-loan-reln-org:CashOutStatus-NoCashOut;
+    rdf:rest rdf:nil.
+_:n3-643 sh:in _:n3-644.
+_:n3-642 sh:qualifiedValueShape _:n3-643;
     sh:qualifiedMaxCount 0.
-_:n3-613 sh:property _:n3-616.
-_:n3-612 rdf:rest rdf:nil.
-mshape:LoanApplicationShape sh:or _:n3-604.
+_:n3-639 sh:property _:n3-642.
+_:n3-638 rdf:rest rdf:nil.
+mshape:LoanApplicationShape sh:or _:n3-630.
 `,
   "loan-estimate": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -3063,109 +3195,109 @@ mshape:LoanApplicationShape sh:or _:n3-604.
 mshape:LoanEstimateShape a sh:NodeShape;
     sh:targetClass mort:LoanEstimate;
     sh:closed true.
-_:n3-621 sh:path rdf:type;
+_:n3-647 sh:path rdf:type;
     sh:hasValue mort:LoanEstimate.
-mshape:LoanEstimateShape sh:property _:n3-621.
-_:n3-622 sh:path schema:name;
+mshape:LoanEstimateShape sh:property _:n3-647.
+_:n3-648 sh:path schema:name;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:LoanEstimateShape sh:property _:n3-622.
-_:n3-623 sh:path mort:loanNumber;
+mshape:LoanEstimateShape sh:property _:n3-648.
+_:n3-649 sh:path mort:loanNumber;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:LoanEstimateShape sh:property _:n3-623.
-_:n3-624 sh:path fibo-fbc-dae-dbt:hasBorrower;
+mshape:LoanEstimateShape sh:property _:n3-649.
+_:n3-650 sh:path fibo-fbc-dae-dbt:hasBorrower;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:LoanEstimateShape sh:property _:n3-624.
-_:n3-625 sh:path dcterms:creator;
+mshape:LoanEstimateShape sh:property _:n3-650.
+_:n3-651 sh:path dcterms:creator;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:LoanEstimateShape sh:property _:n3-625.
-_:n3-626 sh:path mort:applicationDate;
+mshape:LoanEstimateShape sh:property _:n3-651.
+_:n3-652 sh:path mort:applicationDate;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:date;
     sh:lessThan schema:expires.
-mshape:LoanEstimateShape sh:property _:n3-626.
-_:n3-627 sh:path dcterms:issued;
+mshape:LoanEstimateShape sh:property _:n3-652.
+_:n3-653 sh:path dcterms:issued;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:date.
-mshape:LoanEstimateShape sh:property _:n3-627.
-_:n3-628 sh:path schema:expires;
+mshape:LoanEstimateShape sh:property _:n3-653.
+_:n3-654 sh:path schema:expires;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:date.
-mshape:LoanEstimateShape sh:property _:n3-628.
-_:n3-629 sh:path mort:intentToProceedDate;
+mshape:LoanEstimateShape sh:property _:n3-654.
+_:n3-655 sh:path mort:intentToProceedDate;
     sh:maxCount 1;
     sh:datatype xsd:date.
-mshape:LoanEstimateShape sh:property _:n3-629.
-_:n3-630 sh:path fibo-loan-ln-ln:hasPrincipalAmount;
+mshape:LoanEstimateShape sh:property _:n3-655.
+_:n3-656 sh:path fibo-loan-ln-ln:hasPrincipalAmount;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:MonetaryAmountShape.
-mshape:LoanEstimateShape sh:property _:n3-630.
-_:n3-631 sh:path schema:interestRate;
+mshape:LoanEstimateShape sh:property _:n3-656.
+_:n3-657 sh:path schema:interestRate;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:decimal;
     sh:minInclusive 0.0;
     sh:maxInclusive 25.0;
     sh:message "interestRate is the note rate in percent (e.g. 6.5)".
-mshape:LoanEstimateShape sh:property _:n3-631.
-_:n3-632 sh:path mort:loanTermMonths;
+mshape:LoanEstimateShape sh:property _:n3-657.
+_:n3-658 sh:path mort:loanTermMonths;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:integer;
     sh:minInclusive 12;
     sh:maxInclusive 480.
-mshape:LoanEstimateShape sh:property _:n3-632.
-_:n3-633 sh:path mort:annualPercentageRate;
+mshape:LoanEstimateShape sh:property _:n3-658.
+_:n3-659 sh:path mort:annualPercentageRate;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:decimal;
     sh:minInclusive 0.0;
     sh:maxInclusive 40.0.
-mshape:LoanEstimateShape sh:property _:n3-633.
-_:n3-634 sh:path mort:monthlyPrincipalAndInterest;
+mshape:LoanEstimateShape sh:property _:n3-659.
+_:n3-660 sh:path mort:monthlyPrincipalAndInterest;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:MonetaryAmountShape.
-mshape:LoanEstimateShape sh:property _:n3-634.
-_:n3-635 sh:path mort:estimatedTotalMonthlyPayment;
+mshape:LoanEstimateShape sh:property _:n3-660.
+_:n3-661 sh:path mort:estimatedTotalMonthlyPayment;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:MonetaryAmountShape.
-mshape:LoanEstimateShape sh:property _:n3-635.
-_:n3-636 sh:path fibo-loan-ln-ln:hasTotalClosingCosts;
+mshape:LoanEstimateShape sh:property _:n3-661.
+_:n3-662 sh:path fibo-loan-ln-ln:hasTotalClosingCosts;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:MonetaryAmountShape.
-mshape:LoanEstimateShape sh:property _:n3-636.
-_:n3-637 sh:path mort:cashToClose;
+mshape:LoanEstimateShape sh:property _:n3-662.
+_:n3-663 sh:path mort:cashToClose;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:MonetaryAmountShape.
-mshape:LoanEstimateShape sh:property _:n3-637.
-_:n3-638 sh:path mort:subjectProperty;
+mshape:LoanEstimateShape sh:property _:n3-663.
+_:n3-664 sh:path mort:subjectProperty;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:PropertyShape.
-mshape:LoanEstimateShape sh:property _:n3-638.
+mshape:LoanEstimateShape sh:property _:n3-664.
 `,
   "medication-dispense": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -3176,108 +3308,108 @@ mshape:LoanEstimateShape sh:property _:n3-638.
 mshape:MedicationDispenseShape a sh:NodeShape;
     sh:targetClass fhir:MedicationDispense;
     sh:closed true.
-_:n3-639 sh:path rdf:type.
-_:n3-640 rdf:first fhir:MedicationDispense;
+_:n3-665 sh:path rdf:type.
+_:n3-666 rdf:first fhir:MedicationDispense;
     rdf:rest rdf:nil.
-_:n3-639 sh:in _:n3-640.
-mshape:MedicationDispenseShape sh:property _:n3-639.
-_:n3-641 sh:path fhir:nodeRole;
+_:n3-665 sh:in _:n3-666.
+mshape:MedicationDispenseShape sh:property _:n3-665.
+_:n3-667 sh:path fhir:nodeRole;
     sh:maxCount 1.
-_:n3-642 rdf:first fhir:treeRoot;
+_:n3-668 rdf:first fhir:treeRoot;
     rdf:rest rdf:nil.
-_:n3-641 sh:in _:n3-642.
-mshape:MedicationDispenseShape sh:property _:n3-641.
-_:n3-643 sh:path fhir:id;
+_:n3-667 sh:in _:n3-668.
+mshape:MedicationDispenseShape sh:property _:n3-667.
+_:n3-669 sh:path fhir:id;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirIdShape.
-mshape:MedicationDispenseShape sh:property _:n3-643.
-_:n3-644 sh:path fhir:status;
+mshape:MedicationDispenseShape sh:property _:n3-669.
+_:n3-670 sh:path fhir:status;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirStringShape.
-mshape:MedicationDispenseShape sh:property _:n3-644.
-_:n3-646 rdf:first fhir:status;
-    rdf:rest _:n3-647.
-_:n3-647 rdf:first fhir:v;
+mshape:MedicationDispenseShape sh:property _:n3-670.
+_:n3-672 rdf:first fhir:status;
+    rdf:rest _:n3-673.
+_:n3-673 rdf:first fhir:v;
     rdf:rest rdf:nil.
-_:n3-645 sh:path _:n3-646.
-_:n3-648 rdf:first "completed";
-    rdf:rest _:n3-649.
-_:n3-649 rdf:first "in-progress";
-    rdf:rest _:n3-650.
-_:n3-650 rdf:first "declined";
+_:n3-671 sh:path _:n3-672.
+_:n3-674 rdf:first "completed";
+    rdf:rest _:n3-675.
+_:n3-675 rdf:first "in-progress";
+    rdf:rest _:n3-676.
+_:n3-676 rdf:first "declined";
     rdf:rest rdf:nil.
-_:n3-645 sh:in _:n3-648.
-mshape:MedicationDispenseShape sh:property _:n3-645.
-_:n3-651 sh:path fhir:medication;
+_:n3-671 sh:in _:n3-674.
+mshape:MedicationDispenseShape sh:property _:n3-671.
+_:n3-677 sh:path fhir:medication;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirMedicineShape.
-mshape:MedicationDispenseShape sh:property _:n3-651.
-_:n3-652 sh:path fhir:subject;
+mshape:MedicationDispenseShape sh:property _:n3-677.
+_:n3-678 sh:path fhir:subject;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirLinkedReferenceShape.
-mshape:MedicationDispenseShape sh:property _:n3-652.
-_:n3-653 sh:path fhir:performer;
+mshape:MedicationDispenseShape sh:property _:n3-678.
+_:n3-679 sh:path fhir:performer;
     sh:minCount 1;
     sh:maxCount 1.
-mshape:MedicationDispenseShape sh:property _:n3-653.
-_:n3-655 rdf:first fhir:performer;
-    rdf:rest _:n3-656.
-_:n3-656 rdf:first _:n3-657.
-_:n3-657 sh:zeroOrMorePath rdf:rest.
-_:n3-656 rdf:rest _:n3-658.
-_:n3-658 rdf:first rdf:first;
+mshape:MedicationDispenseShape sh:property _:n3-679.
+_:n3-681 rdf:first fhir:performer;
+    rdf:rest _:n3-682.
+_:n3-682 rdf:first _:n3-683.
+_:n3-683 sh:zeroOrMorePath rdf:rest.
+_:n3-682 rdf:rest _:n3-684.
+_:n3-684 rdf:first rdf:first;
     rdf:rest rdf:nil.
-_:n3-654 sh:path _:n3-655;
+_:n3-680 sh:path _:n3-681;
     sh:minCount 1;
     sh:node mshape:DispensePerformerShape.
-mshape:MedicationDispenseShape sh:property _:n3-654.
-_:n3-659 sh:path fhir:authorizingPrescription;
+mshape:MedicationDispenseShape sh:property _:n3-680.
+_:n3-685 sh:path fhir:authorizingPrescription;
     sh:maxCount 1.
-mshape:MedicationDispenseShape sh:property _:n3-659.
-_:n3-661 rdf:first fhir:authorizingPrescription;
-    rdf:rest _:n3-662.
-_:n3-662 rdf:first _:n3-663.
-_:n3-663 sh:zeroOrMorePath rdf:rest.
-_:n3-662 rdf:rest _:n3-664.
-_:n3-664 rdf:first rdf:first;
+mshape:MedicationDispenseShape sh:property _:n3-685.
+_:n3-687 rdf:first fhir:authorizingPrescription;
+    rdf:rest _:n3-688.
+_:n3-688 rdf:first _:n3-689.
+_:n3-689 sh:zeroOrMorePath rdf:rest.
+_:n3-688 rdf:rest _:n3-690.
+_:n3-690 rdf:first rdf:first;
     rdf:rest rdf:nil.
-_:n3-660 sh:path _:n3-661;
+_:n3-686 sh:path _:n3-687;
     sh:node mshape:FhirLinkedReferenceShape.
-mshape:MedicationDispenseShape sh:property _:n3-660.
-_:n3-665 sh:path fhir:quantity;
+mshape:MedicationDispenseShape sh:property _:n3-686.
+_:n3-691 sh:path fhir:quantity;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirQuantityShape.
-mshape:MedicationDispenseShape sh:property _:n3-665.
-_:n3-666 sh:path fhir:whenHandedOver;
+mshape:MedicationDispenseShape sh:property _:n3-691.
+_:n3-692 sh:path fhir:whenHandedOver;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirDateTimeShape.
-mshape:MedicationDispenseShape sh:property _:n3-666.
-_:n3-667 sh:path fhir:dosageInstruction;
+mshape:MedicationDispenseShape sh:property _:n3-692.
+_:n3-693 sh:path fhir:dosageInstruction;
     sh:maxCount 1.
-mshape:MedicationDispenseShape sh:property _:n3-667.
-_:n3-669 rdf:first fhir:dosageInstruction;
-    rdf:rest _:n3-670.
-_:n3-670 rdf:first _:n3-671.
-_:n3-671 sh:zeroOrMorePath rdf:rest.
-_:n3-670 rdf:rest _:n3-672.
-_:n3-672 rdf:first rdf:first;
+mshape:MedicationDispenseShape sh:property _:n3-693.
+_:n3-695 rdf:first fhir:dosageInstruction;
+    rdf:rest _:n3-696.
+_:n3-696 rdf:first _:n3-697.
+_:n3-697 sh:zeroOrMorePath rdf:rest.
+_:n3-696 rdf:rest _:n3-698.
+_:n3-698 rdf:first rdf:first;
     rdf:rest rdf:nil.
-_:n3-668 sh:path _:n3-669;
+_:n3-694 sh:path _:n3-695;
     sh:node mshape:FhirDosageShape.
-mshape:MedicationDispenseShape sh:property _:n3-668.
+mshape:MedicationDispenseShape sh:property _:n3-694.
 mshape:DispensePerformerShape a sh:NodeShape;
     sh:closed true.
-_:n3-673 sh:path fhir:actor;
+_:n3-699 sh:path fhir:actor;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirLinkedReferenceShape.
-mshape:DispensePerformerShape sh:property _:n3-673.
+mshape:DispensePerformerShape sh:property _:n3-699.
 `,
   "medication-request": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -3288,105 +3420,105 @@ mshape:DispensePerformerShape sh:property _:n3-673.
 mshape:MedicationRequestShape a sh:NodeShape;
     sh:targetClass fhir:MedicationRequest;
     sh:closed true.
-_:n3-674 sh:path rdf:type.
-_:n3-675 rdf:first fhir:MedicationRequest;
+_:n3-700 sh:path rdf:type.
+_:n3-701 rdf:first fhir:MedicationRequest;
     rdf:rest rdf:nil.
-_:n3-674 sh:in _:n3-675.
-mshape:MedicationRequestShape sh:property _:n3-674.
-_:n3-676 sh:path fhir:nodeRole;
+_:n3-700 sh:in _:n3-701.
+mshape:MedicationRequestShape sh:property _:n3-700.
+_:n3-702 sh:path fhir:nodeRole;
     sh:maxCount 1.
-_:n3-677 rdf:first fhir:treeRoot;
+_:n3-703 rdf:first fhir:treeRoot;
     rdf:rest rdf:nil.
-_:n3-676 sh:in _:n3-677.
-mshape:MedicationRequestShape sh:property _:n3-676.
-_:n3-678 sh:path fhir:id;
+_:n3-702 sh:in _:n3-703.
+mshape:MedicationRequestShape sh:property _:n3-702.
+_:n3-704 sh:path fhir:id;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirIdShape.
-mshape:MedicationRequestShape sh:property _:n3-678.
-_:n3-679 sh:path fhir:status;
+mshape:MedicationRequestShape sh:property _:n3-704.
+_:n3-705 sh:path fhir:status;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirStringShape.
-mshape:MedicationRequestShape sh:property _:n3-679.
-_:n3-681 rdf:first fhir:status;
-    rdf:rest _:n3-682.
-_:n3-682 rdf:first fhir:v;
+mshape:MedicationRequestShape sh:property _:n3-705.
+_:n3-707 rdf:first fhir:status;
+    rdf:rest _:n3-708.
+_:n3-708 rdf:first fhir:v;
     rdf:rest rdf:nil.
-_:n3-680 sh:path _:n3-681.
-_:n3-683 rdf:first "active";
-    rdf:rest _:n3-684.
-_:n3-684 rdf:first "on-hold";
-    rdf:rest _:n3-685.
-_:n3-685 rdf:first "ended";
-    rdf:rest _:n3-686.
-_:n3-686 rdf:first "stopped";
-    rdf:rest _:n3-687.
-_:n3-687 rdf:first "completed";
-    rdf:rest _:n3-688.
-_:n3-688 rdf:first "cancelled";
-    rdf:rest _:n3-689.
-_:n3-689 rdf:first "entered-in-error";
-    rdf:rest _:n3-690.
-_:n3-690 rdf:first "draft";
-    rdf:rest _:n3-691.
-_:n3-691 rdf:first "unknown";
+_:n3-706 sh:path _:n3-707.
+_:n3-709 rdf:first "active";
+    rdf:rest _:n3-710.
+_:n3-710 rdf:first "on-hold";
+    rdf:rest _:n3-711.
+_:n3-711 rdf:first "ended";
+    rdf:rest _:n3-712.
+_:n3-712 rdf:first "stopped";
+    rdf:rest _:n3-713.
+_:n3-713 rdf:first "completed";
+    rdf:rest _:n3-714.
+_:n3-714 rdf:first "cancelled";
+    rdf:rest _:n3-715.
+_:n3-715 rdf:first "entered-in-error";
+    rdf:rest _:n3-716.
+_:n3-716 rdf:first "draft";
+    rdf:rest _:n3-717.
+_:n3-717 rdf:first "unknown";
     rdf:rest rdf:nil.
-_:n3-680 sh:in _:n3-683.
-mshape:MedicationRequestShape sh:property _:n3-680.
-_:n3-692 sh:path fhir:intent;
+_:n3-706 sh:in _:n3-709.
+mshape:MedicationRequestShape sh:property _:n3-706.
+_:n3-718 sh:path fhir:intent;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirStringShape.
-mshape:MedicationRequestShape sh:property _:n3-692.
-_:n3-694 rdf:first fhir:intent;
-    rdf:rest _:n3-695.
-_:n3-695 rdf:first fhir:v;
+mshape:MedicationRequestShape sh:property _:n3-718.
+_:n3-720 rdf:first fhir:intent;
+    rdf:rest _:n3-721.
+_:n3-721 rdf:first fhir:v;
     rdf:rest rdf:nil.
-_:n3-693 sh:path _:n3-694.
-_:n3-696 rdf:first "order";
-    rdf:rest _:n3-697.
-_:n3-697 rdf:first "plan";
-    rdf:rest _:n3-698.
-_:n3-698 rdf:first "proposal";
+_:n3-719 sh:path _:n3-720.
+_:n3-722 rdf:first "order";
+    rdf:rest _:n3-723.
+_:n3-723 rdf:first "plan";
+    rdf:rest _:n3-724.
+_:n3-724 rdf:first "proposal";
     rdf:rest rdf:nil.
-_:n3-693 sh:in _:n3-696.
-mshape:MedicationRequestShape sh:property _:n3-693.
-_:n3-699 sh:path fhir:medication;
+_:n3-719 sh:in _:n3-722.
+mshape:MedicationRequestShape sh:property _:n3-719.
+_:n3-725 sh:path fhir:medication;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirMedicineShape.
-mshape:MedicationRequestShape sh:property _:n3-699.
-_:n3-700 sh:path fhir:subject;
+mshape:MedicationRequestShape sh:property _:n3-725.
+_:n3-726 sh:path fhir:subject;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirLinkedReferenceShape.
-mshape:MedicationRequestShape sh:property _:n3-700.
-_:n3-701 sh:path fhir:authoredOn;
+mshape:MedicationRequestShape sh:property _:n3-726.
+_:n3-727 sh:path fhir:authoredOn;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirDateTimeShape.
-mshape:MedicationRequestShape sh:property _:n3-701.
-_:n3-702 sh:path fhir:requester;
+mshape:MedicationRequestShape sh:property _:n3-727.
+_:n3-728 sh:path fhir:requester;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirLinkedReferenceShape.
-mshape:MedicationRequestShape sh:property _:n3-702.
-_:n3-703 sh:path fhir:dosageInstruction;
+mshape:MedicationRequestShape sh:property _:n3-728.
+_:n3-729 sh:path fhir:dosageInstruction;
     sh:minCount 1;
     sh:maxCount 1.
-mshape:MedicationRequestShape sh:property _:n3-703.
-_:n3-705 rdf:first fhir:dosageInstruction;
-    rdf:rest _:n3-706.
-_:n3-706 rdf:first _:n3-707.
-_:n3-707 sh:zeroOrMorePath rdf:rest.
-_:n3-706 rdf:rest _:n3-708.
-_:n3-708 rdf:first rdf:first;
+mshape:MedicationRequestShape sh:property _:n3-729.
+_:n3-731 rdf:first fhir:dosageInstruction;
+    rdf:rest _:n3-732.
+_:n3-732 rdf:first _:n3-733.
+_:n3-733 sh:zeroOrMorePath rdf:rest.
+_:n3-732 rdf:rest _:n3-734.
+_:n3-734 rdf:first rdf:first;
     rdf:rest rdf:nil.
-_:n3-704 sh:path _:n3-705;
+_:n3-730 sh:path _:n3-731;
     sh:minCount 1;
     sh:node mshape:FhirDosageShape.
-mshape:MedicationRequestShape sh:property _:n3-704.
+mshape:MedicationRequestShape sh:property _:n3-730.
 `,
   "medication-statement": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -3397,109 +3529,270 @@ mshape:MedicationRequestShape sh:property _:n3-704.
 mshape:MedicationStatementShape a sh:NodeShape;
     sh:targetClass fhir:MedicationStatement;
     sh:closed true.
-_:n3-709 sh:path rdf:type.
-_:n3-710 rdf:first fhir:MedicationStatement;
+_:n3-735 sh:path rdf:type.
+_:n3-736 rdf:first fhir:MedicationStatement;
     rdf:rest rdf:nil.
-_:n3-709 sh:in _:n3-710.
-mshape:MedicationStatementShape sh:property _:n3-709.
-_:n3-711 sh:path fhir:nodeRole;
+_:n3-735 sh:in _:n3-736.
+mshape:MedicationStatementShape sh:property _:n3-735.
+_:n3-737 sh:path fhir:nodeRole;
     sh:maxCount 1.
-_:n3-712 rdf:first fhir:treeRoot;
+_:n3-738 rdf:first fhir:treeRoot;
     rdf:rest rdf:nil.
-_:n3-711 sh:in _:n3-712.
-mshape:MedicationStatementShape sh:property _:n3-711.
-_:n3-713 sh:path fhir:id;
+_:n3-737 sh:in _:n3-738.
+mshape:MedicationStatementShape sh:property _:n3-737.
+_:n3-739 sh:path fhir:id;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirIdShape.
-mshape:MedicationStatementShape sh:property _:n3-713.
-_:n3-715 rdf:first fhir:status;
-    rdf:rest _:n3-716.
-_:n3-716 rdf:first fhir:v;
+mshape:MedicationStatementShape sh:property _:n3-739.
+_:n3-741 rdf:first fhir:status;
+    rdf:rest _:n3-742.
+_:n3-742 rdf:first fhir:v;
     rdf:rest rdf:nil.
-_:n3-714 sh:path _:n3-715;
+_:n3-740 sh:path _:n3-741;
     sh:minCount 1;
     sh:maxCount 1.
-_:n3-717 rdf:first "recorded";
-    rdf:rest _:n3-718.
-_:n3-718 rdf:first "entered-in-error";
-    rdf:rest _:n3-719.
-_:n3-719 rdf:first "draft";
+_:n3-743 rdf:first "recorded";
+    rdf:rest _:n3-744.
+_:n3-744 rdf:first "entered-in-error";
+    rdf:rest _:n3-745.
+_:n3-745 rdf:first "draft";
     rdf:rest rdf:nil.
-_:n3-714 sh:in _:n3-717.
-mshape:MedicationStatementShape sh:property _:n3-714.
-_:n3-720 sh:path fhir:status;
+_:n3-740 sh:in _:n3-743.
+mshape:MedicationStatementShape sh:property _:n3-740.
+_:n3-746 sh:path fhir:status;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirStringShape.
-mshape:MedicationStatementShape sh:property _:n3-720.
-_:n3-721 sh:path fhir:medication;
+mshape:MedicationStatementShape sh:property _:n3-746.
+_:n3-747 sh:path fhir:medication;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirMedicineShape.
-mshape:MedicationStatementShape sh:property _:n3-721.
-_:n3-722 sh:path fhir:subject;
+mshape:MedicationStatementShape sh:property _:n3-747.
+_:n3-748 sh:path fhir:subject;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirLinkedReferenceShape.
-mshape:MedicationStatementShape sh:property _:n3-722.
-_:n3-723 sh:path fhir:dateAsserted;
+mshape:MedicationStatementShape sh:property _:n3-748.
+_:n3-749 sh:path fhir:dateAsserted;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirDateTimeShape.
-mshape:MedicationStatementShape sh:property _:n3-723.
-_:n3-724 sh:path fhir:dosage;
+mshape:MedicationStatementShape sh:property _:n3-749.
+_:n3-750 sh:path fhir:dosage;
     sh:minCount 1;
     sh:maxCount 1.
-mshape:MedicationStatementShape sh:property _:n3-724.
-_:n3-726 rdf:first fhir:dosage;
-    rdf:rest _:n3-727.
-_:n3-727 rdf:first _:n3-728.
-_:n3-728 sh:zeroOrMorePath rdf:rest.
-_:n3-727 rdf:rest _:n3-729.
-_:n3-729 rdf:first rdf:first;
+mshape:MedicationStatementShape sh:property _:n3-750.
+_:n3-752 rdf:first fhir:dosage;
+    rdf:rest _:n3-753.
+_:n3-753 rdf:first _:n3-754.
+_:n3-754 sh:zeroOrMorePath rdf:rest.
+_:n3-753 rdf:rest _:n3-755.
+_:n3-755 rdf:first rdf:first;
     rdf:rest rdf:nil.
-_:n3-725 sh:path _:n3-726;
+_:n3-751 sh:path _:n3-752;
     sh:minCount 1;
     sh:node mshape:FhirDosageShape.
-mshape:MedicationStatementShape sh:property _:n3-725.
-_:n3-730 sh:path fhir:adherence;
+mshape:MedicationStatementShape sh:property _:n3-751.
+_:n3-756 sh:path fhir:adherence;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:MedicationAdherenceShape.
-mshape:MedicationStatementShape sh:property _:n3-730.
+mshape:MedicationStatementShape sh:property _:n3-756.
 mshape:MedicationAdherenceShape a sh:NodeShape;
     sh:closed true.
-_:n3-731 sh:path fhir:code;
+_:n3-757 sh:path fhir:code;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirCodeableConceptShape.
-mshape:MedicationAdherenceShape sh:property _:n3-731.
-_:n3-733 rdf:first fhir:code;
-    rdf:rest _:n3-734.
-_:n3-734 rdf:first fhir:coding;
-    rdf:rest _:n3-735.
-_:n3-735 rdf:first _:n3-736.
-_:n3-736 sh:zeroOrMorePath rdf:rest.
-_:n3-735 rdf:rest _:n3-737.
-_:n3-737 rdf:first rdf:first;
-    rdf:rest _:n3-738.
-_:n3-738 rdf:first fhir:code;
-    rdf:rest _:n3-739.
-_:n3-739 rdf:first fhir:v;
+mshape:MedicationAdherenceShape sh:property _:n3-757.
+_:n3-759 rdf:first fhir:code;
+    rdf:rest _:n3-760.
+_:n3-760 rdf:first fhir:coding;
+    rdf:rest _:n3-761.
+_:n3-761 rdf:first _:n3-762.
+_:n3-762 sh:zeroOrMorePath rdf:rest.
+_:n3-761 rdf:rest _:n3-763.
+_:n3-763 rdf:first rdf:first;
+    rdf:rest _:n3-764.
+_:n3-764 rdf:first fhir:code;
+    rdf:rest _:n3-765.
+_:n3-765 rdf:first fhir:v;
     rdf:rest rdf:nil.
-_:n3-732 sh:path _:n3-733;
+_:n3-758 sh:path _:n3-759;
     sh:minCount 1.
-_:n3-740 rdf:first "taking-as-directed";
-    rdf:rest _:n3-741.
-_:n3-741 rdf:first "stopped-as-directed";
+_:n3-766 rdf:first "taking-as-directed";
+    rdf:rest _:n3-767.
+_:n3-767 rdf:first "stopped-as-directed";
     rdf:rest rdf:nil.
-_:n3-732 sh:in _:n3-740.
-mshape:MedicationAdherenceShape sh:property _:n3-732.
-_:n3-742 sh:path fhir:reason;
+_:n3-758 sh:in _:n3-766.
+mshape:MedicationAdherenceShape sh:property _:n3-758.
+_:n3-768 sh:path fhir:reason;
     sh:maxCount 1;
     sh:node mshape:FhirCodeableConceptShape.
-mshape:MedicationAdherenceShape sh:property _:n3-742.
+mshape:MedicationAdherenceShape sh:property _:n3-768.
+`,
+  "motor-incident-report": `@prefix sh: <http://www.w3.org/ns/shacl#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix schema: <https://schema.org/>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#>.
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#>.
+
+mshape:MotorIncidentReportShape a sh:NodeShape;
+    sh:targetClass mort:MotorIncidentReport;
+    sh:closed true.
+_:n3-769 sh:path rdf:type;
+    sh:hasValue mort:MotorIncidentReport.
+mshape:MotorIncidentReportShape sh:property _:n3-769.
+_:n3-770 sh:path schema:identifier;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:datatype xsd:string;
+    sh:minLength 1.
+mshape:MotorIncidentReportShape sh:property _:n3-770.
+_:n3-771 sh:path schema:name;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:datatype xsd:string;
+    sh:minLength 1.
+mshape:MotorIncidentReportShape sh:property _:n3-771.
+_:n3-772 sh:path schema:description;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:datatype xsd:string;
+    sh:minLength 1.
+mshape:MotorIncidentReportShape sh:property _:n3-772.
+_:n3-773 sh:path mort:occurredAt;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:datatype xsd:dateTime;
+    sh:lessThanOrEquals dcterms:created.
+mshape:MotorIncidentReportShape sh:property _:n3-773.
+_:n3-774 sh:path schema:location;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:datatype xsd:string;
+    sh:minLength 1.
+mshape:MotorIncidentReportShape sh:property _:n3-774.
+_:n3-775 sh:path mort:vehicle;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:nodeKind sh:BlankNodeOrIRI;
+    sh:node mshape:VehicleShape.
+mshape:MotorIncidentReportShape sh:property _:n3-775.
+_:n3-776 sh:path schema:image;
+    sh:minCount 1;
+    sh:nodeKind sh:IRI.
+mshape:MotorIncidentReportShape sh:property _:n3-776.
+_:n3-777 sh:path mort:otherParty;
+    sh:maxCount 1;
+    sh:nodeKind sh:IRI.
+mshape:MotorIncidentReportShape sh:property _:n3-777.
+_:n3-778 sh:path dcterms:creator;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:nodeKind sh:IRI.
+mshape:MotorIncidentReportShape sh:property _:n3-778.
+_:n3-779 sh:path dcterms:created;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:datatype xsd:dateTime.
+mshape:MotorIncidentReportShape sh:property _:n3-779.
+`,
+  "motor-policy-credential": `@prefix sh: <http://www.w3.org/ns/shacl#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix schema: <https://schema.org/>.
+@prefix cred: <https://www.w3.org/2018/credentials#>.
+@prefix sec: <https://w3id.org/security#>.
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#>.
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#>.
+
+mshape:MotorPolicyCredentialShape a sh:NodeShape;
+    sh:targetClass mort:MotorPolicyCredential;
+    sh:closed true.
+_:n3-780 rdf:first sec:proof;
+    rdf:rest rdf:nil.
+mshape:MotorPolicyCredentialShape sh:ignoredProperties _:n3-780.
+_:n3-781 sh:path rdf:type;
+    sh:hasValue cred:VerifiableCredential.
+mshape:MotorPolicyCredentialShape sh:property _:n3-781.
+_:n3-782 sh:path cred:issuer;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:nodeKind sh:IRI.
+mshape:MotorPolicyCredentialShape sh:property _:n3-782.
+_:n3-783 sh:path cred:validFrom;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:datatype xsd:dateTime;
+    sh:lessThan cred:validUntil.
+mshape:MotorPolicyCredentialShape sh:property _:n3-783.
+_:n3-784 sh:path cred:validUntil;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:datatype xsd:dateTime.
+mshape:MotorPolicyCredentialShape sh:property _:n3-784.
+_:n3-785 sh:path cred:credentialStatus;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:nodeKind sh:BlankNodeOrIRI.
+mshape:MotorPolicyCredentialShape sh:property _:n3-785.
+_:n3-786 sh:path cred:credentialSubject;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:nodeKind sh:IRI;
+    sh:node mshape:MotorPolicySubjectShape.
+mshape:MotorPolicyCredentialShape sh:property _:n3-786.
+_:n3-787 sh:path cred:evidence;
+    sh:maxCount 1;
+    sh:nodeKind sh:BlankNodeOrIRI.
+mshape:MotorPolicyCredentialShape sh:property _:n3-787.
+_:n3-788 sh:path cred:credentialSchema;
+    sh:nodeKind sh:IRI.
+mshape:MotorPolicyCredentialShape sh:property _:n3-788.
+mshape:MotorPolicySubjectShape a sh:NodeShape;
+    sh:closed true.
+_:n3-789 rdf:first rdf:type;
+    rdf:rest rdf:nil.
+mshape:MotorPolicySubjectShape sh:ignoredProperties _:n3-789.
+_:n3-790 sh:path schema:identifier;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:datatype xsd:string;
+    sh:minLength 1.
+mshape:MotorPolicySubjectShape sh:property _:n3-790.
+_:n3-791 sh:path mort:vehicle;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:nodeKind sh:BlankNodeOrIRI;
+    sh:node mshape:VehicleShape.
+mshape:MotorPolicySubjectShape sh:property _:n3-791.
+_:n3-792 sh:path mort:coverage;
+    sh:minCount 1;
+    sh:datatype xsd:string;
+    sh:minLength 1.
+mshape:MotorPolicySubjectShape sh:property _:n3-792.
+_:n3-793 sh:path mort:deductible;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:nodeKind sh:BlankNodeOrIRI;
+    sh:node mshape:MonetaryAmountShape.
+mshape:MotorPolicySubjectShape sh:property _:n3-793.
+_:n3-794 sh:path schema:validFrom;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:datatype xsd:date;
+    sh:lessThan schema:validThrough.
+mshape:MotorPolicySubjectShape sh:property _:n3-794.
+_:n3-795 sh:path schema:validThrough;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:datatype xsd:date.
+mshape:MotorPolicySubjectShape sh:property _:n3-795.
 `,
   "odrl-policy": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -3512,51 +3805,106 @@ mshape:MedicationAdherenceShape sh:property _:n3-742.
 mshape:OdrlPolicyShape a sh:NodeShape;
     sh:targetClass odrl:Agreement;
     sh:closed true.
-_:n3-743 sh:path rdf:type;
+_:n3-796 sh:path rdf:type;
     sh:hasValue odrl:Agreement.
-mshape:OdrlPolicyShape sh:property _:n3-743.
-_:n3-744 sh:path schema:identifier;
+mshape:OdrlPolicyShape sh:property _:n3-796.
+_:n3-797 sh:path schema:identifier;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:OdrlPolicyShape sh:property _:n3-744.
-_:n3-745 sh:path schema:name;
+mshape:OdrlPolicyShape sh:property _:n3-797.
+_:n3-798 sh:path schema:name;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:OdrlPolicyShape sh:property _:n3-745.
-_:n3-746 sh:path dcterms:description;
+mshape:OdrlPolicyShape sh:property _:n3-798.
+_:n3-799 sh:path dcterms:description;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:OdrlPolicyShape sh:property _:n3-746.
-_:n3-747 sh:path odrl:assigner;
+mshape:OdrlPolicyShape sh:property _:n3-799.
+_:n3-800 sh:path odrl:assigner;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:OdrlPolicyShape sh:property _:n3-747.
-_:n3-748 sh:path odrl:assignee;
+mshape:OdrlPolicyShape sh:property _:n3-800.
+_:n3-801 sh:path odrl:assignee;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:OdrlPolicyShape sh:property _:n3-748.
-_:n3-749 sh:path odrl:permission;
+mshape:OdrlPolicyShape sh:property _:n3-801.
+_:n3-802 sh:path odrl:permission;
     sh:minCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:PermissionShape.
-mshape:OdrlPolicyShape sh:property _:n3-749.
-_:n3-750 sh:path dcterms:issued;
+mshape:OdrlPolicyShape sh:property _:n3-802.
+_:n3-803 sh:path dcterms:issued;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:dateTime.
-mshape:OdrlPolicyShape sh:property _:n3-750.
-_:n3-751 sh:path dcterms:source;
+mshape:OdrlPolicyShape sh:property _:n3-803.
+_:n3-804 sh:path dcterms:source;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:OdrlPolicyShape sh:property _:n3-751.
+mshape:OdrlPolicyShape sh:property _:n3-804.
+`,
+  "other-party-details": `@prefix sh: <http://www.w3.org/ns/shacl#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix schema: <https://schema.org/>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#>.
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#>.
+
+mshape:OtherPartyDetailsShape a sh:NodeShape;
+    sh:targetClass mort:OtherPartyDetails;
+    sh:closed true.
+_:n3-805 sh:path rdf:type;
+    sh:hasValue mort:OtherPartyDetails.
+mshape:OtherPartyDetailsShape sh:property _:n3-805.
+_:n3-806 sh:path schema:name;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:datatype xsd:string;
+    sh:minLength 1.
+mshape:OtherPartyDetailsShape sh:property _:n3-806.
+_:n3-807 sh:path schema:telephone;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:datatype xsd:string;
+    sh:pattern "^\\\\([0-9]{3}\\\\) 555-01[0-9]{2}$".
+mshape:OtherPartyDetailsShape sh:property _:n3-807.
+_:n3-808 sh:path mort:insurerName;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:datatype xsd:string;
+    sh:minLength 1.
+mshape:OtherPartyDetailsShape sh:property _:n3-808.
+_:n3-809 sh:path schema:identifier;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:datatype xsd:string;
+    sh:minLength 1.
+mshape:OtherPartyDetailsShape sh:property _:n3-809.
+_:n3-810 sh:path mort:vehicle;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:nodeKind sh:BlankNodeOrIRI;
+    sh:node mshape:VehicleShape.
+mshape:OtherPartyDetailsShape sh:property _:n3-810.
+_:n3-811 sh:path dcterms:creator;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:nodeKind sh:IRI.
+mshape:OtherPartyDetailsShape sh:property _:n3-811.
+_:n3-812 sh:path dcterms:created;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:datatype xsd:dateTime.
+mshape:OtherPartyDetailsShape sh:property _:n3-812.
 `,
   "payment-mandate": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -3569,55 +3917,55 @@ mshape:OdrlPolicyShape sh:property _:n3-751.
 mshape:PaymentMandateShape a sh:NodeShape;
     sh:targetClass mort:PaymentMandate;
     sh:closed true.
-_:n3-752 sh:path rdf:type;
+_:n3-813 sh:path rdf:type;
     sh:hasValue mort:PaymentMandate.
-mshape:PaymentMandateShape sh:property _:n3-752.
-_:n3-753 sh:path dcterms:creator;
+mshape:PaymentMandateShape sh:property _:n3-813.
+_:n3-814 sh:path dcterms:creator;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:PaymentMandateShape sh:property _:n3-753.
-_:n3-754 sh:path mort:payee;
+mshape:PaymentMandateShape sh:property _:n3-814.
+_:n3-815 sh:path mort:payee;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:PaymentMandateShape sh:property _:n3-754.
-_:n3-755 sh:path mort:accountLast4;
+mshape:PaymentMandateShape sh:property _:n3-815.
+_:n3-816 sh:path mort:accountLast4;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:pattern "^[0-9]{4}$";
     sh:minLength 1.
-mshape:PaymentMandateShape sh:property _:n3-755.
-_:n3-756 sh:path schema:provider;
+mshape:PaymentMandateShape sh:property _:n3-816.
+_:n3-817 sh:path schema:provider;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:OrganizationShape.
-mshape:PaymentMandateShape sh:property _:n3-756.
-_:n3-757 sh:path schema:amount;
+mshape:PaymentMandateShape sh:property _:n3-817.
+_:n3-818 sh:path schema:amount;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:MonetaryAmountShape.
-mshape:PaymentMandateShape sh:property _:n3-757.
-_:n3-758 sh:path mort:debitDayOfMonth;
+mshape:PaymentMandateShape sh:property _:n3-818.
+_:n3-819 sh:path mort:debitDayOfMonth;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:integer;
     sh:minInclusive 1;
     sh:maxInclusive 28.
-mshape:PaymentMandateShape sh:property _:n3-758.
-_:n3-759 sh:path dcterms:issued;
+mshape:PaymentMandateShape sh:property _:n3-819.
+_:n3-820 sh:path dcterms:issued;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:dateTime.
-mshape:PaymentMandateShape sh:property _:n3-759.
-_:n3-760 sh:path mort:loanNumber;
+mshape:PaymentMandateShape sh:property _:n3-820.
+_:n3-821 sh:path mort:loanNumber;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:PaymentMandateShape sh:property _:n3-760.
+mshape:PaymentMandateShape sh:property _:n3-821.
 `,
   "payout-instruction": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -3630,58 +3978,58 @@ mshape:PaymentMandateShape sh:property _:n3-760.
 mshape:PayoutInstructionShape a sh:NodeShape;
     sh:targetClass mort:PayoutInstruction;
     sh:closed true.
-_:n3-761 sh:path rdf:type;
+_:n3-822 sh:path rdf:type;
     sh:hasValue mort:PayoutInstruction.
-mshape:PayoutInstructionShape sh:property _:n3-761.
-_:n3-762 sh:path schema:name;
+mshape:PayoutInstructionShape sh:property _:n3-822.
+_:n3-823 sh:path schema:name;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:PayoutInstructionShape sh:property _:n3-762.
-_:n3-763 sh:path dcterms:creator;
+mshape:PayoutInstructionShape sh:property _:n3-823.
+_:n3-824 sh:path dcterms:creator;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:PayoutInstructionShape sh:property _:n3-763.
-_:n3-764 sh:path mort:paymentRail;
+mshape:PayoutInstructionShape sh:property _:n3-824.
+_:n3-825 sh:path mort:paymentRail;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-_:n3-765 rdf:first mort:PaymentRail-PushToCard;
+_:n3-826 rdf:first mort:PaymentRail-PushToCard;
     rdf:rest rdf:nil.
-_:n3-764 sh:in _:n3-765.
-mshape:PayoutInstructionShape sh:property _:n3-764.
-_:n3-766 sh:path schema:provider;
+_:n3-825 sh:in _:n3-826.
+mshape:PayoutInstructionShape sh:property _:n3-825.
+_:n3-827 sh:path schema:provider;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:OrganizationShape.
-mshape:PayoutInstructionShape sh:property _:n3-766.
-_:n3-767 sh:path mort:accountLast4;
+mshape:PayoutInstructionShape sh:property _:n3-827.
+_:n3-828 sh:path mort:accountLast4;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:pattern "^[0-9]{4}$";
     sh:message "accountLast4 must be exactly four digits; the full card number never enters the pod".
-mshape:PayoutInstructionShape sh:property _:n3-767.
-_:n3-768 sh:path schema:amount;
+mshape:PayoutInstructionShape sh:property _:n3-828.
+_:n3-829 sh:path schema:amount;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:MonetaryAmountShape.
-mshape:PayoutInstructionShape sh:property _:n3-768.
-_:n3-769 sh:path mort:loanNumber;
+mshape:PayoutInstructionShape sh:property _:n3-829.
+_:n3-830 sh:path mort:loanNumber;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:PayoutInstructionShape sh:property _:n3-769.
-_:n3-770 sh:path dcterms:issued;
+mshape:PayoutInstructionShape sh:property _:n3-830.
+_:n3-831 sh:path dcterms:issued;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:dateTime.
-mshape:PayoutInstructionShape sh:property _:n3-770.
+mshape:PayoutInstructionShape sh:property _:n3-831.
 `,
   "provenance-record": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -3692,109 +4040,109 @@ mshape:PayoutInstructionShape sh:property _:n3-770.
 mshape:ProvenanceRecordShape a sh:NodeShape;
     sh:targetClass fhir:Provenance;
     sh:closed true.
-_:n3-771 sh:path rdf:type.
-_:n3-772 rdf:first fhir:Provenance;
+_:n3-832 sh:path rdf:type.
+_:n3-833 rdf:first fhir:Provenance;
     rdf:rest rdf:nil.
-_:n3-771 sh:in _:n3-772.
-mshape:ProvenanceRecordShape sh:property _:n3-771.
-_:n3-773 sh:path fhir:nodeRole;
+_:n3-832 sh:in _:n3-833.
+mshape:ProvenanceRecordShape sh:property _:n3-832.
+_:n3-834 sh:path fhir:nodeRole;
     sh:maxCount 1.
-_:n3-774 rdf:first fhir:treeRoot;
+_:n3-835 rdf:first fhir:treeRoot;
     rdf:rest rdf:nil.
-_:n3-773 sh:in _:n3-774.
-mshape:ProvenanceRecordShape sh:property _:n3-773.
-_:n3-775 sh:path fhir:id;
+_:n3-834 sh:in _:n3-835.
+mshape:ProvenanceRecordShape sh:property _:n3-834.
+_:n3-836 sh:path fhir:id;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirIdShape.
-mshape:ProvenanceRecordShape sh:property _:n3-775.
-_:n3-776 sh:path fhir:target;
+mshape:ProvenanceRecordShape sh:property _:n3-836.
+_:n3-837 sh:path fhir:target;
     sh:minCount 1;
     sh:maxCount 1.
-mshape:ProvenanceRecordShape sh:property _:n3-776.
-_:n3-778 rdf:first fhir:target;
-    rdf:rest _:n3-779.
-_:n3-779 rdf:first _:n3-780.
-_:n3-780 sh:zeroOrMorePath rdf:rest.
-_:n3-779 rdf:rest _:n3-781.
-_:n3-781 rdf:first rdf:first;
+mshape:ProvenanceRecordShape sh:property _:n3-837.
+_:n3-839 rdf:first fhir:target;
+    rdf:rest _:n3-840.
+_:n3-840 rdf:first _:n3-841.
+_:n3-841 sh:zeroOrMorePath rdf:rest.
+_:n3-840 rdf:rest _:n3-842.
+_:n3-842 rdf:first rdf:first;
     rdf:rest rdf:nil.
-_:n3-777 sh:path _:n3-778;
+_:n3-838 sh:path _:n3-839;
     sh:minCount 1;
     sh:node mshape:FhirLinkedReferenceShape.
-mshape:ProvenanceRecordShape sh:property _:n3-777.
-_:n3-782 sh:path fhir:recorded;
+mshape:ProvenanceRecordShape sh:property _:n3-838.
+_:n3-843 sh:path fhir:recorded;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirDateTimeShape.
-mshape:ProvenanceRecordShape sh:property _:n3-782.
-_:n3-783 sh:path fhir:why;
+mshape:ProvenanceRecordShape sh:property _:n3-843.
+_:n3-844 sh:path fhir:why;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirStringShape.
-mshape:ProvenanceRecordShape sh:property _:n3-783.
-_:n3-784 sh:path fhir:activity;
+mshape:ProvenanceRecordShape sh:property _:n3-844.
+_:n3-845 sh:path fhir:activity;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirCodeableConceptShape.
-mshape:ProvenanceRecordShape sh:property _:n3-784.
-_:n3-786 rdf:first fhir:activity;
-    rdf:rest _:n3-787.
-_:n3-787 rdf:first fhir:coding;
-    rdf:rest _:n3-788.
-_:n3-788 rdf:first _:n3-789.
-_:n3-789 sh:zeroOrMorePath rdf:rest.
-_:n3-788 rdf:rest _:n3-790.
-_:n3-790 rdf:first rdf:first;
-    rdf:rest _:n3-791.
-_:n3-791 rdf:first fhir:code;
-    rdf:rest _:n3-792.
-_:n3-792 rdf:first fhir:v;
+mshape:ProvenanceRecordShape sh:property _:n3-845.
+_:n3-847 rdf:first fhir:activity;
+    rdf:rest _:n3-848.
+_:n3-848 rdf:first fhir:coding;
+    rdf:rest _:n3-849.
+_:n3-849 rdf:first _:n3-850.
+_:n3-850 sh:zeroOrMorePath rdf:rest.
+_:n3-849 rdf:rest _:n3-851.
+_:n3-851 rdf:first rdf:first;
+    rdf:rest _:n3-852.
+_:n3-852 rdf:first fhir:code;
+    rdf:rest _:n3-853.
+_:n3-853 rdf:first fhir:v;
     rdf:rest rdf:nil.
-_:n3-785 sh:path _:n3-786;
+_:n3-846 sh:path _:n3-847;
     sh:minCount 1.
-_:n3-793 rdf:first "CREATE";
-    rdf:rest _:n3-794.
-_:n3-794 rdf:first "UPDATE";
+_:n3-854 rdf:first "CREATE";
+    rdf:rest _:n3-855.
+_:n3-855 rdf:first "UPDATE";
     rdf:rest rdf:nil.
-_:n3-785 sh:in _:n3-793.
-mshape:ProvenanceRecordShape sh:property _:n3-785.
-_:n3-795 sh:path fhir:patient;
+_:n3-846 sh:in _:n3-854.
+mshape:ProvenanceRecordShape sh:property _:n3-846.
+_:n3-856 sh:path fhir:patient;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirLinkedReferenceShape.
-mshape:ProvenanceRecordShape sh:property _:n3-795.
-_:n3-796 sh:path fhir:agent;
+mshape:ProvenanceRecordShape sh:property _:n3-856.
+_:n3-857 sh:path fhir:agent;
     sh:minCount 1;
     sh:maxCount 1.
-mshape:ProvenanceRecordShape sh:property _:n3-796.
-_:n3-798 rdf:first fhir:agent;
-    rdf:rest _:n3-799.
-_:n3-799 rdf:first _:n3-800.
-_:n3-800 sh:zeroOrMorePath rdf:rest.
-_:n3-799 rdf:rest _:n3-801.
-_:n3-801 rdf:first rdf:first;
+mshape:ProvenanceRecordShape sh:property _:n3-857.
+_:n3-859 rdf:first fhir:agent;
+    rdf:rest _:n3-860.
+_:n3-860 rdf:first _:n3-861.
+_:n3-861 sh:zeroOrMorePath rdf:rest.
+_:n3-860 rdf:rest _:n3-862.
+_:n3-862 rdf:first rdf:first;
     rdf:rest rdf:nil.
-_:n3-797 sh:path _:n3-798;
+_:n3-858 sh:path _:n3-859;
     sh:minCount 1;
     sh:node mshape:ProvenanceAgentShape.
-mshape:ProvenanceRecordShape sh:property _:n3-797.
+mshape:ProvenanceRecordShape sh:property _:n3-858.
 mshape:ProvenanceAgentShape a sh:NodeShape;
     sh:closed true.
-_:n3-802 sh:path fhir:type;
+_:n3-863 sh:path fhir:type;
     sh:maxCount 1;
     sh:node mshape:FhirCodeableConceptShape.
-mshape:ProvenanceAgentShape sh:property _:n3-802.
-_:n3-803 sh:path fhir:who;
+mshape:ProvenanceAgentShape sh:property _:n3-863.
+_:n3-864 sh:path fhir:who;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirReferenceShape.
-mshape:ProvenanceAgentShape sh:property _:n3-803.
-_:n3-804 sh:path fhir:onBehalfOf;
+mshape:ProvenanceAgentShape sh:property _:n3-864.
+_:n3-865 sh:path fhir:onBehalfOf;
     sh:minCount 1;
     sh:maxCount 1;
     sh:node mshape:FhirLinkedReferenceShape.
-mshape:ProvenanceAgentShape sh:property _:n3-804.
+mshape:ProvenanceAgentShape sh:property _:n3-865.
 `,
   "purchase-agreement": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -3807,53 +4155,53 @@ mshape:ProvenanceAgentShape sh:property _:n3-804.
 mshape:PurchaseAgreementShape a sh:NodeShape;
     sh:targetClass mort:PurchaseAgreement;
     sh:closed true.
-_:n3-805 sh:path rdf:type;
+_:n3-866 sh:path rdf:type;
     sh:hasValue mort:PurchaseAgreement.
-mshape:PurchaseAgreementShape sh:property _:n3-805.
-_:n3-806 sh:path schema:name;
+mshape:PurchaseAgreementShape sh:property _:n3-866.
+_:n3-867 sh:path schema:name;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:PurchaseAgreementShape sh:property _:n3-806.
-_:n3-807 sh:path schema:buyer;
+mshape:PurchaseAgreementShape sh:property _:n3-867.
+_:n3-868 sh:path schema:buyer;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:PurchaseAgreementShape sh:property _:n3-807.
-_:n3-808 sh:path schema:seller;
+mshape:PurchaseAgreementShape sh:property _:n3-868.
+_:n3-869 sh:path schema:seller;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:NamedPartyShape.
-mshape:PurchaseAgreementShape sh:property _:n3-808.
-_:n3-809 sh:path mort:purchasePrice;
+mshape:PurchaseAgreementShape sh:property _:n3-869.
+_:n3-870 sh:path mort:purchasePrice;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:MonetaryAmountShape.
-mshape:PurchaseAgreementShape sh:property _:n3-809.
-_:n3-810 sh:path mort:earnestMoneyDeposit;
+mshape:PurchaseAgreementShape sh:property _:n3-870.
+_:n3-871 sh:path mort:earnestMoneyDeposit;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:MonetaryAmountShape.
-mshape:PurchaseAgreementShape sh:property _:n3-810.
-_:n3-811 sh:path mort:subjectProperty;
+mshape:PurchaseAgreementShape sh:property _:n3-871.
+_:n3-872 sh:path mort:subjectProperty;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:PropertyShape.
-mshape:PurchaseAgreementShape sh:property _:n3-811.
-_:n3-812 sh:path dcterms:issued;
+mshape:PurchaseAgreementShape sh:property _:n3-872.
+_:n3-873 sh:path dcterms:issued;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:date.
-mshape:PurchaseAgreementShape sh:property _:n3-812.
-_:n3-813 sh:path mort:closingDate;
+mshape:PurchaseAgreementShape sh:property _:n3-873.
+_:n3-874 sh:path mort:closingDate;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:date.
-mshape:PurchaseAgreementShape sh:property _:n3-813.
+mshape:PurchaseAgreementShape sh:property _:n3-874.
 `,
   "recorded-instrument": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -3866,46 +4214,46 @@ mshape:PurchaseAgreementShape sh:property _:n3-813.
 mshape:RecordedInstrumentShape a sh:NodeShape;
     sh:targetClass mort:RecordedInstrument;
     sh:closed true.
-_:n3-814 sh:path rdf:type;
+_:n3-875 sh:path rdf:type;
     sh:hasValue mort:RecordedInstrument.
-mshape:RecordedInstrumentShape sh:property _:n3-814.
-_:n3-815 sh:path schema:name;
+mshape:RecordedInstrumentShape sh:property _:n3-875.
+_:n3-876 sh:path schema:name;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:RecordedInstrumentShape sh:property _:n3-815.
-_:n3-816 sh:path mort:recordingReference;
+mshape:RecordedInstrumentShape sh:property _:n3-876.
+_:n3-877 sh:path mort:recordingReference;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:RecordedInstrumentShape sh:property _:n3-816.
-_:n3-817 sh:path mort:recordedAt;
+mshape:RecordedInstrumentShape sh:property _:n3-877.
+_:n3-878 sh:path mort:recordedAt;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:dateTime.
-mshape:RecordedInstrumentShape sh:property _:n3-817.
-_:n3-818 sh:path mort:grantor;
+mshape:RecordedInstrumentShape sh:property _:n3-878.
+_:n3-879 sh:path mort:grantor;
     sh:minCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:RecordedInstrumentShape sh:property _:n3-818.
-_:n3-819 sh:path mort:grantee;
+mshape:RecordedInstrumentShape sh:property _:n3-879.
+_:n3-880 sh:path mort:grantee;
     sh:minCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:RecordedInstrumentShape sh:property _:n3-819.
-_:n3-820 sh:path mort:parcelNumber;
+mshape:RecordedInstrumentShape sh:property _:n3-880.
+_:n3-881 sh:path mort:parcelNumber;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:RecordedInstrumentShape sh:property _:n3-820.
-_:n3-821 sh:path dcterms:creator;
+mshape:RecordedInstrumentShape sh:property _:n3-881.
+_:n3-882 sh:path dcterms:creator;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:RecordedInstrumentShape sh:property _:n3-821.
+mshape:RecordedInstrumentShape sh:property _:n3-882.
 `,
   "recording-receipt": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -3918,39 +4266,145 @@ mshape:RecordedInstrumentShape sh:property _:n3-821.
 mshape:RecordingReceiptShape a sh:NodeShape;
     sh:targetClass mort:RecordingReceipt;
     sh:closed true.
-_:n3-822 sh:path rdf:type;
+_:n3-883 sh:path rdf:type;
     sh:hasValue mort:RecordingReceipt.
-mshape:RecordingReceiptShape sh:property _:n3-822.
-_:n3-823 sh:path schema:name;
+mshape:RecordingReceiptShape sh:property _:n3-883.
+_:n3-884 sh:path schema:name;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:RecordingReceiptShape sh:property _:n3-823.
-_:n3-824 sh:path dcterms:creator;
+mshape:RecordingReceiptShape sh:property _:n3-884.
+_:n3-885 sh:path dcterms:creator;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:RecordingReceiptShape sh:property _:n3-824.
-_:n3-825 sh:path dcterms:issued;
+mshape:RecordingReceiptShape sh:property _:n3-885.
+_:n3-886 sh:path dcterms:issued;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:dateTime.
-mshape:RecordingReceiptShape sh:property _:n3-825.
-_:n3-826 sh:path mort:recordedInstrument;
+mshape:RecordingReceiptShape sh:property _:n3-886.
+_:n3-887 sh:path mort:recordedInstrument;
     sh:minCount 1;
     sh:nodeKind sh:IRI.
-mshape:RecordingReceiptShape sh:property _:n3-826.
-_:n3-827 sh:path mort:recordingReference;
+mshape:RecordingReceiptShape sh:property _:n3-887.
+_:n3-888 sh:path mort:recordingReference;
     sh:minCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:RecordingReceiptShape sh:property _:n3-827.
-_:n3-828 sh:path mort:subjectProperty;
+mshape:RecordingReceiptShape sh:property _:n3-888.
+_:n3-889 sh:path mort:subjectProperty;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:PropertyShape.
-mshape:RecordingReceiptShape sh:property _:n3-828.
+mshape:RecordingReceiptShape sh:property _:n3-889.
+`,
+  "repair-estimate": `@prefix sh: <http://www.w3.org/ns/shacl#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix schema: <https://schema.org/>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#>.
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#>.
+
+mshape:RepairEstimateShape a sh:NodeShape;
+    sh:targetClass mort:RepairEstimate;
+    sh:closed true.
+_:n3-890 sh:path rdf:type;
+    sh:hasValue mort:RepairEstimate.
+mshape:RepairEstimateShape sh:property _:n3-890.
+_:n3-891 sh:path schema:name;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:datatype xsd:string;
+    sh:minLength 1.
+mshape:RepairEstimateShape sh:property _:n3-891.
+_:n3-892 sh:path schema:identifier;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:datatype xsd:string;
+    sh:minLength 1.
+mshape:RepairEstimateShape sh:property _:n3-892.
+_:n3-893 sh:path schema:about;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:nodeKind sh:IRI.
+mshape:RepairEstimateShape sh:property _:n3-893.
+_:n3-894 sh:path mort:lineItem;
+    sh:minCount 1;
+    sh:nodeKind sh:BlankNodeOrIRI;
+    sh:node mshape:LineItemShape.
+mshape:RepairEstimateShape sh:property _:n3-894.
+_:n3-895 sh:path mort:totalAmount;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:nodeKind sh:BlankNodeOrIRI;
+    sh:node mshape:MonetaryAmountShape.
+mshape:RepairEstimateShape sh:property _:n3-895.
+_:n3-896 sh:path dcterms:creator;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:nodeKind sh:IRI.
+mshape:RepairEstimateShape sh:property _:n3-896.
+_:n3-897 sh:path dcterms:created;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:datatype xsd:dateTime.
+mshape:RepairEstimateShape sh:property _:n3-897.
+`,
+  "repair-invoice": `@prefix sh: <http://www.w3.org/ns/shacl#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix schema: <https://schema.org/>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#>.
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#>.
+
+mshape:RepairInvoiceShape a sh:NodeShape;
+    sh:targetClass schema:Invoice;
+    sh:closed true.
+_:n3-898 sh:path rdf:type;
+    sh:hasValue schema:Invoice.
+mshape:RepairInvoiceShape sh:property _:n3-898.
+_:n3-899 sh:path schema:name;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:datatype xsd:string;
+    sh:minLength 1.
+mshape:RepairInvoiceShape sh:property _:n3-899.
+_:n3-900 sh:path schema:identifier;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:datatype xsd:string;
+    sh:minLength 1.
+mshape:RepairInvoiceShape sh:property _:n3-900.
+_:n3-901 sh:path schema:referencesOrder;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:nodeKind sh:IRI.
+mshape:RepairInvoiceShape sh:property _:n3-901.
+_:n3-902 sh:path mort:lineItem;
+    sh:minCount 1;
+    sh:nodeKind sh:BlankNodeOrIRI;
+    sh:node mshape:LineItemShape.
+mshape:RepairInvoiceShape sh:property _:n3-902.
+_:n3-903 sh:path schema:totalPaymentDue;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:nodeKind sh:BlankNodeOrIRI;
+    sh:node mshape:MonetaryAmountShape.
+mshape:RepairInvoiceShape sh:property _:n3-903.
+_:n3-904 sh:path dcterms:creator;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:nodeKind sh:IRI.
+mshape:RepairInvoiceShape sh:property _:n3-904.
+_:n3-905 sh:path dcterms:created;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:datatype xsd:dateTime.
+mshape:RepairInvoiceShape sh:property _:n3-905.
 `,
   "repayment-history-credential": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -3965,101 +4419,101 @@ mshape:RecordingReceiptShape sh:property _:n3-828.
 mshape:RepaymentHistoryCredentialShape a sh:NodeShape;
     sh:targetClass mort:RepaymentHistoryCredential;
     sh:closed true.
-_:n3-829 rdf:first sec:proof;
+_:n3-906 rdf:first sec:proof;
     rdf:rest rdf:nil.
-mshape:RepaymentHistoryCredentialShape sh:ignoredProperties _:n3-829.
-_:n3-830 sh:path rdf:type;
+mshape:RepaymentHistoryCredentialShape sh:ignoredProperties _:n3-906.
+_:n3-907 sh:path rdf:type;
     sh:hasValue cred:VerifiableCredential.
-mshape:RepaymentHistoryCredentialShape sh:property _:n3-830.
-_:n3-831 sh:path cred:issuer;
+mshape:RepaymentHistoryCredentialShape sh:property _:n3-907.
+_:n3-908 sh:path cred:issuer;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:RepaymentHistoryCredentialShape sh:property _:n3-831.
-_:n3-832 sh:path cred:validFrom;
+mshape:RepaymentHistoryCredentialShape sh:property _:n3-908.
+_:n3-909 sh:path cred:validFrom;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:dateTime;
     sh:lessThan cred:validUntil.
-mshape:RepaymentHistoryCredentialShape sh:property _:n3-832.
-_:n3-833 sh:path cred:validUntil;
+mshape:RepaymentHistoryCredentialShape sh:property _:n3-909.
+_:n3-910 sh:path cred:validUntil;
     sh:maxCount 1;
     sh:datatype xsd:dateTime.
-mshape:RepaymentHistoryCredentialShape sh:property _:n3-833.
-_:n3-834 sh:path cred:credentialStatus;
+mshape:RepaymentHistoryCredentialShape sh:property _:n3-910.
+_:n3-911 sh:path cred:credentialStatus;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI.
-mshape:RepaymentHistoryCredentialShape sh:property _:n3-834.
-_:n3-835 sh:path cred:credentialSubject;
+mshape:RepaymentHistoryCredentialShape sh:property _:n3-911.
+_:n3-912 sh:path cred:credentialSubject;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI;
     sh:node mshape:RepaymentHistorySubjectShape.
-mshape:RepaymentHistoryCredentialShape sh:property _:n3-835.
-_:n3-836 sh:path cred:credentialSchema;
+mshape:RepaymentHistoryCredentialShape sh:property _:n3-912.
+_:n3-913 sh:path cred:credentialSchema;
     sh:nodeKind sh:IRI.
-mshape:RepaymentHistoryCredentialShape sh:property _:n3-836.
+mshape:RepaymentHistoryCredentialShape sh:property _:n3-913.
 mshape:RepaymentHistorySubjectShape a sh:NodeShape;
     sh:closed true.
-_:n3-837 rdf:first rdf:type;
+_:n3-914 rdf:first rdf:type;
     rdf:rest rdf:nil.
-mshape:RepaymentHistorySubjectShape sh:ignoredProperties _:n3-837.
-_:n3-838 sh:path fibo-loan-ln-ln:hasPaymentHistory;
+mshape:RepaymentHistorySubjectShape sh:ignoredProperties _:n3-914.
+_:n3-915 sh:path fibo-loan-ln-ln:hasPaymentHistory;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:PaymentHistoryShape.
-mshape:RepaymentHistorySubjectShape sh:property _:n3-838.
+mshape:RepaymentHistorySubjectShape sh:property _:n3-915.
 mshape:PaymentHistoryShape a sh:NodeShape;
     sh:closed true.
-_:n3-839 sh:path rdf:type;
+_:n3-916 sh:path rdf:type;
     sh:hasValue fibo-loan-ln-ln:PaymentHistory.
-mshape:PaymentHistoryShape sh:property _:n3-839.
-_:n3-840 sh:path mort:servicedLoan;
+mshape:PaymentHistoryShape sh:property _:n3-916.
+_:n3-917 sh:path mort:servicedLoan;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:PaymentHistoryShape sh:property _:n3-840.
-_:n3-841 sh:path mort:loanNumber;
+mshape:PaymentHistoryShape sh:property _:n3-917.
+_:n3-918 sh:path mort:loanNumber;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:PaymentHistoryShape sh:property _:n3-841.
-_:n3-842 sh:path mort:onTimePaymentCount;
+mshape:PaymentHistoryShape sh:property _:n3-918.
+_:n3-919 sh:path mort:onTimePaymentCount;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:integer;
     sh:minInclusive 0;
     sh:maxInclusive 999.
-mshape:PaymentHistoryShape sh:property _:n3-842.
-_:n3-843 sh:path mort:latePaymentCount;
+mshape:PaymentHistoryShape sh:property _:n3-919.
+_:n3-920 sh:path mort:latePaymentCount;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:integer;
     sh:minInclusive 0;
     sh:maxInclusive 999.
-mshape:PaymentHistoryShape sh:property _:n3-843.
-_:n3-844 sh:path mort:scheduledPaymentCount;
+mshape:PaymentHistoryShape sh:property _:n3-920.
+_:n3-921 sh:path mort:scheduledPaymentCount;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:integer;
     sh:minInclusive 1;
     sh:maxInclusive 999.
-mshape:PaymentHistoryShape sh:property _:n3-844.
-_:n3-845 sh:path schema:startDate;
+mshape:PaymentHistoryShape sh:property _:n3-921.
+_:n3-922 sh:path schema:startDate;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:date;
     sh:lessThan schema:endDate;
     sh:message "the reporting period must end after it starts".
-mshape:PaymentHistoryShape sh:property _:n3-845.
-_:n3-846 sh:path schema:endDate;
+mshape:PaymentHistoryShape sh:property _:n3-922.
+_:n3-923 sh:path schema:endDate;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:date.
-mshape:PaymentHistoryShape sh:property _:n3-846.
+mshape:PaymentHistoryShape sh:property _:n3-923.
 `,
   "score-notice": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -4073,47 +4527,47 @@ mshape:PaymentHistoryShape sh:property _:n3-846.
 mshape:CreditScoreNoticeShape a sh:NodeShape;
     sh:targetClass mort:CreditScoreNotice;
     sh:closed true.
-_:n3-847 sh:path rdf:type;
+_:n3-924 sh:path rdf:type;
     sh:hasValue mort:CreditScoreNotice.
-mshape:CreditScoreNoticeShape sh:property _:n3-847.
-_:n3-848 sh:path schema:name;
+mshape:CreditScoreNoticeShape sh:property _:n3-924.
+_:n3-925 sh:path schema:name;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:CreditScoreNoticeShape sh:property _:n3-848.
-_:n3-849 sh:path mort:loanNumber;
+mshape:CreditScoreNoticeShape sh:property _:n3-925.
+_:n3-926 sh:path mort:loanNumber;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:CreditScoreNoticeShape sh:property _:n3-849.
-_:n3-850 sh:path fibo-fbc-dae-dbt:hasBorrower;
+mshape:CreditScoreNoticeShape sh:property _:n3-926.
+_:n3-927 sh:path fibo-fbc-dae-dbt:hasBorrower;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:CreditScoreNoticeShape sh:property _:n3-850.
-_:n3-851 sh:path dcterms:creator;
+mshape:CreditScoreNoticeShape sh:property _:n3-927.
+_:n3-928 sh:path dcterms:creator;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:CreditScoreNoticeShape sh:property _:n3-851.
-_:n3-852 sh:path dcterms:issued;
+mshape:CreditScoreNoticeShape sh:property _:n3-928.
+_:n3-929 sh:path dcterms:issued;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:date.
-mshape:CreditScoreNoticeShape sh:property _:n3-852.
-_:n3-853 sh:path mort:scoreDisclosure;
+mshape:CreditScoreNoticeShape sh:property _:n3-929.
+_:n3-930 sh:path mort:scoreDisclosure;
     sh:minCount 1;
     sh:maxCount 3;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:ScoreDisclosureShape.
-mshape:CreditScoreNoticeShape sh:property _:n3-853.
-_:n3-854 sh:path schema:description;
+mshape:CreditScoreNoticeShape sh:property _:n3-930.
+_:n3-931 sh:path schema:description;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:CreditScoreNoticeShape sh:property _:n3-854.
+mshape:CreditScoreNoticeShape sh:property _:n3-931.
 `,
   "service-order": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -4126,71 +4580,71 @@ mshape:CreditScoreNoticeShape sh:property _:n3-854.
 mshape:ServiceOrderShape a sh:NodeShape;
     sh:targetClass schema:Order;
     sh:closed true.
-_:n3-855 sh:path rdf:type;
+_:n3-932 sh:path rdf:type;
     sh:hasValue schema:Order.
-mshape:ServiceOrderShape sh:property _:n3-855.
-_:n3-856 sh:path schema:orderNumber;
+mshape:ServiceOrderShape sh:property _:n3-932.
+_:n3-933 sh:path schema:orderNumber;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:ServiceOrderShape sh:property _:n3-856.
-_:n3-857 sh:path dcterms:type;
+mshape:ServiceOrderShape sh:property _:n3-933.
+_:n3-934 sh:path dcterms:type;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-_:n3-858 rdf:first mort:ServiceKind-CreditReport;
-    rdf:rest _:n3-859.
-_:n3-859 rdf:first mort:ServiceKind-Appraisal;
-    rdf:rest _:n3-860.
-_:n3-860 rdf:first mort:ServiceKind-Title;
-    rdf:rest _:n3-861.
-_:n3-861 rdf:first mort:ServiceKind-FloodDetermination;
-    rdf:rest _:n3-862.
-_:n3-862 rdf:first mort:ServiceKind-TaxTranscripts;
+_:n3-935 rdf:first mort:ServiceKind-CreditReport;
+    rdf:rest _:n3-936.
+_:n3-936 rdf:first mort:ServiceKind-Appraisal;
+    rdf:rest _:n3-937.
+_:n3-937 rdf:first mort:ServiceKind-Title;
+    rdf:rest _:n3-938.
+_:n3-938 rdf:first mort:ServiceKind-FloodDetermination;
+    rdf:rest _:n3-939.
+_:n3-939 rdf:first mort:ServiceKind-TaxTranscripts;
     rdf:rest rdf:nil.
-_:n3-857 sh:in _:n3-858.
-mshape:ServiceOrderShape sh:property _:n3-857.
-_:n3-863 sh:path schema:customer;
+_:n3-934 sh:in _:n3-935.
+mshape:ServiceOrderShape sh:property _:n3-934.
+_:n3-940 sh:path schema:customer;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:ServiceOrderShape sh:property _:n3-863.
-_:n3-864 sh:path schema:seller;
+mshape:ServiceOrderShape sh:property _:n3-940.
+_:n3-941 sh:path schema:seller;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:ServiceOrderShape sh:property _:n3-864.
-_:n3-865 sh:path schema:orderDate;
+mshape:ServiceOrderShape sh:property _:n3-941.
+_:n3-942 sh:path schema:orderDate;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:date.
-mshape:ServiceOrderShape sh:property _:n3-865.
-_:n3-866 sh:path schema:orderStatus;
+mshape:ServiceOrderShape sh:property _:n3-942.
+_:n3-943 sh:path schema:orderStatus;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-_:n3-867 rdf:first schema:OrderProcessing;
-    rdf:rest _:n3-868.
-_:n3-868 rdf:first schema:OrderDelivered;
+_:n3-944 rdf:first schema:OrderProcessing;
+    rdf:rest _:n3-945.
+_:n3-945 rdf:first schema:OrderDelivered;
     rdf:rest rdf:nil.
-_:n3-866 sh:in _:n3-867.
-mshape:ServiceOrderShape sh:property _:n3-866.
-_:n3-869 sh:path mort:loanNumber;
+_:n3-943 sh:in _:n3-944.
+mshape:ServiceOrderShape sh:property _:n3-943.
+_:n3-946 sh:path mort:loanNumber;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:ServiceOrderShape sh:property _:n3-869.
-_:n3-870 sh:path mort:authorisedBy;
+mshape:ServiceOrderShape sh:property _:n3-946.
+_:n3-947 sh:path mort:authorisedBy;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:ServiceOrderShape sh:property _:n3-870.
-_:n3-871 sh:path schema:description;
+mshape:ServiceOrderShape sh:property _:n3-947.
+_:n3-948 sh:path schema:description;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:ServiceOrderShape sh:property _:n3-871.
+mshape:ServiceOrderShape sh:property _:n3-948.
 `,
   "servicing-notice": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -4204,80 +4658,80 @@ mshape:ServiceOrderShape sh:property _:n3-871.
 mshape:LoanTransferNoticeShape a sh:NodeShape;
     sh:targetClass mort:LoanTransferNotice;
     sh:closed true.
-_:n3-872 sh:path rdf:type;
+_:n3-949 sh:path rdf:type;
     sh:hasValue mort:LoanTransferNotice.
-mshape:LoanTransferNoticeShape sh:property _:n3-872.
-_:n3-873 sh:path schema:name;
+mshape:LoanTransferNoticeShape sh:property _:n3-949.
+_:n3-950 sh:path schema:name;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:LoanTransferNoticeShape sh:property _:n3-873.
-_:n3-874 sh:path dcterms:type;
+mshape:LoanTransferNoticeShape sh:property _:n3-950.
+_:n3-951 sh:path dcterms:type;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-_:n3-875 rdf:first mort:NoticeKind-ServicingTransferFromTransferor;
-    rdf:rest _:n3-876.
-_:n3-876 rdf:first mort:NoticeKind-ServicingTransferFromTransferee;
-    rdf:rest _:n3-877.
-_:n3-877 rdf:first mort:NoticeKind-OwnershipTransfer;
+_:n3-952 rdf:first mort:NoticeKind-ServicingTransferFromTransferor;
+    rdf:rest _:n3-953.
+_:n3-953 rdf:first mort:NoticeKind-ServicingTransferFromTransferee;
+    rdf:rest _:n3-954.
+_:n3-954 rdf:first mort:NoticeKind-OwnershipTransfer;
     rdf:rest rdf:nil.
-_:n3-874 sh:in _:n3-875;
+_:n3-951 sh:in _:n3-952;
     sh:message "dcterms:type must be a concept from mort:NoticeKindScheme".
-mshape:LoanTransferNoticeShape sh:property _:n3-874.
-_:n3-878 sh:path mort:loanNumber;
+mshape:LoanTransferNoticeShape sh:property _:n3-951.
+_:n3-955 sh:path mort:loanNumber;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:LoanTransferNoticeShape sh:property _:n3-878.
-_:n3-879 sh:path fibo-fbc-dae-dbt:hasBorrower;
+mshape:LoanTransferNoticeShape sh:property _:n3-955.
+_:n3-956 sh:path fibo-fbc-dae-dbt:hasBorrower;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:LoanTransferNoticeShape sh:property _:n3-879.
-_:n3-880 sh:path dcterms:creator;
+mshape:LoanTransferNoticeShape sh:property _:n3-956.
+_:n3-957 sh:path dcterms:creator;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:LoanTransferNoticeShape sh:property _:n3-880.
-_:n3-881 sh:path dcterms:issued;
+mshape:LoanTransferNoticeShape sh:property _:n3-957.
+_:n3-958 sh:path dcterms:issued;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:date.
-mshape:LoanTransferNoticeShape sh:property _:n3-881.
-_:n3-882 sh:path mort:transferEffectiveDate;
+mshape:LoanTransferNoticeShape sh:property _:n3-958.
+_:n3-959 sh:path mort:transferEffectiveDate;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:date.
-mshape:LoanTransferNoticeShape sh:property _:n3-882.
-_:n3-883 sh:path mort:transferor;
+mshape:LoanTransferNoticeShape sh:property _:n3-959.
+_:n3-960 sh:path mort:transferor;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:OrganizationShape.
-mshape:LoanTransferNoticeShape sh:property _:n3-883.
-_:n3-884 sh:path mort:transferee;
+mshape:LoanTransferNoticeShape sh:property _:n3-960.
+_:n3-961 sh:path mort:transferee;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:OrganizationShape.
-mshape:LoanTransferNoticeShape sh:property _:n3-884.
-_:n3-885 sh:path mort:paymentProtectionEnds;
+mshape:LoanTransferNoticeShape sh:property _:n3-961.
+_:n3-962 sh:path mort:paymentProtectionEnds;
     sh:maxCount 1;
     sh:datatype xsd:date.
-mshape:LoanTransferNoticeShape sh:property _:n3-885.
-_:n3-886 sh:path schema:telephone;
+mshape:LoanTransferNoticeShape sh:property _:n3-962.
+_:n3-963 sh:path schema:telephone;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:LoanTransferNoticeShape sh:property _:n3-886.
-_:n3-887 sh:path schema:description;
+mshape:LoanTransferNoticeShape sh:property _:n3-963.
+_:n3-964 sh:path schema:description;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:LoanTransferNoticeShape sh:property _:n3-887.
+mshape:LoanTransferNoticeShape sh:property _:n3-964.
 `,
   "settlement-statement": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -4292,81 +4746,81 @@ mshape:LoanTransferNoticeShape sh:property _:n3-887.
 mshape:SettlementStatementShape a sh:NodeShape;
     sh:targetClass mort:SettlementStatement;
     sh:closed true.
-_:n3-888 sh:path rdf:type;
+_:n3-965 sh:path rdf:type;
     sh:hasValue mort:SettlementStatement.
-mshape:SettlementStatementShape sh:property _:n3-888.
-_:n3-889 sh:path schema:name;
+mshape:SettlementStatementShape sh:property _:n3-965.
+_:n3-966 sh:path schema:name;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:SettlementStatementShape sh:property _:n3-889.
-_:n3-890 sh:path schema:identifier;
+mshape:SettlementStatementShape sh:property _:n3-966.
+_:n3-967 sh:path schema:identifier;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:SettlementStatementShape sh:property _:n3-890.
-_:n3-891 sh:path mort:loanNumber;
+mshape:SettlementStatementShape sh:property _:n3-967.
+_:n3-968 sh:path mort:loanNumber;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:SettlementStatementShape sh:property _:n3-891.
-_:n3-892 sh:path fibo-fbc-dae-dbt:hasBorrower;
+mshape:SettlementStatementShape sh:property _:n3-968.
+_:n3-969 sh:path fibo-fbc-dae-dbt:hasBorrower;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:SettlementStatementShape sh:property _:n3-892.
-_:n3-893 sh:path dcterms:creator;
+mshape:SettlementStatementShape sh:property _:n3-969.
+_:n3-970 sh:path dcterms:creator;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:SettlementStatementShape sh:property _:n3-893.
-_:n3-894 sh:path dcterms:issued;
+mshape:SettlementStatementShape sh:property _:n3-970.
+_:n3-971 sh:path dcterms:issued;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:date.
-mshape:SettlementStatementShape sh:property _:n3-894.
-_:n3-895 sh:path mort:closingDate;
+mshape:SettlementStatementShape sh:property _:n3-971.
+_:n3-972 sh:path mort:closingDate;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:date.
-mshape:SettlementStatementShape sh:property _:n3-895.
-_:n3-896 sh:path mort:disbursementDate;
+mshape:SettlementStatementShape sh:property _:n3-972.
+_:n3-973 sh:path mort:disbursementDate;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:date.
-mshape:SettlementStatementShape sh:property _:n3-896.
-_:n3-897 sh:path mort:purchasePrice;
+mshape:SettlementStatementShape sh:property _:n3-973.
+_:n3-974 sh:path mort:purchasePrice;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:MonetaryAmountShape.
-mshape:SettlementStatementShape sh:property _:n3-897.
-_:n3-898 sh:path fibo-loan-ln-ln:hasPrincipalAmount;
+mshape:SettlementStatementShape sh:property _:n3-974.
+_:n3-975 sh:path fibo-loan-ln-ln:hasPrincipalAmount;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:MonetaryAmountShape.
-mshape:SettlementStatementShape sh:property _:n3-898.
-_:n3-899 sh:path mort:lineItem;
+mshape:SettlementStatementShape sh:property _:n3-975.
+_:n3-976 sh:path mort:lineItem;
     sh:minCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:LineItemShape.
-mshape:SettlementStatementShape sh:property _:n3-899.
-_:n3-900 sh:path mort:cashToClose;
+mshape:SettlementStatementShape sh:property _:n3-976.
+_:n3-977 sh:path mort:cashToClose;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:MonetaryAmountShape.
-mshape:SettlementStatementShape sh:property _:n3-900.
-_:n3-901 sh:path mort:subjectProperty;
+mshape:SettlementStatementShape sh:property _:n3-977.
+_:n3-978 sh:path mort:subjectProperty;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:PropertyShape.
-mshape:SettlementStatementShape sh:property _:n3-901.
+mshape:SettlementStatementShape sh:property _:n3-978.
 `,
   "subject-property": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -4379,66 +4833,66 @@ mshape:SettlementStatementShape sh:property _:n3-901.
 mshape:SubjectPropertyShape a sh:NodeShape;
     sh:targetClass schema:SingleFamilyResidence;
     sh:closed true.
-_:n3-902 sh:path rdf:type;
+_:n3-979 sh:path rdf:type;
     sh:hasValue schema:SingleFamilyResidence.
-mshape:SubjectPropertyShape sh:property _:n3-902.
-_:n3-903 sh:path rdf:type;
+mshape:SubjectPropertyShape sh:property _:n3-979.
+_:n3-980 sh:path rdf:type;
     sh:hasValue fibo-fnd-plc-rp:RealEstate.
-mshape:SubjectPropertyShape sh:property _:n3-903.
-_:n3-904 sh:path schema:address;
+mshape:SubjectPropertyShape sh:property _:n3-980.
+_:n3-981 sh:path schema:address;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:PostalAddressShape.
-mshape:SubjectPropertyShape sh:property _:n3-904.
-_:n3-905 sh:path schema:yearBuilt;
+mshape:SubjectPropertyShape sh:property _:n3-981.
+_:n3-982 sh:path schema:yearBuilt;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:integer;
     sh:minInclusive 1600;
     sh:maxInclusive 2100.
-mshape:SubjectPropertyShape sh:property _:n3-905.
-_:n3-906 sh:path schema:floorSize;
+mshape:SubjectPropertyShape sh:property _:n3-982.
+_:n3-983 sh:path schema:floorSize;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:FloorSizeShape.
-mshape:SubjectPropertyShape sh:property _:n3-906.
-_:n3-907 sh:path schema:numberOfBedrooms;
+mshape:SubjectPropertyShape sh:property _:n3-983.
+_:n3-984 sh:path schema:numberOfBedrooms;
     sh:maxCount 1;
     sh:datatype xsd:integer;
     sh:minInclusive 0;
     sh:maxInclusive 50.
-mshape:SubjectPropertyShape sh:property _:n3-907.
-_:n3-908 sh:path schema:numberOfBathroomsTotal;
+mshape:SubjectPropertyShape sh:property _:n3-984.
+_:n3-985 sh:path schema:numberOfBathroomsTotal;
     sh:maxCount 1;
     sh:datatype xsd:integer;
     sh:minInclusive 0;
     sh:maxInclusive 50.
-mshape:SubjectPropertyShape sh:property _:n3-908.
-_:n3-909 sh:path mort:constructionType;
+mshape:SubjectPropertyShape sh:property _:n3-985.
+_:n3-986 sh:path mort:constructionType;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:SubjectPropertyShape sh:property _:n3-909.
-_:n3-910 sh:path mort:roofType;
+mshape:SubjectPropertyShape sh:property _:n3-986.
+_:n3-987 sh:path mort:roofType;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:SubjectPropertyShape sh:property _:n3-910.
-_:n3-911 sh:path mort:parcelNumber;
+mshape:SubjectPropertyShape sh:property _:n3-987.
+_:n3-988 sh:path mort:parcelNumber;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:SubjectPropertyShape sh:property _:n3-911.
-_:n3-912 sh:path mort:legalDescription;
+mshape:SubjectPropertyShape sh:property _:n3-988.
+_:n3-989 sh:path mort:legalDescription;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:SubjectPropertyShape sh:property _:n3-912.
+mshape:SubjectPropertyShape sh:property _:n3-989.
 `,
   support: `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -4455,198 +4909,198 @@ mshape:SubjectPropertyShape sh:property _:n3-912.
 
 mshape:NamedPartyShape a sh:NodeShape;
     sh:closed true.
-_:n3-913 rdf:first rdf:type;
+_:n3-990 rdf:first rdf:type;
     rdf:rest rdf:nil.
-mshape:NamedPartyShape sh:ignoredProperties _:n3-913.
-_:n3-914 sh:path schema:name;
+mshape:NamedPartyShape sh:ignoredProperties _:n3-990.
+_:n3-991 sh:path schema:name;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:NamedPartyShape sh:property _:n3-914.
+mshape:NamedPartyShape sh:property _:n3-991.
 mshape:LineItemShape a sh:NodeShape;
     sh:closed true.
-_:n3-915 sh:path rdf:type;
+_:n3-992 sh:path rdf:type;
     sh:hasValue schema:MonetaryAmount.
-mshape:LineItemShape sh:property _:n3-915.
-_:n3-916 sh:path schema:name;
+mshape:LineItemShape sh:property _:n3-992.
+_:n3-993 sh:path schema:name;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:LineItemShape sh:property _:n3-916.
-_:n3-917 sh:path schema:value;
+mshape:LineItemShape sh:property _:n3-993.
+_:n3-994 sh:path schema:value;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:decimal.
-mshape:LineItemShape sh:property _:n3-917.
-_:n3-918 sh:path schema:currency;
+mshape:LineItemShape sh:property _:n3-994.
+_:n3-995 sh:path schema:currency;
     sh:minCount 1;
     sh:maxCount 1.
-_:n3-919 rdf:first "USD";
+_:n3-996 rdf:first "USD";
     rdf:rest rdf:nil.
-_:n3-918 sh:in _:n3-919.
-mshape:LineItemShape sh:property _:n3-918.
+_:n3-995 sh:in _:n3-996.
+mshape:LineItemShape sh:property _:n3-995.
 mshape:FloorSizeShape a sh:NodeShape;
     sh:closed true.
-_:n3-920 sh:path rdf:type;
+_:n3-997 sh:path rdf:type;
     sh:hasValue schema:QuantitativeValue.
-mshape:FloorSizeShape sh:property _:n3-920.
-_:n3-921 sh:path schema:value;
+mshape:FloorSizeShape sh:property _:n3-997.
+_:n3-998 sh:path schema:value;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:decimal;
     sh:minInclusive 1.0.
-mshape:FloorSizeShape sh:property _:n3-921.
-_:n3-922 sh:path schema:unitCode;
+mshape:FloorSizeShape sh:property _:n3-998.
+_:n3-999 sh:path schema:unitCode;
     sh:minCount 1;
     sh:maxCount 1.
-_:n3-923 rdf:first "FTK";
+_:n3-1000 rdf:first "FTK";
     rdf:rest rdf:nil.
-_:n3-922 sh:in _:n3-923.
-mshape:FloorSizeShape sh:property _:n3-922.
+_:n3-999 sh:in _:n3-1000.
+mshape:FloorSizeShape sh:property _:n3-999.
 mshape:ScoreDisclosureShape a sh:NodeShape;
     sh:closed true.
-_:n3-924 rdf:first rdf:type;
+_:n3-1001 rdf:first rdf:type;
     rdf:rest rdf:nil.
-mshape:ScoreDisclosureShape sh:ignoredProperties _:n3-924.
-_:n3-925 sh:path mort:creditScoreValue;
+mshape:ScoreDisclosureShape sh:ignoredProperties _:n3-1001.
+_:n3-1002 sh:path mort:creditScoreValue;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:integer;
     sh:minInclusive 300;
     sh:maxInclusive 850.
-mshape:ScoreDisclosureShape sh:property _:n3-925.
-_:n3-926 sh:path mort:scoreModel;
+mshape:ScoreDisclosureShape sh:property _:n3-1002.
+_:n3-1003 sh:path mort:scoreModel;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-_:n3-927 rdf:first mort:ScoreModel-FICO8;
-    rdf:rest _:n3-928.
-_:n3-928 rdf:first mort:ScoreModel-ClassicFICO;
-    rdf:rest _:n3-929.
-_:n3-929 rdf:first mort:ScoreModel-VantageScore4;
+_:n3-1004 rdf:first mort:ScoreModel-FICO8;
+    rdf:rest _:n3-1005.
+_:n3-1005 rdf:first mort:ScoreModel-ClassicFICO;
+    rdf:rest _:n3-1006.
+_:n3-1006 rdf:first mort:ScoreModel-VantageScore4;
     rdf:rest rdf:nil.
-_:n3-926 sh:in _:n3-927.
-mshape:ScoreDisclosureShape sh:property _:n3-926.
-_:n3-930 sh:path schema:name;
+_:n3-1003 sh:in _:n3-1004.
+mshape:ScoreDisclosureShape sh:property _:n3-1003.
+_:n3-1007 sh:path schema:name;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:ScoreDisclosureShape sh:property _:n3-930.
-_:n3-931 sh:path dcterms:created;
+mshape:ScoreDisclosureShape sh:property _:n3-1007.
+_:n3-1008 sh:path dcterms:created;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:date.
-mshape:ScoreDisclosureShape sh:property _:n3-931.
-_:n3-932 sh:path mort:keyFactor;
+mshape:ScoreDisclosureShape sh:property _:n3-1008.
+_:n3-1009 sh:path mort:keyFactor;
     sh:maxCount 5;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:ScoreDisclosureShape sh:property _:n3-932.
+mshape:ScoreDisclosureShape sh:property _:n3-1009.
 mshape:ConstraintShape a sh:NodeShape;
     sh:closed true.
-_:n3-933 rdf:first rdf:type;
+_:n3-1010 rdf:first rdf:type;
     rdf:rest rdf:nil.
-mshape:ConstraintShape sh:ignoredProperties _:n3-933.
-_:n3-934 sh:path odrl:leftOperand;
+mshape:ConstraintShape sh:ignoredProperties _:n3-1010.
+_:n3-1011 sh:path odrl:leftOperand;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-_:n3-935 rdf:first odrl:purpose;
-    rdf:rest _:n3-936.
-_:n3-936 rdf:first odrl:dateTime;
-    rdf:rest _:n3-937.
-_:n3-937 rdf:first odrl:event;
-    rdf:rest _:n3-938.
-_:n3-938 rdf:first odrl:count;
+_:n3-1012 rdf:first odrl:purpose;
+    rdf:rest _:n3-1013.
+_:n3-1013 rdf:first odrl:dateTime;
+    rdf:rest _:n3-1014.
+_:n3-1014 rdf:first odrl:event;
+    rdf:rest _:n3-1015.
+_:n3-1015 rdf:first odrl:count;
     rdf:rest rdf:nil.
-_:n3-934 sh:in _:n3-935.
-mshape:ConstraintShape sh:property _:n3-934.
-_:n3-939 sh:path odrl:operator;
+_:n3-1011 sh:in _:n3-1012.
+mshape:ConstraintShape sh:property _:n3-1011.
+_:n3-1016 sh:path odrl:operator;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-_:n3-940 rdf:first odrl:eq;
-    rdf:rest _:n3-941.
-_:n3-941 rdf:first odrl:lt;
-    rdf:rest _:n3-942.
-_:n3-942 rdf:first odrl:lteq;
+_:n3-1017 rdf:first odrl:eq;
+    rdf:rest _:n3-1018.
+_:n3-1018 rdf:first odrl:lt;
+    rdf:rest _:n3-1019.
+_:n3-1019 rdf:first odrl:lteq;
     rdf:rest rdf:nil.
-_:n3-939 sh:in _:n3-940.
-mshape:ConstraintShape sh:property _:n3-939.
-_:n3-943 sh:path odrl:rightOperand;
+_:n3-1016 sh:in _:n3-1017.
+mshape:ConstraintShape sh:property _:n3-1016.
+_:n3-1020 sh:path odrl:rightOperand;
     sh:minCount 1;
     sh:maxCount 1.
-mshape:ConstraintShape sh:property _:n3-943.
+mshape:ConstraintShape sh:property _:n3-1020.
 mshape:PermissionShape a sh:NodeShape;
     sh:closed true.
-_:n3-944 rdf:first rdf:type;
+_:n3-1021 rdf:first rdf:type;
     rdf:rest rdf:nil.
-mshape:PermissionShape sh:ignoredProperties _:n3-944.
-_:n3-945 sh:path odrl:target;
+mshape:PermissionShape sh:ignoredProperties _:n3-1021.
+_:n3-1022 sh:path odrl:target;
     sh:minCount 1;
     sh:nodeKind sh:IRI.
-mshape:PermissionShape sh:property _:n3-945.
-_:n3-946 sh:path odrl:action;
+mshape:PermissionShape sh:property _:n3-1022.
+_:n3-1023 sh:path odrl:action;
     sh:minCount 1;
     sh:maxCount 3;
     sh:nodeKind sh:IRI.
-_:n3-947 rdf:first odrl:read;
-    rdf:rest _:n3-948.
-_:n3-948 rdf:first odrl:append;
-    rdf:rest _:n3-949.
-_:n3-949 rdf:first odrl:write;
+_:n3-1024 rdf:first odrl:read;
+    rdf:rest _:n3-1025.
+_:n3-1025 rdf:first odrl:append;
+    rdf:rest _:n3-1026.
+_:n3-1026 rdf:first odrl:write;
     rdf:rest rdf:nil.
-_:n3-946 sh:in _:n3-947.
-mshape:PermissionShape sh:property _:n3-946.
-_:n3-950 sh:path odrl:assignee;
+_:n3-1023 sh:in _:n3-1024.
+mshape:PermissionShape sh:property _:n3-1023.
+_:n3-1027 sh:path odrl:assignee;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:PermissionShape sh:property _:n3-950.
-_:n3-951 sh:path odrl:constraint;
+mshape:PermissionShape sh:property _:n3-1027.
+_:n3-1028 sh:path odrl:constraint;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:ConstraintShape.
-mshape:PermissionShape sh:property _:n3-951.
+mshape:PermissionShape sh:property _:n3-1028.
 mshape:AgentShape a sh:NodeShape;
     sh:closed true.
-_:n3-952 sh:path rdf:type;
+_:n3-1029 sh:path rdf:type;
     sh:minCount 1.
-_:n3-953 rdf:first schema:Person;
-    rdf:rest _:n3-954.
-_:n3-954 rdf:first schema:Organization;
-    rdf:rest _:n3-955.
-_:n3-955 rdf:first foaf:Agent;
+_:n3-1030 rdf:first schema:Person;
+    rdf:rest _:n3-1031.
+_:n3-1031 rdf:first schema:Organization;
+    rdf:rest _:n3-1032.
+_:n3-1032 rdf:first foaf:Agent;
     rdf:rest rdf:nil.
-_:n3-952 sh:in _:n3-953.
-mshape:AgentShape sh:property _:n3-952.
-_:n3-956 sh:path schema:name;
+_:n3-1029 sh:in _:n3-1030.
+mshape:AgentShape sh:property _:n3-1029.
+_:n3-1033 sh:path schema:name;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:AgentShape sh:property _:n3-956.
-_:n3-957 sh:path ldp:inbox;
+mshape:AgentShape sh:property _:n3-1033.
+_:n3-1034 sh:path ldp:inbox;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:AgentShape sh:property _:n3-957.
-_:n3-958 sh:path pim:storage;
+mshape:AgentShape sh:property _:n3-1034.
+_:n3-1035 sh:path pim:storage;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:AgentShape sh:property _:n3-958.
-_:n3-959 sh:path sec:verificationMethod;
+mshape:AgentShape sh:property _:n3-1035.
+_:n3-1036 sh:path sec:verificationMethod;
     sh:nodeKind sh:IRI.
-mshape:AgentShape sh:property _:n3-959.
-_:n3-960 sh:path sec:assertionMethod;
+mshape:AgentShape sh:property _:n3-1036.
+_:n3-1037 sh:path sec:assertionMethod;
     sh:nodeKind sh:IRI.
-mshape:AgentShape sh:property _:n3-960.
-_:n3-961 sh:path mort:titleVesting;
+mshape:AgentShape sh:property _:n3-1037.
+_:n3-1038 sh:path mort:titleVesting;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:AgentShape sh:property _:n3-961.
+mshape:AgentShape sh:property _:n3-1038.
 `,
   "title-clear-credential": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -4659,74 +5113,74 @@ mshape:AgentShape sh:property _:n3-961.
 mshape:TitleClearCredentialShape a sh:NodeShape;
     sh:targetClass mort:TitleClearCredential;
     sh:closed true.
-_:n3-962 rdf:first sec:proof;
+_:n3-1039 rdf:first sec:proof;
     rdf:rest rdf:nil.
-mshape:TitleClearCredentialShape sh:ignoredProperties _:n3-962.
-_:n3-963 sh:path rdf:type;
+mshape:TitleClearCredentialShape sh:ignoredProperties _:n3-1039.
+_:n3-1040 sh:path rdf:type;
     sh:hasValue cred:VerifiableCredential.
-mshape:TitleClearCredentialShape sh:property _:n3-963.
-_:n3-964 sh:path cred:issuer;
+mshape:TitleClearCredentialShape sh:property _:n3-1040.
+_:n3-1041 sh:path cred:issuer;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:TitleClearCredentialShape sh:property _:n3-964.
-_:n3-965 sh:path cred:validFrom;
+mshape:TitleClearCredentialShape sh:property _:n3-1041.
+_:n3-1042 sh:path cred:validFrom;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:dateTime;
     sh:lessThan cred:validUntil.
-mshape:TitleClearCredentialShape sh:property _:n3-965.
-_:n3-966 sh:path cred:validUntil;
+mshape:TitleClearCredentialShape sh:property _:n3-1042.
+_:n3-1043 sh:path cred:validUntil;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:dateTime.
-mshape:TitleClearCredentialShape sh:property _:n3-966.
-_:n3-967 sh:path cred:credentialStatus;
+mshape:TitleClearCredentialShape sh:property _:n3-1043.
+_:n3-1044 sh:path cred:credentialStatus;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI.
-mshape:TitleClearCredentialShape sh:property _:n3-967.
-_:n3-968 sh:path cred:credentialSubject;
+mshape:TitleClearCredentialShape sh:property _:n3-1044.
+_:n3-1045 sh:path cred:credentialSubject;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI;
     sh:node mshape:TitleClearSubjectShape.
-mshape:TitleClearCredentialShape sh:property _:n3-968.
-_:n3-969 sh:path cred:evidence;
+mshape:TitleClearCredentialShape sh:property _:n3-1045.
+_:n3-1046 sh:path cred:evidence;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI.
-mshape:TitleClearCredentialShape sh:property _:n3-969.
-_:n3-970 sh:path cred:credentialSchema;
+mshape:TitleClearCredentialShape sh:property _:n3-1046.
+_:n3-1047 sh:path cred:credentialSchema;
     sh:nodeKind sh:IRI.
-mshape:TitleClearCredentialShape sh:property _:n3-970.
+mshape:TitleClearCredentialShape sh:property _:n3-1047.
 mshape:TitleClearSubjectShape a sh:NodeShape;
     sh:closed true.
-_:n3-971 rdf:first rdf:type;
+_:n3-1048 rdf:first rdf:type;
     rdf:rest rdf:nil.
-mshape:TitleClearSubjectShape sh:ignoredProperties _:n3-971.
-_:n3-972 sh:path mort:subjectProperty;
+mshape:TitleClearSubjectShape sh:ignoredProperties _:n3-1048.
+_:n3-1049 sh:path mort:subjectProperty;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:PropertyShape.
-mshape:TitleClearSubjectShape sh:property _:n3-972.
-_:n3-973 sh:path mort:titleStatus;
+mshape:TitleClearSubjectShape sh:property _:n3-1049.
+_:n3-1050 sh:path mort:titleStatus;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-_:n3-974 rdf:first mort:TitleStatus-Clear;
-    rdf:rest _:n3-975.
-_:n3-975 rdf:first mort:TitleStatus-Clouded;
+_:n3-1051 rdf:first mort:TitleStatus-Clear;
+    rdf:rest _:n3-1052.
+_:n3-1052 rdf:first mort:TitleStatus-Clouded;
     rdf:rest rdf:nil.
-_:n3-973 sh:in _:n3-974;
+_:n3-1050 sh:in _:n3-1051;
     sh:message "titleStatus must be a concept from mort:TitleStatusScheme".
-mshape:TitleClearSubjectShape sh:property _:n3-973.
-_:n3-976 sh:path mort:searchedThrough;
+mshape:TitleClearSubjectShape sh:property _:n3-1050.
+_:n3-1053 sh:path mort:searchedThrough;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:date;
     sh:message "searchedThrough is the effective xsd:date through which public records were searched".
-mshape:TitleClearSubjectShape sh:property _:n3-976.
+mshape:TitleClearSubjectShape sh:property _:n3-1053.
 `,
   "title-commitment-credential": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -4740,101 +5194,101 @@ mshape:TitleClearSubjectShape sh:property _:n3-976.
 mshape:TitleCommitmentCredentialShape a sh:NodeShape;
     sh:targetClass mort:TitleCommitmentCredential;
     sh:closed true.
-_:n3-977 rdf:first sec:proof;
+_:n3-1054 rdf:first sec:proof;
     rdf:rest rdf:nil.
-mshape:TitleCommitmentCredentialShape sh:ignoredProperties _:n3-977.
-_:n3-978 sh:path rdf:type;
+mshape:TitleCommitmentCredentialShape sh:ignoredProperties _:n3-1054.
+_:n3-1055 sh:path rdf:type;
     sh:hasValue cred:VerifiableCredential.
-mshape:TitleCommitmentCredentialShape sh:property _:n3-978.
-_:n3-979 sh:path cred:issuer;
+mshape:TitleCommitmentCredentialShape sh:property _:n3-1055.
+_:n3-1056 sh:path cred:issuer;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:TitleCommitmentCredentialShape sh:property _:n3-979.
-_:n3-980 sh:path cred:validFrom;
+mshape:TitleCommitmentCredentialShape sh:property _:n3-1056.
+_:n3-1057 sh:path cred:validFrom;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:dateTime;
     sh:lessThan cred:validUntil.
-mshape:TitleCommitmentCredentialShape sh:property _:n3-980.
-_:n3-981 sh:path cred:validUntil;
+mshape:TitleCommitmentCredentialShape sh:property _:n3-1057.
+_:n3-1058 sh:path cred:validUntil;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:dateTime.
-mshape:TitleCommitmentCredentialShape sh:property _:n3-981.
-_:n3-982 sh:path cred:credentialStatus;
+mshape:TitleCommitmentCredentialShape sh:property _:n3-1058.
+_:n3-1059 sh:path cred:credentialStatus;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI.
-mshape:TitleCommitmentCredentialShape sh:property _:n3-982.
-_:n3-983 sh:path cred:credentialSubject;
+mshape:TitleCommitmentCredentialShape sh:property _:n3-1059.
+_:n3-1060 sh:path cred:credentialSubject;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI;
     sh:node mshape:TitleCommitmentSubjectShape.
-mshape:TitleCommitmentCredentialShape sh:property _:n3-983.
-_:n3-984 sh:path cred:evidence;
+mshape:TitleCommitmentCredentialShape sh:property _:n3-1060.
+_:n3-1061 sh:path cred:evidence;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI.
-mshape:TitleCommitmentCredentialShape sh:property _:n3-984.
-_:n3-985 sh:path cred:credentialSchema;
+mshape:TitleCommitmentCredentialShape sh:property _:n3-1061.
+_:n3-1062 sh:path cred:credentialSchema;
     sh:nodeKind sh:IRI.
-mshape:TitleCommitmentCredentialShape sh:property _:n3-985.
+mshape:TitleCommitmentCredentialShape sh:property _:n3-1062.
 mshape:TitleCommitmentSubjectShape a sh:NodeShape;
     sh:closed true.
-_:n3-986 rdf:first rdf:type;
+_:n3-1063 rdf:first rdf:type;
     rdf:rest rdf:nil.
-mshape:TitleCommitmentSubjectShape sh:ignoredProperties _:n3-986.
-_:n3-987 sh:path schema:identifier;
+mshape:TitleCommitmentSubjectShape sh:ignoredProperties _:n3-1063.
+_:n3-1064 sh:path schema:identifier;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:TitleCommitmentSubjectShape sh:property _:n3-987.
-_:n3-988 sh:path mort:subjectProperty;
+mshape:TitleCommitmentSubjectShape sh:property _:n3-1064.
+_:n3-1065 sh:path mort:subjectProperty;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:PropertyShape.
-mshape:TitleCommitmentSubjectShape sh:property _:n3-988.
-_:n3-989 sh:path mort:searchedThrough;
+mshape:TitleCommitmentSubjectShape sh:property _:n3-1065.
+_:n3-1066 sh:path mort:searchedThrough;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:date.
-mshape:TitleCommitmentSubjectShape sh:property _:n3-989.
-_:n3-990 sh:path mort:vestedOwner;
+mshape:TitleCommitmentSubjectShape sh:property _:n3-1066.
+_:n3-1067 sh:path mort:vestedOwner;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:TitleCommitmentSubjectShape sh:property _:n3-990.
-_:n3-991 sh:path mort:proposedInsured;
+mshape:TitleCommitmentSubjectShape sh:property _:n3-1067.
+_:n3-1068 sh:path mort:proposedInsured;
     sh:minCount 1;
     sh:maxCount 2;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:TitleCommitmentSubjectShape sh:property _:n3-991.
-_:n3-992 sh:path mort:ownerPolicyAmount;
+mshape:TitleCommitmentSubjectShape sh:property _:n3-1068.
+_:n3-1069 sh:path mort:ownerPolicyAmount;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:MonetaryAmountShape.
-mshape:TitleCommitmentSubjectShape sh:property _:n3-992.
-_:n3-993 sh:path mort:loanPolicyAmount;
+mshape:TitleCommitmentSubjectShape sh:property _:n3-1069.
+_:n3-1070 sh:path mort:loanPolicyAmount;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:MonetaryAmountShape.
-mshape:TitleCommitmentSubjectShape sh:property _:n3-993.
-_:n3-994 sh:path mort:titleRequirement;
+mshape:TitleCommitmentSubjectShape sh:property _:n3-1070.
+_:n3-1071 sh:path mort:titleRequirement;
     sh:minCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:TitleCommitmentSubjectShape sh:property _:n3-994.
-_:n3-995 sh:path mort:titleException;
+mshape:TitleCommitmentSubjectShape sh:property _:n3-1071.
+_:n3-1072 sh:path mort:titleException;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:TitleCommitmentSubjectShape sh:property _:n3-995.
+mshape:TitleCommitmentSubjectShape sh:property _:n3-1072.
 `,
   "trusted-issuer-list": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -4846,82 +5300,82 @@ mshape:TitleCommitmentSubjectShape sh:property _:n3-995.
 mshape:TrustedIssuerListShape a sh:NodeShape;
     sh:targetClass mort:TrustedIssuerList;
     sh:closed true.
-_:n3-996 sh:path rdf:type;
+_:n3-1073 sh:path rdf:type;
     sh:hasValue mort:TrustedIssuerList.
-_:n3-997 rdf:first mort:TrustedIssuerList;
-    rdf:rest _:n3-998.
-_:n3-998 rdf:first schema:ItemList;
+_:n3-1074 rdf:first mort:TrustedIssuerList;
+    rdf:rest _:n3-1075.
+_:n3-1075 rdf:first schema:ItemList;
     rdf:rest rdf:nil.
-_:n3-996 sh:in _:n3-997.
-mshape:TrustedIssuerListShape sh:property _:n3-996.
-_:n3-999 sh:path schema:name;
+_:n3-1073 sh:in _:n3-1074.
+mshape:TrustedIssuerListShape sh:property _:n3-1073.
+_:n3-1076 sh:path schema:name;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:TrustedIssuerListShape sh:property _:n3-999.
-_:n3-1000 sh:path schema:publisher;
+mshape:TrustedIssuerListShape sh:property _:n3-1076.
+_:n3-1077 sh:path schema:publisher;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:OrganizationShape.
-mshape:TrustedIssuerListShape sh:property _:n3-1000.
-_:n3-1001 sh:path schema:about;
+mshape:TrustedIssuerListShape sh:property _:n3-1077.
+_:n3-1078 sh:path schema:about;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:TrustedIssuerListShape sh:property _:n3-1001.
-_:n3-1002 sh:path schema:datePublished;
+mshape:TrustedIssuerListShape sh:property _:n3-1078.
+_:n3-1079 sh:path schema:datePublished;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:dateTime;
     sh:lessThan schema:validThrough.
-mshape:TrustedIssuerListShape sh:property _:n3-1002.
-_:n3-1003 sh:path schema:validThrough;
+mshape:TrustedIssuerListShape sh:property _:n3-1079.
+_:n3-1080 sh:path schema:validThrough;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:dateTime;
     sh:message "a trusted-issuer list must say until when it is in force".
-mshape:TrustedIssuerListShape sh:property _:n3-1003.
-_:n3-1004 sh:path schema:itemListElement;
+mshape:TrustedIssuerListShape sh:property _:n3-1080.
+_:n3-1081 sh:path schema:itemListElement;
     sh:maxCount 64;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:TrustedIssuerEntryShape.
-mshape:TrustedIssuerListShape sh:property _:n3-1004.
+mshape:TrustedIssuerListShape sh:property _:n3-1081.
 mshape:TrustedIssuerEntryShape a sh:NodeShape;
     sh:closed true.
-_:n3-1005 sh:path rdf:type;
+_:n3-1082 sh:path rdf:type;
     sh:minCount 1;
     sh:maxCount 1;
     sh:hasValue schema:ListItem.
-mshape:TrustedIssuerEntryShape sh:property _:n3-1005.
-_:n3-1006 sh:path schema:item;
+mshape:TrustedIssuerEntryShape sh:property _:n3-1082.
+_:n3-1083 sh:path schema:item;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:TrustedIssuerEntryShape sh:property _:n3-1006.
-_:n3-1007 sh:path schema:name;
+mshape:TrustedIssuerEntryShape sh:property _:n3-1083.
+_:n3-1084 sh:path schema:name;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:TrustedIssuerEntryShape sh:property _:n3-1007.
-_:n3-1008 sh:path schema:identifier;
+mshape:TrustedIssuerEntryShape sh:property _:n3-1084.
+_:n3-1085 sh:path schema:identifier;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:TrustedIssuerEntryShape sh:property _:n3-1008.
-_:n3-1009 sh:path schema:validFrom;
+mshape:TrustedIssuerEntryShape sh:property _:n3-1085.
+_:n3-1086 sh:path schema:validFrom;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:dateTime;
     sh:lessThan schema:validThrough.
-mshape:TrustedIssuerEntryShape sh:property _:n3-1009.
-_:n3-1010 sh:path schema:validThrough;
+mshape:TrustedIssuerEntryShape sh:property _:n3-1086.
+_:n3-1087 sh:path schema:validThrough;
     sh:maxCount 1;
     sh:datatype xsd:dateTime.
-mshape:TrustedIssuerEntryShape sh:property _:n3-1010.
+mshape:TrustedIssuerEntryShape sh:property _:n3-1087.
 `,
   "underwriting-decision": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -4935,66 +5389,102 @@ mshape:TrustedIssuerEntryShape sh:property _:n3-1010.
 mshape:UnderwritingDecisionShape a sh:NodeShape;
     sh:targetClass fibo-loan-ln-app:UnderwritingDecision;
     sh:closed true.
-_:n3-1011 sh:path rdf:type;
+_:n3-1088 sh:path rdf:type;
     sh:hasValue fibo-loan-ln-app:UnderwritingDecision.
-mshape:UnderwritingDecisionShape sh:property _:n3-1011.
-_:n3-1012 sh:path fibo-fnd-rel-rel:evaluates;
+mshape:UnderwritingDecisionShape sh:property _:n3-1088.
+_:n3-1089 sh:path fibo-fnd-rel-rel:evaluates;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:UnderwritingDecisionShape sh:property _:n3-1012.
-_:n3-1013 sh:path mort:decisionStatus;
+mshape:UnderwritingDecisionShape sh:property _:n3-1089.
+_:n3-1090 sh:path mort:decisionStatus;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-_:n3-1014 rdf:first mort:DecisionStatus-Approved;
-    rdf:rest _:n3-1015.
-_:n3-1015 rdf:first mort:DecisionStatus-ApprovedWithConditions;
-    rdf:rest _:n3-1016.
-_:n3-1016 rdf:first mort:DecisionStatus-Denied;
-    rdf:rest _:n3-1017.
-_:n3-1017 rdf:first mort:DecisionStatus-Suspended;
+_:n3-1091 rdf:first mort:DecisionStatus-Approved;
+    rdf:rest _:n3-1092.
+_:n3-1092 rdf:first mort:DecisionStatus-ApprovedWithConditions;
+    rdf:rest _:n3-1093.
+_:n3-1093 rdf:first mort:DecisionStatus-Denied;
+    rdf:rest _:n3-1094.
+_:n3-1094 rdf:first mort:DecisionStatus-Suspended;
     rdf:rest rdf:nil.
-_:n3-1013 sh:in _:n3-1014;
+_:n3-1090 sh:in _:n3-1091;
     sh:message "decisionStatus must be a concept from mort:DecisionStatusScheme".
-mshape:UnderwritingDecisionShape sh:property _:n3-1013.
-_:n3-1018 sh:path mort:underwritingCondition;
+mshape:UnderwritingDecisionShape sh:property _:n3-1090.
+_:n3-1095 sh:path mort:underwritingCondition;
     sh:datatype xsd:string;
     sh:minLength 1.
-mshape:UnderwritingDecisionShape sh:property _:n3-1018.
-_:n3-1019 sh:path fibo-loan-ln-app:hasApprovedAmount;
+mshape:UnderwritingDecisionShape sh:property _:n3-1095.
+_:n3-1096 sh:path fibo-loan-ln-app:hasApprovedAmount;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI;
     sh:node mshape:MonetaryAmountShape.
-mshape:UnderwritingDecisionShape sh:property _:n3-1019.
-_:n3-1020 sh:path dcterms:type;
+mshape:UnderwritingDecisionShape sh:property _:n3-1096.
+_:n3-1097 sh:path dcterms:type;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-_:n3-1021 rdf:first fibo-loan-ln-app:UnderwritingDecision-Approve;
-    rdf:rest _:n3-1022.
-_:n3-1022 rdf:first fibo-loan-ln-app:UnderwritingDecision-Deny;
-    rdf:rest _:n3-1023.
-_:n3-1023 rdf:first fibo-loan-ln-app:UnderwritingDecision-Eligible;
-    rdf:rest _:n3-1024.
-_:n3-1024 rdf:first fibo-loan-ln-app:UnderwritingDecision-Ineligible;
-    rdf:rest _:n3-1025.
-_:n3-1025 rdf:first fibo-loan-ln-app:UnderwritingDecision-Refer;
-    rdf:rest _:n3-1026.
-_:n3-1026 rdf:first fibo-loan-ln-app:UnderwritingDecision-UnableToDetermine;
+_:n3-1098 rdf:first fibo-loan-ln-app:UnderwritingDecision-Approve;
+    rdf:rest _:n3-1099.
+_:n3-1099 rdf:first fibo-loan-ln-app:UnderwritingDecision-Deny;
+    rdf:rest _:n3-1100.
+_:n3-1100 rdf:first fibo-loan-ln-app:UnderwritingDecision-Eligible;
+    rdf:rest _:n3-1101.
+_:n3-1101 rdf:first fibo-loan-ln-app:UnderwritingDecision-Ineligible;
+    rdf:rest _:n3-1102.
+_:n3-1102 rdf:first fibo-loan-ln-app:UnderwritingDecision-Refer;
+    rdf:rest _:n3-1103.
+_:n3-1103 rdf:first fibo-loan-ln-app:UnderwritingDecision-UnableToDetermine;
     rdf:rest rdf:nil.
-_:n3-1020 sh:in _:n3-1021;
+_:n3-1097 sh:in _:n3-1098;
     sh:message "the AUS recommendation must be a FIBO UnderwritingDecision named individual".
-mshape:UnderwritingDecisionShape sh:property _:n3-1020.
-_:n3-1027 sh:path dcterms:issued;
+mshape:UnderwritingDecisionShape sh:property _:n3-1097.
+_:n3-1104 sh:path dcterms:issued;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:dateTime.
-mshape:UnderwritingDecisionShape sh:property _:n3-1027.
-_:n3-1028 sh:path dcterms:creator;
+mshape:UnderwritingDecisionShape sh:property _:n3-1104.
+_:n3-1105 sh:path dcterms:creator;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:UnderwritingDecisionShape sh:property _:n3-1028.
+mshape:UnderwritingDecisionShape sh:property _:n3-1105.
+`,
+  vehicle: `@prefix sh: <http://www.w3.org/ns/shacl#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix schema: <https://schema.org/>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#>.
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#>.
+
+mshape:VehicleShape a sh:NodeShape;
+    sh:closed true.
+_:n3-1106 sh:path rdf:type;
+    sh:hasValue schema:Car.
+mshape:VehicleShape sh:property _:n3-1106.
+_:n3-1107 sh:path schema:name;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:datatype xsd:string;
+    sh:minLength 1.
+mshape:VehicleShape sh:property _:n3-1107.
+_:n3-1108 sh:path schema:vehicleIdentificationNumber;
+    sh:maxCount 1;
+    sh:datatype xsd:string;
+    sh:minLength 1;
+    sh:pattern "^[A-Z0-9]{17}$".
+mshape:VehicleShape sh:property _:n3-1108.
+_:n3-1109 sh:path schema:identifier;
+    sh:maxCount 1;
+    sh:datatype xsd:string;
+    sh:minLength 1.
+mshape:VehicleShape sh:property _:n3-1109.
+_:n3-1110 sh:path schema:color;
+    sh:maxCount 1;
+    sh:datatype xsd:string;
+    sh:minLength 1.
+mshape:VehicleShape sh:property _:n3-1110.
 `,
   "zk-operand-anchor": `@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -5007,75 +5497,75 @@ mshape:UnderwritingDecisionShape sh:property _:n3-1028.
 mshape:ZkOperandAnchorShape a sh:NodeShape;
     sh:targetClass mort:ZkOperandAnchor;
     sh:closed true.
-_:n3-1029 rdf:first sec:proof;
+_:n3-1111 rdf:first sec:proof;
     rdf:rest rdf:nil.
-mshape:ZkOperandAnchorShape sh:ignoredProperties _:n3-1029.
-_:n3-1030 sh:path rdf:type;
+mshape:ZkOperandAnchorShape sh:ignoredProperties _:n3-1111.
+_:n3-1112 sh:path rdf:type;
     sh:hasValue cred:VerifiableCredential.
-mshape:ZkOperandAnchorShape sh:property _:n3-1030.
-_:n3-1031 sh:path cred:issuer;
+mshape:ZkOperandAnchorShape sh:property _:n3-1112.
+_:n3-1113 sh:path cred:issuer;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-mshape:ZkOperandAnchorShape sh:property _:n3-1031.
-_:n3-1032 sh:path cred:validFrom;
+mshape:ZkOperandAnchorShape sh:property _:n3-1113.
+_:n3-1114 sh:path cred:validFrom;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:dateTime;
     sh:lessThan cred:validUntil.
-mshape:ZkOperandAnchorShape sh:property _:n3-1032.
-_:n3-1033 sh:path cred:validUntil;
+mshape:ZkOperandAnchorShape sh:property _:n3-1114.
+_:n3-1115 sh:path cred:validUntil;
     sh:maxCount 1;
     sh:datatype xsd:dateTime.
-mshape:ZkOperandAnchorShape sh:property _:n3-1033.
-_:n3-1034 sh:path cred:credentialStatus;
+mshape:ZkOperandAnchorShape sh:property _:n3-1115.
+_:n3-1116 sh:path cred:credentialStatus;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:BlankNodeOrIRI.
-mshape:ZkOperandAnchorShape sh:property _:n3-1034.
-_:n3-1035 sh:path cred:credentialSubject;
+mshape:ZkOperandAnchorShape sh:property _:n3-1116.
+_:n3-1117 sh:path cred:credentialSubject;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI;
     sh:node mshape:ZkOperandAnchorSubjectShape;
     sh:message "credentialSubject must be the holder WebID the verifier matches against the DPoP-bound session".
-mshape:ZkOperandAnchorShape sh:property _:n3-1035.
-_:n3-1036 sh:path cred:credentialSchema;
+mshape:ZkOperandAnchorShape sh:property _:n3-1117.
+_:n3-1118 sh:path cred:credentialSchema;
     sh:nodeKind sh:IRI.
-mshape:ZkOperandAnchorShape sh:property _:n3-1036.
+mshape:ZkOperandAnchorShape sh:property _:n3-1118.
 mshape:ZkOperandAnchorSubjectShape a sh:NodeShape;
     sh:closed true.
-_:n3-1037 rdf:first rdf:type;
+_:n3-1119 rdf:first rdf:type;
     rdf:rest rdf:nil.
-mshape:ZkOperandAnchorSubjectShape sh:ignoredProperties _:n3-1037.
-_:n3-1038 sh:path mort:field;
+mshape:ZkOperandAnchorSubjectShape sh:ignoredProperties _:n3-1119.
+_:n3-1120 sh:path mort:field;
     sh:minCount 1;
     sh:maxCount 1;
     sh:nodeKind sh:IRI.
-_:n3-1039 rdf:first mort:monthlyGrossIncomeUsd;
-    rdf:rest _:n3-1040.
-_:n3-1040 rdf:first mort:totalMonthlyDebtUsd;
-    rdf:rest _:n3-1041.
-_:n3-1041 rdf:first mort:creditScoreValue;
-    rdf:rest _:n3-1042.
-_:n3-1042 rdf:first mort:cashFlowScoreValue;
-    rdf:rest _:n3-1043.
-_:n3-1043 rdf:first mort:nsf90Count;
-    rdf:rest _:n3-1044.
-_:n3-1044 rdf:first mort:ownershipPercentageBps;
-    rdf:rest _:n3-1045.
-_:n3-1045 rdf:first mort:beneficialOwnershipArrayCommitment;
+_:n3-1121 rdf:first mort:monthlyGrossIncomeUsd;
+    rdf:rest _:n3-1122.
+_:n3-1122 rdf:first mort:totalMonthlyDebtUsd;
+    rdf:rest _:n3-1123.
+_:n3-1123 rdf:first mort:creditScoreValue;
+    rdf:rest _:n3-1124.
+_:n3-1124 rdf:first mort:cashFlowScoreValue;
+    rdf:rest _:n3-1125.
+_:n3-1125 rdf:first mort:nsf90Count;
+    rdf:rest _:n3-1126.
+_:n3-1126 rdf:first mort:ownershipPercentageBps;
+    rdf:rest _:n3-1127.
+_:n3-1127 rdf:first mort:beneficialOwnershipArrayCommitment;
     rdf:rest rdf:nil.
-_:n3-1038 sh:in _:n3-1039;
+_:n3-1120 sh:in _:n3-1121;
     sh:message "field must be one of decision 0005's ZK scaled-unit field IRIs, or a business KYB ownership field".
-mshape:ZkOperandAnchorSubjectShape sh:property _:n3-1038.
-_:n3-1046 sh:path mort:operandEnc;
+mshape:ZkOperandAnchorSubjectShape sh:property _:n3-1120.
+_:n3-1128 sh:path mort:operandEnc;
     sh:minCount 1;
     sh:maxCount 1;
     sh:datatype xsd:string;
     sh:pattern "^0x[0-9a-f]{1,64}$";
     sh:message "operandEnc must be a 0x-prefixed lowercase hex field element".
-mshape:ZkOperandAnchorSubjectShape sh:property _:n3-1046.
+mshape:ZkOperandAnchorSubjectShape sh:property _:n3-1128.
 `,
 } as const;
 
@@ -5090,7 +5580,7 @@ export type ShapesDocumentKey = keyof typeof SHAPES_TURTLE;
 /** Every bundled shapes document, in one Turtle-parseable list. */
 export const ALL_SHAPES_DOCUMENTS: readonly string[] = /* @__PURE__ */ Object.values(SHAPES_TURTLE);
 
-/** File stem of the 58 bundled shapes documents. */
+/** File stem of the 66 bundled shapes documents. */
 export const SHAPES_DOCUMENT_KEYS = /* @__PURE__ */ Object.keys(
   SHAPES_TURTLE,
 ) as readonly ShapesDocumentKey[];

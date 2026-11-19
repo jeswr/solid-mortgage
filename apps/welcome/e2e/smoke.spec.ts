@@ -13,6 +13,7 @@ const ROUTES = [
   "./",
   "./watch/mortgage",
   "./watch/moving-house",
+  "./watch/motor-claim",
   "./watch/small-dollar-lending",
   "./watch/business-kyb",
   "./watch/medication-handover",
