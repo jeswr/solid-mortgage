@@ -308,7 +308,7 @@ export interface SeedContextLike {
 /** A seed request, structurally the runtime's `SeedRequest`. */
 export interface BrowserSeedRequest {
   readonly pod: PodOwner;
-  readonly method: "PUT";
+  readonly method: "PUT" | "DELETE";
   /** Path inside the pod, with a leading slash. */
   readonly path: string;
   readonly contentType: string;

@@ -1,11 +1,11 @@
 // AUTHORED-BY Claude Opus 5.5
-import { isBusinessKybPage } from "@mortgage/content/business-kyb/mount";
+import { isBusinessKybPage } from "@mortgage/content/business-kyb/pages";
 import { BORROWER } from "@mortgage/content/mortgage/facts";
-import { isSmallBusinessLoanPage } from "@mortgage/content/small-business-loan/mount";
+import { isSmallBusinessLoanPage } from "@mortgage/content/small-business-loan/pages";
 import {
   isSmallDollarPage,
   smallDollarPersona,
-} from "@mortgage/content/small-dollar-lending/mount";
+} from "@mortgage/content/small-dollar-lending/pages";
 import { HOLDERS } from "@mortgage/demo-kit/holders";
 import { applyDocumentMeta, DemoTrust, TrustBanner } from "@mortgage/demo-kit/trust";
 import { appUrl } from "@mortgage/demo-kit/urls";

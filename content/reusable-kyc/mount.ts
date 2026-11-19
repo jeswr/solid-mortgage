@@ -11,7 +11,6 @@
 
 import type { TourStep } from "@mortgage/demo-kit/contracts";
 import { HOLDERS, type HolderId } from "@mortgage/demo-kit/holders";
-import type { AppSlug } from "@mortgage/demo-kit/registry";
 import { appUrl } from "@mortgage/demo-kit/urls";
 import { DEMO, GRANT_CODE } from "./facts.js";
 import { POLICY_PATH, PURPOSE_TEXT, UNTIL_LABEL } from "./grants.js";
@@ -63,28 +62,7 @@ export function reusableKycTour(): { demo: string; holder: HolderId; steps: Tour
   return { demo: DEMO, holder: REUSABLE_KYC_HOLDER.id, steps: [...TOUR] };
 }
 
-/** The apps with pages in this demo, and the path prefix those pages live under. */
-export const REUSABLE_KYC_PAGES: Readonly<Partial<Record<AppSlug, string>>> = Object.freeze({
-  bank: "kyc",
-  "card-issuer": "",
-  wallet: "kyc",
-});
-
-/**
- * Does this page belong to the reusable-KYC demo? `pathname` is the full path (`/bank/kyc`).
- * Every page of the card-issuer app does; in the bank and the wallet, the pages under `kyc/`. A
- * `?tour=` parameter naming this demo also counts; one naming another demo does not.
- */
-export function isReusableKycPage(pathname: string, app: AppSlug, search = ""): boolean {
-  const tour = new URLSearchParams(search).get("tour");
-  if (tour === DEMO) return true;
-  if (tour !== null && tour !== "off") return false;
-  const prefix = REUSABLE_KYC_PAGES[app];
-  if (prefix === undefined) return false;
-  if (prefix === "") return true;
-  const inApp = pathname.replace(/^\/[^/]+\/?/, "");
-  return inApp === prefix || inApp.startsWith(`${prefix}/`);
-}
+export { isReusableKycPage, REUSABLE_KYC_PAGES } from "./pages.js";
 
 /** The simulated day of a tour step (pages follow it in the guided tour). */
 export function dayOfStep(stepId: string | undefined): number | undefined {

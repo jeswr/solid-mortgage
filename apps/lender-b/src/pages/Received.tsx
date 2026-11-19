@@ -84,7 +84,14 @@ export function ReceivedPage() {
   const [state] = usePod(() => loadReceived(world()));
   return (
     <>
-      <section className="band" data-tour="lender-b-received" aria-labelledby="received-heading">
+      {/* Focusable so a keyboard visitor can reach the tour's "Look" step (it has no button). */}
+      <section
+        className="band"
+        data-tour="lender-b-received"
+        aria-labelledby="received-heading"
+        // biome-ignore lint/a11y/noNoninteractiveTabindex: the tour completes this step on focus
+        tabIndex={0}
+      >
         <h1 id="received-heading" className="display display-sm">
           What we received
         </h1>

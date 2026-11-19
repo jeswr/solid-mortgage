@@ -1,6 +1,6 @@
 // AUTHORED-BY Claude Opus 5.5
 import { ORG_SLUGS } from "@mortgage/demo-kit/registry";
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { memoryLocation } from "wouter/memory-location";
 import { App } from "../src/App.tsx";
@@ -14,6 +14,7 @@ const present = async () => true;
 
 vi.mock("../src/guided-tour.ts", () => ({
   mountJourneyLedger: vi.fn(async () => () => undefined),
+  readGrantsOnRecord: vi.fn(async () => []),
   startFresh: vi.fn(async () => undefined),
 }));
 
@@ -106,6 +107,42 @@ describe("home", () => {
       expect(
         screen.getByRole("button", { name: `Play from chapter: ${chapter.title}` }),
       ).toBeTruthy();
+    }
+  });
+
+  it("asks for a card's poster only as the card comes near the viewport", async () => {
+    // Acceptance test 15: native lazy loading would fetch every card's poster on arrival.
+    const watched: Array<{ element: Element; callback: IntersectionObserverCallback }> = [];
+    class FakeObserver {
+      constructor(private readonly callback: IntersectionObserverCallback) {}
+      observe(element: Element) {
+        watched.push({ callback: this.callback, element });
+      }
+      disconnect() {}
+      unobserve() {}
+      takeRecords() {
+        return [];
+      }
+    }
+    vi.stubGlobal("IntersectionObserver", FakeObserver);
+    try {
+      render(<App hook={at("/")} probe={present} />);
+      const buttons = await screen.findAllByRole("button", { name: /Play the narrated video/ });
+      expect(document.querySelectorAll("img.poster__image")).toHaveLength(0);
+      const first = buttons[0] as HTMLElement;
+      const entry = watched.find((w) => w.element === first);
+      expect(entry, "the first card's poster is watched").toBeDefined();
+      act(() =>
+        entry?.callback(
+          [{ isIntersecting: true, target: first } as unknown as IntersectionObserverEntry],
+          {} as IntersectionObserver,
+        ),
+      );
+      const images = document.querySelectorAll("img.poster__image");
+      expect(images).toHaveLength(1);
+      expect(images[0]?.getAttribute("src")).toBe("/video/mortgage/poster.jpg");
+    } finally {
+      vi.unstubAllGlobals();
     }
   });
 
@@ -234,6 +271,30 @@ describe("honesty and ledger", () => {
     const mount = document.querySelector("[data-journey-ledger-mount]");
     expect(mount?.id).toBe("journey-ledger");
     expect(screen.getByRole("heading", { level: 1, name: "Journey ledger" })).toBeTruthy();
+  });
+
+  it("lists the grants on record in Alex's pod, read when the page opens", async () => {
+    const { readGrantsOnRecord } = await import("../src/guided-tour.ts");
+    vi.mocked(readGrantsOnRecord).mockResolvedValueOnce([
+      { code: "G4", name: "Apply", state: "revoked", to: "Juniper", when: "Day 40" },
+      { code: "G8", name: "Service", state: "active", to: "Marigold", when: "Day 39" },
+    ]);
+    render(<App hook={at("/journey")} />);
+    const table = await screen.findByRole("table");
+    expect(readGrantsOnRecord).toHaveBeenCalled();
+    expect(screen.getByRole("heading", { name: "Grants on record in Alex's pod" })).toBeTruthy();
+    const rows = within(table).getAllByRole("row").slice(1);
+    expect(rows.map((row) => row.textContent)).toEqual([
+      "G4JuniperApplyWithdrawnDay 40",
+      "G8MarigoldServiceActiveDay 39",
+    ]);
+  });
+
+  it("shows no grants table when the pod has no grant on record", async () => {
+    const { readGrantsOnRecord } = await import("../src/guided-tour.ts");
+    render(<App hook={at("/journey")} />);
+    await waitFor(() => expect(readGrantsOnRecord).toHaveBeenCalled());
+    expect(screen.queryByRole("table")).toBeNull();
   });
 });
 

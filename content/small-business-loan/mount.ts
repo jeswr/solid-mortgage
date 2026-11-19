@@ -15,7 +15,6 @@
 
 import type { TourStep } from "@mortgage/demo-kit/contracts";
 import { HOLDERS, type HolderId } from "@mortgage/demo-kit/holders";
-import type { AppSlug } from "@mortgage/demo-kit/registry";
 import { appUrl } from "@mortgage/demo-kit/urls";
 import { DEMO, PATHS } from "./facts.js";
 import { LOAN_GRANT_CODES, LOAN_GRANTS } from "./grants.js";
@@ -129,28 +128,7 @@ export const LOAN_COMPLIANCE: readonly LoanComplianceItem[] = Object.freeze([
   },
 ]);
 
-/** The apps with pages in this demo, and the path prefix those pages live under. */
-export const SMALL_BUSINESS_LOAN_PAGES: Readonly<Partial<Record<AppSlug, string>>> = Object.freeze({
-  bank: "business",
-  "business-lender": "loan",
-  state: "revenue",
-  wallet: "loan",
-});
-
-/**
- * Does this page belong to the small business loan demo? `pathname` is the full path
- * (`/bank/business/…`). A `?tour=` parameter naming this demo also counts; one naming another
- * demo does not.
- */
-export function isSmallBusinessLoanPage(pathname: string, app: AppSlug, search = ""): boolean {
-  const tour = new URLSearchParams(search).get("tour");
-  if (tour === DEMO) return true;
-  if (tour !== null && tour !== "off") return false;
-  const prefix = SMALL_BUSINESS_LOAN_PAGES[app];
-  if (prefix === undefined) return false;
-  const inApp = pathname.replace(/^\/[^/]+\/?/, "").replace(/\/$/, "");
-  return inApp === prefix || inApp.startsWith(`${prefix}/`);
-}
+export { isSmallBusinessLoanPage, SMALL_BUSINESS_LOAN_PAGES } from "./pages.js";
 
 /** The simulated day of a tour step (pages follow it in the guided tour). */
 export function dayOfStep(stepId: string | undefined): number | undefined {

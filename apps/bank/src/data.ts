@@ -7,9 +7,9 @@
 import { membersOf } from "@mortgage/content/mortgage/grants";
 import { statusListOf } from "@mortgage/content/mortgage/issuers";
 import { CREDENTIALS } from "@mortgage/content/mortgage/journey";
+import { vcKit } from "@mortgage/content/mortgage/vc";
 import { at, podUrl, readDataset, statusOf, type World } from "@mortgage/content/mortgage/world";
 import { CredentialPointer } from "@mortgage/data-model";
-import { deriveStatusIndex } from "@mortgage/vc-kit";
 import { DataFactory } from "n3";
 import { lastSegment } from "./view.ts";
 
@@ -47,6 +47,8 @@ export async function loadIssuances(world: World): Promise<Issuance[]> {
   // A list read before its own validFrom does not verify; read it at or after the latest issue.
   const latest = Math.max(0, ...pointers.map((pointer) => pointer.asOf.getTime()));
   const now = new Date(Math.max(at(world, "12:00").getTime(), latest + 10 * 60_000));
+  // The kit loads with the first issuance read, never in the bank's first load (content/mortgage/vc.ts).
+  const { deriveStatusIndex } = await vcKit();
   const issuances: Issuance[] = [];
   for (const pointer of pointers) {
     // Alder Bank issues each credential once, so the index derives from the credential's URL.

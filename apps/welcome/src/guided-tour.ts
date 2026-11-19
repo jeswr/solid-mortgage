@@ -3,9 +3,16 @@
  * The welcome page's link to the pods, loaded after the first render (it carries the pod runtime,
  * the seed, the tour and the Lens, which the front door's first load does not): the tour and the
  * Solid Lens mounted like every organisation app, "Try it yourself" restarting the demo from its
- * seed before the tour opens, and the journey ledger fed from the pods' request log.
+ * seed before the tour opens, the journey ledger fed from the pods' request log, and the grants
+ * on record in Alex's pod.
  */
-import { mortgageSeed, trackTourContext } from "@mortgage/content/mortgage/browser";
+import {
+  createBrowserWorld,
+  crossOwnerFetch,
+  mortgageSeed,
+  trackTourContext,
+} from "@mortgage/content/mortgage/browser";
+import { GRANTS, type GrantCode, grantRecords } from "@mortgage/content/mortgage/grants";
 import { MORTGAGE_HOLDER, mortgageLens, mortgageTour } from "@mortgage/content/mortgage/mount";
 import { TOUR } from "@mortgage/content/mortgage/tour";
 import { ORGS } from "@mortgage/content/orgs";
@@ -107,4 +114,39 @@ export async function mountJourneyLedger(
     stopReset();
     ledger.remove();
   };
+}
+
+/** One grant as Alex's pod records it: its agreement in `policies/`, its state in `consents/`. */
+export interface GrantOnRecord {
+  readonly code: string;
+  readonly name: string;
+  /** The organisation the grant was given to, by name. */
+  readonly to: string;
+  readonly state: "active" | "expired" | "revoked";
+  /** When the latest consent record was written, as the demo calendar labels its day. */
+  readonly when: string;
+}
+
+/**
+ * The grants on record in Alex's pod, read as Alex (tour step 24 expects these reads of
+ * `/policies/` and `/consents/`): every access agreement and the state its latest consent record
+ * gives it. Only Alex may read these containers; the request is marked as Alex's back office, like
+ * the wallet's own bookkeeping.
+ */
+export async function readGrantsOnRecord(): Promise<GrantOnRecord[]> {
+  const dayOne = await startPods();
+  const world = createBrowserWorld({ actsAs: "alex", dayOne, podFetch: crossOwnerFetch("alex") });
+  const days = createDemoCalendar(dayOne);
+  return (await grantRecords(world)).map((record) => {
+    const spec = Object.hasOwn(GRANTS, record.code) ? GRANTS[record.code as GrantCode] : undefined;
+    return {
+      code: record.code,
+      name: spec?.name ?? record.code,
+      state: record.state,
+      to:
+        (ORGS as Readonly<Record<string, { organisation: string } | undefined>>)[spec?.to ?? ""]
+          ?.organisation ?? "",
+      when: days.label(days.dayOf(record.since)),
+    };
+  });
 }

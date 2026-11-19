@@ -28,6 +28,9 @@ export default defineConfig({
     url: `http://127.0.0.1:${port}/wallet/`,
     reuseExistingServer: false,
     timeout: 180_000,
+    // e2e/serve.mjs removes its copy of the site (about 600 MB) on SIGTERM; Playwright's default
+    // SIGKILL left one behind in the temp directory on every run.
+    gracefulShutdown: { signal: "SIGTERM", timeout: 5_000 },
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
 });

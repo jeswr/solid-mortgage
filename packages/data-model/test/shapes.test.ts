@@ -25,6 +25,16 @@ function shapesStore(): Store {
   return store;
 }
 
+test("the shapes module has no unmarked top-level call, so apps' first loads leave it out", () => {
+  // The package index re-exports the lists; only the lazily loaded validator reads them. A
+  // top-level call a bundler cannot prove pure keeps every shape's Turtle in each app's first
+  // load (acceptance test 15).
+  const source = readFileSync(path.join(PACKAGE_ROOT, "src", "shapes", "shapes.ts"), "utf8");
+  const calls = [...source.matchAll(/^export const \w+[^=]*=\s*(\/\* @__PURE__ \*\/ )?Object\./gm)];
+  expect(calls.length).toBe(2);
+  for (const call of calls) expect(call[1], call[0]).toBeDefined();
+});
+
 test("committed shapes module matches shapes/*.ttl (codegen freshness)", () => {
   execFileSync(process.execPath, ["scripts/generate-shapes.mjs", "--check"], {
     cwd: PACKAGE_ROOT,
