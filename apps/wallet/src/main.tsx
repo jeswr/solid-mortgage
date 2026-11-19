@@ -19,10 +19,18 @@ import { mountDemo } from "@mortgage/tour/mount";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App.tsx";
+import { initialHolder } from "./holder.ts";
 import { setDayOne, setWalletDay } from "./runtime.tsx";
 import { linkTour } from "./tour-link.ts";
 
-configure({ app: "wallet", registry: ORGS, seed: mortgageSeed() });
+// A page under moving/ belongs to the moving-house demo (src/sections/moving-house/).
+const movingHouse = isMovingHousePage(location.pathname, "wallet", location.search);
+
+// The demo the wallet is mounted for, and the holder it shows first (src/holder.ts).
+const demo = movingHouse ? movingHouseTour() : mortgageTour();
+const holder = initialHolder(window.location.href, demo.holder);
+
+configure({ app: "wallet", holder, registry: ORGS, seed: mortgageSeed() });
 
 const started = ready().then((info) => {
   setDayOne(info.dayOne);
@@ -30,16 +38,13 @@ const started = ready().then((info) => {
   return info;
 });
 
-// A page under moving/ belongs to the moving-house demo (src/sections/moving-house/).
-const movingHouse = isMovingHousePage(location.pathname, "wallet", location.search);
-
 void mountDemo({
   app: "wallet",
   holder: movingHouse ? MOVING_HOUSE_HOLDER : MORTGAGE_HOLDER,
   lens: movingHouse ? movingHouseLens() : mortgageLens(),
   registry: ORGS,
   runtime: { onEvent, resetDemo, setTourContext: trackTourContext(setTourContext) },
-  tour: movingHouse ? movingHouseTour() : mortgageTour(),
+  tour: demo,
 }).then(({ tour }) => {
   if (tour === undefined) return;
   linkTour(tour);
@@ -56,6 +61,6 @@ const root = document.getElementById("root");
 if (root === null) throw new Error("index.html is missing #root");
 createRoot(root).render(
   <StrictMode>
-    <App started={started} />
+    <App started={started} holder={holder} demoHolder={demo.holder} />
   </StrictMode>,
 );

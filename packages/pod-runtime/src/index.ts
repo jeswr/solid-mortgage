@@ -4,6 +4,7 @@
  * the host itself runs in `pods-sw.js`. Headless code uses `@mortgage/pod-runtime/node`.
  */
 export {
+  actingAs,
   configure,
   note,
   onEvent,
@@ -17,6 +18,7 @@ export {
   resetDemo,
   session,
   setDay,
+  setHolder,
   setTour,
   setTourContext,
   unwatch,

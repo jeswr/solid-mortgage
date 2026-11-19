@@ -10,7 +10,7 @@ import {
   nameOfWebid,
   podPathOf,
 } from "../explain.ts";
-import { alexRoot, isoDay, readGrants, readReceipts } from "../pod-data.ts";
+import { holderRoot, isoDay, readGrants, readReceipts } from "../pod-data.ts";
 import { usePodData, useWallet } from "../runtime.tsx";
 
 /** Activity: the consent records in `consents/`, newest first (the audit trail Cairn keeps). */
@@ -23,7 +23,7 @@ export function Activity() {
     return { names, receipts };
   });
   const dayLabel = (date: Date) => w.calendar.label(w.calendar.dayOf(isoDay(date)));
-  const root = alexRoot(w);
+  const root = holderRoot(w);
   return (
     <Screen title="Activity" page="Activity" back={{ href: "/sharing", label: "Sharing" }}>
       <p className="lede">

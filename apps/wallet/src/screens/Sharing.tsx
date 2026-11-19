@@ -24,7 +24,7 @@ import {
   orgOfWebid,
   podPathOf,
 } from "../explain.ts";
-import { alexRoot, type GrantItem, isoDay, readGrants } from "../pod-data.ts";
+import { type GrantItem, holderRoot, isoDay, readGrants } from "../pod-data.ts";
 import { usePodData, useWallet } from "../runtime.tsx";
 
 const isGrantCode = (code: string): code is GrantCode =>
@@ -34,14 +34,14 @@ const isGrantCode = (code: string): code is GrantCode =>
 function AccessRules({ grant }: { grant: GrantItem }) {
   const agreement = grant.record.agreement;
   const rules = usePodData(async (w) => {
-    const root = alexRoot(w);
+    const root = holderRoot(w);
     const agents = new Set(agreement.permissions.map((permission) => permission.assigneeIri));
     const targets = [
       ...new Set(agreement.permissions.flatMap((permission) => [...permission.targetIris])),
     ].sort();
     const lines: string[] = [];
     for (const target of targets) {
-      const authorizations = await readAcl(w.fetchAs("alex"), `${target}.acl`);
+      const authorizations = await readAcl(w.fetchAs(w.holder), `${target}.acl`);
       for (const authorization of authorizations) {
         for (const agent of authorization.agent) {
           if (!agents.has(agent)) continue;
@@ -93,7 +93,7 @@ function GrantCard({ grant }: { grant: GrantItem }) {
       targets: [...permission.targetIris].sort(),
     })),
     agreement.assigneeIri,
-    alexRoot(w),
+    holderRoot(w),
   );
   const end = explainEnd(
     endOfPermissions(agreement.permissions.map((permission) => permission.end)),

@@ -10,13 +10,18 @@
  */
 
 import type { TourStep } from "@mortgage/demo-kit/contracts";
+import { HOLDERS, type HolderId } from "@mortgage/demo-kit/holders";
 import type { AppSlug } from "@mortgage/demo-kit/registry";
 import { appUrl } from "@mortgage/demo-kit/urls";
 import { DEMO } from "./facts.js";
 import { HOLDER_CODES, HOLDER_GRANTS, PURPOSE_TEXT, UNTIL_LABEL } from "./grants.js";
 import { TOUR } from "./tour.js";
 
-export const MOVING_HOUSE_HOLDER = Object.freeze({ name: "Alex" });
+/** The moving-house demo's holder, from the holder registry: Alex (the mortgage's borrower). */
+export const MOVING_HOUSE_HOLDER: Readonly<{ id: HolderId; name: string }> = Object.freeze({
+  id: HOLDERS.alex.id,
+  name: HOLDERS.alex.short,
+});
 
 export const MOVING_HOUSE_DRAWERS: readonly { path: string; label: string }[] = Object.freeze([
   { label: "Profile", path: "/profile/" },
@@ -59,8 +64,9 @@ export function movingHouseLens(): MovingHouseLensOptions {
   };
 }
 
-export function movingHouseTour(): { demo: string; steps: TourStep[] } {
-  return { demo: DEMO, steps: [...TOUR] };
+/** The tour (`mountDemo({ tour })`), with the holder whose pod it centres on. */
+export function movingHouseTour(): { demo: string; holder: HolderId; steps: TourStep[] } {
+  return { demo: DEMO, holder: MOVING_HOUSE_HOLDER.id, steps: [...TOUR] };
 }
 
 /** The apps with pages in this demo, and the path prefix those pages live under. */

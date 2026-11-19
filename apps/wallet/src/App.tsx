@@ -1,10 +1,12 @@
 // AUTHORED-BY Claude Opus 5.5
+import { DEFAULT_HOLDER, HOLDERS, type HolderId } from "@mortgage/demo-kit/registry";
 import { applyDocumentMeta, DemoTrust, TrustBanner } from "@mortgage/demo-kit/trust";
 import { type ReactNode, useEffect } from "react";
 import { type BaseLocationHook, Link, Route, Router, Switch, useLocation } from "wouter";
 import { Icon, type IconName } from "./components/Icon.tsx";
+import { recordHolder } from "./holder.ts";
 import { org } from "./org.ts";
-import { WalletProvider } from "./runtime.tsx";
+import { useWallet, WalletProvider } from "./runtime.tsx";
 import { Activity } from "./screens/Activity.tsx";
 import { DocumentDetail, Documents } from "./screens/Documents.tsx";
 import { Home } from "./screens/Home.tsx";
@@ -97,13 +99,55 @@ function NotFound() {
   );
 }
 
-/** `hook` swaps the browser location for another (tests pass wouter's `memoryLocation`). */
-export function App({ hook, started }: { hook?: BaseLocationHook; started: Promise<unknown> }) {
+/**
+ * The simulated sign-in line: the registry's persona (Alex) while the wallet shows Alex's pod,
+ * else the holder it shows ("Jordan Blake, for Northwind Logistics LLC").
+ */
+function HolderTrustBanner() {
+  const { holder } = useWallet();
+  if (holder === org.actsAs) return <TrustBanner />;
+  const shown = HOLDERS[holder];
+  return (
+    <TrustBanner
+      signedInAs={
+        shown.operator === undefined
+          ? { name: shown.name }
+          : { name: shown.operator, role: `for ${shown.name}` }
+      }
+    />
+  );
+}
+
+/** Keeps the shown holder in the address bar as the visitor moves between screens. */
+function HolderInUrl({ demoHolder }: { demoHolder: HolderId }) {
+  const { holder } = useWallet();
+  const [location] = useLocation();
+  // biome-ignore lint/correctness/useExhaustiveDependencies: re-record after each route change.
+  useEffect(() => recordHolder(holder, demoHolder), [holder, demoHolder, location]);
+  return null;
+}
+
+/**
+ * `hook` swaps the browser location for another (tests pass wouter's `memoryLocation`).
+ * `holder` is the holder shown first and `demoHolder` the current demo's (src/holder.ts).
+ */
+export function App({
+  hook,
+  started,
+  holder = DEFAULT_HOLDER,
+  demoHolder = DEFAULT_HOLDER,
+}: {
+  hook?: BaseLocationHook;
+  started: Promise<unknown>;
+  holder?: HolderId;
+  demoHolder?: HolderId;
+}) {
   return (
     <DemoTrust org={org}>
-      <TrustBanner />
-      <WalletProvider started={started}>
+      <WalletProvider started={started} holder={holder}>
+        <HolderTrustBanner />
         <Router {...(hook === undefined ? { base: ROUTER_BASE } : { hook })}>
+          {hook === undefined ? <HolderInUrl demoHolder={demoHolder} /> : null}
           <div className="device">
             <div className="device-screen">
               <Switch>

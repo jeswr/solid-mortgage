@@ -47,6 +47,16 @@ const harness = {
     });
     return response.status;
   },
+  /** PUT a plain-text document as `owner` into `pod`; the status the pod server answered. */
+  async write(owner: PodOwner, pod: PodOwner, path: string, text: string): Promise<number> {
+    const w = await world(1);
+    const response = await w.fetchAs(owner)(podUrl(w, pod, path), {
+      body: text,
+      headers: { "content-type": "text/plain" },
+      method: "PUT",
+    });
+    return response.status;
+  },
   /** The agents named by the ACL document of `path` in Alex's pod, as Alex reads it. */
   async aclAgents(path: string): Promise<string[]> {
     const w = await world(1);

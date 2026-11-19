@@ -8,7 +8,7 @@
 import type { Sentence } from "./describe.js";
 import { s } from "./dom.js";
 import { isDenied, isOk, isPod, type LensModel, type Received } from "./model.js";
-import { HOLDER, isAclPath, nodeOf } from "./paths.js";
+import { isAclPath, nodeOf } from "./paths.js";
 
 type Pt = readonly [number, number];
 
@@ -138,7 +138,7 @@ export class LensMap {
       const p = slots[i];
       if (p) this.positions.set(o.key, p);
     });
-    this.positions.set(HOLDER, [W / 2, holderY]);
+    this.positions.set(m.holder, [W / 2, holderY]);
     const maxY = Math.max(holderY + 34, ...[...this.positions.values()].map((p) => p[1] + 36));
     this.height = Math.ceil(maxY);
     this.svg.setAttribute("viewBox", `0 0 ${W} ${this.height}`);
@@ -244,8 +244,8 @@ export class LensMap {
     });
 
     // Holder.
-    const hp = this.positions.get(HOLDER) ?? [W / 2, holderY];
-    const holderCurrent = this.opts.currentNode === HOLDER;
+    const hp = this.positions.get(m.holder) ?? [W / 2, holderY];
+    const holderCurrent = this.opts.currentNode === m.holder;
     edges.append(
       s("line", {
         x1: W / 2,
@@ -423,7 +423,7 @@ export class LensMap {
   }
 
   /** The motion kind an entry maps to (design.md §c.3). */
-  static motionOf(rec: Received, sentence: Sentence): MotionKind {
+  static motionOf(rec: Received, sentence: Sentence, holder: string): MotionKind {
     const e = rec.entry;
     if (!isPod(e)) {
       if (e.kind === "proof-verified") return "proof";
@@ -435,7 +435,7 @@ export class LensMap {
     if (sentence.kind === "grant") return "grant";
     if (sentence.kind === "expire") return "expire";
     if (sentence.kind === "revoke") return "revoke";
-    if (e.pod !== HOLDER) return "self";
+    if (e.pod !== holder) return "self";
     if (sentence.kind === "credential") return "credential";
     if (e.kind === "read") return "read";
     return "write";
@@ -447,7 +447,7 @@ export class LensMap {
     speed: number,
     backlog = false,
   ): Promise<void> {
-    const kind = LensMap.motionOf(rec, sentence);
+    const kind = LensMap.motionOf(rec, sentence, this.model.holder);
     this.svg.setAttribute("data-last", kind);
     const e = rec.entry;
     const reduced = this.opts.reducedMotion() || backlog;
@@ -487,7 +487,9 @@ export class LensMap {
     const actorNode = nodeOf(this.model.registry, e.actor.org);
     const orgPt = this.nodePoint(e.actor.org);
     const drawerPath =
-      e.pod === HOLDER && !isAclPath(e.path) ? this.model.drawer(e.path)?.path : undefined;
+      e.pod === this.model.holder && !isAclPath(e.path)
+        ? this.model.drawer(e.path)?.path
+        : undefined;
     const drawerPt = this.drawerPoint(drawerPath, orgPt);
 
     switch (kind) {

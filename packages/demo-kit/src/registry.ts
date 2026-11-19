@@ -31,8 +31,12 @@ export type OrgSlug = (typeof ORG_SLUGS)[number];
 export const APP_SLUGS = [...ORG_SLUGS, "welcome"] as const;
 export type AppSlug = (typeof APP_SLUGS)[number];
 
-/** Whose pod a request is addressed to or made as: an organisation's, or Alex's. */
-export type PodOwner = OrgSlug | "alex";
+/** Whose pod a request is addressed to or made as: an organisation's, or a registered holder's. */
+export type PodOwner = OrgSlug | HolderId;
+
+export function isPodOwner(value: unknown): value is PodOwner {
+  return isHolderId(value) || (typeof value === "string" && isOrgSlug(value));
+}
 
 export function isOrgSlug(value: string): value is OrgSlug {
   return (ORG_SLUGS as readonly string[]).includes(value);
@@ -66,8 +70,9 @@ export interface OrgRecord {
   altPersonas?: Persona[];
   /**
    * The pod this app's requests are made as. Usually its own slug; an app that is a second view
-   * of an organisation names the first app's slug (the Loan Desk acts as `lender`), and Alex's
-   * wallet acts as `alex`.
+   * of an organisation names the first app's slug (the Loan Desk acts as `lender`), and the
+   * wallet acts as its default holder, `alex` (it may act for every registered holder:
+   * `holdersActedFor`).
    */
   actsAs: PodOwner;
   /** `<meta name="theme-color">` and the Lens map colour; an original value (design.md §b.2). */
@@ -79,9 +84,9 @@ export interface OrgRecord {
 /** The registry: one record per organisation app. */
 export type OrgRegistry = Readonly<Record<OrgSlug, OrgRecord>>;
 
-/** The person whose pod sits at the centre of the demo. */
+/** The holder whose pod sits at the centre of a demo (`HOLDERS` in `./holders.ts`). */
 export interface PodHolder {
-  owner: "alex";
+  owner: HolderId;
   name: string;
 }
 
@@ -102,9 +107,111 @@ export function webidFor(owner: PodOwner, podOrigin: string): string {
   return new URL(webidPath(owner), podOrigin).href;
 }
 
-/** The pods the registry implies: Alex's plus one per distinct `actsAs` organisation. */
+/** The pods the registry implies: every registered holder's, then one per distinct `actsAs` organisation. */
 export function podOwners(registry: OrgRegistry): PodOwner[] {
-  const owners = new Set<PodOwner>(["alex"]);
+  const owners = new Set<PodOwner>(HOLDER_IDS);
   for (const slug of ORG_SLUGS) owners.add(registry[slug].actsAs);
   return [...owners];
+}
+
+/**
+ * The holders an app may act for. An app that acts as a holder (the wallet) holds every
+ * registered holder's pod (docs/rebuild/flows.md §1: one wallet for all of them); any other app
+ * acts only as its own organisation and gets none.
+ */
+export function holdersActedFor(registry: OrgRegistry, app: string): readonly HolderId[] {
+  if (!isOrgSlug(app)) return [];
+  return isHolderId(registry[app].actsAs) ? HOLDER_IDS : [];
+}
+
+// --- Pod holders ----------------------------------------------------------------------------
+/**
+ * The pod holders: the people and businesses whose pods sit at the centre of a demo
+ * (docs/rebuild/flows.md §1: "the same Cairn app holds Alex's, Maya's, Rosa's and Northwind's
+ * pods"). Every holder is fictional. Registering a holder is one entry here: the runtime then
+ * provisions its pod, its WebID and its baseline profile, the Lens can centre on it, and the
+ * wallet can show it.
+ *
+ * Ids are pod slugs: lower-case, disjoint from the organisation slugs, and fixed (a rename of
+ * the fictional person or business changes `name` and `short`, never the id).
+ */
+
+export type HolderKind = "person" | "business";
+
+export interface HolderRecord {
+  /** The pod slug: the pod lives at `/pods/<id>/`, its WebID at `/pods/<id>/profile/card#me`. */
+  readonly id: string;
+  /** Full display name ("Maya Torres", "Northwind Logistics LLC"). */
+  readonly name: string;
+  /** What the Lens and the wallet call the holder ("Maya", "Northwind"). */
+  readonly short: string;
+  readonly kind: HolderKind;
+  /** The pod's path on the pod origin, `/pods/<id>/`. */
+  readonly podPath: string;
+  /** For a business: the person who operates its pod in the wallet. */
+  readonly operator?: string;
+}
+
+const REGISTERED = {
+  alex: Object.freeze({
+    id: "alex",
+    kind: "person",
+    name: "Alex Rivera",
+    podPath: "/pods/alex/",
+    short: "Alex",
+  }),
+  maya: Object.freeze({
+    id: "maya",
+    kind: "person",
+    name: "Maya Torres",
+    podPath: "/pods/maya/",
+    short: "Maya",
+  }),
+  rosa: Object.freeze({
+    id: "rosa",
+    kind: "person",
+    name: "Rosa Rivera",
+    podPath: "/pods/rosa/",
+    short: "Rosa",
+  }),
+  northwind: Object.freeze({
+    id: "northwind",
+    kind: "business",
+    name: "Northwind Logistics LLC",
+    operator: "Jordan Blake",
+    podPath: "/pods/northwind/",
+    short: "Northwind",
+  }),
+} as const satisfies Record<string, HolderRecord>;
+
+export type HolderId = keyof typeof REGISTERED;
+
+/** The registry. Order is the wallet switcher's order; the first is the default holder. */
+export const HOLDERS: { readonly [K in HolderId]: HolderRecord & { readonly id: K } } =
+  Object.freeze(REGISTERED);
+
+/** Every registered holder id, in registry order. */
+export const HOLDER_IDS: readonly HolderId[] = Object.freeze(Object.keys(HOLDERS) as HolderId[]);
+
+/** The holder a page shows when nothing names another: Alex, the mortgage demo's holder. */
+export const DEFAULT_HOLDER: HolderId = "alex";
+
+export function isHolderId(value: unknown): value is HolderId {
+  return typeof value === "string" && Object.hasOwn(HOLDERS, value);
+}
+
+export function holderRecord(id: HolderId): HolderRecord {
+  return HOLDERS[id];
+}
+
+/** The holder whose pod a URL or pod path names (`…/pods/<id>/…`), if it is a registered one. */
+export function holderOfPodUrl(url: string): HolderId | undefined {
+  let path = url;
+  try {
+    path = new URL(url, "https://pods.invalid").pathname;
+  } catch {
+    return undefined;
+  }
+  const id = /^\/pods\/([^/]+)(?:\/|$)/.exec(path)?.[1];
+  return isHolderId(id) ? id : undefined;
 }

@@ -6,13 +6,15 @@
  * organisation's palette.
  */
 import {
+  HOLDERS,
   ORG_SLUGS,
   type OrgRegistry,
   type OrgSlug,
   type PodHolder,
 } from "@mortgage/demo-kit/registry";
 
-export const POD_HOLDER: PodHolder = Object.freeze({ name: "Alex Rivera", owner: "alex" });
+/** The mortgage demo's holder; the holders themselves are registered in `@mortgage/demo-kit/holders`. */
+export const POD_HOLDER: PodHolder = Object.freeze({ name: HOLDERS.alex.name, owner: "alex" });
 
 const alex = (role?: string) =>
   role === undefined ? { name: POD_HOLDER.name } : { name: POD_HOLDER.name, role };

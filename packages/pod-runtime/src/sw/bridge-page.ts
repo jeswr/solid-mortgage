@@ -11,8 +11,14 @@ import { serviceWorkerTransport } from "../client/transport.js";
 import type { HostMessage } from "../host/host.js";
 import { EVENTS_CHANNEL } from "../protocol.js";
 
-/** `config` is the build-time registry: the only identities the bridge recognises. */
-export function startBridgePage(config: { identities: Record<string, PodOwner> }): void {
+/**
+ * `config` is the build-time registry: the only identities the bridge recognises, and the
+ * holders each may act for.
+ */
+export function startBridgePage(config: {
+  identities: Record<string, PodOwner>;
+  holders?: Record<string, readonly string[]>;
+}): void {
   void (async () => {
     const domain = location.hostname.replace(/^pods\./, "");
     const transport = await serviceWorkerTransport(new URL("/pods-sw.js", location.origin).href);
@@ -29,6 +35,8 @@ export function startBridgePage(config: { identities: Record<string, PodOwner> }
       },
       control: (message) => transport.control(message),
       fetch: (request) => transport.fetch(request),
+      holders: (app) =>
+        Object.hasOwn(config.holders ?? {}, app) ? (config.holders?.[app] ?? []) : [],
       identify: hostModeIdentity(domain, Object.keys(config.identities)),
       podsOrigin: location.origin,
       target: window,

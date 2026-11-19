@@ -436,4 +436,50 @@ describe("pod runtime in Chrome", () => {
     expect((await call(page, "GET", "/pods/bank/documents/seeded.txt")).status).toBe(200);
     await context.close();
   });
+  it("the wallet acts for whichever holder it is set to; an organisation cannot switch", async (ctx) => {
+    if (skipReason) return ctx.skip(skipReason);
+    const context = await (browser as Browser).newContext();
+    const wallet = await open(context, "?app=wallet");
+    await wallet.evaluate(() => rt.ready());
+    // Default: the wallet acts as Alex, exactly as before.
+    expect(await wallet.evaluate(() => [rt.actingAs(), rt.session().webid])).toEqual([
+      "alex",
+      `${origin}/pods/alex/profile/card#me`,
+    ]);
+    const note = { "content-type": "text/plain" };
+    expect((await call(wallet, "PUT", "/pods/maya/notes/a.txt", "maya's", note)).status).toBe(403);
+    await wallet.evaluate(() => rt.setHolder("maya"));
+    expect(await wallet.evaluate(() => [rt.actingAs(), rt.session()])).toEqual([
+      "maya",
+      {
+        org: "wallet",
+        persona: "Maya Torres",
+        simulated: true,
+        webid: `${origin}/pods/maya/profile/card#me`,
+      },
+    ]);
+    expect((await call(wallet, "PUT", "/pods/maya/notes/a.txt", "maya's", note)).status).toBe(201);
+    expect(await call(wallet, "GET", "/pods/maya/notes/a.txt")).toEqual({
+      body: "maya's",
+      status: 200,
+    });
+    // As Maya, the wallet is a stranger to Alex's pod.
+    expect((await call(wallet, "GET", "/pods/alex/")).status).toBe(403);
+    await wallet.evaluate(() => rt.setHolder("alex"));
+    expect((await call(wallet, "GET", "/pods/maya/notes/a.txt")).status).toBe(403);
+
+    const bank = await open(context, "?app=bank");
+    await bank.evaluate(() => rt.ready());
+    const refused = await bank.evaluate(() => {
+      try {
+        rt.setHolder("maya");
+        return "switched";
+      } catch (error) {
+        return String((error as Error).message);
+      }
+    });
+    expect(refused).toMatch(/bank cannot act for maya/);
+    expect((await call(bank, "GET", "/pods/maya/notes/a.txt")).status).toBe(403);
+    await context.close();
+  });
 });

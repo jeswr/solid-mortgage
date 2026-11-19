@@ -1,5 +1,5 @@
 // AUTHORED-BY Claude Opus 5.5
-import { displayName, ORG_SLUGS, podOwners } from "@mortgage/demo-kit/registry";
+import { displayName, HOLDER_IDS, ORG_SLUGS, podOwners } from "@mortgage/demo-kit/registry";
 import { describe, expect, it } from "vitest";
 import { DEMO_APPS, ORGS } from "../orgs.js";
 
@@ -23,12 +23,14 @@ describe("organisation registry", () => {
     for (const colour of colours) expect(colour).toMatch(/^#[0-9a-f]{6}$/);
   });
 
-  it("implies one pod for Alex and one per organisation that acts for itself", () => {
+  it("implies one pod per registered holder and one per organisation that acts for itself", () => {
     const owners = podOwners(ORGS);
     expect(owners).toContain("alex");
     expect(owners).not.toContain("wallet");
     expect(owners).not.toContain("lender-desk");
-    expect(owners).toHaveLength(13); // Alex plus the twelve organisations other than Cairn
+    expect(owners.slice(0, HOLDER_IDS.length)).toEqual([...HOLDER_IDS]);
+    // The holders plus the twelve organisations other than Cairn (the state app is moving house's).
+    expect(owners).toHaveLength(HOLDER_IDS.length + 12);
   });
 });
 

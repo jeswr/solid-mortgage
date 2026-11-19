@@ -13,7 +13,7 @@ import {
   type OrgNode,
   type Received,
 } from "./model.js";
-import { drawerPathOf, HOLDER, isAclPath, nodeOf, podRelative } from "./paths.js";
+import { drawerPathOf, isAclPath, nodeOf, podRelative } from "./paths.js";
 import type { TimelineStep } from "./types.js";
 
 export interface LedgerCell {
@@ -83,7 +83,7 @@ export function computeTotals(model: LensModel): LedgerTotals {
       denied++;
       continue;
     }
-    if (entry.pod !== HOLDER || isAclPath(entry.path) || !isOk(entry.status)) continue;
+    if (entry.pod !== model.holder || isAclPath(entry.path) || !isOk(entry.status)) continue;
     if (entry.kind !== "write") continue;
     const path = podRelative(entry.path);
     const writer = nodeOf(model.registry, entry.actor.org);
@@ -101,16 +101,16 @@ export function computeTotals(model: LensModel): LedgerTotals {
       continue;
     }
     if (model.isRecordDrawer(path)) continue;
-    if (writer === HOLDER) uploads.add(path);
+    if (writer === model.holder) uploads.add(path);
     else delivered.add(path);
   }
 
   for (const { entry } of model.received) {
-    if (!isPod(entry) || entry.pod !== HOLDER || entry.kind !== "read") continue;
+    if (!isPod(entry) || entry.pod !== model.holder || entry.kind !== "read") continue;
     if (!isOk(entry.status) || isDenied(entry)) continue;
     const c = credentials.get(podRelative(entry.path));
     const reader = nodeOf(model.registry, entry.actor.org);
-    if (c && reader !== HOLDER && reader !== c.writer) c.reuses++;
+    if (c && reader !== model.holder && reader !== c.writer) c.reuses++;
   }
 
   return {
@@ -131,7 +131,7 @@ export function computeLedger(model: LensModel, steps: TimelineStep[] = []): Led
   const drawerOrder = new Map(model.drawers().map((d, i) => [d.path, i]));
 
   for (const { entry } of model.received) {
-    if (!isPod(entry) || entry.pod !== HOLDER || isAclPath(entry.path)) continue;
+    if (!isPod(entry) || entry.pod !== model.holder || isAclPath(entry.path)) continue;
     const path = podRelative(entry.path);
     const dp = drawerPathOf(path);
     let row = rows.get(path);
