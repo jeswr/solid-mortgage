@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * CI guard: every mort: term referenced anywhere in packages/ or apps/ must be
+ * CI guard: every mort: term referenced anywhere in packages/, apps/ or content/ must be
  * defined in vocab/mort.ttl (the single source of truth). Catches typo'd or
  * never-minted term IRIs before they reach committed RDF or code.
  */
@@ -52,7 +52,7 @@ async function definedTerms() {
 }
 
 function trackedFiles() {
-  const output = execFileSync("git", ["ls-files", "-z", "--", "packages", "apps"], {
+  const output = execFileSync("git", ["ls-files", "-z", "--", "packages", "apps", "content"], {
     cwd: ROOT,
     encoding: "utf8",
   });
@@ -96,5 +96,5 @@ if (failures.length > 0) {
   process.exit(1);
 }
 console.log(
-  `check-mort-terms: ${referenceCount} reference(s) in packages/ and apps/ all resolve against ${defined.size} defined term(s)`,
+  `check-mort-terms: ${referenceCount} reference(s) in packages/, apps/ and content/ all resolve against ${defined.size} defined term(s)`,
 );
