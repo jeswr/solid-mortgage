@@ -1,0 +1,24 @@
+/* AUTHORED-BY Claude Opus 5.5
+ * Halyard LEI Services' own tokens: deep teal and cool greys, a reference-register voice, Source
+ * Sans 3 for text and IBM Plex Mono for identifiers (both self-hosted, SIL Open Font License).
+ * Original values, no imagery (design.md §b.2). */
+:root {
+  --hy-teal: #0e6e6e;
+  --hy-teal-deep: #094e4e;
+  --hy-teal-soft: #e3f0ef;
+  --hy-canvas: #f5f7f8;
+  --hy-surface: #ffffff;
+  --hy-ink: #1b2428;
+  --hy-muted: #4f5d63;
+  --hy-rule: #cdd5d9;
+  --hy-rule-strong: #8f9ca2;
+  --hy-ok: #1f6a3a;
+  --hy-ok-soft: #e6f2ea;
+  --hy-alert: #922b21;
+  --hy-alert-soft: #fbeceb;
+  --hy-focus: #c8811a;
+  --hy-sans: "Source Sans 3", system-ui, sans-serif;
+  --hy-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --hy-radius: 3px;
+  --hy-measure: 62rem;
+}
