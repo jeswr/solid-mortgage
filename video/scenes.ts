@@ -228,6 +228,18 @@ async function lensOpen(c: Ctx) {
     .catch(() => {});
 }
 
+/** Collapses the Lens, so a page it docks over is seen whole. */
+async function lensFold(c: Ctx) {
+  await page(c)
+    .evaluate(() => {
+      const lens = document.querySelector("solid-lens") as
+        | (HTMLElement & { collapsed?: boolean })
+        | null;
+      if (lens && !lens.collapsed) lens.collapsed = true;
+    })
+    .catch(() => {});
+}
+
 async function demoApi<T>(c: Ctx, fn: string, arg?: string): Promise<T> {
   return page(c).evaluate(
     ([f, a]) => {
@@ -419,6 +431,9 @@ export const actions: Record<string, Action> = {
         return;
       case "totals": {
         const where = await openLedger(c);
+        // On a ledger page the docked Lens covers the right of the totals strip (the mortgage's
+        // "Uploads by Alex" tile): fold it away while the totals are read out.
+        if (await page(c).locator("journey-ledger").count()) await lensFold(c);
         await sleep(600);
         // The ledger's totals strip; a ledger opened on its examiner view has none, and the page
         // shows the demo's own totals beside it (small-business-loan: `wallet-loan-totals`).
