@@ -8,6 +8,7 @@
 
 import { verifyCredential } from "@mortgage/vc-kit";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
+import { completesStep, matchesExpectation } from "../../../packages/tour/src/match.js";
 import { podUrl, readText, statusOf } from "../../mortgage/world.js";
 import { AddressRecord } from "../../moving-house/address.js";
 import { DAY, NEW_ADDRESS, NEW_ADDRESS_AS_SAVED, OLD_ADDRESS } from "../../moving-house/facts.js";
@@ -25,12 +26,15 @@ import {
   stateUpdatesLicence,
 } from "../../moving-house/journey.js";
 import { movingHouseTotals } from "../../moving-house/ledger.js";
+import { TOUR } from "../../moving-house/tour.js";
 import { createHarness, type Harness } from "./harness.js";
 
 let h: Harness;
 /** The licence body as Alex held it before the move. */
 let licenceV1 = "";
 let licenceV2 = "";
+/** The log entries each tour step produced: [first, end). */
+const slices = new Map<string, [number, number]>();
 
 const addressReadsBy = (org: string) =>
   h.log.filter(
@@ -51,6 +55,7 @@ afterAll(() => h?.stop());
 
 describe("moving house, step by step", () => {
   test("1. the address record and its data product description exist once prepared", async () => {
+    const start = h.log.length;
     const view = await openAddress(h.world());
     expect(view.record.address).toEqual(OLD_ADDRESS);
     expect(view.product.endpoint).toBe(addressUrl(h.world()));
@@ -62,6 +67,7 @@ describe("moving house, step by step", () => {
     const writes = h.log.filter((e) => e.source === "pod" && e.kind === "write").length;
     await openAddress(h.world());
     expect(h.log.filter((e) => e.source === "pod" && e.kind === "write").length).toBe(writes);
+    for (const id of ["address"]) slices.set(id, [start, h.log.length]);
   }, 120_000);
 
   test("before any grant, no organisation can read the address (the pod refuses)", async () => {
@@ -75,6 +81,7 @@ describe("moving house, step by step", () => {
   });
 
   test("2. one write, with the recorded deed as evidence", async () => {
+    const start = h.log.length;
     await saveNewAddress(h.world());
     const view = await openAddress(h.world());
     expect(view.record.address).toEqual(NEW_ADDRESS_AS_SAVED);
@@ -82,9 +89,11 @@ describe("moving house, step by step", () => {
     expect([...view.record.derivedFrom]).toEqual([
       podUrl(h.world(), "alex", "mortgage/closing/recording-receipt"),
     ]);
+    for (const id of ["change"]) slices.set(id, [start, h.log.length]);
   });
 
   test("3. six standing grants; bank, payroll and servicer read at once and keep a copy", async () => {
+    const start = h.log.length;
     const codes = await approveWhoShouldKnow(h.world());
     expect(codes).toEqual(["H1", "H2", "H3", "H4", "H5", "H6"]);
     await h.runner.idle();
@@ -117,9 +126,11 @@ describe("moving house, step by step", () => {
       await statusOf(h.host.fetchAs("county"), podUrl(h.world(), "alex", "profile/contact")),
     ).toBe(403);
     h.log.splice(before);
+    for (const id of ["who"]) slices.set(id, [start, h.log.length]);
   });
 
   test("4. Driver Services reads the address and its evidence, then re-issues the licence", async () => {
+    const start = h.log.length;
     const copy = await stateLooks(h.world());
     expect(copy?.address).toEqual(NEW_ADDRESS_AS_SAVED);
     const receiptReads = h.log.filter(
@@ -150,23 +161,29 @@ describe("moving house, step by step", () => {
     expect(licenceV2).toContain("14 Larch Lane");
     const old = await verifyCredential(licenceV1, options);
     expect(old.verified).toBe(false);
+    for (const id of ["driver-services"]) slices.set(id, [start, h.log.length]);
   }, 60_000);
 
   test("5 and 6. the county and the insurer read it when their pages open", async () => {
+    const start = h.log.length;
     expect((await holderLooks(h.world(), "county"))?.address).toEqual(NEW_ADDRESS_AS_SAVED);
     expect((await holderLooks(h.world(), "insurer"))?.address).toEqual(NEW_ADDRESS_AS_SAVED);
     await holderLooks(h.world(), "county");
     expect(addressReadsBy("county")).toHaveLength(1);
+    for (const id of ["treasurer", "insurer"]) slices.set(id, [start, h.log.length]);
   });
 
   test("7. six readers of one record", () => {
+    const start = h.log.length;
     const totals = movingHouseTotals(h.log);
     expect(totals.organisations).toBe(6);
     expect(totals.reads).toBe(6);
     expect(totals.records).toBe(1);
+    for (const id of ["readers"]) slices.set(id, [start, h.log.length]);
   });
 
   test("8. withdrawing Alder Bank's grant removes its rule", async () => {
+    const start = h.log.length;
     const acls = await revokeBank(h.world());
     expect(acls).toEqual([`${addressUrl(h.world())}.acl`]);
     const bank = (await holderGrants(h.world())).find((g) => g.code === "H3");
@@ -175,9 +192,11 @@ describe("moving house, step by step", () => {
     expect(await statusOf(h.host.fetchAs("bank"), addressUrl(h.world()))).toBe(403);
     expect(await statusOf(h.host.fetchAs("payroll"), addressUrl(h.world()))).toBe(200);
     h.log.splice(before);
+    for (const id of ["revoke-bank"]) slices.set(id, [start, h.log.length]);
   });
 
   test("9. the correction: five read it, the bank is refused and marks its copy stale", async () => {
+    const start = h.log.length;
     h.day = DAY.correction;
     await correctUnit(h.world());
     await h.runner.idle();
@@ -212,9 +231,11 @@ describe("moving house, step by step", () => {
     const v3 = await readText(h.host.fetchAs("alex"), licenceUrl(h.world()));
     expect((await verifyCredential(v3, options)).verified).toBe(true);
     expect(v3).not.toContain("Apt 3");
+    for (const id of ["correction"]) slices.set(id, [start, h.log.length]);
   }, 60_000);
 
   test("10. the totals come from the log: one record, six organisations, eleven reads", () => {
+    const start = h.log.length;
     const totals = movingHouseTotals(h.log);
     expect(totals).toMatchObject({ denied: 1, organisations: 6, reads: 11, records: 1 });
     expect(totals.readers).toEqual({
@@ -225,6 +246,7 @@ describe("moving house, step by step", () => {
       servicer: 2,
       state: 2,
     });
+    for (const id of ["ledger"]) slices.set(id, [start, h.log.length]);
   });
 
   test("every organisation's copy is a shape-valid address record in its own pod", async () => {
@@ -232,6 +254,28 @@ describe("moving house, step by step", () => {
       const copy = await readCopy(h.world(), holder);
       expect(copy).toBeInstanceOf(AddressRecord);
       expect(copy?.value).toBe(podUrl(h.world(), holder, COPY_PATHS[holder]));
+    }
+  });
+
+  test("the tour's done and expect patterns match what each step really produced", () => {
+    for (const step of TOUR) {
+      const slice = slices.get(step.id);
+      expect(slice, step.id).toBeDefined();
+      const [first, end] = slice as [number, number];
+      const own = h.log.slice(first, end);
+      const sofar = h.log.slice(0, end);
+      if (step.done.event !== undefined) {
+        expect(
+          own.some((entry) => completesStep(step, entry)),
+          `${step.id} completes`,
+        ).toBe(true);
+      }
+      for (const pattern of step.expect) {
+        expect(
+          sofar.some((entry) => matchesExpectation(entry, pattern)),
+          `${step.id} expects ${JSON.stringify(pattern)}`,
+        ).toBe(true);
+      }
     }
   });
 });
