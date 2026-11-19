@@ -77,6 +77,14 @@ export const RESOURCE_TARGET_CLASSES = {
   "provenance-record": "http://hl7.org/fhir/Provenance",
   "discharge-summary": "http://hl7.org/fhir/Composition",
   "encounter-record": "http://hl7.org/fhir/Encounter",
+  // Motor claim demo (flows.md section 7).
+  "claim-case": MORT.ClaimCase,
+  "damage-report": MORT.DamageReport,
+  "motor-incident-report": MORT.MotorIncidentReport,
+  "motor-policy-credential": MORT.MotorPolicyCredential,
+  "other-party-details": MORT.OtherPartyDetails,
+  "repair-estimate": MORT.RepairEstimate,
+  "repair-invoice": "https://schema.org/Invoice",
 } as const;
 
 /** The mortgage resource kinds validate() can be told to expect. */

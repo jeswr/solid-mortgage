@@ -18,6 +18,10 @@
       "types": "./dist/moving-house/*.d.ts",
       "import": "./dist/moving-house/*.js"
     },
+    "./motor-claim/*": {
+      "types": "./dist/motor-claim/*.d.ts",
+      "import": "./dist/motor-claim/*.js"
+    },
     "./small-dollar-lending/*": {
       "types": "./dist/small-dollar-lending/*.d.ts",
       "import": "./dist/small-dollar-lending/*.js"
@@ -41,7 +45,7 @@
   },
   "scripts": {
     "build": "tsc --project tsconfig.json",
-    "lint": "biome check orgs.ts vite.ts mortgage moving-house small-dollar-lending business-kyb medication-handover reusable-kyc test package.json tsconfig.json",
+    "lint": "biome check orgs.ts vite.ts mortgage moving-house small-dollar-lending business-kyb medication-handover reusable-kyc motor-claim test package.json tsconfig.json",
     "test": "vitest run --root . --config ../vitest.config.ts",
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },

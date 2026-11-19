@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Anvil Collision Repair">
+  <title>Anvil Collision Repair</title>
+  <rect width="32" height="32" rx="3" fill="#1F1D1A" />
+  <path d="M6 11h20v4h-4l-2 4h-8l-2-4H6z" fill="#FFC21A" />
+  <rect x="11" y="21" width="10" height="3" fill="#FFC21A" />
+</svg>

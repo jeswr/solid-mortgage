@@ -45,6 +45,11 @@ describe("the apps each demo uses", () => {
     for (const slug of DEMO_APPS["moving-house"]) expect(ORGS[slug]).toBeDefined();
   });
 
+  it("motor claim: Alex's wallet, the insurer, the repairer and the licence issuer", () => {
+    expect(DEMO_APPS["motor-claim"]).toEqual(["wallet", "insurer", "repairer", "state"]);
+    expect(DEMO_APPS.mortgage).not.toContain("repairer");
+  });
+
   it("small-dollar lending: Maya's wallet, three new apps and three mortgage apps", () => {
     expect(DEMO_APPS["small-dollar-lending"]).toHaveLength(7);
     for (const slug of DEMO_APPS["small-dollar-lending"]) expect(ORGS[slug]).toBeDefined();

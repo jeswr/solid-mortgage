@@ -1,0 +1,17 @@
+@prefix schema: <https://schema.org/>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#>.
+@prefix odrl: <http://www.w3.org/ns/odrl/2/>.
+@prefix cred: <https://www.w3.org/2018/credentials#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+# Reported before it happened, and no photo.
+<https://pods.example/pods/alex/claims/CLM-1/incident> a mort:MotorIncidentReport;
+  schema:identifier "CLM-1";
+  schema:name "Incident report";
+  schema:description "Reversed into while parked.";
+  mort:occurredAt "2026-09-23T16:10:00Z"^^xsd:dateTime;
+  schema:location "Grafton Street car park, Marlow";
+  mort:vehicle [ a schema:Car; schema:name "Larkspur Tern"; schema:color "Blue"; schema:vehicleIdentificationNumber "DEMOVIN0000000001" ];
+  dcterms:creator <https://pods.example/pods/alex/profile/card#me>;
+  dcterms:created "2026-09-23T15:00:00Z"^^xsd:dateTime.
