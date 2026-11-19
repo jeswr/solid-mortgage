@@ -218,7 +218,10 @@ export const ORGS: OrgRegistry = Object.freeze({
 export const DEMO_APPS = Object.freeze({
   mortgage: ORG_SLUGS.filter(
     (slug) =>
-      slug !== "state" && slug !== "registry" && slug !== "business-lender" && slug !== "card-issuer",
+      slug !== "state" &&
+      slug !== "registry" &&
+      slug !== "business-lender" &&
+      slug !== "card-issuer",
   ),
   "moving-house": ["wallet", "state", "county", "bank", "insurer", "payroll", "servicer"],
   "business-kyb": ["wallet", "registry", "bank", "business-lender"],
