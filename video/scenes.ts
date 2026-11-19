@@ -311,8 +311,21 @@ export const actions: Record<string, Action> = {
         await checkTotals(c);
         return;
       }
-      case "examiner":
-        return c.d.warn("the Lens has no examiner view yet");
+      case "examiner": {
+        // A ledger page that opens on the examiner view (the business KYB demo's last step) is
+        // shown where it is; otherwise the Lens opens its ledger on the examiner tab.
+        const onPage = page(c).locator("journey-ledger");
+        if (await onPage.count()) {
+          await onPage
+            .first()
+            .scrollIntoViewIfNeeded()
+            .catch(() => {});
+          return;
+        }
+        await demoApi(c, "lens", "examiner");
+        await sleep(500);
+        return;
+      }
       default:
         await demoApi(c, "lens", view);
         await sleep(300);

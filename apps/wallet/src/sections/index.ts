@@ -5,6 +5,13 @@
  */
 import type { ComponentType } from "react";
 import {
+  KybHome,
+  KybLedger,
+  KybProve,
+  KybRequests,
+  KybSharing,
+} from "./business-kyb/BusinessKyb.tsx";
+import {
   MedHealth,
   MedLedger,
   MedRequests,
@@ -51,6 +58,11 @@ export const sections: readonly AppSection[] = [
     title: "Standing grants",
   },
   { Component: MovingLedger, demo: "moving-house", path: "moving/ledger", title: "Journey ledger" },
+  { Component: KybHome, demo: "business-kyb", path: "kyb", title: "Northwind" },
+  { Component: KybRequests, demo: "business-kyb", path: "kyb/requests", title: "Requests" },
+  { Component: KybProve, demo: "business-kyb", path: "prove/kyb", title: "Prove ownership" },
+  { Component: KybSharing, demo: "business-kyb", path: "kyb/sharing", title: "Grants" },
+  { Component: KybLedger, demo: "business-kyb", path: "kyb/ledger", title: "Journey ledger" },
   { Component: MedHealth, demo: "medication-handover", path: "health", title: "Health" },
   {
     Component: MedRequests,

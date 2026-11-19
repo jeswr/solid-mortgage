@@ -97,6 +97,9 @@ const SHAPE_LOCAL_NAMES: Readonly<Record<CredentialKind, string>> = {
   "title-commitment-credential": "TitleCommitmentCredentialShape",
   "evidence-of-insurance-credential": "EvidenceOfInsuranceCredentialShape",
   "zk-operand-anchor": "ZkOperandAnchorShape",
+  "organisational-identity-credential": "OrganisationalIdentityCredentialShape",
+  "officer-authorisation-credential": "OfficerAuthorisationCredentialShape",
+  "beneficial-ownership-credential": "BeneficialOwnershipCredentialShape",
 };
 
 /** The data-model resource kinds that are Verifiable Credentials (issuable here). */
@@ -109,7 +112,11 @@ export type CredentialKind =
   | "identity-credential"
   | "title-commitment-credential"
   | "evidence-of-insurance-credential"
-  | "zk-operand-anchor";
+  | "zk-operand-anchor"
+  // Business KYB (demo 3).
+  | "organisational-identity-credential"
+  | "officer-authorisation-credential"
+  | "beneficial-ownership-credential";
 
 /** `cred:credentialSchema` IRI per credential kind (decision 0004). */
 export function credentialSchemaIri(kind: CredentialKind): string {

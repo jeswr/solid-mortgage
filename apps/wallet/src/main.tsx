@@ -6,6 +6,13 @@ import "@fontsource/nunito-sans/600.css";
 import "@fontsource/nunito-sans/800.css";
 import "./app.css";
 import {
+  BUSINESS_KYB_HOLDER,
+  businessKybLens,
+  businessKybTour,
+  isBusinessKybPage,
+  KYB_COMPLIANCE,
+} from "@mortgage/content/business-kyb/mount";
+import {
   isMedicationPage,
   MEDICATION_HOLDER,
   medicationLens,
@@ -30,12 +37,21 @@ import { setDayOne, setWalletDay } from "./runtime.tsx";
 import { linkTour } from "./tour-link.ts";
 
 // A page under moving/ belongs to the moving-house demo (src/sections/moving-house/); a page
-// under health/ to the medication handover (src/sections/medication-handover/).
+// under kyb/ (or prove/kyb) to the business KYB demo (src/sections/business-kyb/); a page under
+// health/ to the medication handover (src/sections/medication-handover/).
 const medication = isMedicationPage(location.pathname, "wallet", location.search);
-const movingHouse = !medication && isMovingHousePage(location.pathname, "wallet", location.search);
+const kyb = !medication && isBusinessKybPage(location.pathname, "wallet", location.search);
+const movingHouse =
+  !medication && !kyb && isMovingHousePage(location.pathname, "wallet", location.search);
 
 // The demo the wallet is mounted for, and the holder it shows first (src/holder.ts).
-const demo = medication ? medicationTour() : movingHouse ? movingHouseTour() : mortgageTour();
+const demo = medication
+  ? medicationTour()
+  : kyb
+    ? businessKybTour()
+    : movingHouse
+      ? movingHouseTour()
+      : mortgageTour();
 const holder = initialHolder(window.location.href, demo.holder);
 
 configure({ app: "wallet", holder, registry: ORGS, seed: mortgageSeed() });
@@ -48,8 +64,21 @@ const started = ready().then((info) => {
 
 void mountDemo({
   app: "wallet",
-  holder: medication ? MEDICATION_HOLDER : movingHouse ? MOVING_HOUSE_HOLDER : MORTGAGE_HOLDER,
-  lens: medication ? medicationLens() : movingHouse ? movingHouseLens() : mortgageLens(),
+  holder: medication
+    ? MEDICATION_HOLDER
+    : kyb
+      ? BUSINESS_KYB_HOLDER
+      : movingHouse
+        ? MOVING_HOUSE_HOLDER
+        : MORTGAGE_HOLDER,
+  lens: medication
+    ? medicationLens()
+    : kyb
+      ? businessKybLens()
+      : movingHouse
+        ? movingHouseLens()
+        : mortgageLens(),
+  ...(kyb ? { ledger: { compliance: [...KYB_COMPLIANCE] } } : {}),
   registry: ORGS,
   runtime: { onEvent, resetDemo, setTourContext: trackTourContext(setTourContext) },
   tour: demo,

@@ -23,6 +23,7 @@ import {
 } from "../src/index.js";
 import { demoCreditScoreClaims, demoEmploymentClaims } from "../src/seed-tooling/demo.js";
 import operandFixture from "./fixtures/operand-enc.json" with { type: "json" };
+import kybOperandFixture from "./fixtures/operand-enc-kyb.json" with { type: "json" };
 import {
   ISSUER,
   issuerKey,
@@ -243,7 +244,10 @@ describe("a status list on calendar time", () => {
 
 describe("operand anchors from captured encodings", () => {
   test("the table is exactly the captured fixture", () => {
-    expect({ ...CAPTURED_OPERAND_ENCODINGS }).toEqual(operandFixture.encodings);
+    expect({ ...CAPTURED_OPERAND_ENCODINGS }).toEqual({
+      ...operandFixture.encodings,
+      ...kybOperandFixture.encodings,
+    });
   });
 
   test("8,500 and 742 keep their captured encodings", () => {

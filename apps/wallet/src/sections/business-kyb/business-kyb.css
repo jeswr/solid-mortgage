@@ -1,0 +1,67 @@
+/* AUTHORED-BY Claude Opus 5.5
+ * Cairn's business KYB screens: the wallet's own tokens (tokens.css), a few layouts of their own. */
+.kyb-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 18px 4px 8px;
+}
+
+.kyb-nav a {
+  color: var(--teal);
+  font-weight: 700;
+}
+
+.kyb-mono {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  overflow-wrap: anywhere;
+}
+
+.kyb-plain {
+  margin: 8px 0 0;
+  padding-left: 1.2rem;
+}
+
+.kyb-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+}
+
+.kyb-table caption {
+  text-align: left;
+  padding-bottom: 4px;
+}
+
+.kyb-table th,
+.kyb-table td {
+  text-align: left;
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--line);
+}
+
+.kyb-table td {
+  font-variant-numeric: tabular-nums;
+}
+
+.kyb-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.kyb-code {
+  margin-left: auto;
+  font-weight: 800;
+  color: var(--teal);
+  border: 2px solid var(--teal);
+  border-radius: var(--radius-s);
+  padding: 2px 8px;
+}
+
+.kyb-ledger {
+  margin-top: 12px;
+  overflow-x: auto;
+}

@@ -59,6 +59,11 @@ test("every shape document is bundled", () => {
     "fhir-support",
     "identity-credential",
     "inbox-message",
+    "kyb-beneficial-ownership-credential",
+    "kyb-cdd-decision-record",
+    "kyb-common",
+    "kyb-officer-authorisation-credential",
+    "kyb-organisational-identity-credential",
     "loan-application",
     "loan-estimate",
     "medication-dispense",
@@ -86,7 +91,7 @@ test("every shape document is bundled", () => {
 test("every targeted resource shape is closed", () => {
   const store = shapesStore();
   const targeted = store.getSubjects(`${SH}targetClass`, null, null);
-  expect(targeted.length).toBe(43);
+  expect(targeted.length).toBe(47);
   for (const shape of targeted) {
     const closed = store.getObjects(shape, `${SH}closed`, null);
     expect(
@@ -213,6 +218,20 @@ const cases: readonly {
   { name: "inbox-message", expectedViolations: ["NodeKindConstraintComponent"] },
   { name: "credential-pointer", expectedViolations: ["PatternConstraintComponent"] },
   { name: "document", expectedViolations: ["MinCountConstraintComponent"] },
+  // Business KYB (demo 3).
+  {
+    name: "organisational-identity-credential",
+    expectedViolations: ["HasValueConstraintComponent", "InConstraintComponent"],
+  },
+  { name: "officer-authorisation-credential", expectedViolations: ["ClosedConstraintComponent"] },
+  {
+    name: "beneficial-ownership-credential",
+    expectedViolations: ["MaxInclusiveConstraintComponent", "DatatypeConstraintComponent"],
+  },
+  {
+    name: "cdd-decision-record",
+    expectedViolations: ["InConstraintComponent", "MinCountConstraintComponent"],
+  },
   // Medication handover (flows.md section 5): FHIR R5 in RDF.
   {
     name: "medication-statement",
@@ -363,7 +382,7 @@ describe("ZK digit budgets (decision 0005) stay in lock-step with the shapes", (
           budget.minInclusive,
         );
         expect(literalNumber(store.getObjects(shape, `${SH}maxInclusive`, null))).toBe(
-          budget.maxInclusive,
+          budget.shapeMaxInclusive ?? budget.maxInclusive,
         );
         const datatypes = store.getObjects(shape, `${SH}datatype`, null);
         expect(datatypes.map((term) => term.value)).toEqual([`${XSD}integer`]);

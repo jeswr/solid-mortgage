@@ -24,6 +24,8 @@ export const ORG_SLUGS = [
   "county",
   "servicer",
   "state",
+  "registry",
+  "business-lender",
   "hospital",
   "pharmacy",
   "clinic",

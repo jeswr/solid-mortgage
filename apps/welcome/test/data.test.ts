@@ -1,5 +1,6 @@
 // AUTHORED-BY Claude Opus 5.5
 
+import { TOUR as BUSINESS_KYB_TOUR } from "@mortgage/content/business-kyb/tour";
 import { TOUR as MEDICATION_TOUR } from "@mortgage/content/medication-handover/tour";
 import { TOUR } from "@mortgage/content/mortgage/tour";
 import { TOUR as MOVING_HOUSE_TOUR } from "@mortgage/content/moving-house/tour";
@@ -71,6 +72,21 @@ describe("the demo list", () => {
     });
     expect(tour === undefined ? "" : tourUrl(tour)).toBe(
       "/wallet/moving?tour=moving-house&step=address",
+    );
+  });
+
+  it("starts the business KYB tour at its first step, in Northwind's wallet", () => {
+    const tour = demoById("business-kyb")?.tour;
+    const first = BUSINESS_KYB_TOUR[0];
+    expect(demoById("business-kyb")?.status).toBe("live");
+    expect(tour).toEqual({
+      demo: "business-kyb",
+      app: first?.app,
+      path: first?.path,
+      step: first?.id,
+    });
+    expect(tour === undefined ? "" : tourUrl(tour)).toBe(
+      "/wallet/kyb?tour=business-kyb&step=vault",
     );
   });
 
