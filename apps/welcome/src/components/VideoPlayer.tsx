@@ -54,6 +54,40 @@ function useAvailability(demo: Demo, probe: (url: string) => Promise<boolean>): 
   return state;
 }
 
+/**
+ * Whether `element` is on screen or within `margin` of it. Native `loading="lazy"` fetches images
+ * well below the fold (Chrome starts 1250 to 2500 px early), so a page of cards would download
+ * every poster on arrival; the welcome page's first load holds to acceptance test 15's budget by
+ * asking for a poster only as its card comes near. Without IntersectionObserver it is always true.
+ */
+function useNearViewport<T extends Element>(
+  margin = "200px",
+): [(element: T | null) => void, boolean] {
+  const [near, setNear] = useState(() => typeof IntersectionObserver === "undefined");
+  const observer = useRef<IntersectionObserver | null>(null);
+  const ref = useCallback(
+    (element: T | null) => {
+      observer.current?.disconnect();
+      observer.current = null;
+      if (element === null || near) return;
+      const watch = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((entry) => entry.isIntersecting)) {
+            setNear(true);
+            watch.disconnect();
+          }
+        },
+        { rootMargin: margin },
+      );
+      watch.observe(element);
+      observer.current = watch;
+    },
+    [margin, near],
+  );
+  useEffect(() => () => observer.current?.disconnect(), []);
+  return [ref, near];
+}
+
 export interface VideoPlayerProps {
   demo: Demo;
   /** Where chapter titles link while there is no video: the watch page's transcript anchors. */
@@ -147,6 +181,7 @@ export function VideoPlayer({
     else setOpen(true);
   };
 
+  const [posterRef, posterNear] = useNearViewport<HTMLButtonElement>();
   const label = `${demo.videoTitle} (${formatDuration(demo.durationSeconds)})`;
   const chaptersId = `${idPrefix}-chapters`;
 
@@ -170,17 +205,19 @@ export function VideoPlayer({
             <source src={demo.media.video} type="video/mp4" onError={() => setFailed(true)} />
           </video>
         ) : availability === "available" ? (
-          <button type="button" className="poster" onClick={() => play("")}>
-            <img
-              className="poster__image"
-              src={demo.media.poster}
-              alt=""
-              loading="lazy"
-              decoding="async"
-              onError={(event) => {
-                event.currentTarget.hidden = true;
-              }}
-            />
+          <button type="button" className="poster" ref={posterRef} onClick={() => play("")}>
+            {posterNear ? (
+              <img
+                className="poster__image"
+                src={demo.media.poster}
+                alt=""
+                loading="lazy"
+                decoding="async"
+                onError={(event) => {
+                  event.currentTarget.hidden = true;
+                }}
+              />
+            ) : null}
             <span className="poster__play" aria-hidden="true">
               <PlayIcon />
             </span>

@@ -4,41 +4,14 @@ import "@fontsource/source-serif-4/latin-600.css";
 import "@fontsource/inter/latin-400.css";
 import "@fontsource/inter/latin-600.css";
 import "./app.css";
-import {
-  BUSINESS_KYB_HOLDER,
-  businessKybLens,
-  businessKybTour,
-  isBusinessKybPage,
-  KYB_COMPLIANCE,
-} from "@mortgage/content/business-kyb/mount";
+import { isBusinessKybPage } from "@mortgage/content/business-kyb/pages";
 import { trackTourContext } from "@mortgage/content/mortgage/browser";
 import { MORTGAGE_HOLDER, mortgageLens, mortgageTour } from "@mortgage/content/mortgage/mount";
-import {
-  isMovingHousePage,
-  MOVING_HOUSE_HOLDER,
-  movingHouseLens,
-  movingHouseTour,
-} from "@mortgage/content/moving-house/mount";
+import { isMovingHousePage } from "@mortgage/content/moving-house/pages";
 import { ORGS } from "@mortgage/content/orgs";
-import {
-  isReusableKycPage,
-  REUSABLE_KYC_HOLDER,
-  reusableKycLens,
-  reusableKycTour,
-} from "@mortgage/content/reusable-kyc/mount";
-import {
-  isSmallBusinessLoanPage,
-  LOAN_COMPLIANCE,
-  SMALL_BUSINESS_LOAN_HOLDER,
-  smallBusinessLoanLens,
-  smallBusinessLoanTour,
-} from "@mortgage/content/small-business-loan/mount";
-import {
-  isSmallDollarPage,
-  SMALL_DOLLAR_HOLDER,
-  smallDollarLens,
-  smallDollarTour,
-} from "@mortgage/content/small-dollar-lending/mount";
+import { isReusableKycPage } from "@mortgage/content/reusable-kyc/pages";
+import { isSmallBusinessLoanPage } from "@mortgage/content/small-business-loan/pages";
+import { isSmallDollarPage } from "@mortgage/content/small-dollar-lending/pages";
 import { onEvent, resetDemo, setTourContext } from "@mortgage/pod-runtime";
 import { mountDemo } from "@mortgage/tour/mount";
 import { StrictMode } from "react";
@@ -66,8 +39,52 @@ view.render(
   </StrictMode>,
 );
 
+/**
+ * The demo this page belongs to. The moving-house, small business loan, business KYB,
+ * reusable-KYC and small-dollar lending demos load only on their own pages, so none adds to the
+ * first load of the bank's mortgage screens (acceptance test 15). The small business loan is
+ * checked before business KYB, as its pages module asks.
+ */
+async function demoOptions() {
+  if (loan) {
+    const b = await import("@mortgage/content/small-business-loan/mount");
+    return {
+      holder: b.SMALL_BUSINESS_LOAN_HOLDER,
+      ledger: { compliance: [...b.LOAN_COMPLIANCE] },
+      lens: b.smallBusinessLoanLens(),
+      tour: b.smallBusinessLoanTour(),
+    };
+  }
+  if (kyb) {
+    const k = await import("@mortgage/content/business-kyb/mount");
+    return {
+      holder: k.BUSINESS_KYB_HOLDER,
+      ledger: { compliance: [...k.KYB_COMPLIANCE] },
+      lens: k.businessKybLens(),
+      tour: k.businessKybTour(),
+    };
+  }
+  if (reusableKyc) {
+    const r = await import("@mortgage/content/reusable-kyc/mount");
+    return { holder: r.REUSABLE_KYC_HOLDER, lens: r.reusableKycLens(), tour: r.reusableKycTour() };
+  }
+  if (lending) {
+    const l = await import("@mortgage/content/small-dollar-lending/mount");
+    return { holder: l.SMALL_DOLLAR_HOLDER, lens: l.smallDollarLens(), tour: l.smallDollarTour() };
+  }
+  if (movingHouse) {
+    const moving = await import("@mortgage/content/moving-house/mount");
+    return {
+      holder: moving.MOVING_HOUSE_HOLDER,
+      lens: moving.movingHouseLens(),
+      tour: moving.movingHouseTour(),
+    };
+  }
+  return { holder: MORTGAGE_HOLDER, lens: mortgageLens(), tour: mortgageTour() };
+}
+
 startPods(APP).then(
-  (info) => {
+  async (info) => {
     view.render(
       <StrictMode>
         <PodsProvider app={APP} info={info}>
@@ -75,58 +92,12 @@ startPods(APP).then(
         </PodsProvider>
       </StrictMode>,
     );
-    const runtime = { onEvent, resetDemo, setTourContext: trackTourContext(setTourContext) };
-    void mountDemo(
-      loan
-        ? {
-            app: APP,
-            holder: SMALL_BUSINESS_LOAN_HOLDER,
-            ledger: { compliance: [...LOAN_COMPLIANCE] },
-            lens: smallBusinessLoanLens(),
-            registry: ORGS,
-            runtime,
-            tour: smallBusinessLoanTour(),
-          }
-        : kyb
-          ? {
-              app: APP,
-              holder: BUSINESS_KYB_HOLDER,
-              ledger: { compliance: [...KYB_COMPLIANCE] },
-              lens: businessKybLens(),
-              registry: ORGS,
-              runtime,
-              tour: businessKybTour(),
-            }
-          : reusableKyc
-            ? {
-                app: APP,
-                holder: REUSABLE_KYC_HOLDER,
-                lens: reusableKycLens(),
-                registry: ORGS,
-                runtime,
-                tour: reusableKycTour(),
-              }
-            : {
-                app: APP,
-                holder: lending
-                  ? SMALL_DOLLAR_HOLDER
-                  : movingHouse
-                    ? MOVING_HOUSE_HOLDER
-                    : MORTGAGE_HOLDER,
-                lens: lending
-                  ? smallDollarLens()
-                  : movingHouse
-                    ? movingHouseLens()
-                    : mortgageLens(),
-                registry: ORGS,
-                runtime,
-                tour: lending
-                  ? smallDollarTour()
-                  : movingHouse
-                    ? movingHouseTour()
-                    : mortgageTour(),
-              },
-    );
+    void mountDemo({
+      app: APP,
+      ...(await demoOptions()),
+      registry: ORGS,
+      runtime: { onEvent, resetDemo, setTourContext: trackTourContext(setTourContext) },
+    });
   },
   (error: unknown) => console.error("bank: the pods did not start", error),
 );

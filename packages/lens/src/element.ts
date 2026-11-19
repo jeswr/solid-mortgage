@@ -737,6 +737,10 @@ export class SolidLens extends HTMLElement {
     back.addEventListener("click", () => this.emit("lens-back"));
     next.addEventListener("click", () => this.emit("lens-next"));
     restart.addEventListener("click", () => this.emit("lens-restart"));
+    // Every arriving request re-renders this zone; a keyboard user on one of its buttons keeps
+    // focus on that button's replacement, or their Enter would land on the page body.
+    const active = this.root.activeElement;
+    const focused = active instanceof HTMLElement && z.contains(active) ? active.dataset.lens : "";
     replace(
       z,
       h(
@@ -751,6 +755,7 @@ export class SolidLens extends HTMLElement {
       st.done ? h("p", { class: "step-done", role: "status" }, "✓ Step done") : null,
       h("div", { class: "step-actions" }, act, back, next, h("span", { class: "spacer" }), restart),
     );
+    if (focused) z.querySelector<HTMLElement>(`[data-lens="${focused}"]`)?.focus();
   }
 
   private emit(name: string): void {

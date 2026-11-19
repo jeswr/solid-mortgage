@@ -67,11 +67,18 @@ ${entries.join("\n")}
 /** Document keys of the bundled SHACL shapes. */
 export type ShapesDocumentKey = keyof typeof SHAPES_TURTLE;
 
+// The two lists below are marked pure so a bundler drops this module from any chunk that does
+// not use it: the package index re-exports them, and an unmarked top-level call would pull
+// every shape's Turtle into each app's first load, though only the lazily loaded validator
+// (shacl-validator.ts) reads it.
+
 /** Every bundled shapes document, in one Turtle-parseable list. */
-export const ALL_SHAPES_DOCUMENTS: readonly string[] = Object.values(SHAPES_TURTLE);
+export const ALL_SHAPES_DOCUMENTS: readonly string[] = /* @__PURE__ */ Object.values(SHAPES_TURTLE);
 
 /** File stem of the ${files.length} bundled shapes documents. */
-export const SHAPES_DOCUMENT_KEYS = Object.keys(SHAPES_TURTLE) as readonly ShapesDocumentKey[];
+export const SHAPES_DOCUMENT_KEYS = /* @__PURE__ */ Object.keys(
+  SHAPES_TURTLE,
+) as readonly ShapesDocumentKey[];
 `;
 }
 

@@ -74,6 +74,49 @@ suite("LensModel", () => {
     expect(m.drawerState("insurer", "/profile/")).toBe("never");
   });
 
+  it("folds only the holder's ACL writes into grants; organisations' own sharing is not one", () => {
+    const m = loaded();
+    const before = m.grant("county");
+    const orgShare: PodEvent = {
+      acl: {
+        granted: [
+          {
+            agent: "https://trail.example/pods/county/profile/card#me",
+            inherited: true,
+            modes: ["Read"],
+            resource: "/orders/",
+          },
+          {
+            agent: "https://trail.example/pods/bank/profile/card#me",
+            inherited: true,
+            modes: ["Read"],
+            resource: "/orders/",
+          },
+        ],
+        revoked: [],
+      },
+      actor: {
+        org: "bureau",
+        viaAgent: true,
+        webid: "https://trail.example/pods/bureau/profile/card#me",
+      },
+      at: "2026-09-30T09:00:00.000Z",
+      id: 9001,
+      kind: "grant",
+      method: "PUT",
+      path: "/orders/.acl",
+      pod: "bureau",
+      status: 201,
+    };
+    m.push({ source: "pod", ...orgShare });
+    // County's grant from the holder stays withdrawn; nobody gains a holder grant.
+    expect(m.grant("county")?.state).toBe(before?.state);
+    expect(m.grant("county")?.state).toBe("revoked");
+    expect(m.grant("bank")).toBeUndefined();
+    // The organisation the bureau shared with still takes part.
+    expect(m.orgs().map((o) => o.key)).toContain("bank");
+  });
+
   it("knows who can read a resource now", () => {
     const m = new LensModel(CONFIG);
     for (const e of EVENTS.slice(0, 7)) m.push(e);

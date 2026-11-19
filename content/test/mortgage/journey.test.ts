@@ -16,6 +16,7 @@ import { ACL } from "../../mortgage/acl.js";
 import { DAY } from "../../mortgage/facts.js";
 import { checkAtSource } from "../../mortgage/issuers.js";
 import { CREDENTIALS, JOURNEY, readLedger } from "../../mortgage/journey.js";
+import { mortgageLens } from "../../mortgage/mount.js";
 import { applySeed, firstRun, seedRequests } from "../../mortgage/seed.js";
 import { TOUR } from "../../mortgage/tour.js";
 import { at, podUrl, readDataset, readText, webid } from "../../mortgage/world.js";
@@ -60,6 +61,12 @@ const AFTER: Record<string, () => Promise<void>> = {
     await probe("payroll lists credentials", "payroll", alex("credentials/"));
     await probe("payroll writes another slot", "payroll", alex("credentials/assets"), TURTLE);
     await probe("payroll reads the profile", "payroll", alex("profile/card"));
+    await probe("anonymous reads Alex's profile", null, alex("profile/card"));
+    await probe(
+      "anonymous reads the bank's profile",
+      null,
+      podUrl(host.world, "bank", "profile/card"),
+    );
     await probe(
       "lender reads income before any grant",
       "lender",
@@ -347,6 +354,26 @@ describe("the journey runs on real pods", () => {
   );
 });
 
+describe("Alex uploads nothing", () => {
+  test("every document Alex writes in the journey is in one of the Lens's record drawers", () => {
+    const records = mortgageLens().recordDrawers;
+    const written = host.events.filter(
+      (event) =>
+        !["seed", "probe", "crawl"].includes(event.step) &&
+        event.actor === "alex" &&
+        event.pod === "alex" &&
+        ["PUT", "POST", "PATCH"].includes(event.method) &&
+        event.status < 300 &&
+        !event.path.endsWith(".acl"),
+    );
+    expect(written.length).toBeGreaterThan(0);
+    const outside = written.filter(
+      (event) => !records.some((drawer) => event.path.startsWith(drawer)),
+    );
+    expect(outside.map((event) => `${event.step} ${event.method} ${event.path}`)).toEqual([]);
+  });
+});
+
 describe("every resource in every pod validates", () => {
   const isTurtle = (resource: Crawled) => resource.contentType === "text/turtle";
 
@@ -425,6 +452,8 @@ describe("grants are enforced by the pod", () => {
     "payroll lists credentials": 403,
     "payroll writes another slot": 403,
     "payroll reads the profile": 403,
+    "anonymous reads Alex's profile": 401,
+    "anonymous reads the bank's profile": 200,
     "lender reads income before any grant": 403,
     "anonymous reads income": 401,
     "anonymous reads Copperfield's result": 401,

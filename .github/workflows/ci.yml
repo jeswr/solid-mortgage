@@ -52,11 +52,57 @@ jobs:
       - name: Check RDF IRI dereferenceability
         run: pnpm run lint:iris
 
+      # The gate runs the video lane's tests (test:video), and video/test/published.test.ts probes
+      # the committed MP4s with ffprobe, which the runner image does not ship.
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
+
       - name: Run lint, build, typecheck, and tests
         run: pnpm run gate
 
       - name: Install Playwright browser
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Run end-to-end tests
-        run: pnpm run test:e2e
+      - name: Run the apps' end-to-end tests
+        run: pnpm run test:e2e:apps
+
+  # The root acceptance suite (e2e/, build-plan.md §4) runs beside the gate: it takes about 15
+  # minutes on a runner, which with the gate and the apps' suites would pass the 30-minute limit.
+  acceptance:
+    name: acceptance e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.4.1
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # e2e/data.spec.ts runs lint:iris, which reads this cache (the gate job saves it).
+      - name: Restore IRI lint cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .cache/iri-lint.json
+          key: iri-lint-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            iri-lint-${{ runner.os }}-
+
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run the acceptance suite
+        run: pnpm run test:e2e:site

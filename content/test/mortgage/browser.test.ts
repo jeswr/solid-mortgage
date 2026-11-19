@@ -82,11 +82,15 @@ beforeEach(async () => {
 }, 120_000);
 
 describe("the browser seed", () => {
-  test("is the plain seed plus first run, every request a PUT into the owner's own pod", async () => {
+  test("is the plain seed plus first run: PUTs into each owner's own pod, and one DELETE", async () => {
     const seed = await mortgageSeed({ dayOne: host.calendar.dayOne, keys: memoryKeyStore() })({
       origin: POD_ORIGIN,
     });
-    expect(seed.every((request) => request.method === "PUT")).toBe(true);
+    // The one exception: Alex's card loses the runtime's public ACL (seed.ts module comment).
+    const deletes = seed.filter((request) => request.method !== "PUT");
+    expect(deletes.map((request) => `${request.method} ${request.pod}${request.path}`)).toEqual([
+      "DELETE alex/profile/card.acl",
+    ]);
     const paths = seed.map((request) => `${request.pod}${request.path}`);
     for (const issuer of ["payroll", "bank", "bureau", "appraisal", "title", "insurer"]) {
       expect(paths).toContain(`${issuer}/status/list`);

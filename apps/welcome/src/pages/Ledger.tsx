@@ -11,20 +11,35 @@ import { ExternalIcon } from "../components/icons.tsx";
 import { homeSection } from "../components/Layout.tsx";
 import { DEMOS } from "../demos.ts";
 import { startTourFresh, tourUrl } from "../demos-links.ts";
+import type { GrantOnRecord } from "../guided-tour.ts";
 import { applyMeta, LINKS } from "../site.ts";
+
+const STATE_WORDS: Readonly<Record<GrantOnRecord["state"], string>> = {
+  active: "Active",
+  expired: "Expired",
+  revoked: "Withdrawn",
+};
 
 export function Ledger() {
   useEffect(() => applyMeta("Journey ledger"), []);
   const flagship = DEMOS.find((demo) => demo.tour !== undefined);
   const ledgerRef = useRef<HTMLDivElement>(null);
   const [hasEntries, setHasEntries] = useState(false);
+  const [grants, setGrants] = useState<readonly GrantOnRecord[]>([]);
   useEffect(() => {
     const mount = ledgerRef.current;
     if (mount === null) return;
     let live = true;
     let stop: (() => void) | undefined;
-    import("../guided-tour.ts")
-      .then((pods) => pods.mountJourneyLedger(mount, (has) => live && setHasEntries(has)))
+    const pods = import("../guided-tour.ts");
+    pods
+      .then((loaded) => loaded.readGrantsOnRecord())
+      .then((records) => live && setGrants(records))
+      .catch((error: unknown) =>
+        console.error("welcome: the grants on record did not load", error),
+      );
+    pods
+      .then((loaded) => loaded.mountJourneyLedger(mount, (has) => live && setHasEntries(has)))
       .then((unmount) => {
         if (live) stop = unmount;
         else unmount();
@@ -68,6 +83,38 @@ export function Ledger() {
           )}
           <div ref={ledgerRef} />
         </div>
+
+        {grants.length === 0 ? null : (
+          <section className="grants-on-record" aria-labelledby="grants-on-record">
+            <h2 id="grants-on-record">Grants on record in Alex's pod</h2>
+            <p>
+              Read from the agreements in Alex's policies drawer and the latest consent record for
+              each, not from the log.
+            </p>
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Grant</th>
+                  <th scope="col">Given to</th>
+                  <th scope="col">For</th>
+                  <th scope="col">State</th>
+                  <th scope="col">Since</th>
+                </tr>
+              </thead>
+              <tbody>
+                {grants.map((grant) => (
+                  <tr key={grant.code} data-grant={grant.code} data-state={grant.state}>
+                    <th scope="row">{grant.code}</th>
+                    <td>{grant.to}</td>
+                    <td>{grant.name}</td>
+                    <td>{STATE_WORDS[grant.state]}</td>
+                    <td>{grant.when}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        )}
 
         <section className="cta-row" aria-labelledby="ledger-next">
           <h2 id="ledger-next" className="visually-hidden">

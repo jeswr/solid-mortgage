@@ -55,7 +55,9 @@ const stop = onEvent((entry) => lens.push(entry), { replay: true });
   Lens normalises all three. A drawer is the top-level container of a path on the holder's pod
   (`pod: "alex"`), labelled from `resource.drawer`, else from `config.drawers`, else the
   humanised segment.
-- **Grants** are folded from `acl.granted` / `acl.revoked` of successful ACL writes. Rule agents
+- **Grants** are folded from `acl.granted` / `acl.revoked` of successful ACL writes on the
+  holder's pod. An organisation sharing its own files with another (an ACL write on its own pod)
+  makes that agent part of the journey but is not a grant of the holder's. Rule agents
   map to organisations by the `/pods/<owner>/profile/card#me` WebID shape. When an
   organisation's last rule is removed, the grant is **expired** if the removing request has
   `actor.viaAgent: true` (the holder's app applying expiry automatically, design.md §b.4) and
@@ -107,7 +109,7 @@ Counted over all received entries:
 | Total | Definition |
 |---|---|
 | Organisations involved | distinct organisation nodes (an app's `actsAs`) appearing as a pod event's actor or pod owner, an ACL rule's agent, a note's `org`, or an org-to-org note's other party; never the holder |
-| Grants active / expired / withdrawn | one per grantee organisation, by its final state |
+| Grants active / expired / withdrawn | one per organisation granted access to the holder's pod, by its final state |
 | Credentials issued | distinct holder-pod paths written successfully (`kind: "write"`) with `resource.credential` |
 | Reuses of a credential | successful reads of that path by organisations other than the writer and the holder |
 | Documents delivered to the pod | distinct holder-pod paths written successfully by an organisation, without a credential, outside `recordDrawers`, not `.acl` |
