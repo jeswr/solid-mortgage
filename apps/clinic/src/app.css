@@ -1,0 +1,256 @@
+/* AUTHORED-BY Claude Opus 5.5 */
+@import "./tokens.css";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--ll-panel);
+  color: var(--ll-ink);
+  font-family: var(--ll-font);
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+a {
+  color: var(--ll-plum-deep);
+}
+
+:focus-visible {
+  outline: 3px solid var(--ll-focus);
+  outline-offset: 2px;
+}
+
+h1,
+h2 {
+  font-family: var(--ll-serif);
+  font-weight: 600;
+  color: var(--ll-plum-deep);
+}
+
+h1 {
+  margin: 0 0 0.75rem;
+  font-size: 1.6rem;
+}
+
+h2 {
+  margin: 1.25rem 0 0.5rem;
+  font-size: 1.15rem;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.small {
+  font-size: 0.9rem;
+}
+
+.block {
+  display: block;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1.5rem;
+  padding: 0.85rem var(--ll-space);
+  background: var(--ll-paper);
+  border-bottom: 1px solid var(--ll-line);
+}
+
+.header-name {
+  margin: 0;
+  font-family: var(--ll-serif);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--ll-plum);
+}
+
+.header-nav {
+  display: flex;
+  gap: 1.25rem;
+}
+
+.page {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: var(--ll-space);
+}
+
+.lede {
+  color: var(--ll-muted);
+}
+
+.appointments {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.appointments li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: baseline;
+  padding: 1rem;
+  background: var(--ll-paper);
+  border: 1px solid var(--ll-line);
+  border-radius: 10px;
+}
+
+.time {
+  font-weight: 600;
+  color: var(--ll-plum);
+}
+
+/* The consultation: a timeline down the side, the notes beside it. */
+.consult {
+  display: grid;
+  grid-template-columns: 15rem 1fr;
+  gap: var(--ll-space);
+}
+
+.timeline {
+  padding: 1rem;
+  background: var(--ll-plum-soft);
+  border-radius: 10px;
+}
+
+.timeline h2:first-child {
+  margin-top: 0;
+}
+
+.timeline ol {
+  margin: 0;
+  padding: 0 0 0 1rem;
+  border-left: 2px solid var(--ll-plum);
+  list-style: none;
+}
+
+.timeline ol li {
+  margin-bottom: 0.75rem;
+}
+
+.timeline li[aria-current] {
+  font-weight: 600;
+}
+
+.when {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--ll-muted);
+}
+
+.notes {
+  min-width: 0;
+  padding: 1.25rem;
+  background: var(--ll-paper);
+  border: 1px solid var(--ll-line);
+  border-radius: 10px;
+}
+
+.meds {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.meds th,
+.meds td {
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--ll-line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.meds tr[data-active="false"] td:nth-child(2) {
+  color: var(--ll-red);
+  font-weight: 600;
+}
+
+.flag {
+  padding: 0.6rem 0.8rem;
+  background: var(--ll-amber-soft);
+  border-left: 4px solid var(--ll-amber);
+}
+
+.save {
+  min-height: 44px;
+  padding: 0.55rem 1.75rem;
+  background: var(--ll-plum);
+  border: 0;
+  border-radius: 999px;
+  color: var(--ll-paper);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.save:disabled {
+  background: var(--ll-muted);
+  cursor: default;
+}
+
+.ok {
+  padding: 0.6rem 0.8rem;
+  background: var(--ll-green-soft);
+  border-left: 4px solid var(--ll-green);
+}
+
+.alert {
+  padding: 0.6rem 0.8rem;
+  background: var(--ll-red-soft);
+  border-left: 4px solid var(--ll-red);
+}
+
+.alert p {
+  margin: 0;
+}
+
+.footnote {
+  color: var(--ll-muted);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 760px) {
+  .consult {
+    grid-template-columns: 1fr;
+  }
+
+  .meds thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .meds,
+  .meds tbody,
+  .meds tr,
+  .meds td {
+    display: block;
+    width: 100%;
+  }
+
+  .meds tr {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--ll-line);
+  }
+
+  .meds td {
+    padding: 0.15rem 0;
+    border: 0;
+  }
+}
