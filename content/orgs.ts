@@ -173,6 +173,30 @@ export const ORGS: OrgRegistry = Object.freeze({
     themeColor: "#17375E",
     title: "State Online Services",
   },
+  // Demo 3, business KYB (flows.md §1 and §3): the business register and LEI issuer.
+  registry: {
+    actsAs: "registry",
+    organisation: "Halyard LEI Services",
+    persona: { name: "Imani Clarke", role: "registry analyst" },
+    product: "Business Register",
+    role: "Business register and illustrative LEI issuer: identity, officers and ownership",
+    short: "Halyard",
+    slug: "registry",
+    themeColor: "#0E6E6E",
+    title: "Halyard LEI Services",
+  },
+  // Demo 3: a second bank's commercial credit desk.
+  "business-lender": {
+    actsAs: "business-lender",
+    organisation: "Brackenridge Bank",
+    persona: { name: "Tomas Whitfield", role: "credit officer" },
+    product: "Commercial Credit",
+    role: "Commercial lender: a business credit line, decided on proofs and credentials",
+    short: "Brackenridge",
+    slug: "business-lender",
+    themeColor: "#7A2335",
+    title: "Brackenridge Bank Commercial Credit",
+  },
 });
 
 /**
@@ -180,6 +204,9 @@ export const ORGS: OrgRegistry = Object.freeze({
  * mortgage video's "Thirteen applications.") is taken from its list here, never from `ORGS`.
  */
 export const DEMO_APPS = Object.freeze({
-  mortgage: ORG_SLUGS.filter((slug) => slug !== "state"),
+  mortgage: ORG_SLUGS.filter(
+    (slug) => slug !== "state" && slug !== "registry" && slug !== "business-lender",
+  ),
   "moving-house": ["wallet", "state", "county", "bank", "insurer", "payroll", "servicer"],
+  "business-kyb": ["wallet", "registry", "bank", "business-lender"],
 } satisfies Record<string, readonly OrgSlug[]>);

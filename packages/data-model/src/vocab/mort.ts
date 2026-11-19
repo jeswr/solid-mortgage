@@ -21,11 +21,26 @@ export const MORT = {
   asOf: "https://solid-mortgage-vocab.vercel.app/mort#asOf",
   AssetCredential: "https://solid-mortgage-vocab.vercel.app/mort#AssetCredential",
   authorisedBy: "https://solid-mortgage-vocab.vercel.app/mort#authorisedBy",
+  beneficialOwnershipArrayCommitment:
+    "https://solid-mortgage-vocab.vercel.app/mort#beneficialOwnershipArrayCommitment",
+  BeneficialOwnershipCredential:
+    "https://solid-mortgage-vocab.vercel.app/mort#BeneficialOwnershipCredential",
   cashToClose: "https://solid-mortgage-vocab.vercel.app/mort#cashToClose",
+  cddCheckDate: "https://solid-mortgage-vocab.vercel.app/mort#cddCheckDate",
+  CddDecisionRecord: "https://solid-mortgage-vocab.vercel.app/mort#CddDecisionRecord",
+  cddDecisionStatus: "https://solid-mortgage-vocab.vercel.app/mort#cddDecisionStatus",
+  CddDecisionStatus_Declined:
+    "https://solid-mortgage-vocab.vercel.app/mort#CddDecisionStatus-Declined",
+  CddDecisionStatus_Opened: "https://solid-mortgage-vocab.vercel.app/mort#CddDecisionStatus-Opened",
+  CddDecisionStatus_PendingReview:
+    "https://solid-mortgage-vocab.vercel.app/mort#CddDecisionStatus-PendingReview",
+  CddDecisionStatusScheme: "https://solid-mortgage-vocab.vercel.app/mort#CddDecisionStatusScheme",
   checkedAt: "https://solid-mortgage-vocab.vercel.app/mort#checkedAt",
+  checkedCredential: "https://solid-mortgage-vocab.vercel.app/mort#checkedCredential",
   closingDate: "https://solid-mortgage-vocab.vercel.app/mort#closingDate",
   ClosingDisclosure: "https://solid-mortgage-vocab.vercel.app/mort#ClosingDisclosure",
   constructionType: "https://solid-mortgage-vocab.vercel.app/mort#constructionType",
+  controlPerson: "https://solid-mortgage-vocab.vercel.app/mort#controlPerson",
   CredentialPointer: "https://solid-mortgage-vocab.vercel.app/mort#CredentialPointer",
   CreditReport: "https://solid-mortgage-vocab.vercel.app/mort#CreditReport",
   CreditScoreCredential: "https://solid-mortgage-vocab.vercel.app/mort#CreditScoreCredential",
@@ -46,6 +61,10 @@ export const MORT = {
   EmploymentIncomeCredential:
     "https://solid-mortgage-vocab.vercel.app/mort#EmploymentIncomeCredential",
   eNoteReference: "https://solid-mortgage-vocab.vercel.app/mort#eNoteReference",
+  EntityLegalForm_Corp: "https://solid-mortgage-vocab.vercel.app/mort#EntityLegalForm-Corp",
+  EntityLegalForm_LLC: "https://solid-mortgage-vocab.vercel.app/mort#EntityLegalForm-LLC",
+  EntityLegalForm_LLP: "https://solid-mortgage-vocab.vercel.app/mort#EntityLegalForm-LLP",
+  EntityLegalFormScheme: "https://solid-mortgage-vocab.vercel.app/mort#EntityLegalFormScheme",
   EscrowAccountStatement: "https://solid-mortgage-vocab.vercel.app/mort#EscrowAccountStatement",
   estimatedTotalMonthlyPayment:
     "https://solid-mortgage-vocab.vercel.app/mort#estimatedTotalMonthlyPayment",
@@ -60,8 +79,11 @@ export const MORT = {
   GrantEnd_ServicingEnds: "https://solid-mortgage-vocab.vercel.app/mort#GrantEnd-ServicingEnds",
   GrantEndScheme: "https://solid-mortgage-vocab.vercel.app/mort#GrantEndScheme",
   grantor: "https://solid-mortgage-vocab.vercel.app/mort#grantor",
+  identifiedBeneficialOwner:
+    "https://solid-mortgage-vocab.vercel.app/mort#identifiedBeneficialOwner",
   IdentityCredential: "https://solid-mortgage-vocab.vercel.app/mort#IdentityCredential",
   intentToProceedDate: "https://solid-mortgage-vocab.vercel.app/mort#intentToProceedDate",
+  isIllustrativeLei: "https://solid-mortgage-vocab.vercel.app/mort#isIllustrativeLei",
   keyFactor: "https://solid-mortgage-vocab.vercel.app/mort#keyFactor",
   legalDescription: "https://solid-mortgage-vocab.vercel.app/mort#legalDescription",
   lineItem: "https://solid-mortgage-vocab.vercel.app/mort#lineItem",
@@ -118,8 +140,13 @@ export const MORT = {
   NoticeKind_ServicingTransferFromTransferor:
     "https://solid-mortgage-vocab.vercel.app/mort#NoticeKind-ServicingTransferFromTransferor",
   NoticeKindScheme: "https://solid-mortgage-vocab.vercel.app/mort#NoticeKindScheme",
+  OfficerAuthorisationCredential:
+    "https://solid-mortgage-vocab.vercel.app/mort#OfficerAuthorisationCredential",
   operandEnc: "https://solid-mortgage-vocab.vercel.app/mort#operandEnc",
+  OrganisationalIdentityCredential:
+    "https://solid-mortgage-vocab.vercel.app/mort#OrganisationalIdentityCredential",
   ownerPolicyAmount: "https://solid-mortgage-vocab.vercel.app/mort#ownerPolicyAmount",
+  ownershipPercentageBps: "https://solid-mortgage-vocab.vercel.app/mort#ownershipPercentageBps",
   parcelNumber: "https://solid-mortgage-vocab.vercel.app/mort#parcelNumber",
   payee: "https://solid-mortgage-vocab.vercel.app/mort#payee",
   PaymentMandate: "https://solid-mortgage-vocab.vercel.app/mort#PaymentMandate",

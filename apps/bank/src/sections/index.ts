@@ -23,6 +23,12 @@ function lazySection(load: () => Promise<ComponentType>): ComponentType {
 const MovingAddressOnFile = lazySection(
   async () => (await import("./moving-house/MovingHouse.tsx")).MovingAddressOnFile,
 );
+const KybOnboarding = lazySection(
+  async () => (await import("./business-kyb/BusinessKyb.tsx")).KybOnboarding,
+);
+const KybDueDiligence = lazySection(
+  async () => (await import("./business-kyb/BusinessKyb.tsx")).KybDueDiligence,
+);
 
 export interface AppSection {
   /** The demo that owns this section, e.g. "moving-house". */
@@ -39,5 +45,12 @@ export const sections: readonly AppSection[] = [
     demo: "moving-house",
     path: "moving/address",
     title: "Address on file",
+  },
+  { Component: KybOnboarding, demo: "business-kyb", path: "kyb", title: "Business onboarding" },
+  {
+    Component: KybDueDiligence,
+    demo: "business-kyb",
+    path: "kyb/due-diligence",
+    title: "Customer due diligence",
   },
 ];

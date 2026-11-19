@@ -1,0 +1,18 @@
+{
+  "provenance": {
+    "see": "PROVENANCE.json",
+    "sparqCommit": "947480b02fcbd174f80f9247b55ee02202d2e345",
+    "capturedAt": "2026-07-23",
+    "source": "jeswr/solid-kyb packages/vc-kit/test/fixtures/operand-enc.json (northwindOwnersNote)",
+    "note": "Business KYB owner shares in basis points (Dana Reyes 1200, Marcus Webb 1800, Priya Nandakumar 2800, Jordan Blake 4200), captured with the same sparq commit and toolchain as operand-enc.json. That capture reproduced every mortgage entry byte for byte (crossCheck below). No encoding exists for 6000 (Jordan after the step 9 sale): it is never guessed."
+  },
+  "crossCheck": {
+    "9999": "0x0ad5c5f2163a0400c5cd2a1a80fb43229689797c2b53ac9f93c6af28930e3c91"
+  },
+  "encodings": {
+    "1200": "0x03ba3e08637a48f1960b41c88eb697ed6c6dedaeef8e362d4f6c9d0e35cf8f95",
+    "1800": "0x099b001db07d4133f375846dc5d36e64353e12191e23695c2c73b1a0b58eb734",
+    "2800": "0x1f2027ca53100ba894a3287f5e0ad692464203bd8be74e38590ed9b8a3aa7e74",
+    "4200": "0x0a0e87fb4532734a93ef0d3e31ea031d853b1688b98f7f1572b61ad057d37d96"
+  }
+}

@@ -333,38 +333,62 @@ export const DEMOS: readonly Demo[] = [
       "A business's identity, officers and owners are issued once as credentials; two banks rely on them, and a proof answers the 25% ownership test without the cap table.",
     sectors: ["Finance"],
     durationSeconds: 220,
-    status: "coming",
+    status: "live",
     media: mediaFor("business-kyb"),
+    // Step 1 of content/business-kyb/tour.ts: Northwind's credentials drawer in the wallet.
+    tour: { demo: "business-kyb", app: "wallet", path: "kyb", step: "vault" },
     chapters: [
       {
         id: "intro",
         title: "A business has a pod too",
-        transcript: [],
+        transcript: [
+          "Northwind Logistics is a small freight company. It wants a bank account and a credit line. Both banks must know who the business is, and who owns it.",
+          "Today that means sending the same formation documents and ownership chart to each bank, and sending them again when anything changes.",
+          "Here, Northwind has a pod. It starts empty.",
+        ],
       },
       {
         id: "issue",
         title: "Issued once",
-        transcript: [],
+        transcript: [
+          "A registry issues the company's identity, with its legal entity identifier. The identifier in this demo is illustrative, and is not a real one.",
+          "It states who may act for the company.",
+          "And it records the four owners and their shares. The full ownership table now sits in Northwind's pod, and nowhere else.",
+        ],
       },
       {
         id: "onboard",
         title: "Onboarding from the pod",
-        transcript: [],
+        transcript: [
+          "The first bank asks to read the identity and the ownership record, for customer due diligence. Northwind's managing member approves.",
+          "The bank runs the check the rule requires: every owner with a quarter or more, and the person in control. It reads signed data, checks each signature, and opens the account.",
+        ],
       },
       {
         id: "prove",
         title: "Proving without disclosing",
-        transcript: [],
+        transcript: [
+          "The second bank is only quoting for a credit line. It does not need the ownership table yet. It needs one answer: is there any owner above a quarter that we have not been told about?",
+          "Northwind answers with a proof. The bank learns the answer, and not the shares.",
+          "Once the bank decides to lend, the rule needs the real values. So the proof gives way to a grant.",
+        ],
       },
       {
         id: "fresh",
         title: "Nothing goes stale",
-        transcript: [],
+        transcript: [
+          "One owner sells his stake. The registry issues a new ownership record and withdraws the old one.",
+          "Both banks read the new record through the grants they already have. Nobody starts onboarding again.",
+        ],
       },
       {
         id: "control",
         title: "Control and audit",
-        transcript: [],
+        transcript: [
+          "Northwind closes its account at the first bank and withdraws the grant. The bank's next read is refused. It keeps the due diligence record it must keep. It can no longer refresh it.",
+          "For a supervisor, the ledger lists each due diligence obligation beside the grant and the reads that met it.",
+          "One set of credentials, two banks, no document packs. If your organisation issues or relies on business identity, we would like you in the Community of Practice.",
+        ],
       },
     ],
   },

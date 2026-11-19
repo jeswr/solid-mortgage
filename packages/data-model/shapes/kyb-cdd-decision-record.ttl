@@ -1,0 +1,68 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+# Business KYB: a bank's own customer due diligence decision record (ported from solid-kyb).
+# Kept in the bank's pod, never the customer's, as 31 CFR 1010.230(i) requires.
+mshape:CddDecisionRecordShape
+  a sh:NodeShape ;
+  sh:targetClass mort:CddDecisionRecord ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue mort:CddDecisionRecord ;
+  ] ;
+  sh:property [
+    sh:path dcterms:subject ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:message "the customer entity's WebID" ;
+  ] ;
+  sh:property [
+    sh:path dcterms:creator ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path schema:name ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:cddDecisionStatus ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:in ( mort:CddDecisionStatus-Opened mort:CddDecisionStatus-Declined mort:CddDecisionStatus-PendingReview ) ;
+  ] ;
+  sh:property [
+    sh:path mort:cddCheckDate ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+  ] ;
+  sh:property [
+    sh:path mort:checkedCredential ;
+    sh:minCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path mort:identifiedBeneficialOwner ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:controlPerson ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] .

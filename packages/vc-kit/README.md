@@ -52,6 +52,24 @@ reimplemented here. `CAPTURED_OPERAND_ENCODINGS` holds the values captured
 from it, including the demo's 8,500 (monthly income) and 742 (credit score).
 `mintCapturedOperandAnchor` works for those values and throws for any other.
 
+## Business KYB (demo 3)
+
+`src/zk/kyb/` carries the business KYB ZK layer, ported from `jeswr/solid-kyb`:
+
+- three credential kinds the register issues: `organisational-identity-credential` (an
+  illustrative LEI only), `officer-authorisation-credential` and
+  `beneficial-ownership-credential` (owner shares in basis points);
+- `mintOwnerShareAnchor` (Tier A, one owner's share, captured encodings only: 1200, 1800, 2800,
+  4200) and `mintOwnerArrayAnchor` (Tier B, a BLAKE3 commitment over the eight-slot owner
+  array). Both read the shares from the signed claim graph;
+- `proveCompleteness` / `verifyCompleteness`: the bespoke `kyb_completeness_scan_n8` circuit
+  (Noir source in `circuits/kyb_completeness_scan/`), proved live. It shows that exactly
+  `disclosedCount` owners hold 25 percent or more, bound to the anchored array. The verifier
+  runs nine fail-closed gates, as Tier A does.
+
+BLAKE3 is written out for one chunk in `blake3.ts` (no new dependency) and checked against the
+published test vectors and, end to end, by the circuit itself.
+
 ## Running in a browser or a worker
 
 This package's own code uses only web platform APIs. The pinned
