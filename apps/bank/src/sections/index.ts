@@ -6,6 +6,7 @@
 import type { ComponentType } from "react";
 import { KybDueDiligence, KybOnboarding } from "./business-kyb/BusinessKyb.tsx";
 import { MovingAddressOnFile } from "./moving-house/MovingHouse.tsx";
+import { YourIdentity } from "./reusable-kyc/YourIdentity.tsx";
 import { LendingCashFlow } from "./small-dollar-lending/CashFlow.tsx";
 import { LendingLoans } from "./small-dollar-lending/Loans.tsx";
 
@@ -44,4 +45,5 @@ export const sections: readonly AppSection[] = [
     path: "kyb/due-diligence",
     title: "Customer due diligence",
   },
+  { Component: YourIdentity, demo: "reusable-kyc", path: "kyc", title: "Your identity" },
 ];

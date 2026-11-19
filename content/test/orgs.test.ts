@@ -59,4 +59,8 @@ describe("the apps each demo uses", () => {
     expect(DEMO_APPS["medication-handover"]).toEqual(["wallet", "hospital", "pharmacy", "clinic"]);
     for (const slug of DEMO_APPS["medication-handover"]) expect(ORGS[slug]).toBeDefined();
   });
+
+  it("reusable KYC: Alex's wallet, the bank that checked Alex and the card issuer that relies", () => {
+    expect(DEMO_APPS["reusable-kyc"]).toEqual(["wallet", "bank", "card-issuer"]);
+  });
 });

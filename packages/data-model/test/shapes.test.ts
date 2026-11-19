@@ -67,6 +67,7 @@ test("every shape document is bundled", () => {
     "kyb-common",
     "kyb-officer-authorisation-credential",
     "kyb-organisational-identity-credential",
+    "kyc-attestation-credential",
     "loan-application",
     "loan-estimate",
     "medication-dispense",
@@ -88,6 +89,7 @@ test("every shape document is bundled", () => {
     "support",
     "title-clear-credential",
     "title-commitment-credential",
+    "trusted-issuer-list",
     "underwriting-decision",
     "zk-operand-anchor",
   ]);
@@ -96,7 +98,7 @@ test("every shape document is bundled", () => {
 test("every targeted resource shape is closed", () => {
   const store = shapesStore();
   const targeted = store.getSubjects(`${SH}targetClass`, null, null);
-  expect(targeted.length).toBe(52);
+  expect(targeted.length).toBe(54);
   for (const shape of targeted) {
     const closed = store.getObjects(shape, `${SH}closed`, null);
     expect(
@@ -223,6 +225,14 @@ const cases: readonly {
   { name: "inbox-message", expectedViolations: ["NodeKindConstraintComponent"] },
   { name: "credential-pointer", expectedViolations: ["PatternConstraintComponent"] },
   { name: "document", expectedViolations: ["MinCountConstraintComponent"] },
+  {
+    name: "kyc-attestation-credential",
+    expectedViolations: ["ClosedConstraintComponent", "InConstraintComponent"],
+  },
+  {
+    name: "trusted-issuer-list",
+    expectedViolations: ["MinCountConstraintComponent", "LessThanConstraintComponent"],
+  },
   // Small-dollar lending (flows.md section 4).
   {
     name: "cash-flow-credential",

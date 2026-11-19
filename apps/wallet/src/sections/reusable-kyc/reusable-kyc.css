@@ -1,0 +1,51 @@
+/* AUTHORED-BY Claude Opus 5.5
+ * Cairn's reusable-KYC screens: the wallet's own tokens (tokens.css), a few layouts of their own. */
+.kyc-checks {
+  margin: 10px 0;
+  padding-left: 1.2rem;
+}
+
+.kyc-checks li {
+  margin-bottom: 4px;
+}
+
+.kyc-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 18px 4px 8px;
+}
+
+.kyc-nav a {
+  color: var(--teal);
+  font-weight: 700;
+}
+
+.kyc-totals {
+  list-style: none;
+  margin: 12px 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.kyc-totals li {
+  background: var(--teal-soft);
+  border-radius: var(--radius-s);
+  padding: 10px 12px;
+}
+
+.kyc-totals strong {
+  display: block;
+  font-size: 1.6rem;
+  color: var(--teal);
+}
+
+.kyc-ledger {
+  margin-top: 12px;
+  min-width: 0;
+  overflow-x: auto;
+  /* The ledger's visually hidden labels are absolutely positioned: keep them in this scroller. */
+  position: relative;
+}
