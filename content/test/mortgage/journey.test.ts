@@ -207,6 +207,12 @@ const AFTER: Record<string, () => Promise<void>> = {
   },
   "connect-servicer": async () => {
     await probe("servicer reads contact details under G8", "servicer", alex("profile/contact"));
+    await probe(
+      "servicer reads its own transfer notice",
+      "servicer",
+      alex("mortgage/servicing/transfer-notice"),
+    );
+    await probe("servicer lists its drawer", "servicer", alex("mortgage/servicing/"));
     await probe("servicer reads income", "servicer", alex("credentials/employment-income"));
     await probe("servicer reads the property", "servicer", alex("property/subject-property"));
     await probe(
@@ -449,6 +455,8 @@ describe("grants are enforced by the pod", () => {
     "title reads the profile after the policy": 403,
     "title writes to closing after the policy": 403,
     "servicer reads contact details under G8": 200,
+    "servicer reads its own transfer notice": 200,
+    "servicer lists its drawer": 200,
     "servicer reads income": 403,
     "servicer reads the property": 403,
     "servicer reads Juniper's drawer": 403,

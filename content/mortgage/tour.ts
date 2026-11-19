@@ -9,6 +9,10 @@
  *   pod, path, method, status and kind. `actor` is left out: `Partial<PodEvent>` wants a whole
  *   actor, and who may act is already fixed by the access rules the pod enforces.
  * - Paths are relative to the pod, with a leading slash. `/inbox/` is a POST to the container.
+ * - Steps 7 and 21 start in another app and finish in the wallet. The starting app calls the
+ *   request half (`requestApplicationAccess`, `requestServicerAccess`), the wallet approves, and
+ *   the completion half (`completeApplicationAccess`, `completeServicerConnection`) runs after
+ *   the approval, inside the same step, so its writes count towards the step's `expect` list.
  * - `realWorld.rule` states the rule as it applies in the United States. A rule that could not be
  *   re-checked against its primary source is listed in README.md.
  */
@@ -58,6 +62,9 @@ const revoke = (path: string): Partial<PodEvent> => ({
   status: 204,
 });
 const note = (kind: AppNote["kind"], org: OrgSlug): Partial<AppNote> => ({ kind, org });
+
+/** The tour's demo id (`TourStep` tags and `?tour=<demo>`). */
+export const DEMO = "mortgage";
 
 export const CHAPTERS = Object.freeze([
   "Welcome",
