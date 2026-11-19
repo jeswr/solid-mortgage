@@ -14,6 +14,12 @@ import {
   movingHouseTour,
 } from "@mortgage/content/moving-house/mount";
 import { ORGS } from "@mortgage/content/orgs";
+import {
+  isReusableKycPage,
+  REUSABLE_KYC_HOLDER,
+  reusableKycLens,
+  reusableKycTour,
+} from "@mortgage/content/reusable-kyc/mount";
 import { configure, onEvent, ready, resetDemo, setTourContext } from "@mortgage/pod-runtime";
 import { mountDemo } from "@mortgage/tour/mount";
 import { StrictMode } from "react";
@@ -25,9 +31,16 @@ import { linkTour } from "./tour-link.ts";
 
 // A page under moving/ belongs to the moving-house demo (src/sections/moving-house/).
 const movingHouse = isMovingHousePage(location.pathname, "wallet", location.search);
+// A page under kyc/ belongs to the reusable-KYC demo (src/sections/reusable-kyc/).
+const reusableKyc = isReusableKycPage(location.pathname, "wallet", location.search);
 
 // The demo the wallet is mounted for, and the holder it shows first (src/holder.ts).
-const demo = movingHouse ? movingHouseTour() : mortgageTour();
+const mounted = reusableKyc
+  ? { holder: REUSABLE_KYC_HOLDER, lens: reusableKycLens(), tour: reusableKycTour() }
+  : movingHouse
+    ? { holder: MOVING_HOUSE_HOLDER, lens: movingHouseLens(), tour: movingHouseTour() }
+    : { holder: MORTGAGE_HOLDER, lens: mortgageLens(), tour: mortgageTour() };
+const demo = mounted.tour;
 const holder = initialHolder(window.location.href, demo.holder);
 
 configure({ app: "wallet", holder, registry: ORGS, seed: mortgageSeed() });
@@ -40,11 +53,9 @@ const started = ready().then((info) => {
 
 void mountDemo({
   app: "wallet",
-  holder: movingHouse ? MOVING_HOUSE_HOLDER : MORTGAGE_HOLDER,
-  lens: movingHouse ? movingHouseLens() : mortgageLens(),
+  ...mounted,
   registry: ORGS,
   runtime: { onEvent, resetDemo, setTourContext: trackTourContext(setTourContext) },
-  tour: demo,
 }).then(({ tour }) => {
   if (tour === undefined) return;
   linkTour(tour);
