@@ -8,13 +8,25 @@
 import AxeBuilder from "@axe-core/playwright";
 import { type BrowserContext, expect, type Page, test } from "@playwright/test";
 
-type Owner = "alex" | "payroll" | "bank" | "bureau" | "lender" | "lender-b" | "aus" | "servicer";
+type Owner =
+  | "alex"
+  | "maya"
+  | "rosa"
+  | "northwind"
+  | "payroll"
+  | "bank"
+  | "bureau"
+  | "lender"
+  | "lender-b"
+  | "aus"
+  | "servicer";
 
 interface Harness {
   ready(): Promise<boolean>;
   beats(names: readonly string[]): Promise<string[]>;
   request(code: string, day: number): Promise<string>;
   status(owner: Owner, pod: Owner, path: string, method?: string): Promise<number>;
+  write(owner: Owner, pod: Owner, path: string, text: string): Promise<number>;
   aclAgents(path: string): Promise<string[]>;
   webid(owner: Owner): string;
 }
@@ -41,6 +53,11 @@ async function openHarness(context: BrowserContext) {
         ([o, p, x, m]) =>
           (window as unknown as { __harness: Harness }).__harness.status(o, p, x, m),
         [owner, pod, path, method] as const,
+      ),
+    write: (owner: Owner, pod: Owner, path: string, text: string) =>
+      page.evaluate(
+        ([o, p, x, t]) => (window as unknown as { __harness: Harness }).__harness.write(o, p, x, t),
+        [owner, pod, path, text] as const,
       ),
     aclAgents: (path: string) =>
       page.evaluate(
@@ -301,4 +318,64 @@ test("steps 21 and 22: approve Marigold, revoke Juniper, and the pod refuses Jun
   // Grants that ended on their own are shown as ended, Marigold's is still active.
   await expect(page.locator("article.grant:has(#grant-G2)")).toContainText("Ended");
   await expect(page.locator("article.grant:has(#grant-G8)")).toContainText("Active");
+});
+
+test("holders: one wallet shows Alex's, Maya's, Rosa's and Northwind's pods, each as its holder", async ({
+  context,
+  page,
+}) => {
+  const harness = await openHarness(context);
+  // Maya's own document: hers to read, refused to an organisation and to another holder.
+  expect(await harness.write("maya", "maya", "notes/repair-quote", "car repair: $2,000")).toBe(201);
+  expect(await harness.status("maya", "maya", "notes/repair-quote")).toBe(200);
+  expect(await harness.status("bank", "maya", "notes/repair-quote")).toBe(403);
+  expect(await harness.status("alex", "maya", "notes/repair-quote")).toBe(403);
+  expect(await harness.status("maya", "alex", "credentials/")).toBe(403);
+
+  // The mortgage demo names no holder: Alex, as before, with no parameter in the address.
+  await page.goto("./");
+  await expect(page.locator("main")).toContainText("Alex, everything below");
+  await expect(page.locator(".drawers > li").filter({ hasText: "Credentials" })).toBeVisible();
+  await expect(page.getByText("Signed in as Alex Rivera").first()).toBeVisible();
+  expect(new URL(page.url()).searchParams.has("holder")).toBe(false);
+
+  // Switch to Maya: the wallet now reads her pod as her (a read as Alex would be refused).
+  await page.locator('[data-tour="wallet-holder-maya"]').click();
+  await expect(page.locator("main")).toContainText("Maya, everything below");
+  const drawers = page.locator(".drawers > li");
+  await expect(drawers.filter({ hasText: "Notes" })).toContainText("1 item");
+  await expect(drawers.filter({ hasText: "Profile" })).toBeVisible();
+  await expect(drawers.filter({ hasText: "Credentials" })).toHaveCount(0);
+  await expect(page.getByText("Signed in as Maya Torres").first()).toBeVisible();
+  await expect(page.locator('[data-tour="wallet-holder-maya"]')).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await expect(page.getByRole("link", { name: /Open Prove/ })).toHaveCount(0);
+  await expectAxeClean(page);
+
+  // Moving between screens and reloading keep Maya.
+  await page.getByRole("link", { name: "Documents" }).click();
+  await expect(page).toHaveURL(/holder=maya/);
+  await page.reload();
+  await page.getByRole("link", { name: "Home" }).click();
+  await expect(page.locator("main")).toContainText("Maya, everything below");
+
+  // A business holder, shown as its operator.
+  await page.locator('[data-tour="wallet-holder-northwind"]').click();
+  await expect(page.locator("main")).toContainText(
+    "Everything Northwind Logistics LLC keeps is in one store it controls",
+  );
+  await expect(
+    page.getByText("Signed in as Jordan Blake, for Northwind Logistics LLC").first(),
+  ).toBeVisible();
+  await expect(page.locator(".drawers > li").filter({ hasText: "Notes" })).toHaveCount(0);
+
+  // A link can name the holder; back to Alex, whose pod is as it was.
+  await page.goto("./?holder=rosa");
+  await expect(page.locator("main")).toContainText("Rosa, everything below");
+  await page.locator('[data-tour="wallet-holder-alex"]').click();
+  await expect(page.locator("main")).toContainText("Alex, everything below");
+  await expect(page.locator(".drawers > li").filter({ hasText: "Credentials" })).toBeVisible();
+  expect(new URL(page.url()).searchParams.has("holder")).toBe(false);
 });

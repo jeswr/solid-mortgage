@@ -1,8 +1,9 @@
 // AUTHORED-BY Claude Opus 5.5
 /**
- * The wallet's connection to the pods: one `World` acting as Alex (from the shared browser
- * module in `@mortgage/content/mortgage/browser`), the simulated day, a queue that runs the
- * wallet's writes one at a time, and a refresh signal raised by every pod event.
+ * The wallet's connection to the pods: one `World` acting as the holder the wallet shows (Alex
+ * unless the demo or the visitor picks another registered holder; src/holder.ts), from the
+ * shared browser module in `@mortgage/content/mortgage/browser`, the simulated day, a queue that
+ * runs the wallet's writes one at a time, and a refresh signal raised by every pod event.
  *
  * The day is the current tour step's day in the guided tour, otherwise the runtime's day. When
  * it moves, the wallet applies expiry (`agents.walletApplyExpiries`), because WAC has no expiry
@@ -11,7 +12,15 @@
 import { createBrowserWorld, crossOwnerFetch } from "@mortgage/content/mortgage/browser";
 import type { World } from "@mortgage/content/mortgage/world";
 import type { LensEntry } from "@mortgage/demo-kit/contracts";
-import { note, onEvent, onReset, podFetch, setDay } from "@mortgage/pod-runtime";
+import { DEFAULT_HOLDER, type HolderId } from "@mortgage/demo-kit/registry";
+import {
+  note,
+  onEvent,
+  onReset,
+  podFetch,
+  setDay,
+  setHolder as setRuntimeHolder,
+} from "@mortgage/pod-runtime";
 import {
   createContext,
   type ReactNode,
@@ -24,26 +33,35 @@ import {
 } from "react";
 import { withGrantLock } from "./acl-lock.ts";
 
+/** A world acting as one holder, which it names. */
+export interface WalletWorld extends World {
+  readonly holder: HolderId;
+}
+
 /** What a screen needs from the runtime. */
 export interface WalletRuntime {
-  /** A world acting as Alex on the current day. */
-  world(): World;
+  /** The holder whose pod the wallet shows and acts for. */
+  holder: HolderId;
+  /** Show and act for another registered holder (the holder switcher). */
+  switchHolder(holder: HolderId): void;
+  /** A world acting as the holder on the current day. */
+  world(): WalletWorld;
   /** The simulated day. */
   day: number;
   /** Bumped after every pod event and every wallet action: screens re-read when it changes. */
   version: number;
   /** Run a pod action in the wallet's queue (one at a time), then refresh the screens. */
-  run<T>(action: (world: World) => Promise<T>): Promise<T>;
+  run<T>(action: (world: WalletWorld) => Promise<T>): Promise<T>;
   /**
    * Run a pod action that writes no grant (the threshold proofs), outside the queue and the grant
    * lock, so a proof that takes minutes never holds up an approval, a withdrawal or expiry.
    */
-  runApart<T>(action: (world: World) => Promise<T>): Promise<T>;
+  runApart<T>(action: (world: WalletWorld) => Promise<T>): Promise<T>;
 }
 
 type Action = <T>(
-  action: (world: World) => Promise<T>,
-  world?: (day: number) => World,
+  action: (world: WalletWorld) => Promise<T>,
+  world?: (day: number) => WalletWorld,
 ) => Promise<T>;
 
 const RuntimeContext = createContext<WalletRuntime | undefined>(undefined);
@@ -79,30 +97,38 @@ export function setDayOne(value: string): void {
   dayOne = value;
 }
 
-/** A world acting as Alex through the page's own `podFetch`: Alex's clicks. */
-export function worldOn(day: number): World {
-  return createBrowserWorld({
-    actsAs: "alex",
+// --- The holder --------------------------------------------------------------------------------
+
+let currentHolder: HolderId = DEFAULT_HOLDER;
+
+/** A world acting as the shown holder through the page's own `podFetch`: the holder's clicks. */
+export function worldOn(day: number): WalletWorld {
+  const holder = currentHolder;
+  const world = createBrowserWorld({
+    actsAs: holder,
     day,
     note,
     podFetch,
     ...(dayOne === undefined ? {} : { dayOne }),
   });
+  return { ...world, holder };
 }
 
 /**
  * A world acting as Alex's wallet back office: the same WebID, but its requests are marked as
  * made by an agent, so the Lens labels an ending "expiry applied by Alex's wallet" rather than
- * a withdrawal (packages/lens/README.md, "Grants").
+ * a withdrawal (packages/lens/README.md, "Grants"). Expiry is the mortgage demo's own rule for
+ * Alex's grants (content/mortgage/grants.ts), so it acts as Alex whichever holder is shown.
  */
-function backOfficeWorld(day: number): World {
-  return createBrowserWorld({
+function backOfficeWorld(day: number): WalletWorld {
+  const world = createBrowserWorld({
     actsAs: "alex",
     day,
     note,
     podFetch: crossOwnerFetch("alex"),
     ...(dayOne === undefined ? {} : { dayOne }),
   });
+  return { ...world, holder: "alex" };
 }
 
 // --- Expiry ------------------------------------------------------------------------------------
@@ -136,19 +162,29 @@ function forgetExpiryDay(): void {
 
 // --- Provider ----------------------------------------------------------------------------------
 
-/** Pod events that change what the wallet shows: anything touching Alex's pod. */
-function touchesAlex(entry: LensEntry): boolean {
-  return entry.source === "pod" && entry.pod === "alex" && entry.kind !== "read";
+/** Pod events that change what the wallet shows: anything touching the shown holder's pod. */
+function touchesHolder(entry: LensEntry): boolean {
+  return entry.source === "pod" && entry.pod === currentHolder && entry.kind !== "read";
 }
 
 export function WalletProvider({
   children,
   started,
+  holder: initial = DEFAULT_HOLDER,
+  onHolder,
 }: {
   children: ReactNode;
   /** Resolves once the pods are seeded; screens wait for it before reading. */
   started: Promise<unknown>;
+  /** The holder shown first (src/holder.ts); the runtime must be configured for it. */
+  holder?: HolderId;
+  /** Called after the visitor switches holder. */
+  onHolder?: (holder: HolderId) => void;
 }) {
+  const [holder, setHolderState] = useState<HolderId>(() => {
+    currentHolder = initial;
+    return initial;
+  });
   const [day, setDayState] = useState(currentDay);
   const [version, setVersion] = useState(0);
   const [ready, setReady] = useState(false);
@@ -164,10 +200,24 @@ export function WalletProvider({
     },
     [bump],
   );
-  const run = useCallback(<T,>(action: (world: World) => Promise<T>) => enqueue(action), [enqueue]);
+  const run = useCallback(
+    <T,>(action: (world: WalletWorld) => Promise<T>) => enqueue(action),
+    [enqueue],
+  );
   const runApart = useCallback(
-    <T,>(action: (world: World) => Promise<T>) => action(worldOn(currentDay)).finally(bump),
+    <T,>(action: (world: WalletWorld) => Promise<T>) => action(worldOn(currentDay)).finally(bump),
     [bump],
+  );
+  const switchHolder = useCallback(
+    (next: HolderId) => {
+      if (next === currentHolder) return;
+      setRuntimeHolder(next);
+      currentHolder = next;
+      setHolderState(next);
+      onHolder?.(next);
+      bump();
+    },
+    [bump, onHolder],
   );
 
   useEffect(() => {
@@ -180,7 +230,7 @@ export function WalletProvider({
     dayListeners.add(onDay);
     let timer: ReturnType<typeof setTimeout> | undefined;
     const stopEvents = onEvent((entry) => {
-      if (!touchesAlex(entry)) return;
+      if (!touchesHolder(entry)) return;
       clearTimeout(timer);
       timer = setTimeout(bump, 150);
     });
@@ -214,12 +264,14 @@ export function WalletProvider({
   const value = useMemo<WalletRuntime>(
     () => ({
       day,
+      holder,
       run,
       runApart,
+      switchHolder,
       version: ready ? version : -1,
       world: () => worldOn(currentDay),
     }),
-    [day, run, runApart, version, ready],
+    [day, holder, run, runApart, switchHolder, version, ready],
   );
   return <RuntimeContext.Provider value={value}>{children}</RuntimeContext.Provider>;
 }
@@ -234,10 +286,10 @@ export function WalletProvider({
  * different thing to show) discards a read in flight.
  */
 export function usePodData<T>(
-  load: (world: World) => Promise<T>,
+  load: (world: WalletWorld) => Promise<T>,
   deps: readonly unknown[] = [],
 ): { data: T | undefined; error: unknown; loading: boolean } {
-  const { version, world } = useWallet();
+  const { holder, version, world } = useWallet();
   const [state, setState] = useState<{ data: T | undefined; error: unknown; loading: boolean }>({
     data: undefined,
     error: undefined,
@@ -273,8 +325,9 @@ export function usePodData<T>(
       });
   }, []);
 
-  // A different thing to show (the deps are plain values: names, URLs): forget reads in flight.
-  const subject = JSON.stringify(deps);
+  // A different thing to show (the deps are plain values: names, URLs; or another holder's
+  // pod): forget reads in flight.
+  const subject = JSON.stringify([holder, ...deps]);
   // biome-ignore lint/correctness/useExhaustiveDependencies: `subject` is what the effect keys on.
   useEffect(() => {
     generation.current += 1;
@@ -284,6 +337,14 @@ export function usePodData<T>(
       generation.current += 1;
     };
   }, [subject]);
+
+  // Another holder's pod: never show the previous holder's data while the new read runs.
+  const shownFor = useRef(holder);
+  useEffect(() => {
+    if (shownFor.current === holder) return;
+    shownFor.current = holder;
+    setState({ data: undefined, error: undefined, loading: true });
+  }, [holder]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: `subject` restarts the read above.
   useEffect(() => {

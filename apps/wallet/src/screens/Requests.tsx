@@ -19,7 +19,7 @@ import {
   nameOfWebid,
   safeReturnUrl,
 } from "../explain.ts";
-import { alexRoot, type RequestItem, readRequests } from "../pod-data.ts";
+import { holderRoot, type RequestItem, readRequests } from "../pod-data.ts";
 import { usePodData, useWallet } from "../runtime.tsx";
 import { continueTour, useTourStep } from "../tour-link.ts";
 
@@ -41,7 +41,7 @@ export function useRequestWords(request: AccessRequest) {
       targets: [...permission.targetIris].sort(),
     })),
     request.assigneeIri,
-    alexRoot(w),
+    holderRoot(w),
   );
   return {
     end: explainEnd(endOfPermissions(permissions.map((permission) => permission.end)), w.calendar),
@@ -169,7 +169,7 @@ function ConsentCard({
     try {
       if (kind === "approve") await run((world) => approveRequest(world, item.url));
       // Declining shares nothing: the request leaves the inbox and no grant is written.
-      else await run((world) => remove(world.fetchAs("alex"), item.url));
+      else await run((world) => remove(world.fetchAs(world.holder), item.url));
       onOutcome({ kind: kind === "approve" ? "approved" : "declined", who: words.who });
     } catch (caught) {
       setError(caught);
