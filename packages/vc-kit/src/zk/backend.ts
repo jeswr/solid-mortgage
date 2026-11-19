@@ -21,7 +21,6 @@
 
 import type { CompiledCircuitArtifact, FilterIntMember } from "./circuits/registry.js";
 import { loadCommittedCircuit } from "./circuits/registry.js";
-import { barretenbergWithSiteCrs, usesSiteCrs } from "./crs.js";
 import { ZkError } from "./errors.js";
 
 /** A produced/consumed UltraHonk proof: opaque bytes + ordered public inputs. */
@@ -95,11 +94,12 @@ const memberBackends = new Map<string, Promise<MemberBackend>>();
 async function loadApi(): Promise<{ api: unknown; threads: number }> {
   if (!apiPromise) {
     apiPromise = (async () => {
-      const bb = await import("@aztec/bb.js");
+      // crs.ts loads with bb.js, not with the page: it is no part of any app's first load.
+      const [bb, crs] = await Promise.all([import("@aztec/bb.js"), import("./crs.js")]);
       const threads = maxThreads();
       // In a browser the CRS comes from this site, pinned by SHA-256 (crs.ts), never from a CDN.
-      const api = usesSiteCrs()
-        ? await barretenbergWithSiteCrs(bb, threads)
+      const api = crs.usesSiteCrs()
+        ? await crs.barretenbergWithSiteCrs(bb, threads)
         : await bb.Barretenberg.new({ threads });
       return { api, threads };
     })();
