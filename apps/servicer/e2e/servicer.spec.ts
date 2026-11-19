@@ -51,6 +51,13 @@ async function connectThroughTheWallet(page: Page): Promise<void> {
   await page.goto(back);
   await expect(page.getByText("Connected.")).toBeVisible({ timeout: 60_000 });
   await injectHarness(page);
+  // "Connected." follows the welcome notice; the escrow statement, the set-up's last write,
+  // lands a moment later. Leaving the page before it would end the set-up half done.
+  await expect
+    .poll(async () => (await readAs(page, "alex", "mortgage/servicing/escrow-statement")).status, {
+      timeout: 30_000,
+    })
+    .toBe(200);
 }
 
 test("every route has the trust banner, noindex and its own metadata", async ({ page }) => {

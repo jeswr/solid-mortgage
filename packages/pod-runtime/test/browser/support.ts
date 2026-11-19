@@ -27,9 +27,25 @@ export async function launch(args: string[] = []): Promise<Browser | undefined> 
   return undefined;
 }
 
-/** Bundle the fixture page (the built client) into `out/page.js`. */
+const REGISTRY = "@mortgage/demo-kit/registry";
+const PADDED_REGISTRY = join(import.meta.dirname, "fixture/padded-registry.ts");
+
+/**
+ * Bundle the fixture page (the built client) into `out/page.js`. The client's registry import is
+ * routed through `fixture/padded-registry.ts`, which pads the pod owners when the page URL asks.
+ */
 export async function buildPage(out: string): Promise<string> {
   await build({
+    plugins: [
+      {
+        enforce: "pre",
+        name: "padded-registry",
+        async resolveId(source, importer) {
+          if (source !== REGISTRY || importer === PADDED_REGISTRY) return null;
+          return PADDED_REGISTRY;
+        },
+      },
+    ],
     build: {
       emptyOutDir: true,
       lib: {

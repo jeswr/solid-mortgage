@@ -60,6 +60,10 @@ test("step 13: the appraiser reads two documents, then submits the signed report
   await submit.click();
   await expect(page.getByText("Report delivered.")).toBeVisible({ timeout: 60_000 });
   await expect(submit).toBeDisabled();
+  // The notice follows the first write (Plumbline's own report); the run goes on to deliver it,
+  // wait for Juniper's copy in Alex's pod and end G5. The button's label says when it is over.
+  await expect(submit).toHaveText("Submit the report", { timeout: 60_000 });
+  await expect(page.getByRole("region", { name: "Field app" }).getByRole("alert")).toHaveCount(0);
 
   // The pods, read back as their owners.
   const report = await readAs(page, "appraisal", "appraisal/orders/PV-7731/appraisal");

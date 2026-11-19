@@ -58,9 +58,12 @@ export function startServiceWorker(
     return mayNameIdentity(client) ? identityOf(event.request) : null;
   }
 
-  sw.addEventListener("install", (event: { waitUntil(p: Promise<unknown>): void }) =>
-    event.waitUntil(sw.skipWaiting()),
-  );
+  sw.addEventListener("install", (event: { waitUntil(p: Promise<unknown>): void }) => {
+    // The first page's hello needs the compiled wasm: start it now, while activation and the
+    // claim run, instead of after the hello arrives.
+    runtime.prewarm();
+    event.waitUntil(sw.skipWaiting());
+  });
   sw.addEventListener("activate", (event: { waitUntil(p: Promise<unknown>): void }) =>
     event.waitUntil(
       (async () => {
