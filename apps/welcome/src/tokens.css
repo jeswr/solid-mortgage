@@ -1,0 +1,40 @@
+/* AUTHORED-BY Claude Opus 5.5
+ * The welcome site's own tokens: the convener's front door, not an organisation's app. Warm
+ * paper, deep petrol ink, a sea-glass signal and an apricot accent. Original values only. */
+:root {
+  --paper: #f6f4ef;
+  --paper-deep: #ece8de;
+  --surface: #ffffff;
+  --ink: #13212e;
+  --ink-soft: #2c3e4f;
+  --muted: #4a5866;
+  --line: #d6d0c2;
+  --primary: #1d4e89;
+  --primary-hover: #163d6c;
+  --on-primary: #ffffff;
+  --accent: #a2401f;
+  --signal: #8fd3c7;
+  --apricot: #f2b880;
+  --night: #13212e;
+  --night-2: #1c3142;
+  --on-night: #f6f4ef;
+  --on-night-muted: #c9d3dc;
+  --focus: #c2410c;
+  --focus-on-dark: #f2b880;
+  --live: #1f6b4f;
+  --live-bg: #e3f1ea;
+  --coming: #6a4f12;
+  --coming-bg: #f7ecd2;
+
+  --poster-bg: #1c3142;
+  --poster-line: #4f6b80;
+  --poster-pod: #8fd3c7;
+  --poster-node: #f2b880;
+
+  --font-body: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --radius: 14px;
+  --radius-small: 8px;
+  --shadow: 0 1px 2px rgb(19 33 46 / 6%), 0 8px 24px rgb(19 33 46 / 8%);
+  --gutter: clamp(1rem, 4vw, 2.5rem);
+  --max: 72rem;
+}

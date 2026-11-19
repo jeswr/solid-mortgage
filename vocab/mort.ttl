@@ -23,7 +23,7 @@
   dcterms:description "Project residue vocabulary for the Solid Mortgage Showcase. Defines only the terms that established vocabularies (FIBO, schema.org, W3C VC 2.0, DPV, ODRL) do not provide: credential subtypes, title status, underwriting decision statuses, marital status, ZK scaled-unit fields per decision 0005's digit budgets, and the ZK operand-anchor credential of decision 0012. Every other concern is modelled with the established vocabularies; each term's comment names the external concept it approximates."@en ;
   dcterms:created "2026-07-15"^^xsd:date ;
   dcterms:creator <https://github.com/jeswr> ;
-  owl:versionInfo "0.1.0" .
+  owl:versionInfo "0.2.0" .
 
 #################################################################
 # Credential subtype classes (vocab.md section 5, rows 2-6)
@@ -396,4 +396,851 @@ mort:DecisionStatus-Suspended
   skos:definition "The decision is suspended pending further documentation."@en ;
   skos:inScheme mort:DecisionStatusScheme ;
   skos:topConceptOf mort:DecisionStatusScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+#################################################################
+# Static rebuild (decision 0017): credential subtypes
+#################################################################
+
+mort:IdentityCredential
+  a owl:Class ;
+  rdfs:label "Identity credential"@en ;
+  rdfs:comment "A verifiable credential in which an organisation that has verified the subject's identity attests their name, date of birth and address. Approximates the identity fields of URLA section 1a; the full taxpayer identifier is never stored in the pod."@en ;
+  skos:definition "A verifiable credential in which an organisation that has verified the subject's identity attests their name, date of birth and address. Approximates the identity fields of URLA section 1a; the full taxpayer identifier is never stored in the pod."@en ;
+  rdfs:subClassOf cred:VerifiableCredential ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:TitleCommitmentCredential
+  a owl:Class ;
+  rdfs:label "Title commitment credential"@en ;
+  rdfs:comment "A verifiable credential in which a title agent attests the commitment to insure title: the proposed insured parties and amounts (Schedule A), the requirements to be met before the policy issues (Schedule B, Part I) and the exceptions from coverage (Schedule B, Part II). Approximates an ALTA commitment for title insurance; it replaces the earlier title clear credential."@en ;
+  skos:definition "A verifiable credential in which a title agent attests the commitment to insure title: the proposed insured parties and amounts (Schedule A), the requirements to be met before the policy issues (Schedule B, Part I) and the exceptions from coverage (Schedule B, Part II). Approximates an ALTA commitment for title insurance; it replaces the earlier title clear credential."@en ;
+  rdfs:subClassOf cred:VerifiableCredential ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:EvidenceOfInsuranceCredential
+  a owl:Class ;
+  rdfs:label "Evidence of insurance credential"@en ;
+  rdfs:comment "A verifiable credential in which a homeowner's insurer attests that a policy is bound on the subject property, with its coverage, premium, period and mortgagee clause. Approximates an evidence of property insurance form."@en ;
+  skos:definition "A verifiable credential in which a homeowner's insurer attests that a policy is bound on the subject property, with its coverage, premium, period and mortgagee clause. Approximates an evidence of property insurance form."@en ;
+  rdfs:subClassOf cred:VerifiableCredential ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+#################################################################
+# Static rebuild: documents delivered to the pod
+#################################################################
+
+mort:PurchaseAgreement
+  a owl:Class ;
+  rdfs:label "Purchase agreement"@en ;
+  rdfs:comment "The executed contract in which a buyer agrees to purchase the subject property from a seller at a stated price, with an earnest money deposit and a scheduled closing date."@en ;
+  skos:definition "The executed contract in which a buyer agrees to purchase the subject property from a seller at a stated price, with an earnest money deposit and a scheduled closing date."@en ;
+  rdfs:subClassOf <https://schema.org/DigitalDocument> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:LoanEstimate
+  a owl:Class ;
+  rdfs:label "Loan Estimate"@en ;
+  rdfs:comment "The summary of a Loan Estimate: the creditor's good-faith estimate of loan terms, projected payments and closing costs, delivered within three business days of receiving an application (12 CFR 1026.19(e))."@en ;
+  skos:definition "The summary of a Loan Estimate: the creditor's good-faith estimate of loan terms, projected payments and closing costs, delivered within three business days of receiving an application (12 CFR 1026.19(e))."@en ;
+  rdfs:subClassOf <https://schema.org/DigitalDocument> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:ClosingDisclosure
+  a owl:Class ;
+  rdfs:label "Closing Disclosure"@en ;
+  rdfs:comment "The summary of a Closing Disclosure: the final loan terms, projected payments and closing costs, which the consumer must receive at least three business days before consummation (12 CFR 1026.19(f))."@en ;
+  skos:definition "The summary of a Closing Disclosure: the final loan terms, projected payments and closing costs, which the consumer must receive at least three business days before consummation (12 CFR 1026.19(f))."@en ;
+  rdfs:subClassOf <https://schema.org/DigitalDocument> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:CreditScoreNotice
+  a owl:Class ;
+  rdfs:label "Credit score notice"@en ;
+  rdfs:comment "The disclosure a mortgage lender gives an applicant of the credit scores it used, with the key factors and the notice to the home loan applicant (15 U.S.C. 1681g(g))."@en ;
+  skos:definition "The disclosure a mortgage lender gives an applicant of the credit scores it used, with the key factors and the notice to the home loan applicant (15 U.S.C. 1681g(g))."@en ;
+  rdfs:subClassOf <https://schema.org/DigitalDocument> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:CreditReport
+  a owl:Class ;
+  rdfs:label "Credit report"@en ;
+  rdfs:comment "A lender's record of the merged credit report it ordered from a consumer reporting agency for a loan application. Held in the lender's own records, never in the borrower's pod."@en ;
+  skos:definition "A lender's record of the merged credit report it ordered from a consumer reporting agency for a loan application. Held in the lender's own records, never in the borrower's pod."@en ;
+  rdfs:subClassOf <https://schema.org/DigitalDocument> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:SettlementStatement
+  a owl:Class ;
+  rdfs:label "Settlement statement"@en ;
+  rdfs:comment "The settlement agent's statement of the purchase price, the loan amount, each charge and credit, and the cash the borrower brings to closing."@en ;
+  skos:definition "The settlement agent's statement of the purchase price, the loan amount, each charge and credit, and the cash the borrower brings to closing."@en ;
+  rdfs:subClassOf <https://schema.org/DigitalDocument> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:RecordingReceipt
+  a owl:Class ;
+  rdfs:label "Recording receipt"@en ;
+  rdfs:comment "The settlement agent's receipt showing that the deed and the security instrument were recorded in the county land records, with the instrument numbers and links to the public records."@en ;
+  skos:definition "The settlement agent's receipt showing that the deed and the security instrument were recorded in the county land records, with the instrument numbers and links to the public records."@en ;
+  rdfs:subClassOf <https://schema.org/DigitalDocument> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:RecordedInstrument
+  a owl:Class ;
+  rdfs:label "Recorded instrument"@en ;
+  rdfs:comment "An entry in a county's public land records for one recorded document, such as a deed or a deed of trust."@en ;
+  skos:definition "An entry in a county's public land records for one recorded document, such as a deed or a deed of trust."@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:LoanTransferNotice
+  a owl:Class ;
+  rdfs:label "Loan transfer notice"@en ;
+  rdfs:comment "A notice to the borrower that the servicing of the loan is transferring (12 CFR 1024.33) or that the loan has been sold to a new owner (12 CFR 1026.39). The kind of notice is given with dcterms:type from the notice kind scheme."@en ;
+  skos:definition "A notice to the borrower that the servicing of the loan is transferring (12 CFR 1024.33) or that the loan has been sold to a new owner (12 CFR 1026.39). The kind of notice is given with dcterms:type from the notice kind scheme."@en ;
+  rdfs:subClassOf <https://schema.org/DigitalDocument> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:EscrowAccountStatement
+  a owl:Class ;
+  rdfs:label "Escrow account statement"@en ;
+  rdfs:comment "A servicer's statement of the escrow account: the monthly escrow payment and the taxes and insurance premiums it is collected for (12 CFR 1024.17)."@en ;
+  skos:definition "A servicer's statement of the escrow account: the monthly escrow payment and the taxes and insurance premiums it is collected for (12 CFR 1024.17)."@en ;
+  rdfs:subClassOf <https://schema.org/DigitalDocument> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:PaymentMandate
+  a owl:Class ;
+  rdfs:label "Payment mandate"@en ;
+  rdfs:comment "The borrower's instruction that a named payee may collect a recurring payment from one of the borrower's deposit accounts, identified only by its last four digits."@en ;
+  skos:definition "The borrower's instruction that a named payee may collect a recurring payment from one of the borrower's deposit accounts, identified only by its last four digits."@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:CredentialPointer
+  a owl:Class ;
+  rdfs:label "Credential pointer"@en ;
+  rdfs:comment "An organisation's reference to a credential held in a person's pod: its address, content digest, issuer and as-of time, in place of a copy of the document."@en ;
+  skos:definition "An organisation's reference to a credential held in a person's pod: its address, content digest, issuer and as-of time, in place of a copy of the document."@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+#################################################################
+# Static rebuild: properties
+#################################################################
+
+mort:taxIdLast4
+  a owl:DatatypeProperty ;
+  rdfs:label "taxpayer identifier, last four digits"@en ;
+  rdfs:comment "The last four digits of the subject's taxpayer identification number, as a masked display value. The full number is never stored in the pod."@en ;
+  skos:definition "The last four digits of the subject's taxpayer identification number, as a masked display value. The full number is never stored in the pod."@en ;
+  rdfs:range xsd:string ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:titleVesting
+  a owl:DatatypeProperty ;
+  rdfs:label "title vesting"@en ;
+  rdfs:comment "How the person will hold title to real property, in words (for example 'a single person')."@en ;
+  skos:definition "How the person will hold title to real property, in words (for example 'a single person')."@en ;
+  rdfs:range xsd:string ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:purchasePrice
+  a owl:ObjectProperty ;
+  rdfs:label "purchase price"@en ;
+  rdfs:comment "The contract sales price of the subject property."@en ;
+  skos:definition "The contract sales price of the subject property."@en ;
+  rdfs:range <https://schema.org/MonetaryAmount> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:earnestMoneyDeposit
+  a owl:ObjectProperty ;
+  rdfs:label "earnest money deposit"@en ;
+  rdfs:comment "The deposit the buyer pays into escrow when the purchase agreement is signed."@en ;
+  skos:definition "The deposit the buyer pays into escrow when the purchase agreement is signed."@en ;
+  rdfs:range <https://schema.org/MonetaryAmount> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:constructionType
+  a owl:DatatypeProperty ;
+  rdfs:label "construction type"@en ;
+  rdfs:comment "The main construction material of the dwelling, in words (for example 'wood frame')."@en ;
+  skos:definition "The main construction material of the dwelling, in words (for example 'wood frame')."@en ;
+  rdfs:range xsd:string ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:roofType
+  a owl:DatatypeProperty ;
+  rdfs:label "roof type"@en ;
+  rdfs:comment "The roof covering of the dwelling, in words (for example 'asphalt shingle')."@en ;
+  skos:definition "The roof covering of the dwelling, in words (for example 'asphalt shingle')."@en ;
+  rdfs:range xsd:string ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:parcelNumber
+  a owl:DatatypeProperty ;
+  rdfs:label "parcel number"@en ;
+  rdfs:comment "The county assessor's parcel number of the property."@en ;
+  skos:definition "The county assessor's parcel number of the property."@en ;
+  rdfs:range xsd:string ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:legalDescription
+  a owl:DatatypeProperty ;
+  rdfs:label "legal description"@en ;
+  rdfs:comment "The legal description of the property as it appears in the land records."@en ;
+  skos:definition "The legal description of the property as it appears in the land records."@en ;
+  rdfs:range xsd:string ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:loanNumber
+  a owl:DatatypeProperty ;
+  rdfs:label "loan number"@en ;
+  rdfs:comment "The lender's or servicer's identifier for the loan."@en ;
+  skos:definition "The lender's or servicer's identifier for the loan."@en ;
+  rdfs:range xsd:string ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:applicationDate
+  a owl:DatatypeProperty ;
+  rdfs:label "application date"@en ;
+  rdfs:comment "The date the creditor received the six pieces of information that make an application (12 CFR 1026.2(a)(3)(ii))."@en ;
+  skos:definition "The date the creditor received the six pieces of information that make an application (12 CFR 1026.2(a)(3)(ii))."@en ;
+  rdfs:range xsd:date ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:annualPercentageRate
+  a owl:DatatypeProperty ;
+  rdfs:label "annual percentage rate"@en ;
+  rdfs:comment "The annual percentage rate of the loan, in percent."@en ;
+  skos:definition "The annual percentage rate of the loan, in percent."@en ;
+  rdfs:range xsd:decimal ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:monthlyPrincipalAndInterest
+  a owl:ObjectProperty ;
+  rdfs:label "monthly principal and interest"@en ;
+  rdfs:comment "The monthly principal and interest payment."@en ;
+  skos:definition "The monthly principal and interest payment."@en ;
+  rdfs:range <https://schema.org/MonetaryAmount> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:estimatedTotalMonthlyPayment
+  a owl:ObjectProperty ;
+  rdfs:label "estimated total monthly payment"@en ;
+  rdfs:comment "The estimated total monthly payment, including escrow for taxes and insurance."@en ;
+  skos:definition "The estimated total monthly payment, including escrow for taxes and insurance."@en ;
+  rdfs:range <https://schema.org/MonetaryAmount> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:cashToClose
+  a owl:ObjectProperty ;
+  rdfs:label "cash to close"@en ;
+  rdfs:comment "The amount the borrower must bring to closing."@en ;
+  skos:definition "The amount the borrower must bring to closing."@en ;
+  rdfs:range <https://schema.org/MonetaryAmount> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:intentToProceedDate
+  a owl:DatatypeProperty ;
+  rdfs:label "intent to proceed date"@en ;
+  rdfs:comment "The date the consumer told the creditor they intend to proceed with the loan described in the Loan Estimate."@en ;
+  skos:definition "The date the consumer told the creditor they intend to proceed with the loan described in the Loan Estimate."@en ;
+  rdfs:range xsd:date ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:receivedDate
+  a owl:DatatypeProperty ;
+  rdfs:label "received date"@en ;
+  rdfs:comment "The date the consumer received the disclosure."@en ;
+  skos:definition "The date the consumer received the disclosure."@en ;
+  rdfs:range xsd:date ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:disbursementDate
+  a owl:DatatypeProperty ;
+  rdfs:label "disbursement date"@en ;
+  rdfs:comment "The date the loan funds are disbursed."@en ;
+  skos:definition "The date the loan funds are disbursed."@en ;
+  rdfs:range xsd:date ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:scoreDisclosure
+  a owl:ObjectProperty ;
+  rdfs:label "score disclosure"@en ;
+  rdfs:comment "One credit score disclosed in a credit score notice or held in a credit report: the score, the model, the date it was created and the source."@en ;
+  skos:definition "One credit score disclosed in a credit score notice or held in a credit report: the score, the model, the date it was created and the source."@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:keyFactor
+  a owl:DatatypeProperty ;
+  rdfs:label "key factor"@en ;
+  rdfs:comment "A key factor that adversely affected the credit score."@en ;
+  skos:definition "A key factor that adversely affected the credit score."@en ;
+  rdfs:range xsd:string ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:permissiblePurpose
+  a owl:DatatypeProperty ;
+  rdfs:label "permissible purpose"@en ;
+  rdfs:comment "The permissible purpose under which a consumer report was obtained (15 U.S.C. 1681b), in words."@en ;
+  skos:definition "The permissible purpose under which a consumer report was obtained (15 U.S.C. 1681b), in words."@en ;
+  rdfs:range xsd:string ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:authorisedBy
+  a owl:ObjectProperty ;
+  rdfs:label "authorised by"@en ;
+  rdfs:comment "The consent record or policy in the person's pod that authorised this action."@en ;
+  skos:definition "The consent record or policy in the person's pod that authorised this action."@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:vestedOwner
+  a owl:DatatypeProperty ;
+  rdfs:label "vested owner"@en ;
+  rdfs:comment "The party in whom title is vested at the commitment date."@en ;
+  skos:definition "The party in whom title is vested at the commitment date."@en ;
+  rdfs:range xsd:string ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:proposedInsured
+  a owl:DatatypeProperty ;
+  rdfs:label "proposed insured"@en ;
+  rdfs:comment "A party to be insured by a policy the commitment proposes."@en ;
+  skos:definition "A party to be insured by a policy the commitment proposes."@en ;
+  rdfs:range xsd:string ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:ownerPolicyAmount
+  a owl:ObjectProperty ;
+  rdfs:label "owner's policy amount"@en ;
+  rdfs:comment "The proposed amount of the owner's title insurance policy."@en ;
+  skos:definition "The proposed amount of the owner's title insurance policy."@en ;
+  rdfs:range <https://schema.org/MonetaryAmount> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:loanPolicyAmount
+  a owl:ObjectProperty ;
+  rdfs:label "loan policy amount"@en ;
+  rdfs:comment "The proposed amount of the lender's title insurance policy."@en ;
+  skos:definition "The proposed amount of the lender's title insurance policy."@en ;
+  rdfs:range <https://schema.org/MonetaryAmount> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:titleRequirement
+  a owl:DatatypeProperty ;
+  rdfs:label "title requirement"@en ;
+  rdfs:comment "A requirement that must be met before the title policy is issued (Schedule B, Part I)."@en ;
+  skos:definition "A requirement that must be met before the title policy is issued (Schedule B, Part I)."@en ;
+  rdfs:range xsd:string ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:titleException
+  a owl:DatatypeProperty ;
+  rdfs:label "title exception"@en ;
+  rdfs:comment "A matter excepted from title insurance coverage (Schedule B, Part II)."@en ;
+  skos:definition "A matter excepted from title insurance coverage (Schedule B, Part II)."@en ;
+  rdfs:range xsd:string ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:dwellingCoverage
+  a owl:ObjectProperty ;
+  rdfs:label "dwelling coverage"@en ;
+  rdfs:comment "The dwelling coverage limit of a homeowner's insurance policy."@en ;
+  skos:definition "The dwelling coverage limit of a homeowner's insurance policy."@en ;
+  rdfs:range <https://schema.org/MonetaryAmount> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:annualPremium
+  a owl:ObjectProperty ;
+  rdfs:label "annual premium"@en ;
+  rdfs:comment "The annual premium of an insurance policy."@en ;
+  skos:definition "The annual premium of an insurance policy."@en ;
+  rdfs:range <https://schema.org/MonetaryAmount> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:deductible
+  a owl:ObjectProperty ;
+  rdfs:label "deductible"@en ;
+  rdfs:comment "The deductible of an insurance policy."@en ;
+  skos:definition "The deductible of an insurance policy."@en ;
+  rdfs:range <https://schema.org/MonetaryAmount> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:mortgageeClause
+  a owl:DatatypeProperty ;
+  rdfs:label "mortgagee clause"@en ;
+  rdfs:comment "The clause naming the lender, its successors and assigns as mortgagee on a homeowner's insurance policy."@en ;
+  skos:definition "The clause naming the lender, its successors and assigns as mortgagee on a homeowner's insurance policy."@en ;
+  rdfs:range xsd:string ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:lineItem
+  a owl:ObjectProperty ;
+  rdfs:label "line item"@en ;
+  rdfs:comment "One named charge, credit or escrow item with its amount."@en ;
+  skos:definition "One named charge, credit or escrow item with its amount."@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:recordedInstrument
+  a owl:ObjectProperty ;
+  rdfs:label "recorded instrument"@en ;
+  rdfs:comment "A public land record entry for a document recorded in this transaction."@en ;
+  skos:definition "A public land record entry for a document recorded in this transaction."@en ;
+  rdfs:range mort:RecordedInstrument ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:recordedAt
+  a owl:DatatypeProperty ;
+  rdfs:label "recorded at"@en ;
+  rdfs:comment "The date and time a document was recorded in the land records."@en ;
+  skos:definition "The date and time a document was recorded in the land records."@en ;
+  rdfs:range xsd:dateTime ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:grantor
+  a owl:DatatypeProperty ;
+  rdfs:label "grantor"@en ;
+  rdfs:comment "The party conveying an interest in a recorded instrument."@en ;
+  skos:definition "The party conveying an interest in a recorded instrument."@en ;
+  rdfs:range xsd:string ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:grantee
+  a owl:DatatypeProperty ;
+  rdfs:label "grantee"@en ;
+  rdfs:comment "The party receiving an interest in a recorded instrument."@en ;
+  skos:definition "The party receiving an interest in a recorded instrument."@en ;
+  rdfs:range xsd:string ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:transferEffectiveDate
+  a owl:DatatypeProperty ;
+  rdfs:label "transfer effective date"@en ;
+  rdfs:comment "The date a transfer of servicing or of ownership of the loan takes effect."@en ;
+  skos:definition "The date a transfer of servicing or of ownership of the loan takes effect."@en ;
+  rdfs:range xsd:date ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:transferor
+  a owl:ObjectProperty ;
+  rdfs:label "transferor"@en ;
+  rdfs:comment "The servicer or owner the loan is transferring from."@en ;
+  skos:definition "The servicer or owner the loan is transferring from."@en ;
+  rdfs:range <https://schema.org/Organization> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:transferee
+  a owl:ObjectProperty ;
+  rdfs:label "transferee"@en ;
+  rdfs:comment "The servicer or owner the loan is transferring to."@en ;
+  skos:definition "The servicer or owner the loan is transferring to."@en ;
+  rdfs:range <https://schema.org/Organization> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:paymentProtectionEnds
+  a owl:DatatypeProperty ;
+  rdfs:label "payment protection ends"@en ;
+  rdfs:comment "The last day of the 60-day period after a servicing transfer during which a payment sent to the old servicer on time may not be treated as late (12 CFR 1024.33(c)(1))."@en ;
+  skos:definition "The last day of the 60-day period after a servicing transfer during which a payment sent to the old servicer on time may not be treated as late (12 CFR 1024.33(c)(1))."@en ;
+  rdfs:range xsd:date ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:monthlyEscrowPayment
+  a owl:ObjectProperty ;
+  rdfs:label "monthly escrow payment"@en ;
+  rdfs:comment "The monthly amount collected into the escrow account."@en ;
+  skos:definition "The monthly amount collected into the escrow account."@en ;
+  rdfs:range <https://schema.org/MonetaryAmount> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:payee
+  a owl:ObjectProperty ;
+  rdfs:label "payee"@en ;
+  rdfs:comment "The party allowed to collect payments under a payment mandate."@en ;
+  skos:definition "The party allowed to collect payments under a payment mandate."@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:debitDayOfMonth
+  a owl:DatatypeProperty ;
+  rdfs:label "debit day of month"@en ;
+  rdfs:comment "The day of the month on which a recurring payment is collected."@en ;
+  skos:definition "The day of the month on which a recurring payment is collected."@en ;
+  rdfs:range xsd:integer ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:asOf
+  a owl:DatatypeProperty ;
+  rdfs:label "as of"@en ;
+  rdfs:comment "The time at which the pointed-to data was true according to its issuer."@en ;
+  skos:definition "The time at which the pointed-to data was true according to its issuer."@en ;
+  rdfs:range xsd:dateTime ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:signatureVerified
+  a owl:DatatypeProperty ;
+  rdfs:label "signature verified"@en ;
+  rdfs:comment "Whether the reader verified the issuer's signature on the credential it fetched."@en ;
+  skos:definition "Whether the reader verified the issuer's signature on the credential it fetched."@en ;
+  rdfs:range xsd:boolean ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:statusChecked
+  a owl:DatatypeProperty ;
+  rdfs:label "status checked"@en ;
+  rdfs:comment "Whether the reader checked the credential against its issuer's status list and found it not revoked."@en ;
+  skos:definition "Whether the reader checked the credential against its issuer's status list and found it not revoked."@en ;
+  rdfs:range xsd:boolean ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:checkedAt
+  a owl:DatatypeProperty ;
+  rdfs:label "checked at"@en ;
+  rdfs:comment "When the reader fetched and checked the credential at source."@en ;
+  skos:definition "When the reader fetched and checked the credential at source."@en ;
+  rdfs:range xsd:dateTime ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+#################################################################
+# Static rebuild: concept schemes
+#################################################################
+
+mort:ScoreModel-ClassicFICO
+  a skos:Concept ;
+  rdfs:label "Classic FICO"@en ;
+  rdfs:comment "The Classic FICO credit score models used for mortgage underwriting."@en ;
+  skos:definition "The Classic FICO credit score models used for mortgage underwriting."@en ;
+  skos:prefLabel "Classic FICO"@en ;
+  skos:inScheme mort:ScoreModelScheme ;
+  skos:topConceptOf mort:ScoreModelScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:ScoreModel-VantageScore4
+  a skos:Concept ;
+  rdfs:label "VantageScore 4.0"@en ;
+  rdfs:comment "The VantageScore 4.0 credit score model."@en ;
+  skos:definition "The VantageScore 4.0 credit score model."@en ;
+  skos:prefLabel "VantageScore 4.0"@en ;
+  skos:inScheme mort:ScoreModelScheme ;
+  skos:topConceptOf mort:ScoreModelScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:NoticeKindScheme
+  a skos:ConceptScheme ;
+  rdfs:label "Notice kind scheme"@en ;
+  rdfs:comment "Kinds of loan transfer notice."@en ;
+  skos:definition "Kinds of loan transfer notice."@en ;
+  skos:prefLabel "Notice kind scheme"@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:NoticeKind-ServicingTransferFromTransferor
+  a skos:Concept ;
+  rdfs:label "servicing transfer notice from the old servicer"@en ;
+  rdfs:comment "The notice the transferor servicer sends at least 15 days before the effective date of a servicing transfer."@en ;
+  skos:definition "The notice the transferor servicer sends at least 15 days before the effective date of a servicing transfer."@en ;
+  skos:prefLabel "servicing transfer notice from the old servicer"@en ;
+  skos:inScheme mort:NoticeKindScheme ;
+  skos:topConceptOf mort:NoticeKindScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:NoticeKind-ServicingTransferFromTransferee
+  a skos:Concept ;
+  rdfs:label "servicing transfer notice from the new servicer"@en ;
+  rdfs:comment "The notice the transferee servicer sends no more than 15 days after the effective date of a servicing transfer."@en ;
+  skos:definition "The notice the transferee servicer sends no more than 15 days after the effective date of a servicing transfer."@en ;
+  skos:prefLabel "servicing transfer notice from the new servicer"@en ;
+  skos:inScheme mort:NoticeKindScheme ;
+  skos:topConceptOf mort:NoticeKindScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:NoticeKind-OwnershipTransfer
+  a skos:Concept ;
+  rdfs:label "ownership transfer notice"@en ;
+  rdfs:comment "The notice a new owner of the loan sends the borrower within 30 days of acquiring it."@en ;
+  skos:definition "The notice a new owner of the loan sends the borrower within 30 days of acquiring it."@en ;
+  skos:prefLabel "ownership transfer notice"@en ;
+  skos:inScheme mort:NoticeKindScheme ;
+  skos:topConceptOf mort:NoticeKindScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:ServiceKindScheme
+  a skos:ConceptScheme ;
+  rdfs:label "Service kind scheme"@en ;
+  rdfs:comment "Kinds of settlement service a lender orders while processing a loan."@en ;
+  skos:definition "Kinds of settlement service a lender orders while processing a loan."@en ;
+  skos:prefLabel "Service kind scheme"@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:ServiceKind-CreditReport
+  a skos:Concept ;
+  rdfs:label "credit report"@en ;
+  rdfs:comment "A merged credit report from a consumer reporting agency."@en ;
+  skos:definition "A merged credit report from a consumer reporting agency."@en ;
+  skos:prefLabel "credit report"@en ;
+  skos:inScheme mort:ServiceKindScheme ;
+  skos:topConceptOf mort:ServiceKindScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:ServiceKind-Appraisal
+  a skos:Concept ;
+  rdfs:label "appraisal"@en ;
+  rdfs:comment "An appraisal of the subject property."@en ;
+  skos:definition "An appraisal of the subject property."@en ;
+  skos:prefLabel "appraisal"@en ;
+  skos:inScheme mort:ServiceKindScheme ;
+  skos:topConceptOf mort:ServiceKindScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:ServiceKind-Title
+  a skos:Concept ;
+  rdfs:label "title search and commitment"@en ;
+  rdfs:comment "A title search and a commitment for title insurance."@en ;
+  skos:definition "A title search and a commitment for title insurance."@en ;
+  skos:prefLabel "title search and commitment"@en ;
+  skos:inScheme mort:ServiceKindScheme ;
+  skos:topConceptOf mort:ServiceKindScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:ServiceKind-FloodDetermination
+  a skos:Concept ;
+  rdfs:label "flood determination"@en ;
+  rdfs:comment "A standard flood hazard determination for the subject property."@en ;
+  skos:definition "A standard flood hazard determination for the subject property."@en ;
+  skos:prefLabel "flood determination"@en ;
+  skos:inScheme mort:ServiceKindScheme ;
+  skos:topConceptOf mort:ServiceKindScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:ServiceKind-TaxTranscripts
+  a skos:Concept ;
+  rdfs:label "tax transcripts"@en ;
+  rdfs:comment "Tax return transcripts obtained with the borrower's signed request."@en ;
+  skos:definition "Tax return transcripts obtained with the borrower's signed request."@en ;
+  skos:prefLabel "tax transcripts"@en ;
+  skos:inScheme mort:ServiceKindScheme ;
+  skos:topConceptOf mort:ServiceKindScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:MessageKindScheme
+  a skos:ConceptScheme ;
+  rdfs:label "Message kind scheme"@en ;
+  rdfs:comment "Kinds of message one organisation sends to another organisation's inbox during the mortgage journey."@en ;
+  skos:definition "Kinds of message one organisation sends to another organisation's inbox during the mortgage journey."@en ;
+  skos:prefLabel "Message kind scheme"@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:MessageKind-CreditReportOrder
+  a skos:Concept ;
+  rdfs:label "credit report order"@en ;
+  rdfs:comment "A lender orders a credit report."@en ;
+  skos:definition "A lender orders a credit report."@en ;
+  skos:prefLabel "credit report order"@en ;
+  skos:inScheme mort:MessageKindScheme ;
+  skos:topConceptOf mort:MessageKindScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:MessageKind-CreditReportDelivery
+  a skos:Concept ;
+  rdfs:label "credit report delivery"@en ;
+  rdfs:comment "A consumer reporting agency delivers a credit report."@en ;
+  skos:definition "A consumer reporting agency delivers a credit report."@en ;
+  skos:prefLabel "credit report delivery"@en ;
+  skos:inScheme mort:MessageKindScheme ;
+  skos:topConceptOf mort:MessageKindScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:MessageKind-CasefileSubmission
+  a skos:Concept ;
+  rdfs:label "casefile submission"@en ;
+  rdfs:comment "A lender submits a loan casefile for automated underwriting."@en ;
+  skos:definition "A lender submits a loan casefile for automated underwriting."@en ;
+  skos:prefLabel "casefile submission"@en ;
+  skos:inScheme mort:MessageKindScheme ;
+  skos:topConceptOf mort:MessageKindScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:MessageKind-FindingsDelivery
+  a skos:Concept ;
+  rdfs:label "findings delivery"@en ;
+  rdfs:comment "An automated underwriting system returns its findings."@en ;
+  skos:definition "An automated underwriting system returns its findings."@en ;
+  skos:prefLabel "findings delivery"@en ;
+  skos:inScheme mort:MessageKindScheme ;
+  skos:topConceptOf mort:MessageKindScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:MessageKind-ServiceOrder
+  a skos:Concept ;
+  rdfs:label "service order"@en ;
+  rdfs:comment "A lender orders a settlement service."@en ;
+  skos:definition "A lender orders a settlement service."@en ;
+  skos:prefLabel "service order"@en ;
+  skos:inScheme mort:MessageKindScheme ;
+  skos:topConceptOf mort:MessageKindScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:MessageKind-AppraisalDelivery
+  a skos:Concept ;
+  rdfs:label "appraisal delivery"@en ;
+  rdfs:comment "An appraisal management company delivers the appraisal report."@en ;
+  skos:definition "An appraisal management company delivers the appraisal report."@en ;
+  skos:prefLabel "appraisal delivery"@en ;
+  skos:inScheme mort:MessageKindScheme ;
+  skos:topConceptOf mort:MessageKindScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:MessageKind-CommitmentDelivery
+  a skos:Concept ;
+  rdfs:label "commitment delivery"@en ;
+  rdfs:comment "A title agent delivers the title commitment."@en ;
+  skos:definition "A title agent delivers the title commitment."@en ;
+  skos:prefLabel "commitment delivery"@en ;
+  skos:inScheme mort:MessageKindScheme ;
+  skos:topConceptOf mort:MessageKindScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:MessageKind-RefreshRequest
+  a skos:Concept ;
+  rdfs:label "refresh request"@en ;
+  rdfs:comment "A lender asks an issuer to re-issue a credential with current data."@en ;
+  skos:definition "A lender asks an issuer to re-issue a credential with current data."@en ;
+  skos:prefLabel "refresh request"@en ;
+  skos:inScheme mort:MessageKindScheme ;
+  skos:topConceptOf mort:MessageKindScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:MessageKind-RefreshDelivery
+  a skos:Concept ;
+  rdfs:label "refresh delivery"@en ;
+  rdfs:comment "An issuer confirms that it re-issued a credential."@en ;
+  skos:definition "An issuer confirms that it re-issued a credential."@en ;
+  skos:prefLabel "refresh delivery"@en ;
+  skos:inScheme mort:MessageKindScheme ;
+  skos:topConceptOf mort:MessageKindScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:MessageKind-ClosingInstructions
+  a skos:Concept ;
+  rdfs:label "closing instructions"@en ;
+  rdfs:comment "A lender sends the settlement agent its closing instructions and loan documents."@en ;
+  skos:definition "A lender sends the settlement agent its closing instructions and loan documents."@en ;
+  skos:prefLabel "closing instructions"@en ;
+  skos:inScheme mort:MessageKindScheme ;
+  skos:topConceptOf mort:MessageKindScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:MessageKind-ClosingConfirmation
+  a skos:Concept ;
+  rdfs:label "closing confirmation"@en ;
+  rdfs:comment "A settlement agent confirms that the documents were signed and the loan disbursed."@en ;
+  skos:definition "A settlement agent confirms that the documents were signed and the loan disbursed."@en ;
+  skos:prefLabel "closing confirmation"@en ;
+  skos:inScheme mort:MessageKindScheme ;
+  skos:topConceptOf mort:MessageKindScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:MessageKind-RecordingSubmission
+  a skos:Concept ;
+  rdfs:label "recording submission"@en ;
+  rdfs:comment "A settlement agent submits documents for recording."@en ;
+  skos:definition "A settlement agent submits documents for recording."@en ;
+  skos:prefLabel "recording submission"@en ;
+  skos:inScheme mort:MessageKindScheme ;
+  skos:topConceptOf mort:MessageKindScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:MessageKind-RecordingConfirmation
+  a skos:Concept ;
+  rdfs:label "recording confirmation"@en ;
+  rdfs:comment "A recorder confirms that documents were recorded."@en ;
+  skos:definition "A recorder confirms that documents were recorded."@en ;
+  skos:prefLabel "recording confirmation"@en ;
+  skos:inScheme mort:MessageKindScheme ;
+  skos:topConceptOf mort:MessageKindScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:MessageKind-LoanDelivery
+  a skos:Concept ;
+  rdfs:label "loan delivery"@en ;
+  rdfs:comment "A lender delivers a closed loan to an investor."@en ;
+  skos:definition "A lender delivers a closed loan to an investor."@en ;
+  skos:prefLabel "loan delivery"@en ;
+  skos:inScheme mort:MessageKindScheme ;
+  skos:topConceptOf mort:MessageKindScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:MessageKind-PurchaseConfirmation
+  a skos:Concept ;
+  rdfs:label "purchase confirmation"@en ;
+  rdfs:comment "An investor confirms that it purchased a loan."@en ;
+  skos:definition "An investor confirms that it purchased a loan."@en ;
+  skos:prefLabel "purchase confirmation"@en ;
+  skos:inScheme mort:MessageKindScheme ;
+  skos:topConceptOf mort:MessageKindScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:MessageKind-ServicingBoarding
+  a skos:Concept ;
+  rdfs:label "servicing boarding"@en ;
+  rdfs:comment "A lender transfers the servicing record of a loan to a new servicer."@en ;
+  skos:definition "A lender transfers the servicing record of a loan to a new servicer."@en ;
+  skos:prefLabel "servicing boarding"@en ;
+  skos:inScheme mort:MessageKindScheme ;
+  skos:topConceptOf mort:MessageKindScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:GrantEndScheme
+  a skos:ConceptScheme ;
+  rdfs:label "Grant end scheme"@en ;
+  rdfs:comment "Events that end a grant of access when its end is not a fixed date. Used as the right operand of an odrl:event constraint."@en ;
+  skos:definition "Events that end a grant of access when its end is not a fixed date. Used as the right operand of an odrl:event constraint."@en ;
+  skos:prefLabel "Grant end scheme"@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:GrantEnd-Closing
+  a skos:Concept ;
+  rdfs:label "closing"@en ;
+  rdfs:comment "The loan closes."@en ;
+  skos:definition "The loan closes."@en ;
+  skos:prefLabel "closing"@en ;
+  skos:inScheme mort:GrantEndScheme ;
+  skos:topConceptOf mort:GrantEndScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:GrantEnd-ReportDelivered
+  a skos:Concept ;
+  rdfs:label "report delivered"@en ;
+  rdfs:comment "The appraisal report is delivered to the lender."@en ;
+  skos:definition "The appraisal report is delivered to the lender."@en ;
+  skos:prefLabel "report delivered"@en ;
+  skos:inScheme mort:GrantEndScheme ;
+  skos:topConceptOf mort:GrantEndScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:GrantEnd-PolicyIssued
+  a skos:Concept ;
+  rdfs:label "title policy issued"@en ;
+  rdfs:comment "The title insurance policies are issued after closing."@en ;
+  skos:definition "The title insurance policies are issued after closing."@en ;
+  skos:prefLabel "title policy issued"@en ;
+  skos:inScheme mort:GrantEndScheme ;
+  skos:topConceptOf mort:GrantEndScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:GrantEnd-PolicyLapses
+  a skos:Concept ;
+  rdfs:label "insurance policy lapses"@en ;
+  rdfs:comment "The homeowner's insurance policy is no longer in force."@en ;
+  skos:definition "The homeowner's insurance policy is no longer in force."@en ;
+  skos:prefLabel "insurance policy lapses"@en ;
+  skos:inScheme mort:GrantEndScheme ;
+  skos:topConceptOf mort:GrantEndScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:GrantEnd-ServicingEnds
+  a skos:Concept ;
+  rdfs:label "servicing ends"@en ;
+  rdfs:comment "The servicer stops servicing the loan."@en ;
+  skos:definition "The servicer stops servicing the loan."@en ;
+  skos:prefLabel "servicing ends"@en ;
+  skos:inScheme mort:GrantEndScheme ;
+  skos:topConceptOf mort:GrantEndScheme ;
   rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .

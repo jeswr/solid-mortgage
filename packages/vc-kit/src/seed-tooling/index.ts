@@ -1,7 +1,7 @@
 /**
  * `@mortgage/vc-kit/seed-tooling` (sm-26) - NODE-ONLY seed-time tooling:
  * native dual-signing (eddsa-rdfc-2022 + Schnorr-BJJ over Poseidon2
- * commitments), operand-anchor emission, Tier B ProofManifest capture, and
+ * commitments), operand-anchor emission and
  * the seeder-design section 5.2 `CredentialSeedPipeline` seam.
  *
  * NEVER import this from browser code - it spawns the sparq native helper.
@@ -43,11 +43,6 @@ export {
   fixtureSaltHex,
   type ZkStatusEntry,
 } from "./dual-sign.js";
-export {
-  type CaptureCompositeOptions,
-  type CapturedProofManifest,
-  captureCompositeManifest,
-} from "./manifest-capture.js";
 export {
   SeedToolingError,
   type SparqAttestation,

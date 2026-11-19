@@ -1,0 +1,199 @@
+// AUTHORED-BY Claude Opus 5.5
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { afterEach, describe, expect, it } from "vitest";
+import { memoryLocation } from "wouter/memory-location";
+import { App } from "../src/App.tsx";
+import { EXPLAINER, FOOTER_LINE, HEADLINE, HONESTY_STATEMENT } from "../src/copy.ts";
+import { DEMOS } from "../src/demos.ts";
+import { LINKS } from "../src/site.ts";
+
+const at = (path: string) => memoryLocation({ path }).hook;
+const missing = async () => false;
+const present = async () => true;
+
+afterEach(cleanup);
+
+describe("every route", () => {
+  for (const path of [
+    "/",
+    "/watch/mortgage",
+    "/watch/moving-house",
+    "/honesty",
+    "/ledger",
+    "/nope",
+  ]) {
+    it(`renders the trust banner and the fictional line on ${path}`, () => {
+      render(<App hook={at(path)} probe={missing} />);
+      expect(screen.getByRole("note", { name: "Concept demonstration notice" })).toBeTruthy();
+      expect(
+        screen.getByText("Every organisation in these demos is a fictional organisation."),
+      ).toBeTruthy();
+      expect(screen.getByText(FOOTER_LINE)).toBeTruthy();
+      expect(screen.getByText(/All organisations and people are fictional\./)).toBeTruthy();
+    });
+  }
+});
+
+describe("home", () => {
+  it("leads with the headline and the explainer for data managers", () => {
+    render(<App hook={at("/")} probe={missing} />);
+    expect(screen.getByRole("heading", { level: 1, name: HEADLINE })).toBeTruthy();
+    expect(screen.getByText(EXPLAINER)).toBeTruthy();
+    expect(screen.getAllByText(/EDMA Solid Community of Practice/).length).toBeGreaterThan(0);
+  });
+
+  it("keeps the sections in the order design.md §e gives", () => {
+    const { container } = render(<App hook={at("/")} probe={missing} />);
+    const order = [...container.querySelectorAll("main > section")].map((s) => s.id || "hero");
+    expect(order).toEqual(["hero", "demos", "sectors", "apps", "real", "join"]);
+  });
+
+  it("lists the mortgage first, with Watch and Try it yourself", () => {
+    render(<App hook={at("/")} probe={missing} />);
+    const list = screen.getByRole("list", { name: "Demos" });
+    const cards = within(list).getAllByRole("article");
+    expect(cards).toHaveLength(DEMOS.length);
+    const first = cards[0] as HTMLElement;
+    expect(within(first).getByRole("heading", { level: 3 }).textContent).toBe("Buying a home");
+    expect(
+      within(first)
+        .getByRole("link", { name: /^Watch/ })
+        .getAttribute("href"),
+    ).toBe("/watch/mortgage");
+    expect(
+      within(first)
+        .getByRole("link", { name: /^Try it yourself/ })
+        .getAttribute("href"),
+    ).toBe("/wallet/?tour=mortgage&step=welcome");
+  });
+
+  it("shows coming demos as Coming next with no links at all", () => {
+    render(<App hook={at("/")} probe={missing} />);
+    const coming = DEMOS.filter((demo) => demo.status === "coming");
+    expect(coming.length).toBeGreaterThan(0);
+    for (const demo of coming) {
+      const card = document.getElementById(`demo-${demo.id}`) as HTMLElement;
+      expect(within(card).getByText("Coming next")).toBeTruthy();
+      expect(card.querySelectorAll("a, button")).toHaveLength(0);
+    }
+  });
+
+  it("says Video coming soon while the recording is missing", async () => {
+    render(<App hook={at("/")} probe={missing} />);
+    expect(await screen.findByRole("img", { name: /video coming soon/ })).toBeTruthy();
+    expect(document.querySelector("video")).toBeNull();
+  });
+
+  it("offers a play button and seekable chapters once the recording exists", async () => {
+    render(<App hook={at("/")} probe={present} />);
+    expect(await screen.findByRole("button", { name: /Play the narrated video/ })).toBeTruthy();
+    const mortgage = DEMOS[0];
+    for (const chapter of mortgage?.chapters ?? []) {
+      expect(
+        screen.getByRole("button", { name: `Play from chapter: ${chapter.title}` }),
+      ).toBeTruthy();
+    }
+  });
+
+  it("opens the video in place with captions and preload none", async () => {
+    render(<App hook={at("/")} probe={present} />);
+    (await screen.findByRole("button", { name: /Play the narrated video/ })).click();
+    const video = await waitFor(() => {
+      const found = document.querySelector("video");
+      if (found === null) throw new Error("no video yet");
+      return found;
+    });
+    expect(video.getAttribute("preload")).toBe("none");
+    expect(video.getAttribute("poster")).toBe("/video/mortgage/poster.jpg");
+    const captions = video.querySelector('track[kind="captions"]');
+    expect(captions?.getAttribute("src")).toBe("/video/mortgage/captions.vtt");
+    expect(captions?.hasAttribute("default")).toBe(true);
+    expect(video.querySelector("source")?.getAttribute("src")).toBe("/video/mortgage/video.mp4");
+  });
+
+  it("has the four sectors strip", () => {
+    render(<App hook={at("/")} probe={missing} />);
+    const strip = document.querySelector(".sector-strip") as HTMLElement;
+    const labels = [...strip.querySelectorAll(".sector-strip__label")].map((n) => n.textContent);
+    expect(labels).toEqual([
+      "Buy a home",
+      "Insure it",
+      "Tell everyone you moved",
+      "Hand over a medication list",
+    ]);
+    for (const link of strip.querySelectorAll("a")) {
+      const target = link.getAttribute("href")?.slice(1) ?? "";
+      expect(document.getElementById(target)).not.toBeNull();
+    }
+  });
+
+  it("launches every organisation app in its own colours", () => {
+    render(<App hook={at("/")} probe={missing} />);
+    const tiles = within(screen.getByRole("list", { name: "Organisation apps" })).getAllByRole(
+      "link",
+    );
+    expect(tiles).toHaveLength(13);
+    expect(tiles.map((tile) => tile.getAttribute("href"))).toContain("/lender-desk/");
+    for (const tile of tiles) {
+      expect(tile.style.getPropertyValue("--tile-bg")).toMatch(/^#[0-9A-F]{6}$/i);
+    }
+  });
+
+  it("links the weekly meeting, the forum and the source", () => {
+    render(<App hook={at("/")} probe={missing} />);
+    expect(
+      screen.getByRole("link", { name: /Register for the weekly meeting/ }).getAttribute("href"),
+    ).toBe(LINKS.meeting);
+    expect(screen.getByRole("link", { name: /Join the forum/ }).getAttribute("href")).toBe(
+      LINKS.forum,
+    );
+    expect(screen.getAllByRole("link", { name: /source code/i })[0]?.getAttribute("href")).toBe(
+      LINKS.source,
+    );
+    expect(LINKS).toEqual({
+      meeting: "https://hub.edmcouncil.org/NC__Event?id=a0lVQ0000061alxYAA",
+      forum: "https://edmconnect.edmcouncil.org/solidforum/home",
+      source: "https://github.com/jeswr/solid-mortgage",
+    });
+  });
+});
+
+describe("watch pages", () => {
+  it("gives the mortgage video its transcript, chapter by chapter", () => {
+    render(<App hook={at("/watch/mortgage")} probe={missing} />);
+    const mortgage = DEMOS[0];
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe(mortgage?.videoTitle);
+    for (const chapter of mortgage?.chapters ?? []) {
+      expect(document.getElementById(`chapter-${chapter.id}`)).not.toBeNull();
+      expect(chapter.transcript.length).toBeGreaterThan(0);
+    }
+    expect(screen.getByText(/Thirteen applications\. Eight grants\./)).toBeTruthy();
+  });
+
+  it("gives a coming demo a Coming next page without a player", () => {
+    render(<App hook={at("/watch/moving-house")} probe={present} />);
+    expect(screen.getByRole("heading", { name: "This demo is being built" })).toBeTruthy();
+    expect(document.querySelector("video, .player")).toBeNull();
+  });
+
+  it("answers an unknown demo with not found", () => {
+    render(<App hook={at("/watch/no-such-demo")} probe={missing} />);
+    expect(screen.getByRole("heading", { name: "Page not found" })).toBeTruthy();
+  });
+});
+
+describe("honesty and ledger", () => {
+  it("states what is real and what is simulated in the design's words", () => {
+    render(<App hook={at("/honesty")} />);
+    expect(screen.getByText(HONESTY_STATEMENT)).toBeTruthy();
+    expect(screen.getByRole("table")).toBeTruthy();
+    expect(screen.getAllByRole("row")).toHaveLength(14);
+  });
+
+  it("leaves a marked mount point for the journey ledger", () => {
+    render(<App hook={at("/ledger")} />);
+    const mount = document.querySelector("[data-journey-ledger-mount]");
+    expect(mount?.id).toBe("journey-ledger");
+    expect(screen.getByRole("heading", { level: 1, name: "Journey ledger" })).toBeTruthy();
+  });
+});
