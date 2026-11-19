@@ -31,10 +31,12 @@ function hostConfig(): Plugin {
         throw new Error("a host-mode build needs MORTGAGE_HOST_REGISTRY (the registry module)");
       return [
         `import { ${exportName} as registry } from ${JSON.stringify(resolve(registry))};`,
-        `import { podOwners } from "@mortgage/demo-kit/registry";`,
+        `import { holdersActedFor, podOwners } from "@mortgage/demo-kit/registry";`,
         "const identities = {};",
+        "const holders = {};",
         "for (const [slug, record] of Object.entries(registry)) identities[slug] = record.actsAs;",
-        "export default { identities, owners: podOwners(registry) };",
+        "for (const slug of Object.keys(registry)) holders[slug] = [...holdersActedFor(registry, slug)];",
+        "export default { holders, identities, owners: podOwners(registry) };",
       ].join("\n");
     },
     name: "pod-runtime-host-config",
