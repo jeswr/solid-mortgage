@@ -36,8 +36,11 @@ export interface LensCalendar {
 
 export interface LensConfig {
   registry: OrgRegistry;
-  /** The person whose pod sits in the middle. Defaults to "Alex". */
-  holder?: { name: string };
+  /**
+   * The holder whose pod sits in the middle: a registered holder id (`@mortgage/demo-kit/holders`,
+   * default `alex`) and the name to call it by (default the holder's short name).
+   */
+  holder?: { id?: string; name?: string };
   /** The app hosting this Lens; its organisation is drawn larger on the map. */
   app?: AppSlug;
   /** Cabinet layout: drawers in display order. Drawers seen in events are added after these. */

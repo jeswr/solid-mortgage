@@ -4,7 +4,7 @@
  * `packages/lens` and `packages/tour` read them; neither may redefine them. Change them here, in
  * one reviewed commit, and only together with design.md.
  */
-import type { OrgSlug } from "../registry.js";
+import type { OrgSlug, PodOwner } from "../registry.js";
 
 /** WAC access modes as they appear in an ACL document (`acl:Read`, …). */
 export type AccessMode = "Read" | "Write" | "Append" | "Control";
@@ -24,12 +24,15 @@ export interface AccessRule {
   inherited: boolean;
 }
 
+// Lane E3: `actor.org` and `pod` were `OrgSlug | "alex"`; they are `PodOwner` (an organisation
+// or any registered holder, `./holders.ts`), so demos with other holders type-check. design.md
+// must follow.
 // biome-ignore format: kept verbatim from design.md so the two can be compared line by line
 export interface PodEvent {
   id: number; at: string;            // demo-calendar ISO time
   tour?: { demo: string; step: string };
-  actor: { org: OrgSlug | "alex"; webid: string; viaAgent: boolean };
-  pod: OrgSlug | "alex"; path: string; method: string; status: number;
+  actor: { org: PodOwner; webid: string; viaAgent: boolean };
+  pod: PodOwner; path: string; method: string; status: number;
   kind: "read" | "write" | "delete" | "grant" | "revoke" | "denied";
   resource?: { label: string; drawer: string; types: string[];
                credential?: { type: string; issuer: string; validFrom: string; asOf?: string } };

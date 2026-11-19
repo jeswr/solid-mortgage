@@ -11,11 +11,16 @@
  */
 
 import type { TourStep } from "@mortgage/demo-kit/contracts";
+import { HOLDERS, type HolderId } from "@mortgage/demo-kit/holders";
 import { appUrl } from "@mortgage/demo-kit/urls";
 import { GRANT_CODES, GRANTS } from "./grants.js";
 import { DEMO, SOURCE_IDS, TOUR } from "./tour.js";
 
-export const MORTGAGE_HOLDER = Object.freeze({ name: "Alex" });
+/** The mortgage demo's holder, from the holder registry: Alex. */
+export const MORTGAGE_HOLDER: Readonly<{ id: HolderId; name: string }> = Object.freeze({
+  id: HOLDERS.alex.id,
+  name: HOLDERS.alex.short,
+});
 
 /** The top-level drawers of Alex's pod (design.md section b.4), in cabinet order. */
 export const MORTGAGE_DRAWERS: readonly { path: string; label: string }[] = Object.freeze([
@@ -71,7 +76,12 @@ export function mortgageLens(): MortgageLensOptions {
   };
 }
 
-/** The tour (`mountDemo({ tour })`). */
-export function mortgageTour(): { demo: string; steps: TourStep[]; sources: string[] } {
-  return { demo: DEMO, sources: [...SOURCE_IDS], steps: [...TOUR] };
+/** The tour (`mountDemo({ tour })`), with the holder whose pod it centres on. */
+export function mortgageTour(): {
+  demo: string;
+  holder: HolderId;
+  steps: TourStep[];
+  sources: string[];
+} {
+  return { demo: DEMO, holder: MORTGAGE_HOLDER.id, sources: [...SOURCE_IDS], steps: [...TOUR] };
 }

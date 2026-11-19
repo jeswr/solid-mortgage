@@ -21,13 +21,19 @@ import { mountDemo } from "@mortgage/tour/mount";
 await mountDemo({
   app: "bank",
   registry: ORGS,
-  holder: { name: "Alex" },
+  holder: { name: "Alex" },                           // optional; see below
   runtime: { onEvent, resetDemo, setTourContext },   // setTourContext is optional
-  tour: { demo: "<demo>", steps: TOUR, sources: SOURCE_IDS },
+  tour: { demo: "<demo>", holder: "alex", steps: TOUR, sources: SOURCE_IDS },
   lens: { drawers, grants, recordDrawers, revokeCaveat, grantsHref, ledgerHref },
   ledger: { today, todaySource, callsToAction, compliance }, // compliance: the examiner view's obligations
 });
 ```
+
+Each demo names its holder: `tour.holder` is a registered `HolderId` (`@mortgage/demo-kit/holders`).
+`demoHolder({ holder, tour })` (exported from `@mortgage/tour` and `/mount`) resolves the Lens's
+holder: the tour's wins, a `holder.id` that disagrees with it throws, and the name defaults to the
+registry's `short`. With neither it is Alex, so a mount that names no holder behaves as before.
+Step `owner` fields accept any organisation slug or registered holder.
 
 Also put the view-transition opt-in in the app's `index.html`, so the incoming page has opted
 in before it renders (mount injects it too, but only after the page has rendered, which is too

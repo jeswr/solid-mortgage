@@ -1,0 +1,320 @@
+[
+  {
+    "source": "pod",
+    "actor": {
+      "org": "maya",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/maya/profile/card#me"
+    },
+    "at": "2026-09-01T10:00:00.000Z",
+    "id": 1,
+    "kind": "write",
+    "method": "PUT",
+    "path": "/credentials/income",
+    "pod": "maya",
+    "status": 201,
+    "tour": {
+      "demo": "lending",
+      "step": "deliver"
+    },
+    "resource": {
+      "drawer": "credentials",
+      "label": "income",
+      "types": ["https://schema.org/Thing"]
+    }
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "maya",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/maya/profile/card#me"
+    },
+    "at": "2026-09-01T10:01:00.000Z",
+    "id": 2,
+    "kind": "read",
+    "method": "HEAD",
+    "path": "/credentials/",
+    "pod": "maya",
+    "status": 200,
+    "tour": {
+      "demo": "lending",
+      "step": "share"
+    },
+    "resource": {
+      "drawer": "credentials",
+      "label": "credentials/",
+      "types": []
+    }
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "maya",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/maya/profile/card#me"
+    },
+    "at": "2026-09-01T10:02:00.000Z",
+    "id": 3,
+    "kind": "read",
+    "method": "GET",
+    "path": "/credentials/.acl",
+    "pod": "maya",
+    "status": 404,
+    "tour": {
+      "demo": "lending",
+      "step": "share"
+    }
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "maya",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/maya/profile/card#me"
+    },
+    "at": "2026-09-01T10:03:00.000Z",
+    "id": 4,
+    "kind": "read",
+    "method": "HEAD",
+    "path": "/",
+    "pod": "maya",
+    "status": 200,
+    "tour": {
+      "demo": "lending",
+      "step": "share"
+    },
+    "resource": {
+      "drawer": "",
+      "label": "/",
+      "types": []
+    }
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "maya",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/maya/profile/card#me"
+    },
+    "at": "2026-09-01T10:04:00.000Z",
+    "id": 5,
+    "kind": "read",
+    "method": "GET",
+    "path": "/.acl",
+    "pod": "maya",
+    "status": 200,
+    "tour": {
+      "demo": "lending",
+      "step": "share"
+    },
+    "resource": {
+      "drawer": "",
+      "label": ".acl",
+      "types": ["http://www.w3.org/ns/auth/acl#Authorization"]
+    }
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "maya",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/maya/profile/card#me"
+    },
+    "at": "2026-09-01T10:05:00.000Z",
+    "id": 6,
+    "kind": "grant",
+    "method": "PUT",
+    "path": "/credentials/.acl",
+    "pod": "maya",
+    "status": 201,
+    "tour": {
+      "demo": "lending",
+      "step": "share"
+    },
+    "acl": {
+      "granted": [
+        {
+          "agent": "https://pods.example/pods/bank/profile/card#me",
+          "inherited": false,
+          "modes": ["Read"],
+          "resource": "/credentials/"
+        },
+        {
+          "agent": "https://pods.example/pods/bank/profile/card#me",
+          "inherited": true,
+          "modes": ["Read"],
+          "resource": "/credentials/"
+        }
+      ],
+      "revoked": []
+    },
+    "resource": {
+      "drawer": "credentials",
+      "label": "credentials/",
+      "types": []
+    }
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "bank",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/bank/profile/card#me"
+    },
+    "at": "2026-09-01T10:06:00.000Z",
+    "id": 7,
+    "kind": "read",
+    "method": "GET",
+    "path": "/credentials/income",
+    "pod": "maya",
+    "status": 200,
+    "tour": {
+      "demo": "lending",
+      "step": "share"
+    },
+    "resource": {
+      "drawer": "credentials",
+      "label": "income",
+      "types": ["https://schema.org/Thing"]
+    },
+    "grant": "https://pods.example/pods/maya/credentials/.acl#grant-1"
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "alex",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/alex/profile/card#me"
+    },
+    "at": "2026-09-01T10:07:00.000Z",
+    "id": 8,
+    "kind": "read",
+    "method": "GET",
+    "path": "/profile/card",
+    "pod": "alex",
+    "status": 200,
+    "tour": {
+      "demo": "lending",
+      "step": "share"
+    },
+    "resource": {
+      "drawer": "profile",
+      "label": "card",
+      "types": ["https://schema.org/Person"]
+    }
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "maya",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/maya/profile/card#me"
+    },
+    "at": "2026-09-01T10:08:00.000Z",
+    "id": 9,
+    "kind": "read",
+    "method": "HEAD",
+    "path": "/credentials/",
+    "pod": "maya",
+    "status": 200,
+    "tour": {
+      "demo": "lending",
+      "step": "withdraw"
+    },
+    "resource": {
+      "drawer": "credentials",
+      "label": "credentials/",
+      "types": []
+    }
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "maya",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/maya/profile/card#me"
+    },
+    "at": "2026-09-01T10:09:00.000Z",
+    "id": 10,
+    "kind": "read",
+    "method": "GET",
+    "path": "/credentials/.acl",
+    "pod": "maya",
+    "status": 200,
+    "tour": {
+      "demo": "lending",
+      "step": "withdraw"
+    },
+    "resource": {
+      "drawer": "credentials",
+      "label": ".acl",
+      "types": ["http://www.w3.org/ns/auth/acl#Authorization"]
+    }
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "maya",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/maya/profile/card#me"
+    },
+    "at": "2026-09-01T10:10:00.000Z",
+    "id": 11,
+    "kind": "revoke",
+    "method": "PUT",
+    "path": "/credentials/.acl",
+    "pod": "maya",
+    "status": 204,
+    "tour": {
+      "demo": "lending",
+      "step": "withdraw"
+    },
+    "acl": {
+      "granted": [],
+      "revoked": [
+        {
+          "agent": "https://pods.example/pods/bank/profile/card#me",
+          "inherited": false,
+          "modes": ["Read"],
+          "resource": "/credentials/"
+        },
+        {
+          "agent": "https://pods.example/pods/bank/profile/card#me",
+          "inherited": true,
+          "modes": ["Read"],
+          "resource": "/credentials/"
+        }
+      ]
+    },
+    "resource": {
+      "drawer": "credentials",
+      "label": "credentials/",
+      "types": []
+    }
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "bank",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/bank/profile/card#me"
+    },
+    "at": "2026-09-01T10:11:00.000Z",
+    "id": 12,
+    "kind": "denied",
+    "method": "GET",
+    "path": "/credentials/income",
+    "pod": "maya",
+    "status": 403,
+    "tour": {
+      "demo": "lending",
+      "step": "withdraw"
+    },
+    "resource": {
+      "drawer": "credentials",
+      "label": "income",
+      "types": []
+    }
+  }
+]

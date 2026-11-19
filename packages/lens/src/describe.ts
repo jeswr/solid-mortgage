@@ -6,7 +6,7 @@
  */
 import type { AccessMode, AccessRule } from "@mortgage/demo-kit/contracts";
 import { type GrantRecord, isDenied, isOk, isPod, type LensModel, type Received } from "./model.js";
-import { HOLDER, isAclPath, localName, nodeOf, PUBLIC_AGENTS, podRelative } from "./paths.js";
+import { isAclPath, localName, nodeOf, PUBLIC_AGENTS, podRelative } from "./paths.js";
 
 export type EntryKind =
   | "read"
@@ -187,7 +187,7 @@ export function describe(model: LensModel, rec: Received): Sentence {
 
   const actor = model.nameOf(e.actor.org);
   const actorNode = nodeOf(model.registry, e.actor.org);
-  const onHolder = e.pod === HOLDER;
+  const onHolder = e.pod === model.holder;
   const owner = model.nameOf(e.pod);
   const label = e.resource?.label ?? model.labelOf(e.path, e.pod);
   const drawer = onHolder && !isAclPath(e.path) ? model.drawer(e.path)?.label : undefined;
@@ -219,7 +219,7 @@ export function describe(model: LensModel, rec: Received): Sentence {
   const status = isOk(e.status) ? [] : [statusText(e.status)];
   switch (e.kind) {
     case "read": {
-      if (actorNode === HOLDER) {
+      if (actorNode === model.holder) {
         return sentence(
           "read",
           "pod",
@@ -349,7 +349,7 @@ export function oneTimeLabel(model: LensModel): string {
 
 /** A resource URL's label as events described it, in the pod the URL names. */
 function resourceLabel(model: LensModel, url: string): string {
-  const pod = /\/pods\/([^/]+)\//.exec(url)?.[1] ?? HOLDER;
+  const pod = /\/pods\/([^/]+)\//.exec(url)?.[1] ?? model.holder;
   return model.labelOf(podRelative(url), pod);
 }
 

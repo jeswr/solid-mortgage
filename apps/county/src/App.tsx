@@ -15,6 +15,7 @@ import {
 } from "./data.ts";
 import { org } from "./org.ts";
 import { journey, useAction, useCatchUp, usePodState, worldOn } from "./runtime.ts";
+import { sections } from "./sections/index.ts";
 import { matches, recordedOn, type SearchField } from "./view.ts";
 
 /** The router base: Vite's `base` without its trailing slash ("/county"). */
@@ -396,6 +397,9 @@ export function App({ hook }: { hook?: BaseLocationHook }) {
             <Route path="/intake" component={Intake} />
             <Route path="/search" component={Search} />
             <Route path="/records/:reference" component={RecordDetail} />
+            {sections.map((section) => (
+              <Route key={section.path} path={`/${section.path}`} component={section.Component} />
+            ))}
             <Route component={NotFound} />
           </Switch>
         </main>

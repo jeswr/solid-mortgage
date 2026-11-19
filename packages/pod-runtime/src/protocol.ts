@@ -21,6 +21,12 @@ export const AGENTS_LOCK = "pod-runtime-agents";
 
 /** Who the request is from: an app slug or a pod owner (path mode; self-declared, design.md §d.5). */
 export const AGENT_HEADER = "x-demo-agent";
+/**
+ * Host mode: the registered holder a holder app (the wallet) acts for. The bridge turns it into
+ * the identity only for an app that may act for holders (`holdersActedFor`); path mode puts
+ * the holder in `x-demo-agent` instead.
+ */
+export const HOLDER_HEADER = "x-demo-holder";
 /** "1" when an organisation's back-office agent made the request. */
 export const VIA_AGENT_HEADER = "x-demo-via-agent";
 /** `<demo>:<step>` of the tour step the request belongs to, when there is one. */

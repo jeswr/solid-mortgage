@@ -1,19 +1,19 @@
 // AUTHORED-BY Claude Opus 5.5
 /**
- * What the wallet's screens read from Alex's pod. Every value shown on a screen comes from here:
- * a request made as Alex through the page's `World`, parsed with `@jeswr/fetch-rdf` and read
- * with the `@mortgage/data-model` wrappers. Nothing is a hard-coded copy of pod data.
+ * What the wallet's screens read from the shown holder's pod (Alex's in the mortgage demo).
+ * Every value shown on a screen comes from here: a request made as that holder through the
+ * page's `World`, parsed with `@jeswr/fetch-rdf` and read with the `@mortgage/data-model`
+ * wrappers. Nothing is a hard-coded copy of pod data.
+ *
+ * Credentials, requests and grants are the mortgage demo's (content/mortgage), which are Alex's
+ * by construction; for any other holder those readers return nothing, and a demo with another
+ * holder adds its own screens under src/sections/<demo>/.
  */
 
 import { type GrantRecord, grantRecords, membersOf } from "@mortgage/content/mortgage/grants";
 import type { CredentialName } from "@mortgage/content/mortgage/journey";
-import {
-  PodRequestError,
-  podUrl,
-  readDataset,
-  type World,
-  webid,
-} from "@mortgage/content/mortgage/world";
+import { MORTGAGE_HOLDER } from "@mortgage/content/mortgage/mount";
+import { PodRequestError, podUrl, readDataset, webid } from "@mortgage/content/mortgage/world";
 import {
   AccessRequest,
   AssetCredential,
@@ -43,11 +43,25 @@ import {
 } from "@rdfjs/wrapper";
 import { DataFactory } from "n3";
 import { labelOfPath } from "./explain.ts";
+import type { WalletWorld as World } from "./runtime.tsx";
 
-export const alexRoot = (world: World) => podUrl(world, "alex");
-const alexUrl = (world: World, path: string) => podUrl(world, "alex", path);
-const pathOf = (world: World, url: string) => url.slice(alexRoot(world).length);
-const fetcher = (world: World) => world.fetchAs("alex");
+/** The root of the shown holder's pod. */
+export const holderRoot = (world: World) => podUrl(world, world.holder);
+const holderUrl = (world: World, path: string) => podUrl(world, world.holder, path);
+const pathOf = (world: World, url: string) => url.slice(holderRoot(world).length);
+const fetcher = (world: World) => world.fetchAs(world.holder);
+/** The mortgage demo's records (credentials, requests, grants) live in its holder's pod only. */
+const isMortgageHolder = (world: World) => world.holder === MORTGAGE_HOLDER.id;
+
+/** A container's members; none when the holder's pod has no such container yet. */
+async function membersIfAny(world: World, container: string): Promise<string[]> {
+  try {
+    return await membersOf(fetcher(world), container);
+  } catch (error) {
+    if (error instanceof PodRequestError && error.status === 404) return [];
+    throw error;
+  }
+}
 
 // --- Home --------------------------------------------------------------------------------------
 
@@ -63,7 +77,7 @@ export interface Drawer {
 export async function readDrawers(world: World): Promise<Drawer[]> {
   const alex = fetcher(world);
   const drawers: Drawer[] = [];
-  for (const url of await membersOf(alex, alexRoot(world))) {
+  for (const url of await membersOf(alex, holderRoot(world))) {
     if (!url.endsWith("/")) continue;
     const members = await membersOf(alex, url);
     const subfolders = [];
@@ -183,6 +197,7 @@ function summaryOf(credential: CredentialResource): string {
 
 /** The credentials the journey puts in Alex's pod that are there now. */
 export async function readCredentials(world: World): Promise<CredentialCard[]> {
+  if (!isMortgageHolder(world)) return [];
   const alex = fetcher(world);
   // Loaded at the point of use: the journey module brings the signing library.
   const { CREDENTIALS } = await import("@mortgage/content/mortgage/journey");
@@ -191,7 +206,7 @@ export async function readCredentials(world: World): Promise<CredentialCard[]> {
     CredentialName,
     (typeof CREDENTIALS)[CredentialName],
   ][]) {
-    const url = alexUrl(world, entry.path);
+    const url = holderUrl(world, entry.path);
     let dataset: DatasetCore;
     try {
       dataset = await readDataset(alex, url);
@@ -232,13 +247,14 @@ export interface RequestItem {
 
 /** The access requests in Alex's inbox, newest first, each marked answered or not. */
 export async function readRequests(world: World): Promise<RequestItem[]> {
+  if (!isMortgageHolder(world)) return [];
   const alex = fetcher(world);
   const records = await grantRecords(world);
   const answered = new Set(
     records.map((record) => record.agreement.sourceIri).filter((iri) => iri !== undefined),
   );
   const items: RequestItem[] = [];
-  for (const url of await membersOf(alex, alexUrl(world, "inbox/"))) {
+  for (const url of await membersOf(alex, holderUrl(world, "inbox/"))) {
     if (url.endsWith("/")) continue;
     const dataset = await readDataset(alex, url);
     const request = new AccessRequest(url, dataset, DataFactory);
@@ -264,9 +280,9 @@ function safeTime(request: AccessRequest): number {
   }
 }
 
-/** One request by URL, read as Alex. Refuses a URL outside Alex's inbox. */
+/** One request by URL, read as the holder. Refuses a URL outside the holder's inbox. */
 export async function readRequest(world: World, url: string): Promise<RequestItem> {
-  const inbox = alexUrl(world, "inbox/");
+  const inbox = holderUrl(world, "inbox/");
   if (!url.startsWith(inbox) || url.length === inbox.length || url.includes("..")) {
     throw new Error("That is not a request in your inbox.");
   }
@@ -287,7 +303,7 @@ export interface ReceiptItem {
 export async function readReceipts(world: World): Promise<ReceiptItem[]> {
   const alex = fetcher(world);
   const items: ReceiptItem[] = [];
-  for (const url of await membersOf(alex, alexUrl(world, "consents/"))) {
+  for (const url of await membersIfAny(world, holderUrl(world, "consents/"))) {
     if (url.endsWith("/")) continue;
     items.push({
       receipt: new ConsentReceipt(url, await readDataset(alex, url), DataFactory),
@@ -305,6 +321,7 @@ export interface GrantItem {
 
 /** The grants on record with their consent history (state from `grantRecords`). */
 export async function readGrants(world: World): Promise<GrantItem[]> {
+  if (!isMortgageHolder(world)) return [];
   const records = await grantRecords(world);
   const receipts = await readReceipts(world);
   return records.map((record) => ({
@@ -372,7 +389,7 @@ export async function readDelivered(world: World): Promise<DeliveredItem[]> {
   const urls: string[] = [];
   for (const drawer of DELIVERY_DRAWERS) {
     try {
-      await walk(world, alexUrl(world, drawer), urls);
+      await walk(world, holderUrl(world, drawer), urls);
     } catch (error) {
       if (error instanceof PodRequestError && error.status === 404) continue;
       throw error;
@@ -400,5 +417,5 @@ export async function readDelivered(world: World): Promise<DeliveredItem[]> {
   return items.sort((a, b) => (b.issued?.getTime() ?? 0) - (a.issued?.getTime() ?? 0));
 }
 
-/** Alex's own WebID in this world. */
-export const alexWebid = (world: World) => webid(world, "alex");
+/** The shown holder's own WebID in this world. */
+export const holderWebid = (world: World) => webid(world, world.holder);

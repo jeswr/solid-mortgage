@@ -5,12 +5,14 @@ declare module "virtual:pod-runtime-wasm" {
   export default base64;
 }
 
-/** Host mode: owners and identities from the build-time registry; `undefined` in path mode. */
+/** Host mode: owners, identities and holders from the build-time registry; `undefined` in path mode. */
 declare module "virtual:pod-runtime-host-config" {
   const config:
     | {
         owners: import("@mortgage/demo-kit/registry").PodOwner[];
         identities: Record<string, import("@mortgage/demo-kit/registry").PodOwner>;
+        /** The holders each app may act for (`holdersActedFor`). */
+        holders: Record<string, readonly string[]>;
       }
     | undefined;
   export default config;

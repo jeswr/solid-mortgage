@@ -1,0 +1,16 @@
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix dcat: <http://www.w3.org/ns/dcat#>.
+@prefix dpv: <https://w3id.org/dpv#>.
+@prefix dprod: <https://ekgf.github.io/dprod/>.
+@prefix odrl: <http://www.w3.org/ns/odrl/2/>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+<https://pods.example/pods/alex/profile/address.dprod#product> a dprod:DataProduct;
+  dcterms:title "Alex Rivera's postal address";
+  dcterms:description "The one authoritative copy of where Alex lives and receives post.";
+  dprod:dataProductOwner <https://pods.example/pods/alex/profile/card#me>;
+  dprod:purpose "Keep my address current with the organisations I deal with";
+  dpv:hasPurpose dpv:ServiceProvision;
+  dprod:outputPort [ a dcat:DataService; dcat:endpointURL <https://pods.example/pods/alex/profile/address> ];
+  odrl:hasPolicy <https://pods.example/pods/alex/policies/h1>, <https://pods.example/pods/alex/policies/h2>;
+  dcterms:modified "2026-09-15T09:05:00Z"^^xsd:dateTime.

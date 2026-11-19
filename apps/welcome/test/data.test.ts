@@ -1,6 +1,7 @@
 // AUTHORED-BY Claude Opus 5.5
 
 import { TOUR } from "@mortgage/content/mortgage/tour";
+import { TOUR as MOVING_HOUSE_TOUR } from "@mortgage/content/moving-house/tour";
 import { ORGS } from "@mortgage/content/orgs";
 import { isAppSlug, ORG_SLUGS } from "@mortgage/demo-kit/registry";
 import { appUrl } from "@mortgage/demo-kit/urls";
@@ -54,6 +55,21 @@ describe("the demo list", () => {
     expect(tour?.step).toBe(first?.id);
     expect(tour === undefined ? "" : tourUrl(tour)).toBe(
       `${appUrl(first?.app ?? "welcome", first?.path ?? "")}?tour=mortgage&step=welcome`,
+    );
+  });
+
+  it("starts the moving-house tour at its first step, in Alex's wallet", () => {
+    const tour = demoById("moving-house")?.tour;
+    const first = MOVING_HOUSE_TOUR[0];
+    expect(demoById("moving-house")?.status).toBe("live");
+    expect(tour).toEqual({
+      demo: "moving-house",
+      app: first?.app,
+      path: first?.path,
+      step: first?.id,
+    });
+    expect(tour === undefined ? "" : tourUrl(tour)).toBe(
+      "/wallet/moving?tour=moving-house&step=address",
     );
   });
 

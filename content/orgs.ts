@@ -5,9 +5,16 @@
  * rename is a change to this file only. Theme colours are original values, never a real
  * organisation's palette.
  */
-import type { OrgRegistry, PodHolder } from "@mortgage/demo-kit/registry";
+import {
+  HOLDERS,
+  ORG_SLUGS,
+  type OrgRegistry,
+  type OrgSlug,
+  type PodHolder,
+} from "@mortgage/demo-kit/registry";
 
-export const POD_HOLDER: PodHolder = Object.freeze({ name: "Alex Rivera", owner: "alex" });
+/** The mortgage demo's holder; the holders themselves are registered in `@mortgage/demo-kit/holders`. */
+export const POD_HOLDER: PodHolder = Object.freeze({ name: HOLDERS.alex.name, owner: "alex" });
 
 const alex = (role?: string) =>
   role === undefined ? { name: POD_HOLDER.name } : { name: POD_HOLDER.name, role };
@@ -154,4 +161,25 @@ export const ORGS: OrgRegistry = Object.freeze({
     themeColor: "#E9A100",
     title: "Marigold Loan Servicing",
   },
+  // Demo 2, moving house (flows.md §1 and §2): a state government services portal.
+  state: {
+    actsAs: "state",
+    organisation: "State Online Services",
+    persona: alex("resident account"),
+    product: "Driver Services",
+    role: "State government services: Driver Services and the Department of Revenue",
+    short: "State",
+    slug: "state",
+    themeColor: "#17375E",
+    title: "State Online Services",
+  },
 });
+
+/**
+ * The apps each demo uses. The registry grows as demos are added, so a demo's own count (the
+ * mortgage video's "Thirteen applications.") is taken from its list here, never from `ORGS`.
+ */
+export const DEMO_APPS = Object.freeze({
+  mortgage: ORG_SLUGS.filter((slug) => slug !== "state"),
+  "moving-house": ["wallet", "state", "county", "bank", "insurer", "payroll", "servicer"],
+} satisfies Record<string, readonly OrgSlug[]>);

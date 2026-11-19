@@ -25,6 +25,7 @@ describe("the mountDemo options every mortgage app shares", () => {
   test("the tour is the mortgage tour", () => {
     const tour = mortgageTour();
     expect(tour.demo).toBe("mortgage");
+    expect(tour.holder).toBe("alex");
     expect(tour.steps).toHaveLength(TOUR.length);
   });
 });
