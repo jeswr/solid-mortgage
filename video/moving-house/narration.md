@@ -46,7 +46,7 @@ The county treasurer reads it, so tax bills go to the right house.
 The insurer reads it, and the car policy follows Alex to the new address.
 
 [do: step readers]
-[do: lens step]
+[do: lens map]
 The bank, the payroll provider and the servicer read the same record. Six readers, one copy, no forms.
 
 ## Taking one away {#revoke}
