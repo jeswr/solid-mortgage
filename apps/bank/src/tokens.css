@@ -1,0 +1,22 @@
+/* AUTHORED-BY Claude Opus 5.5
+ * Alder Bank's tokens (design.md §b.3): forest green on cream, large serif numerals, Source Serif 4
+ * headings over an Inter body, square-ish cards with a hairline rule. Original values. */
+:root {
+  --ab-cream: #f4efe3;
+  --ab-paper: #fffdf7;
+  --ab-forest: #1f5135;
+  --ab-forest-deep: #143823;
+  --ab-forest-soft: #e2eadf;
+  --ab-ink: #1d211d;
+  --ab-muted: #575a50;
+  --ab-rule: #d9d1bd;
+  --ab-gold: #b88a2e;
+  --ab-credit: #1f5135;
+  --ab-red: #9b2c22;
+  --ab-red-soft: #f7e5e0;
+  --ab-focus: #b88a2e;
+  --ab-serif: "Source Serif 4", Georgia, serif;
+  --ab-sans: "Inter", system-ui, sans-serif;
+  --ab-mono: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --ab-width: 68rem;
+}
