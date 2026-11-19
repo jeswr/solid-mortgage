@@ -10,13 +10,15 @@
  * - `noindex` on everything; hashed assets cached for a year; `pods-sw.js` may control `/`.
  * - Cross-origin isolation only on the wallet's two prove screens, `/wallet/prove` and
  *   `/wallet/lending/prove` (multithreaded proving).
- * - `/crs/` holds the prover's CRS files (pinned by SHA-256 in vc-kit): cached for a year, since
- *   each name carries its hash, and same-origin only.
+ * - `/crs/` holds the prover's CRS files (pinned by SHA-256 in vc-kit's zk/crs-pins.ts): cached for
+ *   a year, since each name carries its hash, and same-origin only. Only the pinned names get these
+ *   headers, so a 404 for any other name under `/crs/` is never cached as immutable.
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { APP_SLUGS } from "../packages/demo-kit/src/registry.ts";
+import { CRS_FILES, CRS_PATH } from "../packages/vc-kit/src/zk/crs-pins.ts";
 
 export const ROOT = resolve(import.meta.dirname, "..");
 
@@ -63,6 +65,9 @@ export const CRS_HEADERS = Object.freeze({
   "Cross-Origin-Resource-Policy": "same-origin",
 });
 
+/** The exact paths of the pinned CRS files, the only paths {@link CRS_HEADERS} apply to. */
+export const CRS_URL_PATHS = Object.freeze(CRS_FILES.map((pin) => `${CRS_PATH}${pin.file}`));
+
 const toVercelHeaders = (headers) =>
   Object.entries(headers).map(([key, value]) => ({ key, value }));
 
@@ -92,7 +97,7 @@ export function vercelConfig() {
         headers: toVercelHeaders({ "Cache-Control": NO_CACHE, "Service-Worker-Allowed": "/" }),
       },
       { source: "/agents/(.*)", headers: toVercelHeaders({ "Cache-Control": NO_CACHE }) },
-      { source: "/crs/(.*)", headers: toVercelHeaders(CRS_HEADERS) },
+      ...CRS_URL_PATHS.map((source) => ({ source, headers: toVercelHeaders(CRS_HEADERS) })),
       {
         source: `/:app(${SLUG_ALTERNATION})/assets/(.*)`,
         headers: toVercelHeaders({ "Cache-Control": IMMUTABLE }),
@@ -133,7 +138,7 @@ export function headersFor(pathname) {
     Object.assign(headers, { "Cache-Control": NO_CACHE, "Service-Worker-Allowed": "/" });
   }
   if (pathname.startsWith("/agents/")) headers["Cache-Control"] = NO_CACHE;
-  if (pathname.startsWith("/crs/")) Object.assign(headers, CRS_HEADERS);
+  if (CRS_URL_PATHS.includes(pathname)) Object.assign(headers, CRS_HEADERS);
   const [, slug, second] = pathname.split("/");
   if (SITE_SLUGS.includes(slug) && second === "assets") headers["Cache-Control"] = IMMUTABLE;
   if (

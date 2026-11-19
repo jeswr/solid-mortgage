@@ -18,6 +18,7 @@
  *        node tools/build-site.mjs --check-budget   (only checks the budget of the existing dist/)
  */
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import {
   cpSync,
   existsSync,
@@ -30,6 +31,7 @@ import {
 import { dirname, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { gzipSync } from "node:zlib";
+import { CRS_FILES } from "../packages/vc-kit/src/zk/crs-pins.ts";
 import { SITE_SLUGS } from "./site-routes.mjs";
 
 const ROOT = resolve(import.meta.dirname, "..");
@@ -180,6 +182,39 @@ async function bundleAgents(apps) {
   return withAgents.map((app) => app.slug);
 }
 
+/**
+ * The CRS files to copy into `dist/crs/`: exactly the files vc-kit pins (`zk/crs-pins.ts`), each
+ * with its pinned length and SHA-256. Throws when one is missing, differs from its pin, or the
+ * directory holds any other file, so a build never ships a CRS the prover would refuse, nor
+ * anything else under `/crs/`.
+ */
+export function collectCrs(source, pins = CRS_FILES) {
+  const present = existsSync(source) ? readdirSync(source).sort() : [];
+  const pinned = pins.map((pin) => pin.file);
+  const missing = pinned.filter((name) => !present.includes(name));
+  if (missing.length > 0) {
+    throw new Error(`build-site: ${source} lacks the pinned CRS file(s) ${missing.join(", ")}`);
+  }
+  const extra = present.filter((name) => !pinned.includes(name));
+  if (extra.length > 0) {
+    throw new Error(
+      `build-site: ${source} holds file(s) vc-kit does not pin: ${extra.join(", ")} (pins: packages/vc-kit/src/zk/crs-pins.ts)`,
+    );
+  }
+  for (const pin of pins) {
+    const bytes = readFileSync(join(source, pin.file));
+    if (bytes.length !== pin.bytes) {
+      throw new Error(
+        `build-site: CRS file ${pin.file} is ${bytes.length} bytes, not the pinned ${pin.bytes}`,
+      );
+    }
+    if (createHash("sha256").update(bytes).digest("hex") !== pin.sha256) {
+      throw new Error(`build-site: CRS file ${pin.file} does not match its pinned SHA-256`);
+    }
+  }
+  return pinned;
+}
+
 async function main() {
   if (process.argv.includes("--check-budget")) {
     enforceEntryBudgets(checkEntryBudgets());
@@ -229,10 +264,7 @@ async function main() {
 
   // The prover loads its CRS from the site, never from a CDN; vc-kit checks each file's SHA-256.
   const crsSource = join(ROOT, "packages", "vc-kit", "crs");
-  const crs = existsSync(crsSource)
-    ? readdirSync(crsSource).filter((name) => name.endsWith(".dat"))
-    : [];
-  if (crs.length === 0) throw new Error("packages/vc-kit/crs/ has no CRS files for the prover");
+  const crs = collectCrs(crsSource);
   mkdirSync(join(DIST, "crs"), { recursive: true });
   for (const name of crs) cpSync(join(crsSource, name), join(DIST, "crs", name));
 

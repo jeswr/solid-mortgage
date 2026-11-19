@@ -1,15 +1,17 @@
 // AUTHORED-BY Claude Opus 5.5
 
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { request } from "node:http";
 import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { APP_SLUGS } from "../packages/demo-kit/src/registry.ts";
-import { siteApps } from "../tools/build-site.mjs";
+import { CRS_FILES, CRS_G1, CRS_G2 } from "../packages/vc-kit/src/zk/crs-pins.ts";
+import { collectCrs, siteApps } from "../tools/build-site.mjs";
 import { createSiteServer } from "../tools/serve-dist.mjs";
 import {
+  CRS_URL_PATHS,
   headersFor,
   renderVercelJson,
   resolveRequest,
@@ -84,6 +86,21 @@ describe("site routes", () => {
       file: null,
     });
   });
+
+  it("caches only the pinned CRS names as immutable, on Vercel and locally", () => {
+    expect(CRS_URL_PATHS).toEqual(CRS_FILES.map((pin) => `/crs/${pin.file}`));
+    for (const path of CRS_URL_PATHS)
+      expect(headersFor(path)["Cache-Control"]).toContain("immutable");
+    // Any other name under /crs/ is a 404 on a deployment: it must not be cached for a year.
+    for (const path of ["/crs/missing.dat", "/crs/", `/crs/${CRS_G1.file}.bak`]) {
+      expect(headersFor(path)["Cache-Control"]).toBeUndefined();
+      expect(headersFor(path)["X-Robots-Tag"]).toBe("noindex, nofollow");
+    }
+    const sources = JSON.parse(renderVercelJson())
+      .headers.map((rule: { source: string }) => rule.source)
+      .filter((source: string) => source.startsWith("/crs/"));
+    expect(sources).toEqual([...CRS_URL_PATHS]);
+  });
 });
 
 describe("serve-dist", () => {
@@ -97,6 +114,8 @@ describe("serve-dist", () => {
     writeFileSync(join(dir, "lender", "index.html"), "<p>lender</p>");
     writeFileSync(join(dir, "lender", "assets", "app.js"), "export {};");
     writeFileSync(join(dir, "secret.txt"), "top");
+    mkdirSync(join(dir, "crs"));
+    writeFileSync(join(dir, "crs", CRS_G2.file), "g2");
     const server = createSiteServer(dir);
     await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
     origin = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
@@ -131,6 +150,20 @@ describe("serve-dist", () => {
       headers: { "If-Modified-Since": lastModified ?? "" },
     });
     expect(again.status).toBe(304);
+  });
+
+  it("caches a pinned CRS file as immutable, but never a 404", async () => {
+    const served = await fetch(`${origin}/crs/${CRS_G2.file}`);
+    expect(served.status).toBe(200);
+    expect(served.headers.get("cache-control")).toContain("immutable");
+    expect(served.headers.get("cross-origin-resource-policy")).toBe("same-origin");
+    // A pinned name missing from dist/, another name under /crs/, a missing hashed asset: 404s,
+    // none of them cached as immutable.
+    for (const path of [`/crs/${CRS_G1.file}`, "/crs/missing.dat", "/lender/assets/gone.js"]) {
+      const missing = await fetch(`${origin}${path}`);
+      expect(missing.status).toBe(404);
+      expect(missing.headers.get("cache-control") ?? "").not.toContain("immutable");
+    }
   });
 
   it("never serves a file outside dist/", async () => {
@@ -178,6 +211,51 @@ describe("vercel-ignore", () => {
 });
 
 describe("build-site", () => {
+  describe("collectCrs", () => {
+    const source = join(import.meta.dirname, "..", "packages", "vc-kit", "crs");
+    let dir: string;
+    beforeAll(() => {
+      dir = mkdtempSync(join(tmpdir(), "crs-"));
+    });
+    afterAll(() => rmSync(dir, { force: true, recursive: true }));
+    const copy = (name: string) => {
+      const target = join(dir, name);
+      rmSync(target, { force: true, recursive: true });
+      cpSync(source, target, { recursive: true });
+      return target;
+    };
+
+    it("takes exactly the pinned files, as committed", () => {
+      expect(collectCrs(source)).toEqual(CRS_FILES.map((pin) => pin.file));
+    });
+
+    it("fails when a pinned file is missing, or the directory is", () => {
+      const target = copy("missing");
+      rmSync(join(target, CRS_G2.file));
+      expect(() => collectCrs(target)).toThrow(`lacks the pinned CRS file(s) ${CRS_G2.file}`);
+      expect(() => collectCrs(join(dir, "nowhere"))).toThrow("lacks the pinned CRS file(s)");
+    });
+
+    it("fails on any file vc-kit does not pin", () => {
+      const target = copy("extra");
+      writeFileSync(join(target, "bn254-g1-65536-0000000000000000.dat"), "more points");
+      expect(() => collectCrs(target)).toThrow("does not pin: bn254-g1-65536-0000000000000000.dat");
+    });
+
+    it("fails on a same-length change to a pinned file, and on a wrong length", () => {
+      const tampered = copy("tampered");
+      const g1 = readFileSync(join(tampered, CRS_G1.file));
+      g1[g1.length - 1] = (g1[g1.length - 1] ?? 0) ^ 1;
+      writeFileSync(join(tampered, CRS_G1.file), g1);
+      expect(() => collectCrs(tampered)).toThrow(
+        `${CRS_G1.file} does not match its pinned SHA-256`,
+      );
+      const short = copy("short");
+      writeFileSync(join(short, CRS_G2.file), readFileSync(join(source, CRS_G2.file)).subarray(1));
+      expect(() => collectCrs(short)).toThrow(`${CRS_G2.file} is 127 bytes, not the pinned 128`);
+    });
+  });
+
   it("finds the Vite apps and skips the vocab project", () => {
     const slugs = siteApps().map((app: { slug: string }) => app.slug);
     expect(slugs).toContain("_template");
