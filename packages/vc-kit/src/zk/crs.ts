@@ -160,7 +160,8 @@ export interface BarretenbergModuleLike {
  * `Barretenberg.new({ threads })` with the site CRS instead of bb.js's CDN download. bb.js calls
  * `initSRSChonk()` on the instance it makes before `new()` resolves; for that call the prototype
  * method loads the pinned CRS instead, and the original method is put back afterwards. Fails closed
- * when bb.js no longer has that method, or starts without calling it.
+ * when bb.js no longer has that method, or starts without calling it. Whenever it fails after bb.js
+ * has made the instance, it destroys that instance, so failed starts leave no worker behind.
  */
 export async function barretenbergWithSiteCrs(
   bb: BarretenbergModuleLike,
@@ -179,8 +180,15 @@ export async function barretenbergWithSiteCrs(
   crs.catch(() => undefined); // reported where initSRSChonk awaits it
   let loaded = 0;
   prototype.initSRSChonk = async function initSiteSrs(this: SrsApi): Promise<void> {
-    const { g1, g2, numPoints } = await crs;
-    await this.srsInitSrs({ g2Point: g2, numPoints, pointsBuf: g1 });
+    try {
+      const { g1, g2, numPoints } = await crs;
+      await this.srsInitSrs({ g2Point: g2, numPoints, pointsBuf: g1 });
+    } catch (error) {
+      // bb.js has already started this instance's worker and wasm, and Barretenberg.new() rethrows
+      // without destroying it. Stop it here, or every retry after a bad CRS would leave one running.
+      await this.destroy?.().catch(() => undefined);
+      throw error;
+    }
     loaded += 1;
   };
   try {

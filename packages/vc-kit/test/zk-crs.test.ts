@@ -159,19 +159,30 @@ describe("loadSiteCrs", () => {
 });
 
 /** A stand-in for bb.js: `new()` makes an instance and calls `initSRSChonk` on it, as bb.js does. */
-function fakeBb(options: { callsInit?: boolean } = {}) {
+function fakeBb(options: { callsInit?: boolean; srsFails?: boolean } = {}) {
   const network = vi.fn(async () => {
     throw new Error("the CDN");
   });
-  const srsInitSrs = vi.fn(async () => undefined);
+  const srsInitSrs = vi.fn(async () => {
+    if (options.srsFails) throw new Error("srs_init_srs failed in the wasm");
+  });
   const destroy = vi.fn(async () => undefined);
   const newOptions: unknown[] = [];
+  /** Every instance made, as bb.js makes a worker and wasm for each; `live` drops it on destroy(). */
+  const made: object[] = [];
+  const live = new Set<object>();
   class Barretenberg {
     srsInitSrs = srsInitSrs;
-    destroy = destroy;
+    destroy = async () => {
+      live.delete(this);
+      await destroy();
+    };
+    // As bb.js's own new(): it makes the backend, then awaits initSRSChonk with no cleanup on a throw.
     static async new(opts: { threads?: number }) {
       newOptions.push(opts);
       const api = new Barretenberg();
+      made.push(api);
+      live.add(api);
       if (options.callsInit !== false) await api.initSRSChonk();
       return api;
     }
@@ -179,7 +190,7 @@ function fakeBb(options: { callsInit?: boolean } = {}) {
       return network();
     }
   }
-  return { Barretenberg, destroy, network, newOptions, srsInitSrs };
+  return { Barretenberg, destroy, live, made, network, newOptions, srsInitSrs };
 }
 
 const crsFrom = async (): Promise<SiteCrs> => {
@@ -219,6 +230,45 @@ describe("barretenbergWithSiteCrs", () => {
     expect(error.code).toBe("CRS_INTEGRITY");
     expect(bb.srsInitSrs).not.toHaveBeenCalled();
     expect(bb.network).not.toHaveBeenCalled();
+    expect(bb.Barretenberg.prototype.initSRSChonk).toBe(original);
+    // The instance bb.js had already started is destroyed, not left running.
+    expect(bb.made).toHaveLength(1);
+    expect(bb.live.size).toBe(0);
+  });
+
+  it("leaves no instance running however many starts fail, and the next good start keeps only its own", async () => {
+    const bb = fakeBb();
+    const badG1 = async () => {
+      const { fetch } = siteFetch((file, bytes) => {
+        if (file !== CRS_G1.file) return bytes;
+        const copy = bytes.slice();
+        copy[copy.length - 1] = (copy[copy.length - 1] ?? 0) ^ 1;
+        return copy;
+      });
+      return loadSiteCrs({ baseUrl: BASE, fetch });
+    };
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const error = await rejection(
+        barretenbergWithSiteCrs(bb as unknown as BarretenbergModuleLike, 1, badG1),
+      );
+      expect(error.code).toBe("CRS_INTEGRITY");
+    }
+    expect(bb.made).toHaveLength(3);
+    expect(bb.live.size).toBe(0);
+    const api = await barretenbergWithSiteCrs(bb as unknown as BarretenbergModuleLike, 1, crsFrom);
+    expect(bb.made).toHaveLength(4);
+    expect([...bb.live]).toEqual([api]);
+    expect(bb.destroy).toHaveBeenCalledTimes(3);
+  });
+
+  it("destroys the instance when the wasm refuses the CRS, and reports the wasm's error", async () => {
+    const bb = fakeBb({ srsFails: true });
+    const original = bb.Barretenberg.prototype.initSRSChonk;
+    await expect(
+      barretenbergWithSiteCrs(bb as unknown as BarretenbergModuleLike, 1, crsFrom),
+    ).rejects.toThrow("srs_init_srs failed in the wasm");
+    expect(bb.srsInitSrs).toHaveBeenCalledTimes(1);
+    expect(bb.live.size).toBe(0);
     expect(bb.Barretenberg.prototype.initSRSChonk).toBe(original);
   });
 
