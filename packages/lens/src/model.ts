@@ -196,6 +196,16 @@ export class LensModel {
   private foldAcl(e: PodEntry, rec: Received): void {
     const acl = e.acl;
     if (!acl) return;
+    // Grants are the holder's: what organisations may do in the holder's pod. Organisations
+    // also share their own files with each other (an ACL write on their own pod); those agents
+    // take part, but the rules are not the holder's grants and never end with them.
+    if (e.pod !== HOLDER) {
+      for (const rule of acl.granted) {
+        const org = this.orgOfAgent(rule.agent);
+        if (org !== undefined) this.meet(org, rec.seq);
+      }
+      return;
+    }
     const touched = new Set<string>();
     for (const rule of acl.revoked) {
       const org = this.orgOfAgent(rule.agent);
