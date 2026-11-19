@@ -14,6 +14,12 @@ import {
   movingHouseTour,
 } from "@mortgage/content/moving-house/mount";
 import { ORGS } from "@mortgage/content/orgs";
+import {
+  isSmallDollarPage,
+  SMALL_DOLLAR_HOLDER,
+  smallDollarLens,
+  smallDollarTour,
+} from "@mortgage/content/small-dollar-lending/mount";
 import { configure, onEvent, ready, resetDemo, setTourContext } from "@mortgage/pod-runtime";
 import { mountDemo } from "@mortgage/tour/mount";
 import { StrictMode } from "react";
@@ -26,8 +32,11 @@ import { linkTour } from "./tour-link.ts";
 // A page under moving/ belongs to the moving-house demo (src/sections/moving-house/).
 const movingHouse = isMovingHousePage(location.pathname, "wallet", location.search);
 
+// A page under lending/ belongs to the small-dollar lending demo (src/sections/small-dollar-lending/).
+const lending = isSmallDollarPage(location.pathname, "wallet", location.search);
+
 // The demo the wallet is mounted for, and the holder it shows first (src/holder.ts).
-const demo = movingHouse ? movingHouseTour() : mortgageTour();
+const demo = lending ? smallDollarTour() : movingHouse ? movingHouseTour() : mortgageTour();
 const holder = initialHolder(window.location.href, demo.holder);
 
 configure({ app: "wallet", holder, registry: ORGS, seed: mortgageSeed() });
@@ -40,8 +49,8 @@ const started = ready().then((info) => {
 
 void mountDemo({
   app: "wallet",
-  holder: movingHouse ? MOVING_HOUSE_HOLDER : MORTGAGE_HOLDER,
-  lens: movingHouse ? movingHouseLens() : mortgageLens(),
+  holder: lending ? SMALL_DOLLAR_HOLDER : movingHouse ? MOVING_HOUSE_HOLDER : MORTGAGE_HOLDER,
+  lens: lending ? smallDollarLens() : movingHouse ? movingHouseLens() : mortgageLens(),
   registry: ORGS,
   runtime: { onEvent, resetDemo, setTourContext: trackTourContext(setTourContext) },
   tour: demo,

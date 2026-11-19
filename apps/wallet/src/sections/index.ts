@@ -12,6 +12,12 @@ import {
   MovingSharing,
   MovingWho,
 } from "./moving-house/MovingHouse.tsx";
+import {
+  LendingHome,
+  LendingLedger,
+  LendingProve,
+  LendingSharing,
+} from "./small-dollar-lending/Lending.tsx";
 
 export interface AppSection {
   /** The demo that owns this section, e.g. "moving-house". */
@@ -44,4 +50,23 @@ export const sections: readonly AppSection[] = [
     title: "Standing grants",
   },
   { Component: MovingLedger, demo: "moving-house", path: "moving/ledger", title: "Journey ledger" },
+  { Component: LendingHome, demo: "small-dollar-lending", path: "lending", title: "Your pod" },
+  {
+    Component: LendingProve,
+    demo: "small-dollar-lending",
+    path: "lending/prove",
+    title: "Prove to two lenders",
+  },
+  {
+    Component: LendingSharing,
+    demo: "small-dollar-lending",
+    path: "lending/sharing",
+    title: "Grants",
+  },
+  {
+    Component: LendingLedger,
+    demo: "small-dollar-lending",
+    path: "lending/ledger",
+    title: "Journey ledger",
+  },
 ];

@@ -1,0 +1,126 @@
+/* AUTHORED-BY Claude Opus 5.5
+ * Cairn's small-dollar lending screens: the wallet's own tokens (tokens.css), a few layouts. */
+.sd-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 18px 4px 8px;
+}
+
+.sd-nav a {
+  color: var(--teal);
+  font-weight: 700;
+}
+
+.sd-drawers,
+.sd-cards,
+.sd-questions,
+.sd-grants {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.sd-drawers li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+  font-weight: 700;
+}
+
+.sd-credential {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border: 2px solid var(--line);
+  border-radius: var(--radius-s);
+}
+
+.sd-credential p {
+  margin: 2px 0 0;
+}
+
+.sd-questions li {
+  display: grid;
+  gap: 2px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+  font-weight: 700;
+}
+
+.sd-yes {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-s);
+  background: var(--ok-soft);
+  color: var(--ok);
+  font-weight: 700;
+}
+
+.sd-grant-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.sd-code {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--teal-soft);
+  color: var(--teal);
+  font-weight: 800;
+  font-size: 0.8rem;
+}
+
+.sd-state {
+  margin-left: auto;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.sd-state-active {
+  color: var(--ok);
+}
+
+.sd-state-revoked {
+  color: var(--coral-ink);
+}
+
+.sd-state-expired {
+  color: var(--amber-ink);
+}
+
+.sd-totals {
+  list-style: none;
+  margin: 12px 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.sd-totals li {
+  background: var(--teal-soft);
+  border-radius: var(--radius-s);
+  padding: 10px 12px;
+}
+
+.sd-totals strong {
+  display: block;
+  font-size: 1.6rem;
+  color: var(--teal);
+}
+
+.sd-ledger {
+  margin-top: 12px;
+  min-width: 0;
+  overflow-x: auto;
+  /* The ledger's visually hidden labels are absolutely positioned: keep them in this scroller. */
+  position: relative;
+}

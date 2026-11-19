@@ -13,6 +13,12 @@ import {
   movingHouseTour,
 } from "@mortgage/content/moving-house/mount";
 import { ORGS } from "@mortgage/content/orgs";
+import {
+  isSmallDollarPage,
+  SMALL_DOLLAR_HOLDER,
+  smallDollarLens,
+  smallDollarTour,
+} from "@mortgage/content/small-dollar-lending/mount";
 import { onEvent, resetDemo, setTourContext } from "@mortgage/pod-runtime";
 import { mountDemo } from "@mortgage/tour/mount";
 import { StrictMode } from "react";
@@ -23,6 +29,8 @@ import { PodsProvider, startPods } from "./pods.tsx";
 const APP = "bank";
 // A page under moving/ belongs to the moving-house demo (src/sections/moving-house/).
 const movingHouse = isMovingHousePage(location.pathname, "bank", location.search);
+// A page under lending/ belongs to the small-dollar lending demo (src/sections/small-dollar-lending/).
+const lending = isSmallDollarPage(location.pathname, "bank", location.search);
 const root = document.getElementById("root");
 if (root === null) throw new Error("index.html is missing #root");
 const view = createRoot(root);
@@ -43,11 +51,11 @@ startPods(APP).then(
     );
     void mountDemo({
       app: APP,
-      holder: movingHouse ? MOVING_HOUSE_HOLDER : MORTGAGE_HOLDER,
-      lens: movingHouse ? movingHouseLens() : mortgageLens(),
+      holder: lending ? SMALL_DOLLAR_HOLDER : movingHouse ? MOVING_HOUSE_HOLDER : MORTGAGE_HOLDER,
+      lens: lending ? smallDollarLens() : movingHouse ? movingHouseLens() : mortgageLens(),
       registry: ORGS,
       runtime: { onEvent, resetDemo, setTourContext: trackTourContext(setTourContext) },
-      tour: movingHouse ? movingHouseTour() : mortgageTour(),
+      tour: lending ? smallDollarTour() : movingHouse ? movingHouseTour() : mortgageTour(),
     });
   },
   (error: unknown) => console.error("bank: the pods did not start", error),
