@@ -45,11 +45,15 @@ export const GRANT_END_IRIS = [
   MORT.GrantEnd_PolicyIssued,
   MORT.GrantEnd_PolicyLapses,
   MORT.GrantEnd_ServicingEnds,
+  MORT.GrantEnd_LoanRepaid,
   // Motor claim demo (flows.md section 7).
   MORT.GrantEnd_ClaimClosed,
   MORT.GrantEnd_JobCompleted,
   MORT.GrantEnd_MotorPolicyLapses,
 ] as const;
+
+/** An ODRL `timeInterval`: an `xsd:duration` of whole years, months or days (e.g. P3M). */
+const INTERVAL_PATTERN = /^P(?=\d)(\d+Y)?(\d+M)?(\d+D)?$/;
 
 /** One ODRL constraint (mshape:ConstraintShape). */
 class Constraint extends TypedNode {
@@ -114,6 +118,11 @@ export class Permission extends TypedNode {
     }
     return value;
   }
+
+  /** The recurring interval between permitted uses (`odrl:timeInterval`), e.g. "P3M". */
+  get interval(): string | undefined {
+    return this.constraintOn(ODRL.timeInterval)?.rightOperand.value;
+  }
 }
 
 export interface PermissionInit {
@@ -125,6 +134,8 @@ export interface PermissionInit {
   end?: GrantEnd;
   /** How many times the permission may be used (`odrl:count`); 1 for a one-time grant. */
   maxUses?: number;
+  /** A recurring use, at most once per this `xsd:duration` (e.g. "P3M", quarterly). */
+  interval?: string;
 }
 
 /** Fields shared by the request and the agreement. */
@@ -248,6 +259,19 @@ function applyPolicy(policy: AccessPolicy, init: AccessPolicyInit, type: string)
         ),
       );
     }
+    const interval = permissionInit.interval;
+    if (interval !== undefined) {
+      if (!INTERVAL_PATTERN.test(interval)) {
+        throw new RangeError(
+          `an interval is an xsd:duration of years, months or days: ${interval}`,
+        );
+      }
+      addConstraint(permission, 4, ODRL.timeInterval, ODRL.eq, (constraint) =>
+        RequiredAs.object(constraint, ODRL.rightOperand, interval, (value, factory) =>
+          factory.literal(value, factory.namedNode(XSD.duration)),
+        ),
+      );
+    }
   });
   setDateTime(policy, DCTERMS.issued, init.issued);
 }
@@ -288,6 +312,7 @@ export function permissionInits(policy: AccessPolicy): PermissionInit[] {
     if (purpose === undefined) throw new TypeError("a permission needs a purpose constraint");
     const end = permission.end;
     const maxUses = permission.maxUses;
+    const interval = permission.interval;
     return {
       assignee: permission.assigneeIri,
       modes: permission.modes,
@@ -295,6 +320,7 @@ export function permissionInits(policy: AccessPolicy): PermissionInit[] {
       targets: [...permission.targetIris].sort(),
       ...(end === undefined ? {} : { end }),
       ...(maxUses === undefined ? {} : { maxUses }),
+      ...(interval === undefined ? {} : { interval }),
     };
   });
 }

@@ -77,6 +77,11 @@ export const RESOURCE_TARGET_CLASSES = {
   "provenance-record": "http://hl7.org/fhir/Provenance",
   "discharge-summary": "http://hl7.org/fhir/Composition",
   "encounter-record": "http://hl7.org/fhir/Encounter",
+  // Small business loan (demo 6, flows.md section 6).
+  "business-loan-terms": MORT.BusinessLoanTerms,
+  "cash-flow-assessment": MORT.CashFlowAssessment,
+  "cash-flow-record": MORT.CashFlowRecord,
+  "tax-compliance-credential": MORT.TaxComplianceCredential,
   // Motor claim demo (flows.md section 7).
   "claim-case": MORT.ClaimCase,
   "damage-report": MORT.DamageReport,

@@ -10,6 +10,7 @@ import { MORTGAGE_HOLDER, mortgageLens, mortgageTour } from "@mortgage/content/m
 import { isMovingHousePage } from "@mortgage/content/moving-house/pages";
 import { ORGS } from "@mortgage/content/orgs";
 import { isReusableKycPage } from "@mortgage/content/reusable-kyc/pages";
+import { isSmallBusinessLoanPage } from "@mortgage/content/small-business-loan/pages";
 import { isSmallDollarPage } from "@mortgage/content/small-dollar-lending/pages";
 import { onEvent, resetDemo, setTourContext } from "@mortgage/pod-runtime";
 import { mountDemo } from "@mortgage/tour/mount";
@@ -25,6 +26,8 @@ const movingHouse = isMovingHousePage(location.pathname, "bank", location.search
 const lending = isSmallDollarPage(location.pathname, "bank", location.search);
 // A page under kyb/ belongs to the business KYB demo (src/sections/business-kyb/).
 const kyb = isBusinessKybPage(location.pathname, "bank", location.search);
+// A page under business/ belongs to the small business loan (src/sections/small-business-loan/).
+const loan = isSmallBusinessLoanPage(location.pathname, "bank", location.search);
 // A page under kyc/ belongs to the reusable-KYC demo (src/sections/reusable-kyc/).
 const reusableKyc = isReusableKycPage(location.pathname, "bank", location.search);
 const root = document.getElementById("root");
@@ -37,11 +40,21 @@ view.render(
 );
 
 /**
- * The demo this page belongs to. The moving-house, business KYB, reusable-KYC and small-dollar
- * lending demos load only on their own pages, so none adds to the first load of the bank's
- * mortgage screens (acceptance test 15).
+ * The demo this page belongs to. The moving-house, small business loan, business KYB,
+ * reusable-KYC and small-dollar lending demos load only on their own pages, so none adds to the
+ * first load of the bank's mortgage screens (acceptance test 15). The small business loan is
+ * checked before business KYB, as its pages module asks.
  */
 async function demoOptions() {
+  if (loan) {
+    const b = await import("@mortgage/content/small-business-loan/mount");
+    return {
+      holder: b.SMALL_BUSINESS_LOAN_HOLDER,
+      ledger: { compliance: [...b.LOAN_COMPLIANCE] },
+      lens: b.smallBusinessLoanLens(),
+      tour: b.smallBusinessLoanTour(),
+    };
+  }
   if (kyb) {
     const k = await import("@mortgage/content/business-kyb/mount");
     return {

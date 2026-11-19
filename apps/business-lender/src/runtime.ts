@@ -2,7 +2,9 @@
 /**
  * Brackenridge Bank's link to the pods: the runtime configured as this app, the business KYB
  * demo mounted (Lens, step card, examiner obligations), a `World` acting as the credit desk on the
- * step's day, and the shared pod hooks. Every page of this app belongs to the business KYB demo.
+ * step's day, and the shared pod hooks. The equipment loan pages (`loan/…`,
+ * src/sections/small-business-loan/) belong to the small business loan; every other page to the
+ * business KYB demo.
  */
 import { kybWorld } from "@mortgage/content/business-kyb/browser";
 import {
@@ -15,6 +17,13 @@ import { mortgageSeed, trackTourContext } from "@mortgage/content/mortgage/brows
 import { refusalOf } from "@mortgage/content/mortgage/reads";
 import type { World } from "@mortgage/content/mortgage/world";
 import { ORGS } from "@mortgage/content/orgs";
+import {
+  isSmallBusinessLoanPage,
+  LOAN_COMPLIANCE,
+  SMALL_BUSINESS_LOAN_HOLDER,
+  smallBusinessLoanLens,
+  smallBusinessLoanTour,
+} from "@mortgage/content/small-business-loan/mount";
 import { createDemoCalendar } from "@mortgage/demo-kit/calendar";
 import { createPodHooks } from "@mortgage/demo-kit/react";
 import type { PodOwner } from "@mortgage/demo-kit/registry";
@@ -44,16 +53,33 @@ export function startDemo(): Promise<string> {
     configure({ app: APP, registry: ORGS, seed: mortgageSeed() });
     const info = await ready();
     const calendar = createDemoCalendar(info.dayOne);
-    await mountDemo({
+    const common = {
       app: APP,
-      calendar: { dayOf: (date) => calendar.dayOf(date), label: (day) => calendar.label(day) },
-      holder: BUSINESS_KYB_HOLDER,
-      ledger: { compliance: [...KYB_COMPLIANCE] },
-      lens: businessKybLens(),
+      calendar: {
+        dayOf: (date: string) => calendar.dayOf(date),
+        label: (day: number) => calendar.label(day),
+      },
       registry: ORGS,
       runtime: { onEvent, resetDemo, setTourContext: trackTourContext(setTourContext) },
-      tour: businessKybTour(),
-    });
+    };
+    // Checked before business KYB, which claims every page of this app.
+    await mountDemo(
+      isSmallBusinessLoanPage(location.pathname, APP, location.search)
+        ? {
+            ...common,
+            holder: SMALL_BUSINESS_LOAN_HOLDER,
+            ledger: { compliance: [...LOAN_COMPLIANCE] },
+            lens: smallBusinessLoanLens(),
+            tour: smallBusinessLoanTour(),
+          }
+        : {
+            ...common,
+            holder: BUSINESS_KYB_HOLDER,
+            ledger: { compliance: [...KYB_COMPLIANCE] },
+            lens: businessKybLens(),
+            tour: businessKybTour(),
+          },
+    );
     return info.dayOne;
   })();
   return started;

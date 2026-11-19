@@ -1,0 +1,27 @@
+@prefix cred: <https://www.w3.org/2018/credentials#>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#>.
+@prefix schema: <https://schema.org/>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix fibo-fbc-dae-dbt: <https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Debt/>.
+@prefix fibo-loan-ln-ln: <https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/Loans/>.
+
+<https://northwind.pod.example/finance/cash-flow> a mort:CashFlowRecord;
+    schema:name "Operating account cash flow";
+    dcterms:subject <https://northwind.pod.example/profile/card#me>;
+    dcterms:creator <https://bank.pod.example/profile/card#me>;
+    dcterms:issued "2026-09-19T10:00:00.000Z"^^xsd:dateTime;
+    mort:accountLast4 "2210";
+    mort:monthlyCashFlow _:m1, _:m2.
+_:m1 a mort:MonthlyCashFlow;
+    mort:periodStart "2026-07-01"^^xsd:date;
+    mort:inflowUsd "78400.00"^^xsd:decimal;
+    mort:outflowUsd "66100.00"^^xsd:decimal;
+    mort:debtServiceUsd "4200.00"^^xsd:decimal;
+    mort:closingBalanceUsd "48250.00"^^xsd:decimal.
+_:m2 a mort:MonthlyCashFlow;
+    mort:periodStart "2026-08-01"^^xsd:date;
+    mort:inflowUsd "80100.00"^^xsd:decimal;
+    mort:outflowUsd "67000.00"^^xsd:decimal;
+    mort:debtServiceUsd "4200.00"^^xsd:decimal;
+    mort:closingBalanceUsd "61350.00"^^xsd:decimal.

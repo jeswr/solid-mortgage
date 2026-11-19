@@ -65,6 +65,18 @@ describe("the apps each demo uses", () => {
     for (const slug of DEMO_APPS["medication-handover"]) expect(ORGS[slug]).toBeDefined();
   });
 
+  it("small business loan: Northwind's wallet, its bank, the state and the lender", () => {
+    expect(DEMO_APPS["small-business-loan"]).toEqual([
+      "wallet",
+      "bank",
+      "state",
+      "business-lender",
+    ]);
+    expect(
+      new Set(DEMO_APPS["small-business-loan"].map((slug) => ORGS[slug].organisation)).size,
+    ).toBe(4);
+  });
+
   it("reusable KYC: Alex's wallet, the bank that checked Alex and the card issuer that relies", () => {
     expect(DEMO_APPS["reusable-kyc"]).toEqual(["wallet", "bank", "card-issuer"]);
   });

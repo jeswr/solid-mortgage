@@ -56,6 +56,7 @@ export {
   type PostalAddressClaims,
   type PropertyClaims,
   type RepaymentHistoryClaims,
+  type TaxComplianceClaims,
   type TitleClearClaims,
   type TitleCommitmentClaims,
   type VehicleClaims,

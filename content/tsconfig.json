@@ -13,6 +13,7 @@
     "small-dollar-lending/**/*.ts",
     "business-kyb/**/*.ts",
     "medication-handover/**/*.ts",
+    "small-business-loan/**/*.ts",
     "motor-claim/**/*.ts",
     "reusable-kyc/**/*.ts"
   ],

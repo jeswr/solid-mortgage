@@ -23,6 +23,9 @@ function lazySection(load: () => Promise<ComponentType>): ComponentType {
 const MovingAddressOnFile = lazySection(
   async () => (await import("./moving-house/MovingHouse.tsx")).MovingAddressOnFile,
 );
+const BusinessBanking = lazySection(
+  async () => (await import("./small-business-loan/SmallBusinessLoan.tsx")).BusinessBanking,
+);
 const KybOnboarding = lazySection(
   async () => (await import("./business-kyb/BusinessKyb.tsx")).KybOnboarding,
 );
@@ -73,6 +76,12 @@ export const sections: readonly AppSection[] = [
     demo: "business-kyb",
     path: "kyb/due-diligence",
     title: "Customer due diligence",
+  },
+  {
+    Component: BusinessBanking,
+    demo: "small-business-loan",
+    path: "business",
+    title: "Business banking",
   },
   { Component: YourIdentity, demo: "reusable-kyc", path: "kyc", title: "Your identity" },
 ];
