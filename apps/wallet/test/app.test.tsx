@@ -38,3 +38,26 @@ describe("Cairn shell", () => {
     expect(screen.getByRole("note", { name: "Concept demonstration notice" })).toBeTruthy();
   });
 });
+
+describe("the small business loan screens", () => {
+  it.each([
+    ["/loan", "Northwind's loan"],
+    ["/loan/requests", "Requests"],
+    ["/loan/sharing", "Grants"],
+    ["/loan/ledger", "Journey ledger"],
+  ])("%s renders its frame and the trust banner", (path, title) => {
+    render(<App hook={at(path)} started={never} holder="northwind" demoHolder="northwind" />);
+    expect(screen.getByRole("heading", { level: 1, name: title })).toBeTruthy();
+    expect(screen.getByRole("note", { name: "Concept demonstration notice" })).toBeTruthy();
+    expect(screen.getByRole("navigation", { name: "Equipment loan" })).toBeTruthy();
+  });
+
+  it("starts the ledger's totals at zero, from the log and nothing else", () => {
+    render(
+      <App hook={at("/loan/ledger")} started={never} holder="northwind" demoHolder="northwind" />,
+    );
+    expect(screen.getByTestId("wallet-loan-issuers").textContent).toBe("0");
+    expect(screen.getByTestId("wallet-loan-lenders").textContent).toBe("0");
+    expect(screen.getByTestId("wallet-loan-decisions").textContent).toBe("0");
+  });
+});
