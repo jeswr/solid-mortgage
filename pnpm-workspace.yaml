@@ -1,3 +1,4 @@
+# legacy/** (the retired Next.js apps and their e2e suite) is deliberately not a workspace member.
 packages:
   - "packages/*"
   - "apps/*"

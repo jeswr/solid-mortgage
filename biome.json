@@ -35,6 +35,6 @@
     }
   ],
   "files": {
-    "includes": ["**", "!vendor", "!dist", "!**/dist"]
+    "includes": ["**", "!legacy", "!vendor", "!dist", "!**/dist"]
   }
 }
