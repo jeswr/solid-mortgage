@@ -34,7 +34,7 @@
   },
   "scripts": {
     "build": "node scripts/glue-factory.mjs && tsc --project tsconfig.json && vite build",
-    "lint": "biome check src/*.ts src/host src/client src/agents src/bridge src/sw test scripts package.json tsconfig.json tsconfig.test.json vite.config.ts vitest.config.ts",
+    "lint": "biome check src/*.ts src/host src/client src/agents src/bridge src/sw test scripts package.json tsconfig.json tsconfig.test.json tsconfig.sw.json vite.config.ts vitest.config.ts",
     "test": "vitest run",
     "typecheck": "tsc --project tsconfig.json --noEmit && tsc --project tsconfig.test.json && tsc --project tsconfig.sw.json"
   },
