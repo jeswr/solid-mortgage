@@ -1,0 +1,35 @@
+/* AUTHORED-BY Claude Opus 5.5 */
+/* The Department of Revenue page (small business loan demo): the app's own tokens. */
+.revenue-mono {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+
+.revenue-facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.25rem calc(var(--space) * 1);
+  margin: 0 0 var(--space);
+  padding: var(--space);
+  background: var(--color-panel);
+  border-left: 4px solid var(--color-band);
+  border-radius: var(--radius);
+}
+
+.revenue-facts dt {
+  color: var(--color-muted);
+}
+
+.revenue-facts dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+@media (max-width: 30rem) {
+  .revenue-facts {
+    grid-template-columns: 1fr;
+  }
+
+  .revenue-facts dd {
+    margin-bottom: 0.5rem;
+  }
+}

@@ -14,6 +14,13 @@ import {
   movingHouseTour,
 } from "@mortgage/content/moving-house/mount";
 import { ORGS } from "@mortgage/content/orgs";
+import {
+  isSmallBusinessLoanPage,
+  LOAN_COMPLIANCE,
+  SMALL_BUSINESS_LOAN_HOLDER,
+  smallBusinessLoanLens,
+  smallBusinessLoanTour,
+} from "@mortgage/content/small-business-loan/mount";
 import { createDemoCalendar } from "@mortgage/demo-kit/calendar";
 import { createPodHooks } from "@mortgage/demo-kit/react";
 import type { PodOwner } from "@mortgage/demo-kit/registry";
@@ -43,15 +50,33 @@ export function startDemo(): Promise<string> {
     configure({ app: APP, registry: ORGS, seed: mortgageSeed() });
     const info = await ready();
     const calendar = createDemoCalendar(info.dayOne);
-    await mountDemo({
+    const common = {
       app: APP,
-      calendar: { dayOf: (date) => calendar.dayOf(date), label: (day) => calendar.label(day) },
-      holder: MOVING_HOUSE_HOLDER,
-      lens: movingHouseLens(),
+      calendar: {
+        dayOf: (date: string) => calendar.dayOf(date),
+        label: (day: number) => calendar.label(day),
+      },
       registry: ORGS,
       runtime: { onEvent, resetDemo, setTourContext: trackTourContext(setTourContext) },
-      tour: movingHouseTour(),
-    });
+    };
+    // The Department of Revenue's business page (src/sections/small-business-loan/) belongs to the
+    // small business loan; every other page to the moving-house demo.
+    await mountDemo(
+      isSmallBusinessLoanPage(location.pathname, APP, location.search)
+        ? {
+            ...common,
+            holder: SMALL_BUSINESS_LOAN_HOLDER,
+            ledger: { compliance: [...LOAN_COMPLIANCE] },
+            lens: smallBusinessLoanLens(),
+            tour: smallBusinessLoanTour(),
+          }
+        : {
+            ...common,
+            holder: MOVING_HOUSE_HOLDER,
+            lens: movingHouseLens(),
+            tour: movingHouseTour(),
+          },
+    );
     return info.dayOne;
   })();
   return started;
