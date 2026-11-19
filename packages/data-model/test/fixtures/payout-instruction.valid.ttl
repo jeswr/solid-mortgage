@@ -1,0 +1,35 @@
+@prefix as: <https://www.w3.org/ns/activitystreams#>.
+@prefix cred: <https://www.w3.org/2018/credentials#>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix dpv: <https://w3id.org/dpv#>.
+@prefix fibo-fbc-dae-dbt: <https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Debt/>.
+@prefix fibo-fnd-arr-asmt: <https://spec.edmcouncil.org/fibo/ontology/FND/Arrangements/Assessments/>.
+@prefix fibo-fnd-arr-rep: <https://spec.edmcouncil.org/fibo/ontology/FND/Arrangements/Reporting/>.
+@prefix fibo-fnd-plc-rp: <https://spec.edmcouncil.org/fibo/ontology/FND/Places/RealProperty/>.
+@prefix fibo-fnd-rel-rel: <https://spec.edmcouncil.org/fibo/ontology/FND/Relations/Relations/>.
+@prefix fibo-loan-ln-app: <https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoanApplications/>.
+@prefix fibo-loan-ln-ln: <https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/Loans/>.
+@prefix fibo-loan-reln-mtg: <https://spec.edmcouncil.org/fibo/ontology/LOAN/RealEstateLoans/Mortgages/>.
+@prefix fibo-loan-reln-org: <https://spec.edmcouncil.org/fibo/ontology/LOAN/RealEstateLoans/MortgageOrigination/>.
+@prefix foaf: <http://xmlns.com/foaf/0.1/>.
+@prefix ldp: <http://www.w3.org/ns/ldp#>.
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#>.
+@prefix odrl: <http://www.w3.org/ns/odrl/2/>.
+@prefix pim: <http://www.w3.org/ns/pim/space#>.
+@prefix schema: <https://schema.org/>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+<https://maya.pod.example/banking/payout-instruction> a mort:PayoutInstruction;
+    schema:name "Pay my loan to my debit card";
+    dcterms:creator <https://maya.pod.example/profile/card#me>;
+    mort:paymentRail mort:PaymentRail-PushToCard;
+    schema:provider _:provider;
+    mort:accountLast4 "3318";
+    schema:amount _:amount;
+    mort:loanNumber "FL-2048";
+    dcterms:issued "2026-11-02T14:40:00.000Z"^^xsd:dateTime.
+_:provider a schema:Organization;
+    schema:name "Alder Bank".
+_:amount a schema:MonetaryAmount;
+    schema:value 2000.0;
+    schema:currency "USD".

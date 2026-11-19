@@ -12,6 +12,13 @@ import {
   KybSharing,
 } from "./business-kyb/BusinessKyb.tsx";
 import {
+  MedHealth,
+  MedLedger,
+  MedRequests,
+  MedSharedWithMe,
+  MedSharing,
+} from "./medication-handover/Medication.tsx";
+import {
   MovingAddress,
   MovingHome,
   MovingLedger,
@@ -20,6 +27,12 @@ import {
   MovingWho,
 } from "./moving-house/MovingHouse.tsx";
 import { KycConsent, KycHome, KycLedger } from "./reusable-kyc/ReusableKyc.tsx";
+import {
+  LendingHome,
+  LendingLedger,
+  LendingProve,
+  LendingSharing,
+} from "./small-dollar-lending/Lending.tsx";
 
 export interface AppSection {
   /** The demo that owns this section, e.g. "moving-house". */
@@ -52,11 +65,55 @@ export const sections: readonly AppSection[] = [
     title: "Standing grants",
   },
   { Component: MovingLedger, demo: "moving-house", path: "moving/ledger", title: "Journey ledger" },
+  { Component: LendingHome, demo: "small-dollar-lending", path: "lending", title: "Your pod" },
+  {
+    Component: LendingProve,
+    demo: "small-dollar-lending",
+    path: "lending/prove",
+    title: "Prove to two lenders",
+  },
+  {
+    Component: LendingSharing,
+    demo: "small-dollar-lending",
+    path: "lending/sharing",
+    title: "Grants",
+  },
+  {
+    Component: LendingLedger,
+    demo: "small-dollar-lending",
+    path: "lending/ledger",
+    title: "Journey ledger",
+  },
   { Component: KybHome, demo: "business-kyb", path: "kyb", title: "Northwind" },
   { Component: KybRequests, demo: "business-kyb", path: "kyb/requests", title: "Requests" },
   { Component: KybProve, demo: "business-kyb", path: "prove/kyb", title: "Prove ownership" },
   { Component: KybSharing, demo: "business-kyb", path: "kyb/sharing", title: "Grants" },
   { Component: KybLedger, demo: "business-kyb", path: "kyb/ledger", title: "Journey ledger" },
+  { Component: MedHealth, demo: "medication-handover", path: "health", title: "Health" },
+  {
+    Component: MedRequests,
+    demo: "medication-handover",
+    path: "health/requests",
+    title: "Health requests",
+  },
+  {
+    Component: MedSharing,
+    demo: "medication-handover",
+    path: "health/sharing",
+    title: "Who can see it",
+  },
+  {
+    Component: MedSharedWithMe,
+    demo: "medication-handover",
+    path: "health/shared",
+    title: "Shared with me",
+  },
+  {
+    Component: MedLedger,
+    demo: "medication-handover",
+    path: "health/ledger",
+    title: "Journey ledger",
+  },
   { Component: KycHome, demo: "reusable-kyc", path: "kyc", title: "Verified identity" },
   { Component: KycConsent, demo: "reusable-kyc", path: "kyc/consent", title: "One-time request" },
   { Component: KycLedger, demo: "reusable-kyc", path: "kyc/ledger", title: "Journey ledger" },

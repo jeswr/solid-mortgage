@@ -1,10 +1,12 @@
 // AUTHORED-BY Claude Opus 5.5
 
 import { TOUR as BUSINESS_KYB_TOUR } from "@mortgage/content/business-kyb/tour";
+import { TOUR as MEDICATION_TOUR } from "@mortgage/content/medication-handover/tour";
 import { TOUR } from "@mortgage/content/mortgage/tour";
 import { TOUR as MOVING_HOUSE_TOUR } from "@mortgage/content/moving-house/tour";
 import { ORGS } from "@mortgage/content/orgs";
 import { TOUR as REUSABLE_KYC_TOUR } from "@mortgage/content/reusable-kyc/tour";
+import { TOUR as SMALL_DOLLAR_TOUR } from "@mortgage/content/small-dollar-lending/tour";
 import { isAppSlug, ORG_SLUGS } from "@mortgage/demo-kit/registry";
 import { appUrl } from "@mortgage/demo-kit/urls";
 import { describe, expect, it } from "vitest";
@@ -75,6 +77,21 @@ describe("the demo list", () => {
     );
   });
 
+  it("starts the small-dollar lending tour at its first step, in Maya's wallet", () => {
+    const tour = demoById("small-dollar-lending")?.tour;
+    const first = SMALL_DOLLAR_TOUR[0];
+    expect(demoById("small-dollar-lending")?.status).toBe("live");
+    expect(tour).toEqual({
+      demo: "small-dollar-lending",
+      app: first?.app,
+      path: first?.path,
+      step: first?.id,
+    });
+    expect(tour === undefined ? "" : tourUrl(tour)).toBe(
+      "/wallet/lending?tour=small-dollar-lending&step=vault",
+    );
+  });
+
   it("starts the business KYB tour at its first step, in Northwind's wallet", () => {
     const tour = demoById("business-kyb")?.tour;
     const first = BUSINESS_KYB_TOUR[0];
@@ -102,6 +119,21 @@ describe("the demo list", () => {
     });
     expect(tour === undefined ? "" : tourUrl(tour)).toBe(
       "/bank/kyc?tour=reusable-kyc&step=attestation",
+    );
+  });
+
+  it("starts the medication-handover tour at its first step, in Rosa's wallet", () => {
+    const tour = demoById("medication-handover")?.tour;
+    const first = MEDICATION_TOUR[0];
+    expect(demoById("medication-handover")?.status).toBe("live");
+    expect(tour).toEqual({
+      demo: "medication-handover",
+      app: first?.app,
+      path: first?.path,
+      step: first?.id,
+    });
+    expect(tour === undefined ? "" : tourUrl(tour)).toBe(
+      "/wallet/health?tour=medication-handover&step=health",
     );
   });
 

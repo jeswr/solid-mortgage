@@ -5,6 +5,7 @@
  */
 import type { ComponentType } from "react";
 import { MovingAddressOnFile } from "./moving-house/MovingHouse.tsx";
+import { LendingIncome } from "./small-dollar-lending/Income.tsx";
 
 export interface AppSection {
   /** The demo that owns this section, e.g. "moving-house". */
@@ -21,5 +22,11 @@ export const sections: readonly AppSection[] = [
     demo: "moving-house",
     path: "moving/address",
     title: "Employee address",
+  },
+  {
+    Component: LendingIncome,
+    demo: "small-dollar-lending",
+    path: "lending",
+    title: "Employment verification",
   },
 ];

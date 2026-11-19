@@ -1,0 +1,22 @@
+/* AUTHORED-BY Claude Opus 5.5
+ * Corner Dispensary's own tokens: a dispensing workstation in high contrast, deep green on
+ * white with near-black ink, Atkinson Hyperlegible for reading at a glance and IBM Plex Mono for
+ * labels and dates (both self-hosted, SIL Open Font License). Original values, no imagery. */
+:root {
+  --rx-green: #006b3c;
+  --rx-green-deep: #004d2b;
+  --rx-green-soft: #e3f3ea;
+  --rx-ink: #0b0f0d;
+  --rx-muted: #3b4540;
+  --rx-paper: #ffffff;
+  --rx-panel: #f3f5f4;
+  --rx-line: #0b0f0d;
+  --rx-amber: #7a4a00;
+  --rx-amber-soft: #fff1d6;
+  --rx-red: #9b1c13;
+  --rx-red-soft: #fde8e6;
+  --rx-focus: #ffbf00;
+  --rx-font: "Atkinson Hyperlegible", system-ui, sans-serif;
+  --rx-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --rx-space: 1rem;
+}

@@ -9,17 +9,17 @@ describe("organisation registry", () => {
     for (const slug of ORG_SLUGS) expect(ORGS[slug].slug).toBe(slug);
   });
 
-  it("covers sixteen fictional organisations across seventeen apps", () => {
+  it("covers one fictional organisation per app, the Loan Desk sharing its lender's", () => {
     const organisations = new Set(ORG_SLUGS.map((slug) => ORGS[slug].organisation));
-    expect(organisations.size).toBe(16);
+    expect(organisations.size).toBe(ORG_SLUGS.length - 1);
     expect(displayName(ORGS["lender-desk"])).toBe("Juniper Home Loans, Loan Desk");
   });
 
   it("gives every app its own title and theme colour", () => {
     const titles = ORG_SLUGS.map((slug) => ORGS[slug].title);
     const colours = ORG_SLUGS.map((slug) => ORGS[slug].themeColor.toLowerCase());
-    expect(new Set(titles).size).toBe(17);
-    expect(new Set(colours).size).toBe(17);
+    expect(new Set(titles).size).toBe(ORG_SLUGS.length);
+    expect(new Set(colours).size).toBe(ORG_SLUGS.length);
     for (const colour of colours) expect(colour).toMatch(/^#[0-9a-f]{6}$/);
   });
 
@@ -29,9 +29,8 @@ describe("organisation registry", () => {
     expect(owners).not.toContain("wallet");
     expect(owners).not.toContain("lender-desk");
     expect(owners.slice(0, HOLDER_IDS.length)).toEqual([...HOLDER_IDS]);
-    // The holders plus every organisation other than Cairn (the state, registry,
-    // business-lender and card-issuer apps belong to later demos).
-    expect(owners).toHaveLength(HOLDER_IDS.length + 15);
+    // The holders plus every organisation other than Cairn and the Loan Desk (one pod each).
+    expect(owners).toHaveLength(HOLDER_IDS.length + ORG_SLUGS.length - 2);
   });
 });
 
@@ -46,9 +45,19 @@ describe("the apps each demo uses", () => {
     for (const slug of DEMO_APPS["moving-house"]) expect(ORGS[slug]).toBeDefined();
   });
 
+  it("small-dollar lending: Maya's wallet, three new apps and three mortgage apps", () => {
+    expect(DEMO_APPS["small-dollar-lending"]).toHaveLength(7);
+    for (const slug of DEMO_APPS["small-dollar-lending"]) expect(ORGS[slug]).toBeDefined();
+  });
+
   it("business KYB: Northwind's wallet, the register and two banks", () => {
     expect(DEMO_APPS["business-kyb"]).toEqual(["wallet", "registry", "bank", "business-lender"]);
     expect(new Set(DEMO_APPS["business-kyb"].map((slug) => ORGS[slug].organisation)).size).toBe(4);
+  });
+
+  it("medication handover: Rosa's wallet, the hospital, the pharmacy and the practice", () => {
+    expect(DEMO_APPS["medication-handover"]).toEqual(["wallet", "hospital", "pharmacy", "clinic"]);
+    for (const slug of DEMO_APPS["medication-handover"]) expect(ORGS[slug]).toBeDefined();
   });
 
   it("reusable KYC: Alex's wallet, the bank that checked Alex and the card issuer that relies", () => {

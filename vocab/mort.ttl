@@ -1335,6 +1335,245 @@ mort:TrustedIssuerList
   rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
 
 #################################################################
+# Small-dollar lending (demo 4; ported from jeswr/solid-lending's
+# urn:example:lend# vocabulary, docs/rebuild/flows.md section 4)
+#################################################################
+
+mort:CashFlowCredential
+  a owl:Class ;
+  rdfs:label "Cash-flow credential"@en ;
+  rdfs:comment "A verifiable credential in which a depository institution attests a consumer-permissioned summary of the subject's account: the recurring deposit streams it observed, the average daily balance, the count of returned (insufficient-funds) payments in the last 90 days and a cash-flow score. Ported from lend:BankCashFlowCredential and lend:CashFlowScoreCredential; field semantics follow the FDX account and transaction model, which publishes no RDF namespace."@en ;
+  skos:definition "A verifiable credential in which a depository institution attests a consumer-permissioned summary of the subject's account: the recurring deposit streams it observed, the average daily balance, the count of returned (insufficient-funds) payments in the last 90 days and a cash-flow score. Ported from lend:BankCashFlowCredential and lend:CashFlowScoreCredential; field semantics follow the FDX account and transaction model, which publishes no RDF namespace."@en ;
+  rdfs:subClassOf cred:VerifiableCredential ;
+  rdfs:seeAlso <https://schema.org/DepositAccount> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:RepaymentHistoryCredential
+  a owl:Class ;
+  rdfs:label "Repayment history credential"@en ;
+  rdfs:comment "A verifiable credential in which a lender attests how the subject repaid a loan it serviced: the payments scheduled, made on time and made late over a reporting period. The payment record is a fibo-loan-ln-ln:PaymentHistory. Ported from lend:RepaymentHistoryCredential."@en ;
+  skos:definition "A verifiable credential in which a lender attests how the subject repaid a loan it serviced: the payments scheduled, made on time and made late over a reporting period. The payment record is a fibo-loan-ln-ln:PaymentHistory. Ported from lend:RepaymentHistoryCredential."@en ;
+  rdfs:subClassOf cred:VerifiableCredential ;
+  rdfs:seeAlso <https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/Loans/PaymentHistory> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:ClosedEndCreditDisclosure
+  a owl:Class ;
+  rdfs:label "Closed-end credit disclosure"@en ;
+  rdfs:comment "The disclosure a creditor gives before consummation of closed-end consumer credit: the amount financed, the finance charge, the annual percentage rate, the total of payments and the payment schedule (12 CFR 1026.17 and 1026.18). The credit is a fibo-loan-ln-ln:ClosedEndCredit."@en ;
+  skos:definition "The disclosure a creditor gives before consummation of closed-end consumer credit: the amount financed, the finance charge, the annual percentage rate, the total of payments and the payment schedule (12 CFR 1026.17 and 1026.18). The credit is a fibo-loan-ln-ln:ClosedEndCredit."@en ;
+  rdfs:subClassOf <https://schema.org/DigitalDocument> ;
+  rdfs:seeAlso <https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/Loans/ClosedEndCredit> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:AdverseActionNotice
+  a owl:Class ;
+  rdfs:label "Adverse action notice"@en ;
+  rdfs:comment "A creditor's notice that it declined an application for credit, with the principal reasons (12 CFR 1002.9) and, when a credit score was used, the score and its key factors (15 U.S.C. 1681m(a))."@en ;
+  skos:definition "A creditor's notice that it declined an application for credit, with the principal reasons (12 CFR 1002.9) and, when a credit score was used, the score and its key factors (15 U.S.C. 1681m(a))."@en ;
+  rdfs:subClassOf <https://schema.org/DigitalDocument> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:PayoutInstruction
+  a owl:Class ;
+  rdfs:label "Payout instruction"@en ;
+  rdfs:comment "The borrower's instruction of where the proceeds of a loan are to be paid: the payment rail and the card or account, identified only by its last four digits."@en ;
+  skos:definition "The borrower's instruction of where the proceeds of a loan are to be paid: the payment rail and the card or account, identified only by its last four digits."@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:DepositStream
+  a owl:Class ;
+  rdfs:label "Deposit stream"@en ;
+  rdfs:comment "One recurring income stream observed on a deposit account, such as a payroll deposit, with its typical monthly amount. Ported from lend:DepositStream (FDX analogue: a recurring credit transaction stream)."@en ;
+  skos:definition "One recurring income stream observed on a deposit account, such as a payroll deposit, with its typical monthly amount. Ported from lend:DepositStream (FDX analogue: a recurring credit transaction stream)."@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:cashFlowScoreValue
+  a owl:DatatypeProperty ;
+  rdfs:label "cash-flow score value"@en ;
+  rdfs:comment "A cash-flow score as a plain xsd:integer, 300 to 850, within a 3-digit ZK budget (SHACL pins the bounds). ZK-provable via filter_int_d3 (score >= threshold). The scoring model is named via mort:scoreModel. Ported from lend:cashFlowScoreValue."@en ;
+  skos:definition "A cash-flow score as a plain xsd:integer, 300 to 850, within a 3-digit ZK budget (SHACL pins the bounds). ZK-provable via filter_int_d3 (score >= threshold). The scoring model is named via mort:scoreModel. Ported from lend:cashFlowScoreValue."@en ;
+  rdfs:range xsd:integer ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:nsf90Count
+  a owl:DatatypeProperty ;
+  rdfs:label "returned payments in the last 90 days"@en ;
+  rdfs:comment "The count of payments returned for insufficient funds over the trailing 90 days, as a plain xsd:integer, 0 to 99 (FDX analogue: the NSF or returned-item transaction count). ZK-provable: a zero count is proved as an equality statement via filter_int_d1. Ported from lend:nsf90Count."@en ;
+  skos:definition "The count of payments returned for insufficient funds over the trailing 90 days, as a plain xsd:integer, 0 to 99 (FDX analogue: the NSF or returned-item transaction count). ZK-provable: a zero count is proved as an equality statement via filter_int_d1. Ported from lend:nsf90Count."@en ;
+  rdfs:range xsd:integer ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:depositStream
+  a owl:ObjectProperty ;
+  rdfs:label "deposit stream"@en ;
+  rdfs:comment "Links the subject of a cash-flow credential to one observed mort:DepositStream."@en ;
+  skos:definition "Links the subject of a cash-flow credential to one observed mort:DepositStream."@en ;
+  rdfs:range mort:DepositStream ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:averageDailyBalance
+  a owl:ObjectProperty ;
+  rdfs:label "average daily balance"@en ;
+  rdfs:comment "The average daily balance over the observation window, as a schema:MonetaryAmount (FDX analogue: the averageDailyBalance account statistic)."@en ;
+  skos:definition "The average daily balance over the observation window, as a schema:MonetaryAmount (FDX analogue: the averageDailyBalance account statistic)."@en ;
+  rdfs:range <https://schema.org/MonetaryAmount> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:observationMonths
+  a owl:DatatypeProperty ;
+  rdfs:label "observation window (months)"@en ;
+  rdfs:comment "The length, in months, of the consumer-permissioned transaction window a cash-flow summary was computed over."@en ;
+  skos:definition "The length, in months, of the consumer-permissioned transaction window a cash-flow summary was computed over."@en ;
+  rdfs:range xsd:integer ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:financeCharge
+  a owl:ObjectProperty ;
+  rdfs:label "finance charge"@en ;
+  rdfs:comment "The dollar cost of the credit over the life of the loan (12 CFR 1026.18(d)), as a schema:MonetaryAmount."@en ;
+  skos:definition "The dollar cost of the credit over the life of the loan (12 CFR 1026.18(d)), as a schema:MonetaryAmount."@en ;
+  rdfs:range <https://schema.org/MonetaryAmount> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:amountFinanced
+  a owl:ObjectProperty ;
+  rdfs:label "amount financed"@en ;
+  rdfs:comment "The amount of credit provided to the borrower or on the borrower's behalf (12 CFR 1026.18(b)), as a schema:MonetaryAmount."@en ;
+  skos:definition "The amount of credit provided to the borrower or on the borrower's behalf (12 CFR 1026.18(b)), as a schema:MonetaryAmount."@en ;
+  rdfs:range <https://schema.org/MonetaryAmount> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:totalOfPayments
+  a owl:ObjectProperty ;
+  rdfs:label "total of payments"@en ;
+  rdfs:comment "The amount the borrower will have paid after making every scheduled payment (12 CFR 1026.18(h)), as a schema:MonetaryAmount."@en ;
+  skos:definition "The amount the borrower will have paid after making every scheduled payment (12 CFR 1026.18(h)), as a schema:MonetaryAmount."@en ;
+  rdfs:range <https://schema.org/MonetaryAmount> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:paymentIntervalDays
+  a owl:DatatypeProperty ;
+  rdfs:label "payment interval (days)"@en ;
+  rdfs:comment "The number of days between scheduled payments of an installment loan (14 for a biweekly schedule)."@en ;
+  skos:definition "The number of days between scheduled payments of an installment loan (14 for a biweekly schedule)."@en ;
+  rdfs:range xsd:integer ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:adverseActionReason
+  a owl:DatatypeProperty ;
+  rdfs:label "adverse action reason"@en ;
+  rdfs:comment "One principal reason a creditor gives for declining an application (12 CFR 1002.9(b)(2))."@en ;
+  skos:definition "One principal reason a creditor gives for declining an application (12 CFR 1002.9(b)(2))."@en ;
+  rdfs:range xsd:string ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:paymentRail
+  a owl:ObjectProperty ;
+  rdfs:label "payment rail"@en ;
+  rdfs:comment "The rail a payout travels on, a concept from mort:PaymentRailScheme."@en ;
+  skos:definition "The rail a payout travels on, a concept from mort:PaymentRailScheme."@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:onTimePaymentCount
+  a owl:DatatypeProperty ;
+  rdfs:label "on-time payment count"@en ;
+  rdfs:comment "The scheduled payments made on time within a reporting period."@en ;
+  skos:definition "The scheduled payments made on time within a reporting period."@en ;
+  rdfs:range xsd:integer ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:latePaymentCount
+  a owl:DatatypeProperty ;
+  rdfs:label "late payment count"@en ;
+  rdfs:comment "The scheduled payments made late, or missed, within a reporting period."@en ;
+  skos:definition "The scheduled payments made late, or missed, within a reporting period."@en ;
+  rdfs:range xsd:integer ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:scheduledPaymentCount
+  a owl:DatatypeProperty ;
+  rdfs:label "scheduled payment count"@en ;
+  rdfs:comment "The payments scheduled for a loan; on-time and late payments together never exceed it."@en ;
+  skos:definition "The payments scheduled for a loan; on-time and late payments together never exceed it."@en ;
+  rdfs:range xsd:integer ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:servicedLoan
+  a owl:ObjectProperty ;
+  rdfs:label "serviced loan"@en ;
+  rdfs:comment "The loan a payment history reports on, identified by its disclosure in the borrower's pod."@en ;
+  skos:definition "The loan a payment history reports on, identified by its disclosure in the borrower's pod."@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:ScoreModel-CashFlowV1
+  a skos:Concept ;
+  rdfs:label "Cash-flow score v1"@en ;
+  rdfs:comment "An illustrative consumer-permissioned cash-flow score model on a 300 to 850 range. Ported from lend:ScoreModel-CashFlowV1."@en ;
+  skos:definition "An illustrative consumer-permissioned cash-flow score model on a 300 to 850 range. Ported from lend:ScoreModel-CashFlowV1."@en ;
+  skos:prefLabel "Cash-flow score v1"@en ;
+  skos:inScheme mort:ScoreModelScheme ;
+  skos:topConceptOf mort:ScoreModelScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:PaymentRailScheme
+  a skos:ConceptScheme ;
+  rdfs:label "Payment rail scheme"@en ;
+  rdfs:comment "The value space of mort:paymentRail."@en ;
+  skos:definition "The value space of mort:paymentRail."@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:PaymentRail-PushToCard
+  a skos:Concept ;
+  rdfs:label "push to card"@en ;
+  rdfs:comment "A card-network push payment to the borrower's debit card, which settles in minutes."@en ;
+  skos:definition "A card-network push payment to the borrower's debit card, which settles in minutes."@en ;
+  skos:prefLabel "push to card"@en ;
+  skos:inScheme mort:PaymentRailScheme ;
+  skos:topConceptOf mort:PaymentRailScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:MessageKind-RepaymentFurnishing
+  a skos:Concept ;
+  rdfs:label "repayment furnishing"@en ;
+  rdfs:comment "A lender reports a borrower's repayment history to a consumer reporting agency (15 U.S.C. 1681s-2)."@en ;
+  skos:definition "A lender reports a borrower's repayment history to a consumer reporting agency (15 U.S.C. 1681s-2)."@en ;
+  skos:prefLabel "repayment furnishing"@en ;
+  skos:inScheme mort:MessageKindScheme ;
+  skos:topConceptOf mort:MessageKindScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:MessageKind-PayoutConfirmation
+  a skos:Concept ;
+  rdfs:label "payout confirmation"@en ;
+  rdfs:comment "A payment service confirms to a lender that it paid out a loan's proceeds."@en ;
+  skos:definition "A payment service confirms to a lender that it paid out a loan's proceeds."@en ;
+  skos:prefLabel "payout confirmation"@en ;
+  skos:inScheme mort:MessageKindScheme ;
+  skos:topConceptOf mort:MessageKindScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:MessageKind-ScoreInquiry
+  a skos:Concept ;
+  rdfs:label "score inquiry"@en ;
+  rdfs:comment "A lender asks a consumer reporting agency for a consumer's credit score, citing the consumer's authorisation."@en ;
+  skos:definition "A lender asks a consumer reporting agency for a consumer's credit score, citing the consumer's authorisation."@en ;
+  skos:prefLabel "score inquiry"@en ;
+  skos:inScheme mort:MessageKindScheme ;
+  skos:topConceptOf mort:MessageKindScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:MessageKind-ScoreDelivery
+  a skos:Concept ;
+  rdfs:label "score delivery"@en ;
+  rdfs:comment "A consumer reporting agency answers a score inquiry with the score and its key factors."@en ;
+  skos:definition "A consumer reporting agency answers a score inquiry with the score and its key factors."@en ;
+  skos:prefLabel "score delivery"@en ;
+  skos:inScheme mort:MessageKindScheme ;
+  skos:topConceptOf mort:MessageKindScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+#################################################################
 # Business KYB (demo 3, flows.md section 3). Ported from the
 # solid-kyb residue vocabulary (kyb:, never deployed) into this
 # single published vocabulary. Every other KYB concern uses FIBO

@@ -32,6 +32,12 @@ fixtures play that issuer role in tests. The encodings are deterministic and
 salt-free — which is also exactly why a bare proof is forgeable and the
 operand-anchor check is mandatory.
 
+The values 0, 99, 500, 660, 720, 850, 2200 and 2860 were ported from
+jeswr/solid-lending's capture at the same sparq commit (2026-07-18) for the
+small-dollar lending demo (`provenance.lendingPort`); the values both captures
+share (9999) are identical, and `DEMO_OPERAND_VALUES` lists all of them, so a
+native re-capture reproduces the whole file.
+
 ## `dual-sign-attestations.json`
 
 Decision-0004 dual-sign artifacts for the demo employment + asset credentials:

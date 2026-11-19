@@ -1,0 +1,48 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix fhir: <http://hl7.org/fhir/> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+
+# AUTHORED-BY Claude Opus 5.5
+# A medicine in Rosa's list (medication handover, flows.md section 5): rosa:/medications/<name>,
+# a FHIR R5 MedicationStatement in RDF. Whether Rosa takes it is its adherence (R5:
+# taking-as-directed or stopped-as-directed, with the reason); who changed it, when and why is a
+# FHIR Provenance beside it (provenance-record.ttl). Shared data types: fhir-support.ttl.
+mshape:MedicationStatementShape
+  a sh:NodeShape ;
+  sh:targetClass fhir:MedicationStatement ;
+  sh:closed true ;
+  sh:property [ sh:path rdf:type ; sh:in ( fhir:MedicationStatement ) ] ;
+  sh:property [ sh:path fhir:nodeRole ; sh:maxCount 1 ; sh:in ( fhir:treeRoot ) ] ;
+  sh:property [ sh:path fhir:id ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirIdShape ] ;
+  sh:property [
+    sh:path ( fhir:status fhir:v ) ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:in ( "recorded" "entered-in-error" "draft" ) ;
+  ] ;
+  sh:property [ sh:path fhir:status ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirStringShape ] ;
+  sh:property [ sh:path fhir:medication ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirMedicineShape ] ;
+  sh:property [ sh:path fhir:subject ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirLinkedReferenceShape ] ;
+  sh:property [ sh:path fhir:dateAsserted ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirDateTimeShape ] ;
+  sh:property [ sh:path fhir:dosage ; sh:minCount 1 ; sh:maxCount 1 ] ;
+  sh:property [
+    sh:path ( fhir:dosage [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+    sh:minCount 1 ;
+    sh:node mshape:FhirDosageShape ;
+  ] ;
+  sh:property [ sh:path fhir:adherence ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:MedicationAdherenceShape ] .
+
+# MedicationStatement.adherence: a code from the R5 medication-statement-adherence code system,
+# and in words why (a stop always carries its reason).
+mshape:MedicationAdherenceShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:property [ sh:path fhir:code ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirCodeableConceptShape ] ;
+  sh:property [
+    sh:path ( fhir:code fhir:coding [ sh:zeroOrMorePath rdf:rest ] rdf:first fhir:code fhir:v ) ;
+    sh:minCount 1 ;
+    sh:in ( "taking-as-directed" "stopped-as-directed" ) ;
+  ] ;
+  sh:property [ sh:path fhir:reason ; sh:maxCount 1 ; sh:node mshape:FhirCodeableConceptShape ] .

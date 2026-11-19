@@ -1,0 +1,68 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+@prefix fibo-fbc-dae-dbt: <https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Debt/> .
+
+# AUTHORED-BY Claude Opus 5.5
+# loans/<creditor>/adverse-action: a creditor's notice that it declined an application, with the
+# principal reasons (12 CFR 1002.9) and the credit score it used (15 U.S.C. 1681m(a)); flows.md
+# section 4, step 9.
+mshape:AdverseActionNoticeShape
+  a sh:NodeShape ;
+  sh:targetClass mort:AdverseActionNotice ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue mort:AdverseActionNotice ;
+  ] ;
+  sh:property [
+    sh:path schema:name ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path fibo-fbc-dae-dbt:hasBorrower ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path dcterms:creator ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path dcterms:issued ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dateTime ;
+  ] ;
+  sh:property [
+    # Reg B asks for the principal reasons; four is the customary maximum.
+    sh:path mort:adverseActionReason ;
+    sh:minCount 1 ;
+    sh:maxCount 4 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:scoreDisclosure ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:ScoreDisclosureShape ;
+  ] ;
+  sh:property [
+    # The ECOA notice and the consumer's right to a free copy of the report.
+    sh:path schema:description ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] .

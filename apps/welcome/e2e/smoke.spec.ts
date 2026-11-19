@@ -13,7 +13,9 @@ const ROUTES = [
   "./",
   "./watch/mortgage",
   "./watch/moving-house",
+  "./watch/small-dollar-lending",
   "./watch/business-kyb",
+  "./watch/medication-handover",
   "./watch/reusable-kyc",
   "./honesty",
   "./journey",
@@ -66,8 +68,7 @@ test("home: title, order, demos, launcher and join-in links", async ({ page }) =
   }
 
   const tiles = page.getByRole("list", { name: "Organisation apps" }).getByRole("link");
-  // One tile per organisation app in the registry (the mortgage's thirteen and each other
-  // demo's apps), so a new demo's app needs no edit here.
+  // One tile per organisation app in the registry.
   await expect(tiles).toHaveCount(ORG_SLUGS.length);
 
   await expect(page.getByRole("link", { name: /Register for the weekly meeting/ })).toHaveAttribute(

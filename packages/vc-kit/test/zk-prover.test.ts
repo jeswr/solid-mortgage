@@ -147,7 +147,7 @@ describe("proveTierA", () => {
     await expect(
       proveTierA({
         statement: INCOME_STATEMENT,
-        value: 5, // 1 digit: in budget, but no committed filter_int_d1
+        value: 5, // 1 digit: in budget, but below the income field's 2-digit minimum member
         operandEnc: encOf(8500),
         nonce: "n",
       }),

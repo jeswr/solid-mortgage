@@ -1,0 +1,33 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix fhir: <http://hl7.org/fhir/> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+
+# AUTHORED-BY Claude Opus 5.5
+# A discharge prescription (medication handover, flows.md section 5): rosa:/medications/requests/
+# <name>, a FHIR R5 MedicationRequest the ward writes and the pharmacy dispenses against.
+mshape:MedicationRequestShape
+  a sh:NodeShape ;
+  sh:targetClass fhir:MedicationRequest ;
+  sh:closed true ;
+  sh:property [ sh:path rdf:type ; sh:in ( fhir:MedicationRequest ) ] ;
+  sh:property [ sh:path fhir:nodeRole ; sh:maxCount 1 ; sh:in ( fhir:treeRoot ) ] ;
+  sh:property [ sh:path fhir:id ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirIdShape ] ;
+  sh:property [ sh:path fhir:status ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirStringShape ] ;
+  sh:property [
+    sh:path ( fhir:status fhir:v ) ;
+    sh:in ( "active" "on-hold" "ended" "stopped" "completed" "cancelled" "entered-in-error" "draft" "unknown" ) ;
+  ] ;
+  sh:property [ sh:path fhir:intent ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirStringShape ] ;
+  sh:property [ sh:path ( fhir:intent fhir:v ) ; sh:in ( "order" "plan" "proposal" ) ] ;
+  sh:property [ sh:path fhir:medication ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirMedicineShape ] ;
+  sh:property [ sh:path fhir:subject ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirLinkedReferenceShape ] ;
+  sh:property [ sh:path fhir:authoredOn ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirDateTimeShape ] ;
+  sh:property [ sh:path fhir:requester ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirLinkedReferenceShape ] ;
+  sh:property [ sh:path fhir:dosageInstruction ; sh:minCount 1 ; sh:maxCount 1 ] ;
+  sh:property [
+    sh:path ( fhir:dosageInstruction [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+    sh:minCount 1 ;
+    sh:node mshape:FhirDosageShape ;
+  ] .
