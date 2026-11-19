@@ -25,8 +25,11 @@ const PUBLIC_AGENTS = new Set([
   "http://www.w3.org/ns/auth/acl#AuthenticatedAgent",
 ]);
 
-/** The holder's bookkeeping drawers (design.md §b.4): not uploads, not deliveries. */
-export const RECORD_DRAWERS = ["/inbox/", "/policies/", "/consents/"];
+/**
+ * The holder's bookkeeping drawers (design.md §b.4): not uploads, not deliveries. `banking/` holds
+ * only Alex's autopay mandate, an authorisation like a consent record (content/mortgage/mount.ts).
+ */
+export const RECORD_DRAWERS = ["/inbox/", "/policies/", "/consents/", "/banking/"];
 
 /** The organisation node of an app slug or pod owner (an app's `actsAs`). */
 function nodeOf(slug: string): string {
