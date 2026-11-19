@@ -21,30 +21,29 @@ no affiliation or endorsement implied.*
 
 ### The system in one paragraph
 
-Eight Next.js applications — tour shell, borrower Data Vault (wallet), three issuer flows,
-two competing lenders, an AUS, a property (appraisal + title) app, and an eClose/servicing
-app — share one Solid data layer: every persona (the borrower and each stakeholder
-organisation) has a pod and a WebID. Verifications are W3C Verifiable Credentials 2.0 stored
-in the borrower's pod; access is governed by WAC ACLs the borrower's wallet manages; every
+One static site (<https://solid-mortgage.vercel.app/>) serves thirteen apps for twelve
+fictional organisations, each under its own path (`/wallet/`, `/lender/`, `/aus/`, …): the
+borrower's pod provider, payroll, bank, credit bureau, two competing lenders and the lender's
+staff desk, an AUS, appraisal, title and settlement, insurer, county recorder and servicer.
+They share one Solid data layer: the borrower and each organisation have a pod and a WebID.
+Verifications are W3C Verifiable Credentials 2.0 stored in the borrower's pod; access is
+governed by WAC, which the pod server enforces against the calling organisation's WebID; every
 grant and revocation writes a DPV consent receipt; pre-qualification thresholds are proved
-with zero-knowledge proofs so the underlying values never leave the pod (SPEC §§2–4).
+with zero-knowledge proofs so the underlying values never leave the pod (decision 0017;
+`docs/rebuild/design.md`).
 
 ### Pods and identity
 
 - **Every party is a pod + WebID.** Borrower data lives in the borrower's pod under
-  `/mortgage/` and `/credentials/`; stakeholder orgs have their own pods and dereferenceable
-  WebIDs (SPEC §3).
-- **Three deployment modes** (decision 0011). Mode 1, the default visitor experience: pods run
-  *in the visitor's own browser* (the sparq WASM Solid server in a SharedWorker runtime,
-  seeded on load) — free, instant, zero server state; **login is simulated and the on-screen
-  honesty panel says so**. Mode 2a: org pods on a hard read-only hosted endpoint so org WebIDs
-  dereference publicly. Mode 2b: a hosted Community Solid Server instance (pinned 7.1.9) with
-  **real Solid-OIDC logins** for facilitated multi-actor sessions — deliberately a second
-  implementation, framed as an interoperability proof.
-- **Why one shared domain:** `vercel.app` is on the Public Suffix List and Chrome 115+
-  partitions all storage by top-level site, so in-browser pods cannot be shared across
-  origins; the eight apps therefore serve under one domain via Next.js multi-zones with the
-  tour app as shell (decision 0011).
+  `/mortgage/` and `/credentials/`; each organisation has its own pod and WebID profile in the
+  same in-browser runtime (`docs/rebuild/design.md`).
+- **No server** (decision 0017). Every pod runs *in the visitor's own browser*: sparq's wasm
+  Solid server in a service worker, seeded per visitor, so the demo is free, instant and keeps
+  no server state. **Sign-in is simulated and the site says so; access control is real.**
+- **Why one site:** `vercel.app` is on the Public Suffix List and browsers partition storage
+  and service workers by top-level site, so in-browser pods cannot be shared across separate
+  `*.vercel.app` projects. Every app is therefore a path on one site; the same build can serve
+  one hostname per organisation once a custom domain is attached (`docs/rebuild/design.md`).
 - **Partner-phase path:** migrate storage to the sparq native server + Keycloak (DPoP support
   is official in Keycloak 26.4+); apps change only runtime-config base URLs (decision 0011).
 

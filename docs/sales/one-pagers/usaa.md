@@ -17,8 +17,7 @@ before closing [23][24] — one more document chased by phone and PDF today.
 
 ## Your seat in the demo
 
-*(Live demo front door: <https://solid-mortgage.vercel.app> — every deployed app links from the
-tour shell.)*
+> **Current demo (static rebuild, decision 0017):** this role is played by Wrenfield Mutual (`apps/insurer`, [`/insurer/`](https://solid-mortgage.vercel.app/insurer/)): homeowner's insurance is now an interactive step before closing. Every organisation in the demo is fictional and no real name appears in it. The description below was written for the earlier five-scene build and is due a refresh against `docs/rebuild/design.md` §a before use.
 
 Honestly stated: the insurance-binder credential is a named partner-phase extension, not one
 of the eight demo apps (SPEC §2, product-phase extensions; decision 0002). What the demo
@@ -28,7 +27,7 @@ binder-before-closing pattern [23][24]. Your membership-restricted customer base
 for a demo (org-map role 12); your lender side is portrayed generically by the two lender
 apps.
 
-> SCREENSHOT-TODO: `apps/closing` pre-close checklist (scene 5 run-up) — the beat the
+> SCREENSHOT-TODO: `apps/insurer` pre-close checklist (scene 5 run-up) — the beat the
 > insurance credential would slot into.
 
 ## The proposition

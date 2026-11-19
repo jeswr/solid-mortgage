@@ -18,14 +18,16 @@ handoff — goodbye letter ≥ 15 days before the effective date, hello letter �
 
 ## Your seat in the demo
 
-`apps/closing` (live: <https://solid-mortgage-closing.vercel.app>) — the servicing-transfer beat of scene 5: the loan is sold, the Truist-modelled
+> **Current demo (static rebuild, decision 0017):** this role is played by Marigold Loan Servicing (`apps/servicer`, [`/servicer/`](https://solid-mortgage.vercel.app/servicer/)). Every organisation in the demo is fictional and no real name appears in it. The description below was written for the earlier five-scene build and is due a refresh against `docs/rebuild/design.md` §a before use.
+
+The servicing-transfer beat of scene 5: the loan is sold, the Truist-modelled
 servicer **requests** access to the loan file, the borrower approves the grant, revokes the
 original lender, and reads the consent-receipt ledger — every grant and revocation, receipted.
 It is the payoff screen of the entire demo: the borrower enumerates exactly who has been
 granted access to what, something no participant in today's process can do (mortgage-process
 §3; master narrative, scene 5).
 
-> SCREENSHOT-TODO: `apps/closing` servicing-transfer approval + the wallet ledger view it
+> SCREENSHOT-TODO: `apps/servicer` servicing-transfer approval + the wallet ledger view it
 > triggers (scene 5).
 
 ## The proposition

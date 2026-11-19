@@ -20,13 +20,15 @@ cycle time [34].
 
 ## Your seat in the demo
 
-`apps/gse` (live: <https://solid-mortgage-underwriting.vercel.app>) — presented as "automated underwriting service (AUS) — the Freddie Mac role".
+> **Current demo (static rebuild, decision 0017):** this role is played by Castellan Housing Finance (`apps/aus`, [`/aus/`](https://solid-mortgage.vercel.app/aus/)). Every organisation in the demo is fictional and no real name appears in it. The description below was written for the earlier five-scene build and is due a refresh against `docs/rebuild/design.md` §a before use.
+
+Presented as "automated underwriting service (AUS) — the Freddie Mac role".
 Scene 3: instant findings over a loan file the borrower granted, prefilled from pod-held
 credentials. Scene 4: the pre-close freshness check finds the employment credential lapsed
 (verbal VOE ≤ 10 business days before note, B3-3.1-04 [10]); one click re-issues it through
 the existing grant and the AUS re-runs — re-issue, not re-collection.
 
-> SCREENSHOT-TODO: `apps/gse` findings screen after the scene-4 re-run.
+> SCREENSHOT-TODO: `apps/aus` findings screen after the scene-4 re-run.
 
 ## The proposition
 

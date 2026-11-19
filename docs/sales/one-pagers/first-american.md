@@ -19,13 +19,15 @@ Endpoint digital-closing business (org-map role 7). Title work produces the ALTA
 
 ## Your seat in the demo
 
-`apps/property` (live: <https://solid-mortgage-property.vercel.app>) — the First American-modelled flow issues the **title-clear credential** into
+> **Current demo (static rebuild, decision 0017):** this role is played by Sextant Title & Escrow (`apps/title`, [`/title/`](https://solid-mortgage.vercel.app/title/)). Every organisation in the demo is fictional and no real name appears in it. The description below was written for the earlier five-scene build and is due a refresh against `docs/rebuild/design.md` §a before use.
+
+The First American-modelled flow issues the **title-clear credential** into
 the loan file (decision 0002). Honestly scoped: ALTA commitment internals are a product-phase
 extension, not one of the five scripted scenes — in the 10-minute cut the title-clear
 credential is a checklist beat in the journey rather than a played scene (SPEC §2). Your
 Endpoint adjacency also touches the closing app's territory (org-map role 7).
 
-> SCREENSHOT-TODO: `apps/property` title-clear credential issuance flow.
+> SCREENSHOT-TODO: `apps/title` title-clear credential issuance flow.
 
 ## The proposition
 

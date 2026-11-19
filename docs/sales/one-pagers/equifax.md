@@ -20,14 +20,16 @@ employment verifications are fulfilled through it (org-map).
 
 ## Your seat in the demo
 
-`apps/verifications` (live: <https://solid-mortgage-verifications.vercel.app>) — two of its three distinctly branded issuer flows are yours (decision
+> **Current demo (static rebuild, decision 0017):** this role is played by Quillon Credit Bureau (`apps/bureau`, [`/bureau/`](https://solid-mortgage.vercel.app/bureau/)) for the credit file, and Ledgerly Payroll (`apps/payroll`, [`/payroll/`](https://solid-mortgage.vercel.app/payroll/)) for employment and income. Every organisation in the demo is fictional and no real name appears in it. The description below was written for the earlier five-scene build and is due a refresh against `docs/rebuild/design.md` §a before use.
+
+Two of its three distinctly branded issuer flows are yours (decision
 0002): the flow modelled on The Work Number issues the **employment+income credential**, and
 the Equifax-modelled flow issues the **credit-score credential**, both into the borrower's pod
 (scene 1). Scene 4's freshness beat is also yours: the employment credential lapses against
 the 10-business-day verbal-VOE rule [10] and is re-issued in one click through the existing
 grant — issuer re-issue, not re-collection (decision 0007).
 
-> SCREENSHOT-TODO: `apps/verifications` — The Work Number-modelled issuance flow (scene 1)
+> SCREENSHOT-TODO: `apps/bureau` and `apps/payroll` — The Work Number-modelled issuance flow (scene 1)
 > and the scene-4 re-issue confirmation.
 
 ## The proposition

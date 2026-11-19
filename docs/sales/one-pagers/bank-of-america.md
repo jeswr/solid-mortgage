@@ -18,14 +18,16 @@ gap the pod closes.
 
 ## Your seat in the demo
 
-`apps/lender-boa` (live: <https://solid-mortgage-lender-a.vercel.app>) — the full origination portal (decision 0002). Scene 2: verify a
+> **Current demo (static rebuild, decision 0017):** this role is played by Juniper Home Loans (`apps/lender`, [`/lender/`](https://solid-mortgage.vercel.app/lender/), and its staff desk `apps/lender-desk`, [`/lender-desk/`](https://solid-mortgage.vercel.app/lender-desk/)). Every organisation in the demo is fictional and no real name appears in it. The description below was written for the earlier five-scene build and is due a refresh against `docs/rebuild/design.md` §a before use.
+
+The full origination portal (decision 0002). Scene 2: verify a
 zero-knowledge pre-qual proof (income ≥ $7,000/month AND score ≥ 620) without seeing the
 values. Scene 3: the borrower grants scoped pod access; the URLA (Form 1003) prefills from
 pod-held credentials and the Loan Estimate lands back in the borrower's pod inside TRID's
 3-business-day window [4][5]. Scene 4: the pre-close freshness check resolves by issuer
 re-issue through the existing grant, not re-collection [10].
 
-> SCREENSHOT-TODO: `apps/lender-boa` URLA prefill view (scene 3) and LE-delivered timeline
+> SCREENSHOT-TODO: `apps/lender-desk` URLA prefill view (scene 3) and LE-delivered timeline
 > card.
 
 ## The proposition

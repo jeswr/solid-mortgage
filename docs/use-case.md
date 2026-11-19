@@ -1,5 +1,12 @@
 # Use Case: Borrower-Controlled Mortgage Origination on Solid
 
+> **Superseded as a description of the build** by `docs/rebuild/design.md` (decision 0017). This
+> record (July 2026) describes the earlier Next.js apps (`apps/verifications`, `apps/lender-boa`,
+> `apps/gse`, `apps/closing`, …), which were cast on real organisations and were removed on
+> 19 Nov 2026; their code is in git history. The current demo is one site,
+> <https://solid-mortgage.vercel.app/>, with fictional organisations (`content/orgs.ts`), and its
+> guided path corrects several steps below (`docs/rebuild/design.md` §a lists each correction).
+
 > Concept demonstration — not affiliated with or endorsed by Bank of America, Fifth Third
 > Bank, Freddie Mac, Equifax, The Work Number, Mastercard, Finicity, Cotality, First American,
 > Wolters Kluwer, eOriginal, Truist, USAA, GLEIF, EDM Council/OMG, MISMO, or the CFPB. Every

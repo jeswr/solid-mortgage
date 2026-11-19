@@ -92,9 +92,10 @@ first verification to a closed, transferred loan. Each scene names the real regu
 dramatizes, because the compliance clock is the part of the story every member already lives
 with. Scene design source: `mortgage-process.md` §5 and `SPEC.md` §2.
 
-> **Before you start:** the tour app is the front door
-> (<https://solid-mortgage.vercel.app>) — it has the ecosystem map, the scene
-> launcher, and a copy-ready demo identity. Every app carries a "concept demonstration"
+> **Before you start:** the front door is the welcome page
+> (<https://solid-mortgage.vercel.app/welcome/>), which starts the guided path. The scenes
+> below were written for the earlier five-scene build; the current guided path (24 steps,
+> fictional organisations) is in `docs/rebuild/design.md` §a. Every app carries a "concept demonstration"
 > banner; leave it visible, it is part of the honesty story (§6 below).
 
 ### Scene 1 — Fill the vault (~2 min)

@@ -1,6 +1,7 @@
 # Glossary and copy rules — Solid Mortgage Showcase
 
-This is the controlled vocabulary for all demo copy: app UI, tour chapters, guided steps, the overlay, and narration.
+This is the controlled vocabulary for all demo copy: app UI, tour steps, the Solid Lens, and narration.
+It predates the static rebuild (decision 0017, `docs/rebuild/design.md`); where the two disagree, the rebuild design wins. Organisation names now come from `content/orgs.ts` and are all fictional.
 The audience is EDMA members: lenders, GSEs, credit bureaus, data and verification providers, title and appraisal firms, and regulators' staff.
 **Use the preferred term. Never use the terms in the "Use instead of" column.** If a term you need is missing, add it here with a source before you use it.
 Source keys (`[R…]` repo, `[E…]` external) resolve in the source list at the end. External sources were checked on 2026-10-14.
@@ -10,7 +11,7 @@ Source keys (`[R…]` repo, `[E…]` external) resolve in the source list at the
 1. **Plain English, one idea per sentence, about 20 words or fewer.** Lead with what happens and who does it. Drop asides, em-dash chains, and "the point is…" framing.
 2. **Active voice, with a named actor.** Write "The lender orders the appraisal", not "The appraisal is ordered". Write "Alex gives the lender access", not "access is granted".
 3. **Name people and organisations consistently.** Write "Alex" in the story and "the borrower" in rules and explanations. Name each organisation by its role ("the lender", "the employment verification provider", "the servicer"). Do not use "persona", "visitor" or "pod owner" in story copy. Do not use "seat" for a role.
-4. **Use the "modelled on X" framing exactly once per surface,** in the form "*[Role], modelled on [Organisation]*", for example "Lender, modelled on Bank of America". After that, use the role. Never write "BofA-modelled", "Truist-modelled servicer" or "the Bank of America lender" in running text. Keep the concept-demo and non-affiliation notices as they are.
+4. **Use the organisation's fictional name, then its role.** Every organisation in the demo is fictional (`content/orgs.ts`), for example "Juniper Home Loans, the lender". Never name, or write "modelled on", a real organisation in demo copy: `check:insignia` bans real organisation names from app source and the built site. Keep the concept-demo notice as it is.
 5. **Use the regulator's or GSE's own term,** with its acronym on first use: "Loan Estimate", "Closing Disclosure", "verbal verification of employment (VOE)", "automated underwriting system (AUS)", "clear to close". Cite the rule by section, for example "12 CFR 1026.19(e)", not "TRID's window".
 6. **Be legally precise.**
    - A prequalification is not an offer, an approval or a commitment.
@@ -20,7 +21,7 @@ Source keys (`[R…]` repo, `[E…]` external) resolve in the source list at the
    - "Revoke a credential" (status list) and "revoke access" (permission) are different acts. Never use one to mean the other.
    - **AUS recommendation**, **underwriter decision** and **closing status** are separate states. Show each under its own label; submission alone does not produce an AUS recommendation.
    - A credential check (signature, status, validity period) is not employment re-verification. Use "employment re-verification" only for an actual employment confirmation.
-   - Wherever copy mentions permissions or service identities, add the local-mode limitation: "Permission changes are saved. This local demo makes requests as Alex; it does not enforce separate organisation permissions." Short form: "Local requests run as Alex; separate organisation permissions are not enforced here."
+   - Access control is real: the pod server evaluates every request against Web Access Control as the calling organisation's WebID. Sign-in is simulated; say so wherever copy mentions signing in.
 7. **Mark figures as illustrative, and do not reuse industry statistics as loan figures.** Write numbers as "$7,000 a month" and "credit score of 620 or higher". Use "≥" only in technical panels. Every rate or amount is "illustrative"; put the unit inside the tagged value ("$8,500 a month — illustrative"). Never present an industry average (such as the ~$11,600 cost to originate) as a loan figure (such as closing costs). Demo policy: include the standard caution beside illustrative quotes ("Your actual rate, payment, and costs could be higher. Get an official Loan Estimate before choosing a loan."). Regulation Z's requirement concerns consumer-specific written estimates before the Loan Estimate; generic rate lists and advertisements have exceptions. [E3]
 8. **No invented metaphors or slogans.** Replace them with the process stage they stand for:
    - "Fill the vault" → **"Verify income, assets and credit"**
@@ -35,7 +36,7 @@ Source keys (`[R…]` repo, `[E…]` external) resolve in the source list at the
    - Never cite internal decision numbers on screen.
 10. **Do not overclaim.** Write "controls access to", not "owns". Write "consumer-permissioned data", not "borrower-owned data". Do not claim encryption or "user-held keys" unless the build implements them. Write "simulated" for anything not real.
 11. **Explain each Solid concept in one line on first use, in financial-services terms:**
-    - **Pod**: "a personal data store the borrower controls; the borrower sets who may read it". In this local demo every request runs as Alex, so pair any permission claim with the local-mode limitation (rule 6).
+    - **Pod**: "a personal data store the borrower controls; the borrower sets who may read it".
     - **WebID**: "a web address that identifies a person or organisation, like a login identity anyone can check".
     - **Web Access Control**: "the pod's permission list: who may read or write each item".
     - **Verifiable credential**: "a signed verification record". Define it once per surface and link to the longer explanation elsewhere.
@@ -141,13 +142,13 @@ Source keys (`[R…]` repo, `[E…]` external) resolve in the source list at the
 | **consent record** | The organisation's structured record that consent was given, changed or withdrawn. ISO/IEC TS 27560:2023 defines the structure, and DPV implements it. | "receipt" (for the stored record) | [E15] |
 | **consent receipt** | The copy of a consent record given to the individual. Use "consent receipt" for what Alex reads. Use "consent records" for the stored list. Do not use Kantara's spec name: ISO 27560 builds on and replaces it. | "consent-receipt ledger", "receipt ledger", "receipted", "Every change is receipted" | [E15] |
 | **access history** / **audit trail** | A chronological record of who was given or denied access, and when. Note that the demo's consent records cover grants and revocations, not every read. | "ledger", "the whole pitch in one view" | [R-spec] §3 (decision 0006) |
-| **access log** | A record of each read and write request. The demo's "Pod activity" panel is an access log. | "Pod activity" (acceptable as a panel title) | [R-spec] §3 |
+| **access log** | A record of each read and write request. The Solid Lens shows the requests the pod answered, so it is an access log. | "Pod activity" (the old panel title) | [R-spec] §3 |
 | **nonpublic personal information (NPI)** | GLBA's term for personally identifiable financial information that a financial institution holds. | "PII" (when the context is a lender's GLBA obligations) | [E7] §1016.3(p) |
 | **personally identifiable information (PII)** | Information that identifies an individual. Use it in general privacy statements. | "no PII left behind" | NIST SP 800-122 [E21] |
 | **data minimization** | Sharing only the data needed for the stated purpose. | "shop without undressing", "walk away clean", "no PII left behind" | [E15]; [R1] §4 last row |
 | **system of record** / **authoritative source** | The designated source of truth for a data element. | "from the source" (acceptable), "attested once" | EDM Council DCAM [E16] |
 | **data lineage** / **provenance** | Where data came from and how it changed. VC issuer, issuance date and signature give provenance. | "attested", "signed claim" (in data-management copy) | EDM Council DCAM [E16]; W3C PROV-O |
-| **service identity** | The WebID that an organisation's system uses to access the pod. In this local demo requests run as Alex: an app label in the activity panel is not evidence that a service identity authenticated. | "service identity" (keep the term; explain it once as "the organisation's system login") | [R-spec] §3; [E14] |
+| **service identity** | The WebID that an organisation's system uses to access the pod. Sign-in is simulated: the in-browser runtime passes each app's WebID to the pod server, which enforces access against it. | "service identity" (keep the term; explain it once as "the organisation's system login") | [R-spec] §3; [E14] |
 
 ### 2.5 Credentials and cryptography
 
@@ -176,7 +177,7 @@ Source keys (`[R…]` repo, `[E…]` external) resolve in the source list at the
 | Preferred term | Definition | Use instead of | Source |
 |---|---|---|---|
 | **pod** (Solid pod) | A personal online data store that the borrower controls. In Solid, organisations read from it or write to it only with permission; this local demo makes every request as Alex and does not enforce separate organisation permissions. The spec calls it a "storage". | "vault" (as a place: "into the vault"), "Data Vault pod", "fill the vault" | [E14] Solid Protocol |
-| **Data Vault** | The product name of the borrower's wallet app (modelled on Verizon). Use it only as an app name. | "vault" (as a metaphor for security) | [R-spec] §4 (decision 0003) |
+| **Cairn** | The fictional pod provider whose app (`apps/wallet`, `/wallet/`) is Alex's personal data app. Use it only as an app or organisation name. | "Data Vault" (the old app name), "vault" (as a metaphor for security) | `content/orgs.ts`; decision 0017 |
 | **WebID** | A web address (URI) that identifies a person or organisation and links to their public profile. | "identity document" | [E14] WebID |
 | **Web Access Control (WAC)** / **access control list (ACL)** | The Solid permission system: an ACL lists which agents may read, write, append or control each resource. | "access rules" (acceptable in the activity panel only) | [E14] WAC |
 | **sign in** / **Solid-OIDC** | Authentication of a person or organisation to a pod, using OpenID Connect. | "rail", "server rail", "DPoP-bound Solid-OIDC holder binding" (visitor copy) | [E14] Solid-OIDC |
@@ -199,7 +200,7 @@ Slugs (`fill-the-vault`, `shop-without-undressing`, …) are used in URLs and in
 
 ## 4. Baseline scan of demo copy (historical)
 
-**Baseline only.** This scan records the copy as first reviewed. Its line references are historical and are not a current acceptance checklist; regenerate the locations after editing. Where a replacement below conflicts with §1–3, §1–3 win.
+**Baseline only.** This scan records the copy of the earlier Next.js apps as first reviewed. Those apps were removed on 19 Nov 2026; the files it cites are in the git history before that commit. Its line references are historical and are not a current acceptance checklist; regenerate the locations after editing. Where a replacement below conflicts with §1–3, §1–3 win.
 
 The scan covered user-facing strings in `apps/*/app/**/*.tsx`, `apps/*/components/*.tsx`, `apps/tour/app/content/*.ts`, `scripts/demo/steps.ts`, `scripts/demo/overlay/overlay.js` and `scripts/demo/activity.ts`, as of 2026-10-14. Paths are relative to the repo root. "→" gives the replacement from this glossary.
 
@@ -296,7 +297,7 @@ The scan covered user-facing strings in `apps/*/app/**/*.tsx`, `apps/*/component
 - [R-zk] `docs/research/zkp-fit.md`: Verdict, Q1
 - [R-spec] `SPEC.md` §2–6; decisions 0003, 0006 and 0007 as summarised there
 - [R-ttl] `vocab/mort.ttl`: decision-status and title-status schemes, ZK operand anchor
-- [R-anchors] `apps/tour/app/content/anchors.ts` (Freddie Mac 2024 Cost to Originate Study)
+- [R-anchors] `docs/research/mortgage-process.md` (Freddie Mac 2024 Cost to Originate Study; the earlier tour app's `anchors.ts` is in git history)
 
 **External**
 - [E1] CFPB, prequalification vs preapproval: https://www.consumerfinance.gov/ask-cfpb/whats-the-difference-between-a-prequalification-letter-and-a-preapproval-letter-en-127/
