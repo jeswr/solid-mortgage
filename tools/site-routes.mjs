@@ -42,6 +42,18 @@ export const ISOLATION_HEADERS = Object.freeze({
   "Cross-Origin-Opener-Policy": "same-origin",
 });
 
+/**
+ * Worker scripts an isolated page starts: under `require-corp` a dedicated worker whose script lacks
+ * the same embedder policy is blocked (`ERR_BLOCKED_BY_RESPONSE`), so the prover's bb.js workers,
+ * the pods worker and the agent workers carry it too. Only COEP: COOP applies to documents.
+ */
+export const WORKER_COEP_SOURCES = Object.freeze([
+  "/wallet/assets/(.*)",
+  "/pods-sw.js",
+  "/agents/(.*)",
+]);
+const WORKER_COEP = Object.freeze({ "Cross-Origin-Embedder-Policy": "require-corp" });
+
 const toVercelHeaders = (headers) =>
   Object.entries(headers).map(([key, value]) => ({ key, value }));
 
@@ -75,6 +87,7 @@ export function vercelConfig() {
         source: `/:app(${SLUG_ALTERNATION})/assets/(.*)`,
         headers: toVercelHeaders({ "Cache-Control": IMMUTABLE }),
       },
+      ...WORKER_COEP_SOURCES.map((source) => ({ source, headers: toVercelHeaders(WORKER_COEP) })),
       ...ISOLATED_PATHS.flatMap((path) => [
         { source: path, headers: toVercelHeaders(ISOLATION_HEADERS) },
         { source: `${path}/(.*)`, headers: toVercelHeaders(ISOLATION_HEADERS) },
@@ -112,6 +125,13 @@ export function headersFor(pathname) {
   if (pathname.startsWith("/agents/")) headers["Cache-Control"] = NO_CACHE;
   const [, slug, second] = pathname.split("/");
   if (SITE_SLUGS.includes(slug) && second === "assets") headers["Cache-Control"] = IMMUTABLE;
+  if (
+    pathname === "/pods-sw.js" ||
+    pathname.startsWith("/agents/") ||
+    pathname.startsWith("/wallet/assets/")
+  ) {
+    Object.assign(headers, WORKER_COEP);
+  }
   if (ISOLATED_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`))) {
     Object.assign(headers, ISOLATION_HEADERS);
   }
