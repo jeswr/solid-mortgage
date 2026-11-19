@@ -41,10 +41,8 @@ import {
   PodRequestError,
   podUrl,
   postResource,
-  put,
   putResource,
   readDataset,
-  statusOf,
   type World,
   webid,
 } from "./world.js";
@@ -427,7 +425,7 @@ function rulesFor(
  * targets of active one-time permissions only.
  */
 async function oneTimeRulesInForce(
-  world: World,
+  sync: AclSync,
   records: readonly GrantRecord[],
 ): Promise<Set<string>> {
   const targets = new Set<string>();
@@ -438,12 +436,10 @@ async function oneTimeRulesInForce(
       for (const target of permission.targetIris) targets.add(target);
     }
   }
-  const alex = world.fetchAs("alex");
   const held = new Set<string>();
   for (const target of targets) {
-    const aclUrl = `${target}.acl`;
-    if ((await statusOf(alex, aclUrl)) !== 200) continue;
-    for (const rule of await readAcl(alex, aclUrl)) {
+    const doc = await readAclDocument(sync, `${target}.acl`);
+    for (const rule of doc?.authorizations ?? []) {
       for (const agent of rule.agent) held.add(`${agent} ${target}`);
     }
   }
@@ -463,51 +459,146 @@ function parentOf(url: string, root: string): string | undefined {
   return trimmed.slice(0, trimmed.lastIndexOf("/") + 1);
 }
 
+/** An ACL document as read: its authorizations and the ETag a conditional write must match. */
+interface AclDocument {
+  readonly authorizations: readonly Authorization[];
+  readonly etag: string;
+}
+
 /**
- * The rules in force for `target` that no agreement manages: what the seed or the pod runtime put
- * there, such as the public read on the WebID profile (`profile/card.acl`, written by the
- * runtime's baseline) or a public drawer. The pod server uses only the nearest ACL document, so a
- * document the wallet writes must repeat them, or writing it would take them away. They come from
- * the target's own document when it has one, otherwise from the inheritable rules of the nearest
- * document above it.
- *
- * Left out: the owner (every document names the owner), any agent in `managed` (the wallet
- * recomputes those from the agreements), and rules narrowed by origin or group, which an
- * `AclRule` cannot carry. Leaving a rule out can only narrow access, never widen it. Only HEAD
- * and GET requests are made, as the owner.
+ * One ACL recomputation: who writes, whose rules the agreements manage, and the ACL documents
+ * read so far. Each document is read at most once per sync (a 404 is remembered as absent); a
+ * document the sync writes is forgotten, so a later read sees the new copy.
  */
-export async function unmanagedRules(
+export interface AclSync {
+  readonly fetcher: typeof fetch;
+  /** The pod root: reads walk up to it and no further. */
+  readonly root: string;
+  readonly owner: string;
+  /** Every agent an agreement names: their rules are recomputed, never carried over. */
+  readonly managed: ReadonlySet<string>;
+  readonly docs: Map<string, AclDocument | undefined>;
+}
+
+export function aclSync(
   fetcher: typeof fetch,
   root: string,
   owner: string,
-  target: string,
   managed: ReadonlySet<string>,
-): Promise<AclRule[]> {
-  for (let doc: string | undefined = target; doc !== undefined; doc = parentOf(doc, root)) {
-    const aclUrl = `${doc}.acl`;
-    const head = await fetcher(aclUrl, { method: "HEAD" });
-    if (head.status === 404) continue;
-    if (!head.ok) throw new PodRequestError("HEAD", aclUrl, head.status);
+): AclSync {
+  return { docs: new Map(), fetcher, managed, owner, root };
+}
+
+/** The ACL document at `aclUrl`, or undefined when there is none; read once per sync. */
+async function readAclDocument(sync: AclSync, aclUrl: string): Promise<AclDocument | undefined> {
+  if (sync.docs.has(aclUrl)) return sync.docs.get(aclUrl);
+  const response = await sync.fetcher(aclUrl, { headers: { accept: "text/turtle" } });
+  if (response.status === 404) {
+    sync.docs.set(aclUrl, undefined);
+    return undefined;
+  }
+  if (!response.ok) throw new PodRequestError("GET", aclUrl, response.status);
+  const etag = response.headers.get("etag");
+  if (etag === null)
+    throw new Error(`${aclUrl} came without an ETag: it cannot be rewritten safely`);
+  const dataset = await parseRdf(await response.text(), response.headers.get("content-type"), {
+    baseIRI: aclUrl,
+  });
+  const doc = { authorizations: [...new AclResource(dataset, DataFactory).authorizations], etag };
+  sync.docs.set(aclUrl, doc);
+  return doc;
+}
+
+/**
+ * What a rewrite of `target`'s ACL document must keep: the rules in force there that no agreement
+ * manages, such as the runtime's public read on the WebID profile (`profile/card.acl`). The pod
+ * server uses only the nearest ACL document, so a document the wallet writes must repeat them.
+ *
+ * - From the target's own document: the public and signed-in classes, and agents that no
+ *   agreement on record names, each with its modes, scope (`acl:accessTo`, `acl:default`, or
+ *   members only) and `acl:origin` limits as they were. The owner and every agreement's assignee
+ *   are left out: the wallet recomputes those. An `acl:agentGroup` is not carried (its members
+ *   are defined elsewhere); the agents and classes on the same authorization still are.
+ * - When the target has no document of its own: only the public and signed-in class rules the
+ *   nearest document above lets its members have. No agent rule is ever copied down, because a
+ *   copy would outlive a later change to the document above.
+ *
+ * Leaving anything out can only narrow access, never widen it. `etag` is the target's own
+ * document's (absent when it has none), for a write that fails if the document changed.
+ */
+async function currentAcl(
+  sync: AclSync,
+  target: string,
+): Promise<{ kept: AclRule[]; etag?: string }> {
+  for (let doc: string | undefined = target; doc !== undefined; doc = parentOf(doc, sync.root)) {
+    const found = await readAclDocument(sync, `${doc}.acl`);
+    if (found === undefined) continue;
     const own = doc === target;
-    const rules: AclRule[] = [];
-    for (const authorization of await readAcl(fetcher, aclUrl)) {
-      if (authorization.origin.size > 0 || authorization.agentGroup !== undefined) continue;
-      // Its own document's rules about the target itself; a document above, its rules for members.
-      if (own ? authorization.accessTo !== target : authorization.default !== doc) continue;
+    const kept: AclRule[] = [];
+    for (const authorization of found.authorizations) {
       const modes = ACL_MODES.filter((mode) => authorization.mode.has(`${ACL}${mode}`));
       if (modes.length === 0) continue;
-      const inheritable = own ? authorization.default === target : true;
-      for (const agent of authorization.agent) {
-        if (agent !== owner && !managed.has(agent)) rules.push({ agent, inheritable, modes });
-      }
+      const self = authorization.accessTo === target;
+      const members = authorization.default === doc;
+      // Its own document: rules about the target or its members. Above: rules for members.
+      if (own ? !self && !members : !members) continue;
+      const origins = [...authorization.origin].sort();
+      const scope = own
+        ? { inheritable: members, ...(self ? {} : { membersOnly: true }) }
+        : { inheritable: true };
+      const limits = origins.length > 0 ? { origins } : {};
       for (const agentClass of authorization.agentClass) {
         const agent = AGENT_CLASSES[agentClass];
-        if (agent !== undefined) rules.push({ agent, inheritable, modes });
+        if (agent !== undefined) kept.push({ agent, modes, ...scope, ...limits });
+      }
+      if (!own) continue;
+      for (const agent of authorization.agent) {
+        if (agent === sync.owner || sync.managed.has(agent)) continue;
+        kept.push({ agent, modes, ...scope, ...limits });
       }
     }
-    return rules;
+    return own ? { etag: found.etag, kept } : { kept };
   }
-  return [];
+  return { kept: [] };
+}
+
+/**
+ * Write the ACL document for `target`: the owner, `rules`, and what {@link currentAcl} says must be
+ * kept. The write is conditional on what was read (`If-Match` on the ETag, or `If-None-Match: *`
+ * when there was no document), so a change made in between is never overwritten with a stale
+ * copy: on 412 the documents are read again and the write retried.
+ */
+export async function writeAclDocument(
+  sync: AclSync,
+  target: string,
+  rules: readonly AclRule[],
+  attempts = 3,
+): Promise<void> {
+  const aclUrl = `${target}.acl`;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    const { etag, kept } = await currentAcl(sync, target);
+    const response = await sync.fetcher(aclUrl, {
+      body: await aclTurtle(aclDataset(sync.owner, target, [...rules, ...kept])),
+      headers: {
+        "content-type": "text/turtle",
+        ...(etag === undefined ? { "if-none-match": "*" } : { "if-match": etag }),
+      },
+      method: "PUT",
+    });
+    if (response.ok) {
+      sync.docs.delete(aclUrl);
+      return;
+    }
+    if (response.status !== 412) throw new PodRequestError("PUT", aclUrl, response.status);
+    // Something changed since the read: read everything again.
+    sync.docs.clear();
+  }
+  throw new Error(`${aclUrl} kept changing while the wallet wrote it (${attempts} attempts)`);
+}
+
+/** The state a grant is in once a consent record with `status` is its latest. */
+export function endedState(status: string): "expired" | "revoked" {
+  return status === DPV.ConsentExpired ? "expired" : "revoked";
 }
 
 /** Every agent any agreement on record names: the agents whose rules the wallet recomputes. */
@@ -527,6 +618,29 @@ export function managedAgents(
   return agents;
 }
 
+/**
+ * End a grant in the order that fails safe: the ACL documents first, computed as if the grant had
+ * already ended, and the consent record that says so only once they are written. If a pod request
+ * fails on the way, the grant is still on record as active, so ending it again retries the whole
+ * change; it is never recorded as ended while its access is still in force.
+ */
+export async function endGrantInOrder<
+  R extends { readonly policy: string; readonly state: string },
+>(
+  before: readonly R[],
+  ended: R,
+  state: R["state"],
+  sync: (before: readonly R[], after: readonly R[]) => Promise<string[]>,
+  record: () => Promise<unknown>,
+): Promise<string[]> {
+  const after = before.map((candidate) =>
+    candidate.policy === ended.policy ? { ...candidate, state } : candidate,
+  );
+  const written = await sync(before, after);
+  await record();
+  return written;
+}
+
 /** A stable description of a rule set, for telling whether a document has to be rewritten. */
 function fingerprint(rules: readonly Rule[]): string {
   return rules
@@ -538,8 +652,9 @@ function fingerprint(rules: readonly Rule[]): string {
 /**
  * Bring the pod's ACL documents in line with the grants on record. Only documents whose rules
  * differ between `before` and `after` are written, so each change shows in the Lens as the ACL
- * documents it really touched. Each document written also repeats the rules no agreement manages
- * ({@link unmanagedRules}), so a grant never takes away the public read on Alex's WebID profile.
+ * documents it really touched. Each document is written by {@link writeAclDocument}, which keeps
+ * the rules no agreement manages (the public read on Alex's WebID profile) and never overwrites a
+ * change made since it read the document.
  */
 export async function syncAcls(
   world: World,
@@ -548,29 +663,25 @@ export async function syncAcls(
   /** Policies approved by this change: their one-time rules are written (see `KeepOneTime`). */
   fresh: readonly string[] = [],
 ): Promise<string[]> {
-  const alex = world.fetchAs("alex");
+  const sync = aclSync(
+    world.fetchAs("alex"),
+    alexUrl(world),
+    webid(world, "alex"),
+    managedAgents(before, after),
+  );
   const beforeTargets = targetsOf(before);
   const afterTargets = targetsOf(after);
-  const held = await oneTimeRulesInForce(world, after);
+  const held = await oneTimeRulesInForce(sync, after);
   const keep: KeepOneTime = (policy, agent, target) =>
     fresh.includes(policy) || held.has(`${agent} ${target}`);
-  const owner = webid(world, "alex");
-  const managed = managedAgents(before, after);
   const written: string[] = [];
   for (const target of afterTargets) {
     const rules = rulesFor(after, afterTargets, target, keep);
     const had = beforeTargets.includes(target);
     if (had && fingerprint(rulesFor(before, beforeTargets, target, keep)) === fingerprint(rules))
       continue;
-    const aclUrl = `${target}.acl`;
-    const kept = await unmanagedRules(alex, alexUrl(world), owner, target, managed);
-    await put(
-      alex,
-      aclUrl,
-      await aclTurtle(aclDataset(owner, target, [...rules, ...kept])),
-      "text/turtle",
-    );
-    written.push(aclUrl);
+    await writeAclDocument(sync, target, rules);
+    written.push(`${target}.acl`);
   }
   return written;
 }
@@ -752,8 +863,13 @@ export async function endGrant(
   if (record === undefined || record.state !== "active") {
     throw new Error(`${code} is not an active grant`);
   }
-  await writeConsent(world, record, status, suffix, time);
-  return syncAcls(world, before, await grantRecords(world));
+  return endGrantInOrder(
+    before,
+    record,
+    endedState(status),
+    (from, to) => syncAcls(world, from, to),
+    () => writeConsent(world, record, status, suffix, time),
+  );
 }
 
 /** Alex withdraws a grant. The agreement stays on record; a "withdrawn" consent record is added. */

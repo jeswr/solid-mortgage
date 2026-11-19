@@ -32,19 +32,20 @@ import {
 } from "@mortgage/data-model";
 import type { PodOwner } from "@mortgage/demo-kit/registry";
 import { DataFactory } from "n3";
-import { type AclRule, aclDataset, aclTurtle } from "../mortgage/acl.js";
+import type { AclRule } from "../mortgage/acl.js";
 import {
+  aclSync,
+  endGrantInOrder,
   type GrantRecord,
   type GrantState,
   managedAgents,
   membersOf,
-  unmanagedRules,
+  writeAclDocument,
 } from "../mortgage/grants.js";
 import {
   at,
   podUrl,
   postResource,
-  put,
   putResource,
   readDataset,
   type World,
@@ -326,7 +327,12 @@ export async function syncMedAcls(
   const rosa = world.fetchAs(HOLDER);
   const beforeTargets = targetsOf(before);
   const afterTargets = targetsOf(after);
-  const managed = managedAgents(before, after);
+  const sync = aclSync(
+    rosa,
+    podUrl(world, HOLDER, ""),
+    webid(world, HOLDER),
+    managedAgents(before, after),
+  );
   const written: string[] = [];
   for (const target of afterTargets) {
     const rules = rulesFor(after, afterTargets, target);
@@ -336,16 +342,8 @@ export async function syncMedAcls(
     ) {
       continue;
     }
-    const aclUrl = `${target}.acl`;
-    const owner = webid(world, HOLDER);
-    const kept = await unmanagedRules(rosa, podUrl(world, HOLDER, ""), owner, target, managed);
-    await put(
-      rosa,
-      aclUrl,
-      await aclTurtle(aclDataset(owner, target, [...rules, ...kept])),
-      "text/turtle",
-    );
-    written.push(aclUrl);
+    await writeAclDocument(sync, target, rules);
+    written.push(`${target}.acl`);
   }
   return written;
 }
@@ -435,11 +433,13 @@ export interface MedApproval {
 /**
  * Rosa approves the waiting requests and adds Alex as her carer, in one press:
  *
- * 1. the wallet first applies any grant whose end has passed (M1, once the stay is over);
+ * 1. any grant whose end has passed (M1, once the stay is over) is ended: its rules leave the ACL
+ *    documents first and its "expired" consent record follows, so a grant is never recorded as
+ *    ended while its access is still in force;
  * 2. one agreement and one consent record per new grant (M2 and M3 answer the requests in her
  *    inbox; M4 is Rosa's own);
  * 3. a copy of each agreement to the grantee's inbox;
- * 4. one ACL recomputation for all of it, last, so the step's final request is the ACL change.
+ * 4. one ACL recomputation for the new grants.
  */
 export async function approveMedGrants(
   world: World,
@@ -457,8 +457,22 @@ export async function approveMedGrants(
       return end !== undefined && "until" in end && end.until.getTime() <= now;
     });
     if (!ends) continue;
-    await putResource(rosa, consentFor(world, record, DPV.ConsentExpired, "expired", time));
     expired.push(record.code);
+  }
+  // Grants that have ended first, in `endGrantInOrder`'s order: the ACL documents as if they were
+  // already recorded as expired, and their "expired" consent records only once access is gone.
+  const acls: string[] = [];
+  let base = before;
+  if (expired.length > 0) {
+    const ended = before.map((record) =>
+      expired.includes(record.code as MedCode) ? { ...record, state: "expired" as const } : record,
+    );
+    acls.push(...(await syncMedAcls(world, before, ended)));
+    for (const record of before) {
+      if (!expired.includes(record.code as MedCode)) continue;
+      await putResource(rosa, consentFor(world, record, DPV.ConsentExpired, "expired", time));
+    }
+    base = ended;
   }
   const requests = await pendingRequests(world);
   const given: { code: MedCode; agreement: AccessAgreement }[] = [];
@@ -496,12 +510,12 @@ export async function approveMedGrants(
       ),
     );
   }
-  const acls = await syncMedAcls(world, before, await medGrants(world));
+  acls.push(...(await syncMedAcls(world, base, await medGrants(world))));
   return { acls, expired, given: given.map((entry) => entry.code), notices };
 }
 
 /**
- * Rosa withdraws a grant: a "withdrawn" consent record, the ACL change, then a copy of the
+ * Rosa withdraws a grant: the ACL change, then (once it is written) a "withdrawn" consent record, then a copy of the
  * consent record to the grantee's inbox, so its back office learns of it. Returns the ACL
  * documents written and where the notice landed.
  */
@@ -517,8 +531,13 @@ export async function withdrawMedGrant(
     throw new Error(`${code} is not an active grant`);
   }
   const consent = consentFor(world, record, DPV.ConsentWithdrawn, "withdrawn", time);
-  await putResource(rosa, consent);
-  const acls = await syncMedAcls(world, before, await medGrants(world));
+  const acls = await endGrantInOrder(
+    before,
+    record,
+    "revoked",
+    (from, to) => syncMedAcls(world, from, to),
+    () => putResource(rosa, consent),
+  );
   const notice = await postResource(
     rosa,
     podUrl(world, MED_GRANTS[code].to, PATHS.inbox),

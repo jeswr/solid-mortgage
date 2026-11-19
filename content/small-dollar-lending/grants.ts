@@ -32,15 +32,21 @@ import {
 } from "@mortgage/data-model";
 import type { PodOwner } from "@mortgage/demo-kit/registry";
 import { DataFactory } from "n3";
-import { type AclRule, aclDataset, aclTurtle } from "../mortgage/acl.js";
-import { managedAgents, membersOf, unmanagedRules } from "../mortgage/grants.js";
+import type { AclRule } from "../mortgage/acl.js";
+import {
+  aclSync,
+  endedState,
+  endGrantInOrder,
+  managedAgents,
+  membersOf,
+  writeAclDocument,
+} from "../mortgage/grants.js";
 import {
   at,
   dateOf,
   PodRequestError,
   podUrl,
   postResource,
-  put,
   putResource,
   readDataset,
   type World,
@@ -373,7 +379,12 @@ export async function syncLendingAcls(
   const opened = new Set(fresh);
   const beforeTargets = targetsOf(before);
   const afterTargets = targetsOf(after);
-  const managed = managedAgents(before, after);
+  const sync = aclSync(
+    maya(world),
+    mayaUrl(world),
+    webid(world, MAYA),
+    managedAgents(before, after),
+  );
   const written: string[] = [];
   for (const target of afterTargets) {
     const rules = rulesFor(after, afterTargets, target, opened);
@@ -384,16 +395,8 @@ export async function syncLendingAcls(
     ) {
       continue;
     }
-    const aclUrl = `${target}.acl`;
-    const owner = webid(world, MAYA);
-    const kept = await unmanagedRules(maya(world), mayaUrl(world), owner, target, managed);
-    await put(
-      maya(world),
-      aclUrl,
-      await aclTurtle(aclDataset(owner, target, [...rules, ...kept])),
-      "text/turtle",
-    );
-    written.push(aclUrl);
+    await writeAclDocument(sync, target, rules);
+    written.push(`${target}.acl`);
   }
   return written;
 }
@@ -592,10 +595,18 @@ export async function endLendingGrant(
   if (record === undefined || record.state !== "active") {
     throw new Error(`${code} is not an active grant`);
   }
-  await writeConsent(world, record, status, suffix, time);
-  if (!syncAcl) return [];
+  if (!syncAcl) {
+    await writeConsent(world, record, status, suffix, time);
+    return [];
+  }
   // An unused one-time grant ended here still has its rule: name it, so the rule is removed.
-  return syncLendingAcls(world, before, await lendingGrantRecords(world), [record.policy]);
+  return endGrantInOrder(
+    before,
+    record,
+    endedState(status),
+    (from, to) => syncLendingAcls(world, from, to, [record.policy]),
+    () => writeConsent(world, record, status, suffix, time),
+  );
 }
 
 /** The inbox slug of the wallet's withdrawal notice to an organisation. */
@@ -607,7 +618,7 @@ export function isWithdrawalNotice(path: string): boolean {
 }
 
 /**
- * Maya withdraws a grant: the consent record, the ACL change, then a copy of the withdrawal in
+ * Maya withdraws a grant: the ACL change, the consent record once it is written, then a copy of the withdrawal in
  * the organisation's inbox, so its back office learns the access has ended.
  */
 export async function withdrawLendingGrant(

@@ -18,7 +18,14 @@ import {
   measure,
   monthsUpTo,
 } from "../../small-business-loan/cash-flow.js";
-import { DAY, LENDER_PATHS, LOAN, LOAN_PAYMENT, PATHS } from "../../small-business-loan/facts.js";
+import {
+  DAY,
+  HOLDER,
+  LENDER_PATHS,
+  LOAN,
+  LOAN_PAYMENT,
+  PATHS,
+} from "../../small-business-loan/facts.js";
 import {
   approveLoanRequest,
   grantRecords,
@@ -26,6 +33,7 @@ import {
   loanGrant,
   pendingRequest,
   requestLoanAccess,
+  withdrawLoanGrant,
 } from "../../small-business-loan/grants.js";
 import {
   approveApplication,
@@ -49,6 +57,7 @@ import { isPrepared, prepareSmallBusinessLoan } from "../../small-business-loan/
 import { readTaxCredential, taxCredentialUrl, taxVersions } from "../../small-business-loan/tax.js";
 import { TOUR } from "../../small-business-loan/tour.js";
 import { createHarness, type Harness } from "../business-kyb/harness.js";
+import { failingAcl } from "../failing-acl.js";
 
 let h: Harness;
 const slices = new Map<string, [number, number]>();
@@ -292,6 +301,15 @@ describe("small business loan, from a cold start", () => {
     expect(record.months.at(-1)?.debtServiceUsd).toBeCloseTo(4200 + LOAN_PAYMENT, 2);
     expect(measure(record, 3).dscr).toBe(result.test.measures.dscr);
   }, 120_000);
+
+  test("a withdrawal whose ACL write fails leaves S3 active, to be withdrawn again", async () => {
+    const failing = failingAcl(h.world(DAY.repaid), HOLDER, "PUT");
+    await probe(() =>
+      expect(withdrawLoanGrant(failing.world, "S3", "16:00")).rejects.toThrow(/503/),
+    );
+    expect(failing.failed()).toBe(1);
+    expect((await probe(() => loanGrant(h.world(), "S3")))?.state).toBe("active");
+  }, 60_000);
 
   test("8. the loan is repaid; S3 is withdrawn and Brackenridge's next read is refused (403)", async () => {
     const result = await step("revoke", DAY.repaid, () => repaidStep(h.world()));

@@ -22,6 +22,14 @@ export interface AclRule {
   readonly modes: readonly AclMode[];
   /** True when the rule also covers the members of a container target (`acl:default`). */
   readonly inheritable: boolean;
+  /**
+   * True when the rule covers only the members of a container target (`acl:default` with no
+   * `acl:accessTo`). Such rules are written by others (the wallet never makes one) and are kept
+   * as they were when the wallet rewrites the document.
+   */
+  readonly membersOnly?: boolean;
+  /** `acl:origin`: the rule applies only to requests from these origins. Never dropped. */
+  readonly origins?: readonly string[];
 }
 
 const isContainer = (target: string) => target.endsWith("/");
@@ -32,9 +40,11 @@ function addAuthorization(dataset: DatasetCore, name: string, target: string, ru
   if (typeof rule.agent === "string") authorization.agent.add(rule.agent);
   else if (rule.agent.class === "anyone") authorization.accessibleToAny = true;
   else authorization.accessibleToAuthenticated = true;
-  authorization.accessTo = target;
-  if (isContainer(target) && rule.inheritable) authorization.default = target;
+  const membersOnly = isContainer(target) && rule.membersOnly === true;
+  if (!membersOnly) authorization.accessTo = target;
+  if (isContainer(target) && (rule.inheritable || membersOnly)) authorization.default = target;
   for (const mode of rule.modes) authorization.mode.add(`${ACL}${mode}`);
+  for (const origin of rule.origins ?? []) authorization.origin.add(origin);
 }
 
 /** The ACL document for `target`: the owner's full control, then `rules` in order. */

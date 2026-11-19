@@ -320,11 +320,19 @@ describe("the journey runs on real pods", () => {
           `${event.step} ${event.actor} ${event.method} ${event.pod}${event.path} ${event.status}`,
       ),
     ).toEqual(["denied-read lender GET alex/credentials/assets 403"]);
-    // A 404 is the wallet asking whether the document that ends a grant exists yet.
+    // A 404 is the wallet asking whether a document exists yet: the one that ends a grant
+    // (HEAD), or an ACL document it is about to write (read in full when it is there).
     const missing = host.events.filter(
       (event) => event.status === 404 && !["probe", "crawl"].includes(event.step),
     );
-    expect(missing.every((event) => event.actor === "alex" && event.method === "HEAD")).toBe(true);
+    expect(missing.length).toBeGreaterThan(0);
+    expect(
+      missing.every(
+        (event) =>
+          event.actor === "alex" &&
+          (event.method === "HEAD" || (event.method === "GET" && event.path.endsWith(".acl"))),
+      ),
+    ).toBe(true);
   });
 
   test.each(TOUR.map((step) => [step.id, step] as const))(

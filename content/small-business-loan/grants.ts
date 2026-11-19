@@ -36,7 +36,13 @@ import type { OrgSlug } from "@mortgage/demo-kit/registry";
 import { DataFactory } from "n3";
 import { type KybGrantRecord, kybGrantRecords } from "../business-kyb/grants.js";
 import { type AclRule, aclDataset, aclTurtle, SIGNED_IN_APPEND } from "../mortgage/acl.js";
-import { managedAgents, membersOf, unmanagedRules } from "../mortgage/grants.js";
+import {
+  aclSync,
+  endGrantInOrder,
+  managedAgents,
+  membersOf,
+  writeAclDocument,
+} from "../mortgage/grants.js";
 import {
   at,
   dateOf,
@@ -285,7 +291,12 @@ async function syncAcls(
 ): Promise<string[]> {
   const holder = world.fetchAs(HOLDER);
   const had = targetsOf(before);
-  const managed = managedAgents(before, after);
+  const sync = aclSync(
+    holder,
+    holderUrl(world),
+    webid(world, HOLDER),
+    managedAgents(before, after),
+  );
   const written: string[] = [];
   for (const target of targetsOf(after)) {
     if (target.endsWith("/")) throw new Error(`a loan grant never covers a container: ${target}`);
@@ -293,16 +304,8 @@ async function syncAcls(
     if (had.includes(target) && fingerprint(rulesFor(before, target)) === fingerprint(rules)) {
       continue;
     }
-    const aclUrl = `${target}.acl`;
-    const owner = webid(world, HOLDER);
-    const kept = await unmanagedRules(holder, holderUrl(world), owner, target, managed);
-    await put(
-      holder,
-      aclUrl,
-      await aclTurtle(aclDataset(owner, target, [...rules, ...kept])),
-      "text/turtle",
-    );
-    written.push(aclUrl);
+    await writeAclDocument(sync, target, rules);
+    written.push(`${target}.acl`);
   }
   return written;
 }
@@ -449,8 +452,13 @@ export async function withdrawLoanGrant(
   if (record === undefined || record.state !== "active") {
     throw new Error(`${code} is not an active grant`);
   }
-  await writeConsent(world, record, DPV.ConsentWithdrawn, "withdrawn", time);
-  return syncAcls(world, before, await grantRecords(world));
+  return endGrantInOrder(
+    before,
+    record,
+    "revoked",
+    (from, to) => syncAcls(world, from, to),
+    () => writeConsent(world, record, DPV.ConsentWithdrawn, "withdrawn", time),
+  );
 }
 
 /**
@@ -467,10 +475,14 @@ export async function expireLoanGrants(world: World, time = "00:05"): Promise<Lo
     const ends = record.agreement.permissions.map((permission) => permission.end);
     const until = ends.find((end) => end !== undefined && "until" in end);
     if (until === undefined || !("until" in until) || until.until.getTime() > now) continue;
-    await writeConsent(world, record, DPV.ConsentExpired, "expired", time);
-    const after = await grantRecords(world);
-    await syncAcls(world, before, after);
-    before = after;
+    await endGrantInOrder(
+      before,
+      record,
+      "expired",
+      (from, to) => syncAcls(world, from, to),
+      () => writeConsent(world, record, DPV.ConsentExpired, "expired", time),
+    );
+    before = await grantRecords(world);
     ended.push(code);
   }
   return ended;

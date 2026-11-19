@@ -27,14 +27,19 @@ import {
 import type { HolderId } from "@mortgage/demo-kit/holders";
 import type { OrgSlug } from "@mortgage/demo-kit/registry";
 import { DataFactory } from "n3";
-import { type AclRule, aclDataset, aclTurtle } from "../mortgage/acl.js";
-import { managedAgents, membersOf, unmanagedRules } from "../mortgage/grants.js";
+import type { AclRule } from "../mortgage/acl.js";
+import {
+  aclSync,
+  endGrantInOrder,
+  managedAgents,
+  membersOf,
+  writeAclDocument,
+} from "../mortgage/grants.js";
 import {
   at,
   dateOf,
   podUrl,
   postResource,
-  put,
   putResource,
   readDataset,
   statusOf,
@@ -259,7 +264,12 @@ async function syncAcls(
 ): Promise<string[]> {
   const holder = world.fetchAs(HOLDER);
   const had = targetsOf(before);
-  const managed = managedAgents(before, after);
+  const sync = aclSync(
+    holder,
+    holderUrl(world),
+    webid(world, HOLDER),
+    managedAgents(before, after),
+  );
   const written: string[] = [];
   for (const target of targetsOf(after)) {
     if (target.endsWith("/")) throw new Error(`a KYB grant never covers a container: ${target}`);
@@ -267,16 +277,8 @@ async function syncAcls(
     if (had.includes(target) && fingerprint(rulesFor(before, target)) === fingerprint(rules)) {
       continue;
     }
-    const aclUrl = `${target}.acl`;
-    const owner = webid(world, HOLDER);
-    const kept = await unmanagedRules(holder, holderUrl(world), owner, target, managed);
-    await put(
-      holder,
-      aclUrl,
-      await aclTurtle(aclDataset(owner, target, [...rules, ...kept])),
-      "text/turtle",
-    );
-    written.push(aclUrl);
+    await writeAclDocument(sync, target, rules);
+    written.push(`${target}.acl`);
   }
   return written;
 }
@@ -393,8 +395,13 @@ export async function withdrawKybGrant(
   if (record === undefined || record.state !== "active") {
     throw new Error(`${code} is not an active grant`);
   }
-  await writeConsent(world, record, DPV.ConsentWithdrawn, "withdrawn", time);
-  return syncAcls(world, before, await kybGrantRecords(world));
+  return endGrantInOrder(
+    before,
+    record,
+    "revoked",
+    (from, to) => syncAcls(world, from, to),
+    () => writeConsent(world, record, DPV.ConsentWithdrawn, "withdrawn", time),
+  );
 }
 
 /** The organisation a grant goes to. */
