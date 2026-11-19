@@ -37,6 +37,7 @@ test("every shape document is bundled", () => {
     "access-request",
     "address-record",
     "agent-profile",
+    "allergy-intolerance",
     "appraisal-credential",
     "asset-credential",
     "borrower-profile",
@@ -49,16 +50,23 @@ test("every shape document is bundled", () => {
     "credit-report",
     "credit-score-credential",
     "data-product",
+    "discharge-summary",
     "document",
     "employment-income-credential",
+    "encounter-record",
     "escrow-statement",
     "evidence-of-insurance-credential",
+    "fhir-support",
     "identity-credential",
     "inbox-message",
     "loan-application",
     "loan-estimate",
+    "medication-dispense",
+    "medication-request",
+    "medication-statement",
     "odrl-policy",
     "payment-mandate",
+    "provenance-record",
     "purchase-agreement",
     "recorded-instrument",
     "recording-receipt",
@@ -78,7 +86,7 @@ test("every shape document is bundled", () => {
 test("every targeted resource shape is closed", () => {
   const store = shapesStore();
   const targeted = store.getSubjects(`${SH}targetClass`, null, null);
-  expect(targeted.length).toBe(36);
+  expect(targeted.length).toBe(43);
   for (const shape of targeted) {
     const closed = store.getObjects(shape, `${SH}closed`, null);
     expect(
@@ -205,6 +213,32 @@ const cases: readonly {
   { name: "inbox-message", expectedViolations: ["NodeKindConstraintComponent"] },
   { name: "credential-pointer", expectedViolations: ["PatternConstraintComponent"] },
   { name: "document", expectedViolations: ["MinCountConstraintComponent"] },
+  // Medication handover (flows.md section 5): FHIR R5 in RDF.
+  {
+    name: "medication-statement",
+    expectedViolations: ["InConstraintComponent", "ClosedConstraintComponent"],
+  },
+  {
+    name: "medication-request",
+    expectedViolations: ["MinCountConstraintComponent", "InConstraintComponent"],
+  },
+  {
+    name: "medication-dispense",
+    expectedViolations: ["MinCountConstraintComponent", "NodeConstraintComponent"],
+  },
+  {
+    name: "allergy-intolerance",
+    expectedViolations: ["MinCountConstraintComponent", "InConstraintComponent"],
+  },
+  { name: "provenance-record", expectedViolations: ["MinCountConstraintComponent"] },
+  {
+    name: "discharge-summary",
+    expectedViolations: ["InConstraintComponent", "MinCountConstraintComponent"],
+  },
+  {
+    name: "encounter-record",
+    expectedViolations: ["InConstraintComponent", "ClosedConstraintComponent"],
+  },
 ];
 
 // Generous timeout: the first validation pays comunica's cold start for the

@@ -1,0 +1,61 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix fhir: <http://hl7.org/fhir/> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+
+# AUTHORED-BY Claude Opus 5.5
+# The discharge summary (medication handover, flows.md section 5): rosa:/discharge/summary, a FHIR
+# R5 Composition typed with LOINC 18842-5 (Discharge summary). Its medicines section points at
+# the statements in rosa:/medications/; it copies none of them. The pharmacy's grant does not
+# reach it.
+mshape:DischargeSummaryShape
+  a sh:NodeShape ;
+  sh:targetClass fhir:Composition ;
+  sh:closed true ;
+  sh:property [ sh:path rdf:type ; sh:in ( fhir:Composition ) ] ;
+  sh:property [ sh:path fhir:nodeRole ; sh:maxCount 1 ; sh:in ( fhir:treeRoot ) ] ;
+  sh:property [ sh:path fhir:id ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirIdShape ] ;
+  sh:property [ sh:path fhir:status ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirStringShape ] ;
+  sh:property [ sh:path ( fhir:status fhir:v ) ; sh:in ( "preliminary" "final" "amended" ) ] ;
+  sh:property [ sh:path fhir:type ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirCodeableConceptShape ] ;
+  sh:property [
+    sh:path ( fhir:type fhir:coding [ sh:zeroOrMorePath rdf:rest ] rdf:first fhir:code fhir:v ) ;
+    sh:minCount 1 ;
+    sh:in ( "18842-5" ) ;
+  ] ;
+  sh:property [ sh:path fhir:subject ; sh:minCount 1 ; sh:maxCount 1 ] ;
+  sh:property [
+    sh:path ( fhir:subject [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+    sh:minCount 1 ;
+    sh:node mshape:FhirLinkedReferenceShape ;
+  ] ;
+  sh:property [ sh:path fhir:date ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirDateTimeShape ] ;
+  sh:property [ sh:path fhir:author ; sh:minCount 1 ; sh:maxCount 1 ] ;
+  sh:property [
+    sh:path ( fhir:author [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+    sh:minCount 1 ;
+    sh:node mshape:FhirReferenceShape ;
+  ] ;
+  sh:property [ sh:path fhir:title ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirStringShape ] ;
+  sh:property [ sh:path fhir:note ; sh:maxCount 1 ] ;
+  sh:property [
+    sh:path ( fhir:note [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+    sh:node mshape:FhirAnnotationShape ;
+  ] ;
+  sh:property [ sh:path fhir:section ; sh:minCount 1 ; sh:maxCount 1 ] ;
+  sh:property [
+    sh:path ( fhir:section [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+    sh:minCount 1 ;
+    sh:node mshape:CompositionSectionShape ;
+  ] .
+
+mshape:CompositionSectionShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:property [ sh:path fhir:title ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirStringShape ] ;
+  sh:property [ sh:path fhir:entry ; sh:maxCount 1 ] ;
+  sh:property [
+    sh:path ( fhir:entry [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+    sh:node mshape:FhirLinkedReferenceShape ;
+  ] .
