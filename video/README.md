@@ -14,6 +14,7 @@ the Solid Suite walkthrough recorder; one generic `scenes.ts` serves every demo
 | `<demo>/claims.json` | Each spoken total and the ledger quantity it must equal |
 | `record.ts` | Check, rehearse or record one demo |
 | `voice.ts` | Prepare narration takes and split them into clips |
+| `publish.ts` | Re-encode recordings for the web into `published/` (committed, served by the site) |
 | `scenes.ts` | The actions: `card`, `step`, `act`, `ring`, `lens`, `ring-lens`, `chip`, `open` |
 | `lib/` | Narration parser, the static check, screencast capture, the pointer and rings, the mux |
 | `stage/` | The overlay injected into every page (pointer, rings, organisation chip, cross-fades) |
@@ -71,6 +72,20 @@ Output in `video/dist/<demo>/` (not in git; `tools/build-site.mjs` copies it to 
 `/video/<demo>/`): `video.mp4`, `captions.vtt`, `chapters.vtt` (cue id = scene id, which the
 welcome page's player seeks by), `poster.jpg`, `report.json` (duration, chapter times, the live
 totals, warnings).
+
+## Publish
+
+`video/dist/` is archival (CRF 18) and not in git. The copy the site serves is committed in
+`video/published/<demo>/` (`video.mp4`, `captions.vtt`, `chapters.vtt`, `poster.jpg`):
+
+```sh
+node --experimental-transform-types video/publish.ts --all   # re-encode dist/ for the web
+```
+
+It re-encodes the picture at CRF 28 with fast start and keeps the narration, soft captions and
+chapters. `tools/build-site.mjs` copies `video/published/` to the site's `/video/`, then any local
+`video/dist/` over it. The welcome page fetches nothing until a visitor presses play
+(`preload="none"`, lazy poster), so the videos do not count against an app's first load.
 
 ## Voice
 
