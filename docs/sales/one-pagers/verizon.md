@@ -19,7 +19,9 @@ Operator (role-map sheet).
 
 ## Your seat in the demo
 
-`apps/wallet` (live: <https://solid-mortgage-wallet.vercel.app>) — the "Data Vault", modelled on Verizon: the borrower's profile, credential
+> **Current demo (static rebuild, decision 0017):** this role is played by Cairn (`apps/wallet`, [`/wallet/`](https://solid-mortgage.vercel.app/wallet/)), Alex's pod provider and personal data app. Every organisation in the demo is fictional and no real name appears in it. The description below was written for the earlier five-scene build and is due a refresh against `docs/rebuild/design.md` §a before use.
+
+The "Data Vault", modelled on Verizon: the borrower's profile, credential
 wallet, access grants, consent-receipt ledger, and revocation controls (decisions 0002/0003).
 It is the only app on screen in **every** scene, and the demo's closing payoff is its ledger
 view: every grant and every revocation, receipted (scene 5). Honesty note the presenter owns:

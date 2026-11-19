@@ -23,12 +23,14 @@ dual-GSE acceptance (org-map role 5).
 
 ## Your seat in the demo
 
-`apps/verifications` (live: <https://solid-mortgage-verifications.vercel.app>) — the Finicity-modelled flow is one of three distinctly branded issuer
+> **Current demo (static rebuild, decision 0017):** this role is played by Alder Bank (`apps/bank`, [`/bank/`](https://solid-mortgage.vercel.app/bank/)), Alex's bank, which supplies the account and asset data; the demo has no separate aggregator. Every organisation in the demo is fictional and no real name appears in it. The description below was written for the earlier five-scene build and is due a refresh against `docs/rebuild/design.md` §a before use.
+
+The Finicity-modelled flow is one of three distinctly branded issuer
 flows in scene 1: it issues the **asset credential** into the borrower's pod, alongside the
 employment/income and credit-score issuers. Bank-sourced open banking and employer-sourced
 payroll verification are deliberately distinct issuers in the demo (org-map role 4).
 
-> SCREENSHOT-TODO: `apps/verifications` Finicity-modelled asset-credential issuance flow
+> SCREENSHOT-TODO: `apps/bank` Finicity-modelled asset-credential issuance flow
 > (scene 1).
 
 ## The proposition

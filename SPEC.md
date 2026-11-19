@@ -1,5 +1,10 @@
 # Solid Mortgage Showcase — SPEC
 
+> **Superseded** by decision [0017](decisions/0017-static-rebuild.md) and the rebuild design
+> (`docs/rebuild/design.md`). This was the design of record for the earlier Next.js build
+> (eight apps "modelled on" real organisations, per-app Vercel projects), removed on 19 Nov 2026;
+> it is kept for its research grounding and the history of the decisions it summarises.
+
 Design of record. Research grounding: `docs/research/` (read `research-gaps.md` first — every
 contradiction it raises is resolved by a numbered decision in `decisions/`). Task tracking:
 beads (`bd`), prefix `sm-`. This SPEC is scene-driven: everything exists to make the five-scene

@@ -19,13 +19,15 @@ requires the borrower's copy promptly on completion or 3 business days before co
 
 ## Your seat in the demo
 
-`apps/property` (live: <https://solid-mortgage-property.vercel.app>) — the Cotality-modelled flow issues the **appraisal-value credential** that
+> **Current demo (static rebuild, decision 0017):** this role is played by Plumbline Valuation (`apps/appraisal`, [`/appraisal/`](https://solid-mortgage.vercel.app/appraisal/)). Every organisation in the demo is fictional and no real name appears in it. The description below was written for the earlier five-scene build and is due a refresh against `docs/rebuild/design.md` §a before use.
+
+The Cotality-modelled flow issues the **appraisal-value credential** that
 feeds the underwriting file (decision 0002). Honestly scoped: appraisal internals are a
 product-phase extension, not one of the five scripted scenes — in the 10-minute cut your
 credential is referenced from the loan file rather than played on stage (SPEC §2). The seat
 exists in the build today; the spotlight grows in the partner phase.
 
-> SCREENSHOT-TODO: `apps/property` appraisal-value credential issuance flow.
+> SCREENSHOT-TODO: `apps/appraisal` appraisal-value credential issuance flow.
 
 ## The proposition
 

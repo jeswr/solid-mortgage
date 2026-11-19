@@ -18,8 +18,7 @@ non-commercial and neutral, and the role-map already lists you as the identifier
 
 ## Your seat in the demo
 
-*(Live demo front door: <https://solid-mortgage.vercel.app> — every deployed app links from the
-tour shell.)*
+> **Current demo (static rebuild, decision 0017):** this role is played by Halyard LEI Services (`apps/registry`, [`/registry/`](https://solid-mortgage.vercel.app/registry/)), a business register and illustrative LEI issuer in the business-onboarding demo. Every organisation in the demo is fictional and no real name appears in it. The description below was written for the earlier five-scene build and is due a refresh against `docs/rebuild/design.md` §a before use.
 
 Not an app — the layer under all of them. Every stakeholder organisation in the demo is
 referenced by its GLEIF LEI in the RDF data model (SPEC §3). Honestly scoped: the demo uses
@@ -27,7 +26,7 @@ LEI-as-identifier only; vLEI (KERI/ACDC) role credentials are partner-phase narr
 the build (SPEC §3; research-gaps C5). Your seat becomes visible wherever an org identity is
 resolved — the tour app's ecosystem map and each org's WebID profile.
 
-> SCREENSHOT-TODO: `apps/tour` ecosystem map with an org profile showing its LEI reference.
+> SCREENSHOT-TODO: `apps/registry` ecosystem map with an org profile showing its LEI reference.
 
 ## The proposition
 

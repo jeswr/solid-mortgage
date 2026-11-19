@@ -8,10 +8,10 @@ through thirteen apps of twelve fictional organisations that all work from one p
 > control, signatures and proofs are real. Everything runs in your browser and nothing is sent to
 > a server.
 
-The rebuild is under way (decision [0017](decisions/0017-static-rebuild.md)). One static site:
-each organisation app is served under `/<slug>/`, and the pods run in the visitor's browser in
-a service worker backed by sparq's wasm Solid server (`@sparq-org/solid-server`). The previous
-Next.js apps are in `legacy/` until the new guided path replaces them.
+The demo is one static site (decision [0017](decisions/0017-static-rebuild.md)): each
+organisation app is served under `/<slug>/`, and the pods run in the visitor's browser in a
+service worker backed by sparq's wasm Solid server (`@sparq-org/solid-server`). The previous
+Next.js apps were removed on 19 Nov 2026; their code is in the git history before that commit.
 
 ## Run it
 

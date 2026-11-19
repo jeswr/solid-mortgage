@@ -18,14 +18,16 @@ eNotes are 12.86% of MERS registrations (Oct 2025, 3M+ total) and eNote loans fu
 
 ## Your seat in the demo
 
-`apps/closing` (live: <https://solid-mortgage-closing.vercel.app>) — the eClose flow modelled on eOriginal, scene 5: the Closing Disclosure
+> **Current demo (static rebuild, decision 0017):** this role is played by Sextant Title & Escrow (`apps/title`, [`/title/`](https://solid-mortgage.vercel.app/title/)): the settlement agent runs the closing, with eClosing as its tool. Every organisation in the demo is fictional and no real name appears in it. The description below was written for the earlier five-scene build and is due a refresh against `docs/rebuild/design.md` §a before use.
+
+The eClose flow modelled on eOriginal, scene 5: the Closing Disclosure
 arrives in the borrower's pod at least 3 business days before closing (TRID [5][25]), the
 borrower eSigns, and the eNote beat references "the eNote registry" generically (the demo
 carries no registry-operator branding — org-map, gaps). The notarisation session itself is a
 partner slot: the org-map pairs you with a RON platform such as Proof or a MISMO-certified
 notary product (org-map role 8).
 
-> SCREENSHOT-TODO: `apps/closing` eSign ceremony with the CD-delivered timeline (scene 5).
+> SCREENSHOT-TODO: `apps/title` eSign ceremony with the CD-delivered timeline (scene 5).
 
 ## The proposition
 

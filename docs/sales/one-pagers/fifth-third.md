@@ -18,13 +18,15 @@ removes.
 
 ## Your seat in the demo
 
-`apps/lender-53` (live: <https://solid-mortgage-lender-b.vercel.app>) — the thin competing pre-qualification surface in scene 2. The borrower
+> **Current demo (static rebuild, decision 0017):** this role is played by Copperfield Mortgage (`apps/lender-b`, [`/lender-b/`](https://solid-mortgage.vercel.app/lender-b/)). Every organisation in the demo is fictional and no real name appears in it. The description below was written for the earlier five-scene build and is due a refresh against `docs/rebuild/design.md` §a before use.
+
+The thin competing pre-qualification surface in scene 2. The borrower
 proves **income ≥ $7,000/month AND credit score ≥ 620** with a zero-knowledge proof; the app
 modelled on Fifth Third verifies the proof and returns an illustrative rate quote without ever
 seeing the underlying numbers. No credit pull; if the borrower walks away, there is no income
 or credit data for the lender to retain (master narrative, scene 2).
 
-> SCREENSHOT-TODO: `apps/lender-53` pre-qual result card (scene 2, proof verified, quote
+> SCREENSHOT-TODO: `apps/lender-b` pre-qual result card (scene 2, proof verified, quote
 > returned).
 
 ## The proposition

@@ -2,4 +2,4 @@
 
 | Command | Cold | Warm | Notes |
 |---|---|---|---|
-| `node packages/solid-kit/scripts/vendor-solid-server.mjs` | ~292s | ~77s | wasm-pack build of sparq-lws-wasm; needs wasm-pack >=0.14 |
+| `pnpm run test:e2e:site` | – | ~8 min | Builds the site, then runs the root acceptance suite (74 tests) against `dist/` |

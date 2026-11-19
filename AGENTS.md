@@ -74,7 +74,6 @@ e2e/                  acceptance suite (lane T1), run against dist/ by playwrigh
 tools/                build-site, serve-dist, site-routes (generates vercel.json),
                       vercel-ignore, vendor-sdk, lint-iris, check-insignia, check-mort-terms
 vendor/               packed @jeswr tarballs not on npm (showcase-kit, app-shell)
-legacy/               the retired Next.js apps and their e2e suite; not in the workspace
 video/                recorder and narration (lane V1)
 ```
 
