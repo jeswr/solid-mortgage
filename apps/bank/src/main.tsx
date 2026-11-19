@@ -4,6 +4,13 @@ import "@fontsource/source-serif-4/latin-600.css";
 import "@fontsource/inter/latin-400.css";
 import "@fontsource/inter/latin-600.css";
 import "./app.css";
+import {
+  BUSINESS_KYB_HOLDER,
+  businessKybLens,
+  businessKybTour,
+  isBusinessKybPage,
+  KYB_COMPLIANCE,
+} from "@mortgage/content/business-kyb/mount";
 import { trackTourContext } from "@mortgage/content/mortgage/browser";
 import { MORTGAGE_HOLDER, mortgageLens, mortgageTour } from "@mortgage/content/mortgage/mount";
 import {
@@ -23,6 +30,8 @@ import { PodsProvider, startPods } from "./pods.tsx";
 const APP = "bank";
 // A page under moving/ belongs to the moving-house demo (src/sections/moving-house/).
 const movingHouse = isMovingHousePage(location.pathname, "bank", location.search);
+// A page under kyb/ belongs to the business KYB demo (src/sections/business-kyb/).
+const kyb = isBusinessKybPage(location.pathname, "bank", location.search);
 const root = document.getElementById("root");
 if (root === null) throw new Error("index.html is missing #root");
 const view = createRoot(root);
@@ -41,14 +50,27 @@ startPods(APP).then(
         </PodsProvider>
       </StrictMode>,
     );
-    void mountDemo({
-      app: APP,
-      holder: movingHouse ? MOVING_HOUSE_HOLDER : MORTGAGE_HOLDER,
-      lens: movingHouse ? movingHouseLens() : mortgageLens(),
-      registry: ORGS,
-      runtime: { onEvent, resetDemo, setTourContext: trackTourContext(setTourContext) },
-      tour: movingHouse ? movingHouseTour() : mortgageTour(),
-    });
+    const runtime = { onEvent, resetDemo, setTourContext: trackTourContext(setTourContext) };
+    void mountDemo(
+      kyb
+        ? {
+            app: APP,
+            holder: BUSINESS_KYB_HOLDER,
+            ledger: { compliance: [...KYB_COMPLIANCE] },
+            lens: businessKybLens(),
+            registry: ORGS,
+            runtime,
+            tour: businessKybTour(),
+          }
+        : {
+            app: APP,
+            holder: movingHouse ? MOVING_HOUSE_HOLDER : MORTGAGE_HOLDER,
+            lens: movingHouse ? movingHouseLens() : mortgageLens(),
+            registry: ORGS,
+            runtime,
+            tour: movingHouse ? movingHouseTour() : mortgageTour(),
+          },
+    );
   },
   (error: unknown) => console.error("bank: the pods did not start", error),
 );

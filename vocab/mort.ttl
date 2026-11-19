@@ -1443,3 +1443,180 @@ mort:CaseKind-RepairJob
   skos:inScheme mort:CaseKindScheme ;
   skos:topConceptOf mort:CaseKindScheme ;
   rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+#################################################################
+# Business KYB (demo 3, flows.md section 3). Ported from the
+# solid-kyb residue vocabulary (kyb:, never deployed) into this
+# single published vocabulary. Every other KYB concern uses FIBO
+# Business Entities, OMG Commons, schema.org and W3C VC 2.0.
+#################################################################
+
+mort:OrganisationalIdentityCredential
+  a owl:Class ;
+  rdfs:subClassOf cred:VerifiableCredential ;
+  rdfs:label "Organisational identity credential"@en ;
+  rdfs:comment "A business register's attestation of a legal entity's identity: legal name, legal form, registered address and Legal Entity Identifier (ISO 17442). The subject is the entity, typed fibo-be-le-lei:LEIRegisteredEntity. In the demo every LEI is illustrative (prefix 9999, mort:isIllustrativeLei true)."@en ;
+  skos:definition "Verifiable credential attesting a legal entity's registered identity and LEI."@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:OfficerAuthorisationCredential
+  a owl:Class ;
+  rdfs:subClassOf cred:VerifiableCredential ;
+  rdfs:label "Officer authorisation credential"@en ;
+  rdfs:comment "A business register's attestation that a named natural person is a corporate officer and signatory of the subject entity (fibo-be-oac-exec:hasCorporateOfficer). Supplies the control person of FinCEN's CDD Rule, 31 CFR 1010.230(d)(2)."@en ;
+  skos:definition "Verifiable credential attesting who may act and sign for a legal entity."@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:BeneficialOwnershipCredential
+  a owl:Class ;
+  rdfs:subClassOf cred:VerifiableCredential ;
+  rdfs:label "Beneficial ownership credential"@en ;
+  rdfs:comment "A business register's attestation of the direct owners of the subject entity and each owner's share in basis points (fibo-be-oac-opty:hasDirectOwnership). The ownership prong of FinCEN's CDD Rule, 31 CFR 1010.230(d)(1), names every individual holding 25 percent (2500 basis points) or more."@en ;
+  skos:definition "Verifiable credential attesting the owners of a legal entity and their ownership shares."@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:CddDecisionRecord
+  a owl:Class ;
+  rdfs:label "Customer due diligence decision record"@en ;
+  rdfs:comment "A bank's own record of a customer due diligence decision on a legal entity customer: the credentials it checked, the beneficial owners and control person it identified, the decision and its date. Kept by the bank as 31 CFR 1010.230(i) requires, independent of any grant the customer later withdraws."@en ;
+  skos:definition "A bank's record of a customer due diligence decision on a legal entity."@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:isIllustrativeLei
+  a owl:DatatypeProperty ;
+  rdfs:label "is illustrative LEI"@en ;
+  rdfs:comment "On a fibo-be-le-lei:LegalEntityIdentifier: true when the identifier is a fictional, checksum-valid demonstration value under the never-accredited prefix 9999, which must never be mistaken for a GLEIF-issued LEI."@en ;
+  skos:definition "Flags a legal entity identifier as a fictional demonstration value."@en ;
+  rdfs:range xsd:boolean ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:ownershipPercentageBps
+  a owl:DatatypeProperty ;
+  rdfs:label "ownership percentage (basis points)"@en ;
+  rdfs:comment "On a fibo-be-oac-opty:EntityOwnership: the owner's share as whole basis points (0 to 10000), the integer form ZK threshold circuits take. Approximates fibo-be-le-lei:hasOwnershipPercentage, which is a decimal percentage."@en ;
+  skos:definition "An ownership share in whole basis points."@en ;
+  rdfs:range xsd:integer ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:beneficialOwnershipArrayCommitment
+  a owl:DatatypeProperty ;
+  rdfs:label "beneficial ownership array commitment"@en ;
+  rdfs:comment "Named by mort:field on a mort:ZkOperandAnchor: the anchor's mort:operandEnc is a BLAKE3 commitment, truncated to a BN254 field element, over the entity's full owner array (eight basis-point slots, zero-padded). A completeness proof binds to it."@en ;
+  skos:definition "A commitment to an entity's full beneficial-owner basis-point array."@en ;
+  rdfs:range xsd:string ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:cddDecisionStatus
+  a owl:ObjectProperty ;
+  rdfs:label "CDD decision status"@en ;
+  rdfs:comment "On a mort:CddDecisionRecord: the decision, a concept of mort:CddDecisionStatusScheme."@en ;
+  skos:definition "The outcome of a customer due diligence decision."@en ;
+  rdfs:range skos:Concept ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:cddCheckDate
+  a owl:DatatypeProperty ;
+  rdfs:label "CDD check date"@en ;
+  rdfs:comment "On a mort:CddDecisionRecord: the date the credentials were checked."@en ;
+  skos:definition "The date a customer due diligence check was made."@en ;
+  rdfs:range xsd:date ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:checkedCredential
+  a owl:ObjectProperty ;
+  rdfs:label "checked credential"@en ;
+  rdfs:comment "On a mort:CddDecisionRecord: a credential the bank read from the customer's pod and checked (signature, shape, validity, status) before deciding."@en ;
+  skos:definition "A credential checked for a customer due diligence decision."@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:identifiedBeneficialOwner
+  a owl:DatatypeProperty ;
+  rdfs:label "identified beneficial owner"@en ;
+  rdfs:comment "On a mort:CddDecisionRecord: the name of an individual the bank identified under the ownership prong, 31 CFR 1010.230(d)(1)."@en ;
+  skos:definition "Name of a beneficial owner identified in a customer due diligence decision."@en ;
+  rdfs:range xsd:string ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:controlPerson
+  a owl:DatatypeProperty ;
+  rdfs:label "control person"@en ;
+  rdfs:comment "On a mort:CddDecisionRecord: the name of the individual the bank identified under the control prong, 31 CFR 1010.230(d)(2)."@en ;
+  skos:definition "Name of the control person identified in a customer due diligence decision."@en ;
+  rdfs:range xsd:string ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:EntityLegalFormScheme
+  a skos:ConceptScheme ;
+  rdfs:label "Entity legal form scheme"@en ;
+  rdfs:comment "The US legal forms the demo's register attests, as values of fibo-be-le-lei:hasLegalForm."@en ;
+  skos:prefLabel "Entity legal form scheme"@en ;
+  skos:definition "Concept scheme of US entity legal forms."@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:EntityLegalForm-LLC
+  a skos:Concept ;
+  rdfs:label "limited liability company"@en ;
+  rdfs:comment "A US limited liability company."@en ;
+  skos:prefLabel "limited liability company"@en ;
+  skos:definition "A US limited liability company."@en ;
+  skos:inScheme mort:EntityLegalFormScheme ;
+  skos:topConceptOf mort:EntityLegalFormScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:EntityLegalForm-Corp
+  a skos:Concept ;
+  rdfs:label "corporation"@en ;
+  rdfs:comment "A US business corporation."@en ;
+  skos:prefLabel "corporation"@en ;
+  skos:definition "A US business corporation."@en ;
+  skos:inScheme mort:EntityLegalFormScheme ;
+  skos:topConceptOf mort:EntityLegalFormScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:EntityLegalForm-LLP
+  a skos:Concept ;
+  rdfs:label "limited liability partnership"@en ;
+  rdfs:comment "A US limited liability partnership."@en ;
+  skos:prefLabel "limited liability partnership"@en ;
+  skos:definition "A US limited liability partnership."@en ;
+  skos:inScheme mort:EntityLegalFormScheme ;
+  skos:topConceptOf mort:EntityLegalFormScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:CddDecisionStatusScheme
+  a skos:ConceptScheme ;
+  rdfs:label "CDD decision status scheme"@en ;
+  rdfs:comment "Outcomes of a customer due diligence decision on a legal entity customer."@en ;
+  skos:prefLabel "CDD decision status scheme"@en ;
+  skos:definition "Concept scheme of customer due diligence outcomes."@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:CddDecisionStatus-Opened
+  a skos:Concept ;
+  rdfs:label "account opened"@en ;
+  rdfs:comment "Due diligence passed and the account was opened."@en ;
+  skos:prefLabel "account opened"@en ;
+  skos:definition "Due diligence passed; the account was opened."@en ;
+  skos:inScheme mort:CddDecisionStatusScheme ;
+  skos:topConceptOf mort:CddDecisionStatusScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:CddDecisionStatus-Declined
+  a skos:Concept ;
+  rdfs:label "declined"@en ;
+  rdfs:comment "Due diligence failed and the account was declined."@en ;
+  skos:prefLabel "declined"@en ;
+  skos:definition "Due diligence failed; the account was declined."@en ;
+  skos:inScheme mort:CddDecisionStatusScheme ;
+  skos:topConceptOf mort:CddDecisionStatusScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:CddDecisionStatus-PendingReview
+  a skos:Concept ;
+  rdfs:label "pending review"@en ;
+  rdfs:comment "Due diligence needs a person's review before a decision."@en ;
+  skos:prefLabel "pending review"@en ;
+  skos:definition "Due diligence awaits a person's review."@en ;
+  skos:inScheme mort:CddDecisionStatusScheme ;
+  skos:topConceptOf mort:CddDecisionStatusScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .

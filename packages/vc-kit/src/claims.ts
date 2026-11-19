@@ -14,11 +14,15 @@
 
 import {
   type AddressFields,
+  type LegalForm,
   MORT,
   TypedNode,
+  writeBeneficialOwnershipClaims,
   writeEvidenceOfInsuranceClaims,
   writeIdentityClaims,
   writeMotorPolicyClaims,
+  writeOfficerAuthorisationClaims,
+  writeOrganisationalIdentityClaims,
   writeTitleCommitmentClaims,
 } from "@mortgage/data-model";
 import type { DataFactory, DatasetCore, Term } from "@rdfjs/types";
@@ -293,6 +297,30 @@ export interface MotorPolicyClaims {
   readonly policyEnd: string;
 }
 
+/** Business KYB: the register's organisational identity of an entity (an illustrative LEI). */
+export interface OrganisationalIdentityClaims {
+  readonly kind: "organisational-identity-credential";
+  readonly legalName: string;
+  readonly legalForm: LegalForm;
+  readonly address: PostalAddressClaims;
+  /** Prefix 9999 with valid ISO 7064 check digits; anything else is refused. */
+  readonly lei: string;
+}
+
+/** Business KYB: the officers and signatories who act for an entity. */
+export interface OfficerAuthorisationClaims {
+  readonly kind: "officer-authorisation-credential";
+  readonly entityName: string;
+  readonly officers: readonly { readonly name: string; readonly jobTitle: string }[];
+}
+
+/** Business KYB: an entity's direct owners and their shares in basis points. */
+export interface BeneficialOwnershipClaims {
+  readonly kind: "beneficial-ownership-credential";
+  readonly entityName: string;
+  readonly owners: readonly { readonly name: string; readonly bps: number }[];
+}
+
 /** The typed claims union - discriminated by the credential kind. */
 export type CredentialClaims =
   | EmploymentIncomeClaims
@@ -304,7 +332,10 @@ export type CredentialClaims =
   | TitleCommitmentClaims
   | EvidenceOfInsuranceClaims
   | MotorPolicyClaims
-  | ZkOperandAnchorClaims;
+  | ZkOperandAnchorClaims
+  | OrganisationalIdentityClaims
+  | OfficerAuthorisationClaims
+  | BeneficialOwnershipClaims;
 
 /** Base wrapper: typed multi-valued `rdf:type` plus single-valued setters. */
 class GraphNode extends TermWrapper {
@@ -580,6 +611,29 @@ export function writeSubjectClaims(
           ...(claims.vehicle.plate === undefined ? {} : { plate: claims.vehicle.plate }),
           ...(claims.vehicle.color === undefined ? {} : { color: claims.vehicle.color }),
         },
+      });
+      return;
+    }
+    case "organisational-identity-credential": {
+      writeOrganisationalIdentityClaims(typedSubject(subject), {
+        address: addressFieldsOf(claims.address),
+        legalForm: claims.legalForm,
+        legalName: claims.legalName,
+        lei: claims.lei,
+      });
+      return;
+    }
+    case "officer-authorisation-credential": {
+      writeOfficerAuthorisationClaims(typedSubject(subject), {
+        entityName: claims.entityName,
+        officers: claims.officers,
+      });
+      return;
+    }
+    case "beneficial-ownership-credential": {
+      writeBeneficialOwnershipClaims(typedSubject(subject), {
+        entityName: claims.entityName,
+        owners: claims.owners,
       });
       return;
     }

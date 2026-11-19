@@ -5,6 +5,13 @@
  */
 import type { ComponentType } from "react";
 import {
+  KybHome,
+  KybLedger,
+  KybProve,
+  KybRequests,
+  KybSharing,
+} from "./business-kyb/BusinessKyb.tsx";
+import {
   MotorClaimFile,
   MotorClaimRequests,
   MotorClaimSeen,
@@ -50,6 +57,11 @@ export const sections: readonly AppSection[] = [
     title: "Standing grants",
   },
   { Component: MovingLedger, demo: "moving-house", path: "moving/ledger", title: "Journey ledger" },
+  { Component: KybHome, demo: "business-kyb", path: "kyb", title: "Northwind" },
+  { Component: KybRequests, demo: "business-kyb", path: "kyb/requests", title: "Requests" },
+  { Component: KybProve, demo: "business-kyb", path: "prove/kyb", title: "Prove ownership" },
+  { Component: KybSharing, demo: "business-kyb", path: "kyb/sharing", title: "Grants" },
+  { Component: KybLedger, demo: "business-kyb", path: "kyb/ledger", title: "Journey ledger" },
   { Component: MotorClaimFile, demo: "motor-claim", path: "claim", title: "Claim CLM-1" },
   { Component: MotorClaimRequests, demo: "motor-claim", path: "claim/requests", title: "Requests" },
   { Component: MotorClaimSeen, demo: "motor-claim", path: "claim/seen", title: "Who saw what" },

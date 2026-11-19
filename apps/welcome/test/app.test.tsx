@@ -28,6 +28,7 @@ describe("every route", () => {
     "/watch/mortgage",
     "/watch/moving-house",
     "/watch/motor-claim",
+    "/watch/business-kyb",
     "/honesty",
     "/journey",
     "/nope",

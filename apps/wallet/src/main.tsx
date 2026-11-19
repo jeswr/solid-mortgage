@@ -5,6 +5,13 @@ import "@fontsource/nunito-sans/400.css";
 import "@fontsource/nunito-sans/600.css";
 import "@fontsource/nunito-sans/800.css";
 import "./app.css";
+import {
+  BUSINESS_KYB_HOLDER,
+  businessKybLens,
+  businessKybTour,
+  isBusinessKybPage,
+  KYB_COMPLIANCE,
+} from "@mortgage/content/business-kyb/mount";
 import { mortgageSeed, trackTourContext } from "@mortgage/content/mortgage/browser";
 import { MORTGAGE_HOLDER, mortgageLens, mortgageTour } from "@mortgage/content/mortgage/mount";
 import {
@@ -33,9 +40,17 @@ import { linkTour } from "./tour-link.ts";
 // claim/ to the motor claim (src/sections/motor-claim/).
 const movingHouse = isMovingHousePage(location.pathname, "wallet", location.search);
 const motorClaim = !movingHouse && isMotorClaimPage(location.pathname, "wallet", location.search);
+// A page under kyb/ (or prove/kyb) belongs to the business KYB demo (src/sections/business-kyb/).
+const kyb = isBusinessKybPage(location.pathname, "wallet", location.search);
 
 // The demo the wallet is mounted for, and the holder it shows first (src/holder.ts).
-const demo = movingHouse ? movingHouseTour() : motorClaim ? motorClaimTour() : mortgageTour();
+const demo = kyb
+  ? businessKybTour()
+  : movingHouse
+    ? movingHouseTour()
+    : motorClaim
+      ? motorClaimTour()
+      : mortgageTour();
 const holder = initialHolder(window.location.href, demo.holder);
 
 configure({ app: "wallet", holder, registry: ORGS, seed: mortgageSeed() });
@@ -48,8 +63,21 @@ const started = ready().then((info) => {
 
 void mountDemo({
   app: "wallet",
-  holder: movingHouse ? MOVING_HOUSE_HOLDER : motorClaim ? MOTOR_CLAIM_HOLDER : MORTGAGE_HOLDER,
-  lens: movingHouse ? movingHouseLens() : motorClaim ? motorClaimLens() : mortgageLens(),
+  holder: kyb
+    ? BUSINESS_KYB_HOLDER
+    : movingHouse
+      ? MOVING_HOUSE_HOLDER
+      : motorClaim
+        ? MOTOR_CLAIM_HOLDER
+        : MORTGAGE_HOLDER,
+  lens: kyb
+    ? businessKybLens()
+    : movingHouse
+      ? movingHouseLens()
+      : motorClaim
+        ? motorClaimLens()
+        : mortgageLens(),
+  ...(kyb ? { ledger: { compliance: [...KYB_COMPLIANCE] } } : {}),
   registry: ORGS,
   runtime: { onEvent, resetDemo, setTourContext: trackTourContext(setTourContext) },
   tour: demo,

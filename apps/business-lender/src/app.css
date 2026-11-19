@@ -1,0 +1,259 @@
+/* AUTHORED-BY Claude Opus 5.5 */
+@import "./tokens.css";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bb-stone);
+  color: var(--bb-ink);
+  font-family: var(--bb-sans);
+  line-height: 1.55;
+}
+
+a {
+  color: var(--bb-burgundy-deep);
+}
+
+:focus-visible {
+  outline: 3px solid var(--bb-focus);
+  outline-offset: 2px;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--bb-serif);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* A sober burgundy masthead with the desk's name set in the serif. */
+.masthead {
+  background: var(--bb-burgundy);
+  color: #ffffff;
+}
+
+.masthead-inner {
+  max-width: var(--bb-measure);
+  margin: 0 auto;
+  padding: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 1.5rem;
+}
+
+.masthead-name {
+  margin: 0;
+  font-family: var(--bb-serif);
+  font-size: 1.35rem;
+}
+
+.masthead-name a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.masthead-desk {
+  margin: 0;
+  font-size: 0.9rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.92;
+}
+
+main {
+  max-width: var(--bb-measure);
+  margin: 0 auto;
+  padding: 1.5rem 1rem 4rem;
+}
+
+h1 {
+  margin: 0 0 0.25rem;
+  font-size: 2rem;
+}
+
+.lede {
+  color: var(--bb-muted);
+  margin: 0 0 1.25rem;
+  max-width: 46rem;
+}
+
+.mono {
+  font-family: var(--bb-mono);
+  overflow-wrap: anywhere;
+}
+
+/* The pipeline: a ruled ledger of deals. */
+.pipeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--bb-paper);
+  border: 1px solid var(--bb-rule);
+}
+
+.pipeline li {
+  padding: 1rem;
+  border-bottom: 1px solid var(--bb-rule);
+}
+
+.pipeline li:last-child {
+  border-bottom: 0;
+}
+
+.pipeline a {
+  font-family: var(--bb-serif);
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.pipeline p {
+  margin: 0.2rem 0 0;
+  color: var(--bb-muted);
+}
+
+/* The deal view: two panes, the borrower on the left and the facility on the right. */
+.deal {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (max-width: 56rem) {
+  .deal {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.pane {
+  background: var(--bb-paper);
+  border: 1px solid var(--bb-rule);
+  border-top: 4px solid var(--bb-burgundy);
+  padding: 1rem 1.1rem 1.25rem;
+  min-width: 0;
+}
+
+.pane h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.3rem;
+}
+
+.pane h3 {
+  margin: 1.25rem 0 0.5rem;
+  font-size: 1.05rem;
+}
+
+.terms {
+  display: grid;
+  grid-template-columns: minmax(8rem, max-content) 1fr;
+  gap: 0.35rem 1rem;
+  margin: 0;
+}
+
+.terms dt {
+  color: var(--bb-muted);
+}
+
+.terms dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.table caption {
+  text-align: left;
+  color: var(--bb-muted);
+  padding-bottom: 0.35rem;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.5rem 0.45rem;
+  border-bottom: 1px solid var(--bb-rule);
+  overflow-wrap: anywhere;
+}
+
+.table thead th {
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--bb-muted);
+}
+
+.table td.num {
+  font-variant-numeric: tabular-nums;
+}
+
+.status {
+  display: inline-block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.1rem 0.5rem;
+  border-radius: 2px;
+}
+
+.status-met {
+  background: var(--bb-met-soft);
+  color: var(--bb-met);
+}
+
+.status-pending {
+  background: var(--bb-pending-soft);
+  color: var(--bb-pending);
+}
+
+.status-illustrative {
+  background: var(--bb-stone);
+  color: var(--bb-muted);
+}
+
+.note {
+  background: var(--bb-burgundy-soft);
+  border-left: 4px solid var(--bb-burgundy);
+  padding: 0.6rem 0.8rem;
+  margin: 0.75rem 0 0;
+}
+
+.alert {
+  background: var(--bb-alert-soft);
+  color: var(--bb-alert);
+  border-left: 4px solid var(--bb-alert);
+  padding: 0.6rem 0.8rem;
+  margin: 0.5rem 0 0;
+}
+
+.muted {
+  color: var(--bb-muted);
+}
+
+.small {
+  font-size: 0.9rem;
+}
+
+footer.foot {
+  max-width: var(--bb-measure);
+  margin: 0 auto;
+  padding: 0 1rem 2rem;
+  color: var(--bb-muted);
+  font-size: 0.9rem;
+}

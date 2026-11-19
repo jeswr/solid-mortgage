@@ -80,7 +80,7 @@ interface UltraHonkLike {
   ): Promise<boolean>;
 }
 
-interface MemberBackend {
+export interface MemberBackend {
   readonly circuit: CompiledCircuitArtifact;
   readonly noir: NoirProgram;
   readonly backend: UltraHonkLike;
@@ -96,7 +96,7 @@ function maxThreads(): number {
 
 /** One shared WASM API instance (the dominant cold cost), then one backend per member. */
 let apiPromise: Promise<{ api: unknown; threads: number }> | null = null;
-const memberBackends = new Map<FilterIntMember, Promise<MemberBackend>>();
+const memberBackends = new Map<string, Promise<MemberBackend>>();
 
 async function loadApi(): Promise<{ api: unknown; threads: number }> {
   if (!apiPromise) {
@@ -114,14 +114,26 @@ async function loadApi(): Promise<{ api: unknown; threads: number }> {
 }
 
 /** Load (once) the pinned toolchain + committed artifact + backend for `member`. */
-export async function memberBackend(member: FilterIntMember): Promise<MemberBackend> {
-  let pending = memberBackends.get(member);
+export function memberBackend(member: FilterIntMember): Promise<MemberBackend> {
+  return circuitBackend(member, () => loadCommittedCircuit(member));
+}
+
+/**
+ * Load (once) the pinned toolchain + backend for any committed circuit, keyed by its name. The
+ * Tier A members go through {@link memberBackend}; the business KYB completeness circuit
+ * (`zk/kyb/`) passes its own committed artifact. `load` must assert the toolchain pin.
+ */
+export async function circuitBackend(
+  key: string,
+  load: () => Promise<CompiledCircuitArtifact>,
+): Promise<MemberBackend> {
+  let pending = memberBackends.get(key);
   if (!pending) {
     pending = (async () => {
       const [{ Noir }, bb, circuit, { api, threads }] = await Promise.all([
         import("@noir-lang/noir_js"),
         import("@aztec/bb.js"),
-        loadCommittedCircuit(member),
+        load(),
         loadApi(),
       ]);
       // The committed artifact IS a noir_js CompiledCircuit (identical compiler
@@ -136,12 +148,25 @@ export async function memberBackend(member: FilterIntMember): Promise<MemberBack
       ) as UltraHonkLike;
       return { circuit, noir, backend, threads };
     })();
-    memberBackends.set(member, pending);
+    memberBackends.set(key, pending);
     pending.catch(() => {
-      memberBackends.delete(member);
+      memberBackends.delete(key);
     });
   }
   return pending;
+}
+
+/** Prove with the pinned flavour on an already-loaded backend. */
+export function generateProofOn(loaded: MemberBackend, witness: Uint8Array): Promise<ProofData> {
+  return loaded.backend.generateProof(witness, PROOF_OPTIONS);
+}
+
+/** Verify with the pinned flavour on an already-loaded backend. */
+export function verifyProofOn(loaded: MemberBackend, proof: ProofData): Promise<boolean> {
+  return loaded.backend.verifyProof(
+    { proof: proof.proof, publicInputs: [...proof.publicInputs] },
+    PROOF_OPTIONS,
+  );
 }
 
 /**

@@ -34,6 +34,8 @@ export {
   PINNED_NOIR_JS_VERSION,
 } from "./circuits/registry.js";
 export { type HonestyItem, ZK_HONESTY, ZK_HONESTY_ITEMS, ZK_TOOLCHAIN } from "./honesty.js";
+// Business KYB (demo 3): owner-share and owner-array anchors, the Tier B completeness proof.
+export * from "./kyb/index.js";
 export {
   OP_CODES,
   type ProveTierAOptions,

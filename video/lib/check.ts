@@ -71,7 +71,7 @@ export const LENS_VIEWS = [
   "examiner",
 ] as const;
 /** Views the Lens (packages/lens) does not have yet. */
-const LENS_VIEWS_MISSING = new Set(["examiner"]);
+const LENS_VIEWS_MISSING = new Set<string>([]);
 
 const SMALL: Record<string, number> = {
   no: 0,
