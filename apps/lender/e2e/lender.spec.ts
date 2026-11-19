@@ -113,9 +113,12 @@ test("apply, submit, intend to proceed and acknowledge the Closing Disclosure", 
   await expect(page.getByText(/Application received on/)).toBeVisible();
   expect(await statusAs(helperPage, "lender", loanFile("application"))).toBe(200);
   expect(await statusAs(helperPage, "alex", alex("mortgage/juniper/application"))).toBe(200);
-  expect(await statusAs(helperPage, "alex", alex("consents/g4-credit-report-authorisation"))).toBe(
-    200,
-  );
+  // The screen records the credit-report authorisation by itself when it opens, apart from Submit.
+  await expect
+    .poll(() => statusAs(helperPage, "alex", alex("consents/g4-credit-report-authorisation")), {
+      timeout: 30_000,
+    })
+    .toBe(200);
   // The typed number went nowhere: not in Juniper's file, not in Alex's copy.
   for (const [owner, url] of [
     ["lender", loanFile("application")],

@@ -15,7 +15,7 @@
     "generate:shapes": "node scripts/generate-shapes.mjs",
     "generate:vocab": "node scripts/generate-vocab.mjs",
     "lint": "biome check src test scripts package.json tsconfig.json",
-    "test": "vitest run --root . --config ../../vitest.config.ts",
+    "test": "vitest run --root . --config vitest.config.ts",
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "dependencies": {

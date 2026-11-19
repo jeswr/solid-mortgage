@@ -20,6 +20,10 @@ import { type ServiceWorkerScope, startServiceWorker } from "./service-worker.js
 const scope = globalThis as unknown as { name?: string; document?: unknown };
 
 function decode(text: string): Uint8Array<ArrayBuffer> {
+  // Native base64 decoding where the browser has it (Uint8Array.fromBase64); else a byte loop.
+  const native = (Uint8Array as unknown as { fromBase64?: (s: string) => Uint8Array<ArrayBuffer> })
+    .fromBase64;
+  if (typeof native === "function") return native(text);
   const binary = atob(text);
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);

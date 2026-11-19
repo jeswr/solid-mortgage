@@ -333,6 +333,18 @@ export function createPodHost(options: PodHostOptions): PodHost {
   let restoreIssues: RestoreIssue[] = [];
   let seeded = false;
   let nextId = 1;
+  /**
+   * Pods are made when first needed (`ensurePod`), not all at start: the registry grows with every
+   * demo, and a cold start that built every owner's pod twice and saved it three times stopped
+   * fitting the 3 s budget (design.md). A pod with nothing saved for it is its baseline, so making
+   * it later gives the same pod. `lazyChain` is where a pod made later is restored from: nothing
+   * before the seed (as `rebuild("none")`), its own snapshots after it.
+   */
+  let lazyChain: Array<"current" | "seed"> = [];
+  /** Owners whose snapshot was saved before the seed; the seed overwrites them (see `runSeed`). */
+  const UNSEEDED_KEY = "unseededSnapshots";
+  let unseeded: Set<string> | undefined;
+  let seeding = false;
 
   // ---- serialisation: one queue per wasm module ----
   let queue: Promise<unknown> = Promise.resolve();
@@ -409,7 +421,38 @@ export function createPodHost(options: PodHostOptions): PodHost {
   async function persist(owner: PodOwner, kinds: Array<"current" | "seed">): Promise<void> {
     const bytes = pods.get(owner)?.snapshot();
     if (bytes === undefined) return;
+    if (!seeded && !seeding && kinds.includes("current")) {
+      unseeded ??= new Set((await storage.getMeta<string[]>(UNSEEDED_KEY)) ?? []);
+      if (!unseeded.has(owner)) {
+        unseeded.add(owner);
+        await storage.putMeta(UNSEEDED_KEY, [...unseeded]);
+      }
+    }
     for (const kind of kinds) await storage.putSnapshot(owner, kind, bytes);
+  }
+
+  /**
+   * Make `owner`'s pod when it is not up yet: restored from what was saved for it (`lazyChain`),
+   * else its baseline. False when `owner` has no pod at all. A trap while restoring replaces the
+   * module and restores every pod that was up, as `rebuild` does.
+   */
+  async function ensurePod(owner: PodOwner): Promise<boolean> {
+    if (pods.has(owner)) return true;
+    if (!(owners as string[]).includes(owner)) return false;
+    const issues: RestoreIssue[] = [];
+    try {
+      await restoreOwner(owner, lazyChain, new Set(), issues, false);
+    } catch (error) {
+      // A trap restoring a snapshot, or making the baseline, poisons the whole module.
+      if (!(error instanceof PoisonedModule) && !isTrap(error)) throw error;
+      await rebuild("current", [...pods.keys(), owner]);
+      return pods.has(owner);
+    }
+    if (issues.length > 0) {
+      restoreIssues = [...restoreIssues, ...issues];
+      await persist(owner, ["current"]);
+    }
+    return true;
   }
 
   async function baseline(owner: PodOwner): Promise<void> {
@@ -459,24 +502,40 @@ export function createPodHost(options: PodHostOptions): PodHost {
    * and the repaired pod is saved as its new current snapshot. A trap during restore replaces the
    * module and starts again without the snapshot that caused it.
    */
-  async function rebuild(source: "current" | "seed" | "none"): Promise<void> {
+  async function rebuild(
+    source: "current" | "seed" | "none",
+    need: readonly PodOwner[] = [],
+  ): Promise<void> {
     const chain: Array<"current" | "seed"> =
       source === "current" ? ["current", "seed"] : source === "seed" ? ["seed"] : [];
     const bad = new Set<string>();
     const issues: RestoreIssue[] = [];
+    // `none` makes no pod (each is its baseline, made when first needed). `current` makes only the
+    // pods with something saved (and any in `need`). `seed` ("Restart the demo") makes every pod,
+    // so that every owner's current snapshot is rewritten to its seed state.
+    const defer = source !== "seed";
     for (let attempt = 0; ; attempt += 1) {
       glue = options.loadWasm();
       pods.clear();
       const repaired: PodOwner[] = [];
       try {
         for (const owner of owners) {
-          if (!(await restoreOwner(owner, chain, bad, issues))) repaired.push(owner);
+          if (source === "none" && !need.includes(owner)) continue;
+          const restored = await restoreOwner(
+            owner,
+            chain,
+            bad,
+            issues,
+            defer && !need.includes(owner),
+          );
+          if (restored === false) repaired.push(owner);
         }
       } catch (error) {
         if (error instanceof PoisonedModule && attempt <= owners.length * 2) continue;
         throw error;
       }
       restoreIssues = issues;
+      lazyChain = source === "none" ? [] : ["current", "seed"];
       for (const owner of repaired) {
         if (issues.some((issue) => issue.owner === owner)) await persist(owner, ["current"]);
       }
@@ -484,18 +543,27 @@ export function createPodHost(options: PodHostOptions): PodHost {
     }
   }
 
-  /** Restore one pod; false when it did not come from the first snapshot in `chain`. */
+  /**
+   * Restore one pod; false when it did not come from the first snapshot in `chain`. With `defer`,
+   * a pod with nothing saved for it (and no failed snapshot) is left to be made when first needed,
+   * and the answer is `"deferred"`.
+   */
   async function restoreOwner(
     owner: PodOwner,
     chain: Array<"current" | "seed">,
     bad: Set<string>,
     issues: RestoreIssue[],
-  ): Promise<boolean> {
+    defer: boolean,
+  ): Promise<boolean | "deferred"> {
     // Each snapshot is read only when it is tried, inside the recovery: a record that cannot be
     // read or decoded is one more failure to fall back from, never a reason the start fails.
     let previous: RestoreIssue | undefined;
+    let skipped = false;
     for (const kind of chain) {
-      if (bad.has(`${owner}:${kind}`)) continue;
+      if (bad.has(`${owner}:${kind}`)) {
+        skipped = true;
+        continue;
+      }
       try {
         let bytes: Uint8Array | undefined;
         try {
@@ -527,6 +595,7 @@ export function createPodHost(options: PodHostOptions): PodHost {
         if (isTrap(error)) throw new PoisonedModule(`restoring ${owner} trapped`);
       }
     }
+    if (defer && previous === undefined && !skipped) return "deferred";
     pods.set(
       owner,
       (glue as Glue).SolidServer.withSnapshot(base(owner), webid(owner), new Uint8Array()),
@@ -669,7 +738,7 @@ export function createPodHost(options: PodHostOptions): PodHost {
     }
     const match = /^\/pods\/([^/]+)(\/.*)?$/.exec(url.pathname);
     const owner = match?.[1] as PodOwner | undefined;
-    if (url.origin !== origin || owner === undefined || !pods.has(owner))
+    if (url.origin !== origin || owner === undefined || !(await ensurePod(owner)))
       return text(404, "no such pod");
     const path = `${match?.[2] ?? "/"}${url.search}`;
     const podPath = match?.[2] ?? "/";
@@ -833,7 +902,7 @@ export function createPodHost(options: PodHostOptions): PodHost {
     const requests = typeof seed === "function" ? await seed(seedContext) : seed;
     await rebuild("none");
     for (const step of requests) {
-      if (!pods.has(step.pod)) throw new Error(`seed: no pod ${step.pod}`);
+      if (!(await ensurePod(step.pod))) throw new Error(`seed: no pod ${step.pod}`);
       const body =
         typeof step.body === "string"
           ? new TextEncoder().encode(step.body)
@@ -872,9 +941,21 @@ export function createPodHost(options: PodHostOptions): PodHost {
         );
       }
     }
-    for (const owner of owners) await persist(owner, ["current", "seed"]);
+    // Only the pods the seed made are saved; every other pod is its baseline, made when first
+    // needed. A snapshot saved for one of those before the seed is now stale, so it is overwritten
+    // with the baseline (the seed used to save a baseline for every owner).
+    const stale = (await storage.getMeta<string[]>(UNSEEDED_KEY)) ?? [];
+    for (const owner of owners) if (stale.includes(owner)) await ensurePod(owner);
+    seeding = true;
+    try {
+      for (const owner of pods.keys()) await persist(owner, ["current", "seed"]);
+    } finally {
+      seeding = false;
+    }
     seeded = true;
     await storage.putMeta("seeded", true);
+    if (stale.length > 0) await storage.putMeta(UNSEEDED_KEY, []);
+    unseeded = new Set();
   }
 
   // ---- runtime services (change notification, one-time grants) ----
@@ -929,6 +1010,7 @@ export function createPodHost(options: PodHostOptions): PodHost {
     actsAs: (app, owner) => isOrgSlug(app) && actsFor(app, owner),
     appFor,
     async canRead(owner, path, agent) {
+      if (!(await ensurePod(owner))) return false;
       const pod = pods.get(owner);
       if (pod === undefined) return false;
       const result = await call(pod, "HEAD", path, [], new Uint8Array(), agent);
@@ -969,8 +1051,8 @@ export function createPodHost(options: PodHostOptions): PodHost {
     } else if (options.seed !== undefined) {
       await runSeed(options.seed);
     } else {
+      // Not seeded yet: a later start makes the pods afresh, so there is nothing to save.
       await rebuild("none");
-      for (const owner of owners) await persist(owner, ["current"]);
     }
   }
 

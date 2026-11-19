@@ -72,16 +72,22 @@ How a seed is applied:
   through the same ACL policy as any other write.
 - A request that fails stops the seed with an error naming it.
 - The seed function runs in the page, so it can sign credentials with WebCrypto first.
-- After the seed, the host saves a `seed` snapshot per pod. `resetDemo()` restores those snapshots
-  and clears the event log.
+- After the seed, the host saves a `seed` snapshot for each pod the seed wrote. `resetDemo()`
+  restores those snapshots (every other pod returns to its baseline) and clears the event log.
 
-Every pod gets a baseline before the seed runs:
+Every pod gets a baseline before anything is written to it:
 
 - a root `.acl` that gives the owner Read, Write and Control (`acl:accessTo` and `acl:default`);
 - `profile/card` with `foaf:primaryTopic` and `pim:storage`;
 - a public-read `profile/card.acl`.
 - for a registered holder, `profile/card` also says who it is: `schema:Person` or
   `schema:Organization` and `schema:name`, from the holder registry. A demo's seed may replace it.
+
+A pod is made when it is first needed (a request, the seed, a runtime service), not at start: a
+pod with nothing saved for it is exactly its baseline, so making it later gives the same pod. A
+cold start therefore costs the same however many owners the registry lists; only the pods the
+seed writes are built and saved. A restart restores only the pods with a saved snapshot.
+`info().owners` still lists every owner.
 
 ### Agent contract
 

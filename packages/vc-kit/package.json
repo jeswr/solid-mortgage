@@ -42,7 +42,7 @@
     "build": "tsc --project tsconfig.json",
     "capture:fixtures": "pnpm run build && node scripts/capture-fixtures.mjs",
     "lint": "biome check src test scripts/*.mjs package.json tsconfig.json",
-    "test": "vitest run --root . --config ../../vitest.config.ts",
+    "test": "vitest run --root . --config vitest.config.ts",
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "dependencies": {
