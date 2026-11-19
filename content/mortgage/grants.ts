@@ -511,7 +511,7 @@ async function readAclDocument(sync: AclSync, aclUrl: string): Promise<AclDocume
 
 /**
  * What a rewrite of `target`'s ACL document must keep: the rules in force there that no agreement
- * manages, such as the runtime's public read on the WebID profile (`profile/card.acl`). The pod
+ * manages, such as a public read Alex wrote on a document herself. The pod
  * server uses only the nearest ACL document, so a document the wallet writes must repeat them.
  *
  * - From the target's own document: the public and signed-in classes, and agents that no
@@ -653,7 +653,7 @@ function fingerprint(rules: readonly Rule[]): string {
  * Bring the pod's ACL documents in line with the grants on record. Only documents whose rules
  * differ between `before` and `after` are written, so each change shows in the Lens as the ACL
  * documents it really touched. Each document is written by {@link writeAclDocument}, which keeps
- * the rules no agreement manages (the public read on Alex's WebID profile) and never overwrites a
+ * the rules no agreement manages (a public read Alex wrote herself) and never overwrites a
  * change made since it read the document.
  */
 export async function syncAcls(

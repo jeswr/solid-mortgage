@@ -199,11 +199,12 @@ describe("the Lens over the mortgage journey's log", () => {
     expect(drawers.filter((path) => !configured.has(path))).toEqual([]);
   });
 
-  test("Alex's WebID profile stays public through the journey, G6 included", () => {
-    // G6 (order-services) is the grant that writes profile/card.acl, beside the runtime's
-    // public read; the wallet must keep that rule.
+  test("no grant opens Alex's profile card to anyone, G6 included", () => {
+    // The seed takes the runtime's public read off Alex's card (content/mortgage/seed.ts): it is
+    // read only under a grant. G6 (order-services) writes profile/card.acl; whatever the wallet
+    // keeps there, an anonymous read stays refused at every beat.
     expect(Object.fromEntries(profileStatus)).toEqual(
-      Object.fromEntries(JOURNEY.map((beat) => [beat.name, 200])),
+      Object.fromEntries(JOURNEY.map((beat) => [beat.name, 401])),
     );
   });
 

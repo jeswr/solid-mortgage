@@ -2,9 +2,10 @@
 /**
  * The wallet's ACL documents keep the rules it does not manage. The pod server uses only the
  * nearest ACL document, so when the wallet writes one for a resource it must repeat what was in
- * force there before: the runtime's public read on the WebID profile (`profile/card.acl`), or a
- * public rule inherited from a drawer above. Before this was pinned, approving G6 (which reads
- * `profile/card`) made Alex's WebID profile unreadable to anyone but Alex and the grantees.
+ * force there before: a rule Alex wrote herself (a public read on her card, as the pod runtime's
+ * baseline gives every other pod's), or a public rule inherited from a drawer above. Before this
+ * was pinned, approving G6 (which reads `profile/card`) dropped the public read on the card.
+ * The mortgage seed takes that baseline rule off Alex's card, so these tests write it back first.
  *
  * Real pod runtime host and wasm (`createNodePodHost`) with the mortgage seed; every status is the
  * pod server's.
@@ -106,7 +107,9 @@ async function stateOf(code: GrantCode): Promise<string | undefined> {
 }
 
 describe("the wallet keeps the rules it does not manage", () => {
-  test("Alex's WebID profile stays public when G6 adds Sextant to its ACL document", async () => {
+  test("a public read Alex put on her card stays when G6 adds Sextant to its ACL document", async () => {
+    expect(await status(null, "profile/card")).toBe(401);
+    await writeOwnAcl("profile/card", [PUBLIC_READ]);
     expect(await status(null, "profile/card")).toBe(200);
     await grant("G6");
     expect(await status("title", "profile/card")).toBe(200);
@@ -136,7 +139,7 @@ describe("the wallet keeps the rules it does not manage", () => {
     expect(await status(null, "property/subject-property")).toBe(200);
   }, 120_000);
 
-  test("an organisation's rule is never carried over as if it were the seed's", async () => {
+  test("an organisation's rule is never carried over as if no agreement managed it", async () => {
     await grant("G6");
     expect(await names("profile/card", "title")).toBe(true);
     await revokeGrant(world, "G6", "10:00");
@@ -190,6 +193,7 @@ describe("rules above a document are never copied into it as agent rules", () =>
 describe("a grant is recorded as ended only once its access is gone", () => {
   for (const failing of ["GET", "PUT"] as const) {
     test(`a ${failing} of an ACL document answered 503 leaves the grant active, and ending it again works`, async () => {
+      await writeOwnAcl("profile/card", [PUBLIC_READ]);
       await grant("G6");
       let failed = 0;
       const flaky = intercepted(async (url, init) => {
@@ -215,6 +219,7 @@ describe("a grant is recorded as ended only once its access is gone", () => {
 
 describe("the wallet never overwrites an ACL document it read before someone changed it", () => {
   test("a change made between the wallet's read and its write is kept (412, read again)", async () => {
+    await writeOwnAcl("profile/card", [PUBLIC_READ]);
     const county = webid(world, "county");
     let raced = 0;
     const racing = intercepted(async (url, init) => {

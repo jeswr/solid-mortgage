@@ -159,8 +159,8 @@ County has the public `records/2026-0048113` (deed) and `records/2026-0048114` (
 from it. A grant's state is its latest consent record, and the ACL documents are recomputed from
 the grants that are active, so a revoke or an expiry removes rules by the same code that added them.
 A document the wallet writes also repeats the rules no agreement manages (`writeAclDocument`),
-because the pod uses only the nearest document. That keeps the runtime's public read on
-`profile/card` through G6. From the target's own document it keeps the public and signed-in
+because the pod uses only the nearest document, so a rule Alex wrote herself (say a public read on
+a document) survives a grant on it. From the target's own document it keeps the public and signed-in
 classes and any agent no agreement names, with their scope and `acl:origin` limits as they were
 (an `acl:agentGroup` is left out, the agents beside it kept). When the target has no document yet,
 only the public and signed-in rules of the nearest one above are repeated: an agent rule copied
