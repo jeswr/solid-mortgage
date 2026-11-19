@@ -13,6 +13,7 @@ import {
   OUTSIDE_LENS,
   readAs,
 } from "../../../test-support/e2e.ts";
+import { keepToOrigin } from "../../../test-support/origin-guard.ts";
 import { act, gotoStep, startTour } from "./demo.ts";
 
 test.setTimeout(900_000);
@@ -34,8 +35,12 @@ const metric = (page: Page, key: string) =>
   page.locator(`[data-metric="small-dollar-lending.${key}"]`);
 
 test("the small-dollar lending tour, all twelve steps, with the pods read back", async ({
+  baseURL,
+  context,
   page,
 }) => {
+  // Nothing may leave the site, Aztec's CRS hosts included: the prover loads the site's pinned CRS.
+  const guard = await keepToOrigin(context, new URL(baseURL as string).origin);
   // 1. An empty pod.
   await startTour(page);
   await expect(page.getByTestId("sd-drawers")).toBeVisible({ timeout: 90_000 });
@@ -86,6 +91,11 @@ test("the small-dollar lending tour, all twelve steps, with the pods read back",
   expect(quote.status).toBe(200);
   expect(quote.body).not.toContain("2860");
   expect((await readAs(page, "bank", "bank/quotes/maya")).status).toBe(200);
+  // Checked once both lenders have written their quotes, so their verification of the proofs is
+  // covered as well as the proving: nothing loaded from off the site, and the site's G1 file was used.
+  expect(guard.cdn).toEqual([]);
+  expect(guard.outside).toEqual([]);
+  expect(guard.crs.some((path) => path.startsWith("/crs/bn254-g1-"))).toBe(true);
   // Neither lender can read anything in Maya's pod yet.
   expect([401, 403]).toContain(
     (await readAs(page, "fintech-lender", "maya/credentials/cash-flow")).status,
@@ -176,4 +186,7 @@ test("the small-dollar lending tour, all twelve steps, with the pods read back",
   await expect(metric(page, "credentials")).toHaveAttribute("data-value", "5");
   await expect(metric(page, "denied")).not.toHaveAttribute("data-value", "0");
   await checkPage(page);
+  // And nothing left the site in the rest of the tour either.
+  expect(guard.cdn).toEqual([]);
+  expect(guard.outside).toEqual([]);
 });

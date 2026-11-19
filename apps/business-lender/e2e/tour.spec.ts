@@ -14,6 +14,7 @@ import {
   OUTSIDE_LENS,
   readAs,
 } from "../../../test-support/e2e.ts";
+import { keepToOrigin } from "../../../test-support/origin-guard.ts";
 import { act, gotoStep, startTour, stepDone } from "./demo.ts";
 
 test.setTimeout(900_000);
@@ -25,7 +26,13 @@ async function checkPage(page: Page): Promise<void> {
 
 const card = (who: string) => `/pods/${who}/profile/card#me`;
 
-test("the business KYB tour, all twelve steps, with the pods read back", async ({ page }) => {
+test("the business KYB tour, all twelve steps, with the pods read back", async ({
+  baseURL,
+  context,
+  page,
+}) => {
+  // Nothing may leave the site, Aztec's CRS hosts included: the prover loads the site's pinned CRS.
+  const guard = await keepToOrigin(context, new URL(baseURL as string).origin);
   // 1. Northwind's pod, empty.
   await startTour(page);
   await expect(page.getByText(/credentials drawer is empty/)).toBeVisible({ timeout: 90_000 });
@@ -92,6 +99,11 @@ test("the business KYB tour, all twelve steps, with the pods read back", async (
   const pre = await readAs(page, "business-lender", "business-lender/kyb/pre-decisions/northwind");
   expect(pre.body).toContain("Pre-decision: proceed");
   expect(pre.body).not.toContain("Marcus Webb");
+  // Checked once Brackenridge has decided, so its verification of the proof is covered as well as
+  // the proving: neither loaded anything from off the site, and the site's G1 file was used.
+  expect(guard.cdn).toEqual([]);
+  expect(guard.outside).toEqual([]);
+  expect(guard.crs.some((path) => path.startsWith("/crs/bn254-g1-"))).toBe(true);
   // The challenge was single-use: it is gone.
   expect(
     (await readAs(page, "business-lender", "business-lender/kyb/challenges/northwind")).status,
@@ -158,6 +170,9 @@ test("the business KYB tour, all twelve steps, with the pods read back", async (
   }
   await expectAccessible(page, OUTSIDE_LENS);
   await expectNoSideScroll(page);
+  // And nothing left the site in the rest of the tour either.
+  expect(guard.cdn).toEqual([]);
+  expect(guard.outside).toEqual([]);
 });
 
 test("before Northwind grants K1, Alder Bank's due diligence is refused by the pod", async ({

@@ -11,7 +11,7 @@ import { createReadStream, statSync } from "node:fs";
 import { createServer } from "node:http";
 import { extname, join, normalize, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
-import { headersFor, ROOT, resolveRequest } from "./site-routes.mjs";
+import { headersFor, IMMUTABLE, NO_CACHE, ROOT, resolveRequest } from "./site-routes.mjs";
 
 const TYPES = {
   ".css": "text/css; charset=utf-8",
@@ -36,6 +36,16 @@ const TYPES = {
 function argument(name, fallback) {
   const index = process.argv.indexOf(name);
   return index === -1 ? fallback : process.argv[index + 1];
+}
+
+/**
+ * Headers for a 404: a path's immutable caching is for the file it names, so a miss is never
+ * cached as immutable (a browser would keep the 404 for a year after the file appears).
+ */
+export function notFoundHeaders(headers) {
+  const result = { ...headers, "Content-Type": "text/plain; charset=utf-8" };
+  if (result["Cache-Control"] === IMMUTABLE) result["Cache-Control"] = NO_CACHE;
+  return result;
 }
 
 export function createSiteServer(distDir) {
@@ -68,7 +78,7 @@ export function createSiteServer(distDir) {
       return;
     }
     if (route.file === null) {
-      response.writeHead(404, { ...headers, "Content-Type": "text/plain; charset=utf-8" });
+      response.writeHead(404, notFoundHeaders(headers));
       response.end("Not found\n");
       return;
     }
@@ -77,7 +87,7 @@ export function createSiteServer(distDir) {
       stat = statSync(join(root, route.file));
     } catch {
       // A slug fallback can name an app that is not built into dist/: answer 404, not a crash.
-      response.writeHead(404, { ...headers, "Content-Type": "text/plain; charset=utf-8" });
+      response.writeHead(404, notFoundHeaders(headers));
       response.end("Not found\n");
       return;
     }
