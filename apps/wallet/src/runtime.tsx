@@ -35,6 +35,11 @@ export interface WalletRuntime {
   version: number;
   /** Run a pod action in the wallet's queue (one at a time), then refresh the screens. */
   run<T>(action: (world: World) => Promise<T>): Promise<T>;
+  /**
+   * Run a pod action that writes no grant (the threshold proofs), outside the queue and the grant
+   * lock, so a proof that takes minutes never holds up an approval, a withdrawal or expiry.
+   */
+  runApart<T>(action: (world: World) => Promise<T>): Promise<T>;
 }
 
 type Action = <T>(
@@ -161,6 +166,10 @@ export function WalletProvider({
     [bump],
   );
   const run = useCallback(<T,>(action: (world: World) => Promise<T>) => enqueue(action), [enqueue]);
+  const runApart = useCallback(
+    <T,>(action: (world: World) => Promise<T>) => action(worldOn(currentDay)).finally(bump),
+    [bump],
+  );
 
   useEffect(() => {
     let live = true;
@@ -199,8 +208,14 @@ export function WalletProvider({
   }, [ready, day, enqueue]);
 
   const value = useMemo<WalletRuntime>(
-    () => ({ day, run, version: ready ? version : -1, world: () => worldOn(currentDay) }),
-    [day, run, version, ready],
+    () => ({
+      day,
+      run,
+      runApart,
+      version: ready ? version : -1,
+      world: () => worldOn(currentDay),
+    }),
+    [day, run, runApart, version, ready],
   );
   return <RuntimeContext.Provider value={value}>{children}</RuntimeContext.Provider>;
 }
