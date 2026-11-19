@@ -18,7 +18,7 @@ import { PodRequestError } from "@mortgage/content/mortgage/world";
 import { CreditScoreNotice, LoanTransferNotice, SCHEMA } from "@mortgage/data-model";
 import { podUrl } from "@mortgage/pod-runtime";
 import { useState } from "react";
-import { runOn } from "../demo.ts";
+import { runOn, worldOn } from "../demo.ts";
 import { useDesk, whoLabel } from "../desk.tsx";
 import { useLoanFile, useRead } from "../file.tsx";
 import { isOk, type Loaded, load, oks } from "../pod.ts";
@@ -308,7 +308,8 @@ function ReadAgain() {
         run={async () => {
           setOutcome(undefined);
           try {
-            const read = await runOn(DAY.revoke, readBankDataAgain);
+            // A read only: it does not move the demo clock.
+            const read = await readBankDataAgain(worldOn(DAY.revoke));
             setOutcome({ kind: "denied", read });
             return "The pod refused the read.";
           } catch (error) {
