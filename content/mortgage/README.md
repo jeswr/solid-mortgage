@@ -164,7 +164,7 @@ the grants that are active, so a revoke or an expiry removes rules by the same c
 | G1 | Ledgerly | write `credentials/employment-income` and its anchor | at closing |
 | G2 | Alder Bank | write `credentials/assets` | after 7 days |
 | G3 | Quillon | write `credentials/credit-summary` and its anchor | after 7 days |
-| G4 | Juniper | read `profile/`, `identity/`, `credentials/`, `property/`, `insurance/`; write `mortgage/juniper/`. Castellan may read the three credentials. Quillon may read the credit-report authorisation | 60 days after closing, or on revoke (step 22) |
+| G4 | Juniper | read `profile/`, `identity/`, `credentials/`, `property/`, `insurance/`; read and write `mortgage/juniper/`. Castellan may read the three credentials. Quillon may read the credit-report authorisation | 60 days after closing, or on revoke (step 22) |
 | G5 | Plumbline | read `property/subject-property`, `property/purchase-agreement` | when the report is delivered |
 | G6 | Sextant | read `profile/card`, `property/purchase-agreement`; write `mortgage/closing/` | when the owner's policy is issued |
 | G7 | Wrenfield | read `property/subject-property`, `mortgage/juniper/appraisal`; write `insurance/` | when the policy lapses |
@@ -254,7 +254,7 @@ The threshold proof is JSON, not RDF, because the proof is bytes:
 Checked by `content/test/mortgage/journey.test.ts`, on the real `@sparq-org/solid-server` wasm with
 one WebID per organisation: every beat completes; every tour `expect` and `done` entry is produced
 in its step; every Turtle resource in all 12 pods conforms to the closed SHACL shape of each type
-it claims; every ACL document keeps its owner in control; 66 access probes between steps return
+it claims; every ACL document keeps its owner in control; 68 access probes between steps return
 the status the grants imply (including 403 for each ended or revoked grant); the first employment
 credential is revoked and the re-issued one verifies.
 

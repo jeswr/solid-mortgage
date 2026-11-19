@@ -73,6 +73,11 @@ describe("tour content", () => {
     expect(days).toEqual([...days].sort((a, b) => a - b));
   });
 
+  test("only Juniper's refused read completes the denied-read step", () => {
+    const denied = TOUR.find((step) => step.id === "denied-read");
+    expect(denied?.done.event?.actor).toEqual({ org: "lender" });
+  });
+
   test("the revoke caveat is the sentence the design fixes", () => {
     const denied = TOUR.find((step) => step.id === "denied-read");
     expect(denied?.realWorld.rule).toBe(

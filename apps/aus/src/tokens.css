@@ -1,0 +1,19 @@
+/* AUTHORED-BY Claude Opus 5.5
+ * Castellan console tokens (design.md §b.3): navy on white, hairline rules, IBM Plex Mono for
+ * the machine voice and Plex Sans for prose. No consumer warmth. Original values. */
+:root {
+  --cas-navy: #0b1f3a;
+  --cas-navy-2: #1b3358;
+  --cas-paper: #ffffff;
+  --cas-rule: #c9d1dc;
+  --cas-hair: #e3e8ee;
+  --cas-ink: #0b1f3a;
+  --cas-dim: #4a5a70;
+  --cas-select: #e8eef7;
+  --cas-pass: #0d5b3a;
+  --cas-fail: #9b1c1c;
+  --cas-fail-bg: #fdecec;
+  --cas-focus: #b4540a;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-sans: "IBM Plex Sans", system-ui, sans-serif;
+}

@@ -2,8 +2,17 @@
   "name": "@mortgage/app-lender-b",
   "version": "0.0.0",
   "private": true,
+  "description": "Copperfield Mortgage (fictional): a rate-quote landing page that pre-qualifies by threshold proof and shows exactly what it received.",
   "type": "module",
-  "description": "Scaffold manifest from lane L0: dependencies are fixed here so the lockfile is complete; lane A3 owns the package and adds scripts and source. Start from apps/_template and keep these dependencies.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "biome check src test e2e package.json tsconfig.json vite.config.ts playwright.config.ts",
+    "typecheck": "tsc --project tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test"
+  },
   "dependencies": {
     "@fontsource/archivo": "^5.3.0",
     "@fontsource/archivo-black": "^5.3.0",

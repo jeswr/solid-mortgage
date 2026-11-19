@@ -1,0 +1,21 @@
+/* AUTHORED-BY Claude Opus 5.5
+ * Juniper Home Loans: blue-green and sand, Manrope, soft generous surfaces (design.md §b.3).
+ * Original values; no real organisation's palette. */
+:root {
+  --teal: #2b6777;
+  --teal-deep: #1d4e5a;
+  --teal-wash: #e2eef0;
+  --sand: #f2e9dc;
+  --sand-deep: #e6d8c3;
+  --surface: #fffdf9;
+  --ink: #15303a;
+  --muted: #4b6069;
+  --ok: #1d6a46;
+  --bad: #9b2c1c;
+  --focus: #b4501a;
+  --font: "Manrope", system-ui, sans-serif;
+  --radius-lg: 22px;
+  --radius: 14px;
+  --gap: 1.25rem;
+  --shadow: 0 1px 2px rgb(21 48 58 / 6%), 0 8px 28px rgb(21 48 58 / 7%);
+}
