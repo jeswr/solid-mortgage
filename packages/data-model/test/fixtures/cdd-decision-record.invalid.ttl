@@ -14,7 +14,7 @@
     schema:name "Customer due diligence: Northwind Logistics LLC";
     dcterms:subject <https://northwind.pod.example/profile/card#me>;
     dcterms:creator <https://bank.pod.example/profile/card#me>;
-    mort:cddDecisionStatus mort:CddDecisionStatus-Maybe;
+    mort:cddDecisionStatus mort:EntityLegalForm-LLC;
     mort:cddCheckDate "2026-09-02"^^xsd:date;
     mort:checkedCredential <https://northwind.pod.example/credentials/org-identity>, <https://northwind.pod.example/credentials/beneficial-ownership>;
     mort:identifiedBeneficialOwner "Jordan Blake", "Priya Nandakumar".
