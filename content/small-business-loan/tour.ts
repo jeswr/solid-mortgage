@@ -105,12 +105,14 @@ export const TOUR: readonly TourStep[] = Object.freeze([
     body: "Brackenridge Bank asks for four things: identity, ownership, tax compliance and cash flow, to decide on a $150,000 equipment loan. Press Approve for 30 days: grant S2, one purpose, credit decision.",
     chapter: "2 The application",
     clock: { day: DAY.apply },
-    done: { event: acl("grant", "/finance/cash-flow") },
+    // S2's documents are written in path order: the loan terms come last.
+    done: { event: acl("grant", "/loans/brackenridge/terms") },
     expect: [
       write("northwind", "/policies/s2"),
       write("northwind", "/consents/s2-given"),
       acl("grant", "/credentials/tax-compliance"),
       acl("grant", "/finance/cash-flow"),
+      acl("grant", "/loans/brackenridge/terms"),
     ],
     id: "apply",
     lens: {
