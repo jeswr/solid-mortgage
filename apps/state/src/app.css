@@ -1,0 +1,202 @@
+/* AUTHORED-BY Claude Opus 5.5 */
+@import "./tokens.css";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  line-height: 1.5;
+}
+
+a {
+  color: var(--color-primary);
+}
+
+/* The wide header band: full-bleed navy, the agency's name in white, a thin rule below. */
+.band {
+  background: var(--color-band);
+  color: var(--color-band-ink);
+  border-bottom: 4px solid var(--color-band-rule);
+}
+
+.band-inner,
+.band-nav {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 0 var(--space);
+}
+
+.band-inner {
+  padding-top: calc(var(--space) * 1.5);
+  padding-bottom: calc(var(--space) * 0.75);
+}
+
+.band-name {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.band-sub {
+  margin: 0.25rem 0 0;
+  font-weight: 600;
+}
+
+.band-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.5rem;
+  padding-bottom: 0.75rem;
+}
+
+.band-nav a {
+  color: var(--color-band-ink);
+  font-weight: 600;
+}
+
+main {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: calc(var(--space) * 2) var(--space) calc(var(--space) * 4);
+}
+
+h1 {
+  margin: 0 0 0.5rem;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+}
+
+.lede {
+  font-size: 1.125rem;
+  margin: 0 0 calc(var(--space) * 1.5);
+}
+
+.muted,
+.provenance {
+  color: var(--color-muted);
+}
+
+.services {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space);
+}
+
+.services li {
+  border: 1px solid var(--color-line);
+  border-left: 6px solid var(--color-primary);
+  padding: var(--space);
+}
+
+/* Numbered form steps: a counter in a navy square beside each step. */
+.steps {
+  list-style: none;
+  counter-reset: step;
+  margin: calc(var(--space) * 1.5) 0 0;
+  padding: 0;
+}
+
+.steps > li {
+  counter-increment: step;
+  position: relative;
+  padding: 0 0 calc(var(--space) * 1.5) 3.25rem;
+  border-left: 2px solid var(--color-line);
+  margin-left: 1.125rem;
+}
+
+.steps > li:last-child {
+  border-left-color: transparent;
+}
+
+.steps > li::before {
+  content: counter(step);
+  position: absolute;
+  left: -1.125rem;
+  top: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  display: grid;
+  place-items: center;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-weight: 700;
+}
+
+.steps > li > h2 {
+  padding-top: 0.25rem;
+}
+
+address {
+  font-style: normal;
+  background: var(--color-panel);
+  border: 1px solid var(--color-line);
+  padding: 0.75rem var(--space);
+  font-size: 1.125rem;
+  max-width: 28rem;
+}
+
+button.primary {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius);
+  font: inherit;
+  font-weight: 700;
+  padding: 0.75rem 1.5rem;
+  cursor: pointer;
+}
+
+button.primary:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+
+button.primary:disabled {
+  background: var(--color-panel);
+  color: var(--color-muted);
+  border-color: var(--color-line);
+  cursor: not-allowed;
+}
+
+.alert {
+  background: var(--color-alert-bg);
+  color: var(--color-alert);
+  border-left: 6px solid var(--color-alert);
+  padding: 0.75rem var(--space);
+  margin: var(--space) 0;
+}
+
+.ok {
+  background: var(--color-ok-bg);
+  color: var(--color-ok);
+  border-left: 6px solid var(--color-ok);
+  padding: 0.75rem var(--space);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+@media (max-width: 30rem) {
+  .band-name {
+    font-size: 1.375rem;
+  }
+  h1 {
+    font-size: 1.625rem;
+  }
+}

@@ -1,0 +1,25 @@
+/* AUTHORED-BY Claude Opus 5.5
+ * State Online Services' own tokens: navy and white, a plain government voice, Public Sans
+ * (self-hosted, SIL Open Font License). Original values, no imagery (design.md §b.2). */
+:root {
+  --color-band: #17375e;
+  --color-band-ink: #ffffff;
+  --color-band-rule: #c9d6e6;
+  --color-canvas: #ffffff;
+  --color-panel: #f1f4f8;
+  --color-ink: #10223a;
+  --color-muted: #46566b;
+  --color-line: #b9c4d2;
+  --color-primary: #17375e;
+  --color-primary-hover: #0e2643;
+  --color-on-primary: #ffffff;
+  --color-ok: #1d5c36;
+  --color-ok-bg: #e6f2ea;
+  --color-alert: #8a1c12;
+  --color-alert-bg: #fbeceb;
+  --color-focus: #f2b630;
+  --font-body: "Public Sans", system-ui, sans-serif;
+  --radius: 2px;
+  --space: 1rem;
+  --measure: 60rem;
+}

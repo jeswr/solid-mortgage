@@ -1,9 +1,17 @@
 // AUTHORED-BY Claude Opus 5.5
 /**
  * Section registry. A demo other than the mortgage adds screens to an existing app only under
- * src/sections/<demo>/ and registers them here (build-plan.md §2). Empty until a demo needs it.
+ * src/sections/<demo>/ and registers them here (build-plan.md §2).
  */
 import type { ComponentType } from "react";
+import {
+  MovingAddress,
+  MovingHome,
+  MovingLedger,
+  MovingReaders,
+  MovingSharing,
+  MovingWho,
+} from "./moving-house/MovingHouse.tsx";
 
 export interface AppSection {
   /** The demo that owns this section, e.g. "moving-house". */
@@ -14,4 +22,26 @@ export interface AppSection {
   Component: ComponentType;
 }
 
-export const sections: readonly AppSection[] = [];
+export const sections: readonly AppSection[] = [
+  { Component: MovingHome, demo: "moving-house", path: "moving", title: "Your address" },
+  {
+    Component: MovingAddress,
+    demo: "moving-house",
+    path: "moving/address",
+    title: "Change address",
+  },
+  { Component: MovingWho, demo: "moving-house", path: "moving/who", title: "Who should know" },
+  {
+    Component: MovingReaders,
+    demo: "moving-house",
+    path: "moving/readers",
+    title: "Who has read it",
+  },
+  {
+    Component: MovingSharing,
+    demo: "moving-house",
+    path: "moving/sharing",
+    title: "Standing grants",
+  },
+  { Component: MovingLedger, demo: "moving-house", path: "moving/ledger", title: "Journey ledger" },
+];

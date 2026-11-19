@@ -1,0 +1,9 @@
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix dprod: <https://ekgf.github.io/dprod/>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+# No owner, no purpose and no output port.
+<https://pods.example/pods/alex/profile/address.dprod#product> a dprod:DataProduct;
+  dcterms:title "Alex Rivera's postal address";
+  dcterms:description "The one authoritative copy of where Alex lives.";
+  dcterms:modified "2026-09-15T09:05:00Z"^^xsd:dateTime.

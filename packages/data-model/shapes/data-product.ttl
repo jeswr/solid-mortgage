@@ -1,0 +1,88 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix dcat: <http://www.w3.org/ns/dcat#> .
+@prefix dpv: <https://w3id.org/dpv#> .
+@prefix dprod: <https://ekgf.github.io/dprod/> .
+@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+
+# AUTHORED-BY Claude Opus 5.5
+# profile/address.dprod (moving-house demo, flows.md section 2): the address described the way a
+# data team describes a data product (EKGF DPROD): one owner, a stated purpose (in words and as a
+# DPV purpose), one output port (the resource itself, served as a dcat:DataService), and its
+# consumers as the ODRL agreements that let each of them read it.
+mshape:DataProductShape
+  a sh:NodeShape ;
+  sh:targetClass dprod:DataProduct ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue dprod:DataProduct ;
+  ] ;
+  sh:property [
+    sh:path dcterms:title ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path dcterms:description ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path dprod:dataProductOwner ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path dprod:purpose ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path dpv:hasPurpose ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path dprod:outputPort ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:DataServiceShape ;
+  ] ;
+  sh:property [
+    sh:path odrl:hasPolicy ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path dcterms:modified ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dateTime ;
+  ] .
+
+# The output port: where consumers read the product.
+mshape:DataServiceShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue dcat:DataService ;
+  ] ;
+  sh:property [
+    sh:path dcat:endpointURL ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] .
