@@ -72,8 +72,23 @@ export function createSiteServer(distDir) {
       response.end("Not found\n");
       return;
     }
+    let stat;
+    try {
+      stat = statSync(join(root, route.file));
+    } catch {
+      // A slug fallback can name an app that is not built into dist/: answer 404, not a crash.
+      response.writeHead(404, { ...headers, "Content-Type": "text/plain; charset=utf-8" });
+      response.end("Not found\n");
+      return;
+    }
+    const lastModified = new Date(Math.floor(stat.mtimeMs / 1000) * 1000).toUTCString();
+    const since = Date.parse(request.headers["if-modified-since"] ?? "");
+    if (!Number.isNaN(since) && since >= Date.parse(lastModified)) {
+      response.writeHead(304, { ...headers, "Last-Modified": lastModified }).end();
+      return;
+    }
     const type = TYPES[extname(route.file)] ?? "application/octet-stream";
-    response.writeHead(200, { ...headers, "Content-Type": type });
+    response.writeHead(200, { ...headers, "Content-Type": type, "Last-Modified": lastModified });
     if (request.method === "HEAD") {
       response.end();
       return;

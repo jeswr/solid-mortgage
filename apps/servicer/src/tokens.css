@@ -1,0 +1,23 @@
+/* AUTHORED-BY Claude Opus 5.5
+ * Marigold Loan Servicing's tokens (design.md §b.3): marigold on charcoal, Public Sans, square
+ * panels and a dense dashboard. Original values. Marigold is used as a fill, never as text on
+ * white (it fails contrast there). */
+:root {
+  --marigold: #e9a100;
+  --marigold-deep: #7a5200;
+  --marigold-wash: #fdf3dc;
+  --charcoal: #2b2b2b;
+  --charcoal-2: #3d3d3d;
+  --ink: #1f1f1f;
+  --ink-soft: #555555;
+  --canvas: #f3f2ef;
+  --paper: #ffffff;
+  --line: #dddad3;
+  --refusal: #9b1c1c;
+  --refusal-bg: #fbeaea;
+  --ok: #1d6b3a;
+  --ok-bg: #e7f4ec;
+  --focus: #0b5cad;
+  --font: "Public Sans", system-ui, sans-serif;
+  --radius: 4px;
+}
