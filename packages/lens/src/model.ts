@@ -206,7 +206,7 @@ export class LensModel {
     // Grants are the holder's: what organisations may do in the holder's pod. Organisations
     // also share their own files with each other (an ACL write on their own pod); those agents
     // take part, but the rules are not the holder's grants and never end with them.
-    if (e.pod !== HOLDER) {
+    if (e.pod !== this.holder) {
       for (const rule of acl.granted) {
         const org = this.orgOfAgent(rule.agent);
         if (org !== undefined) this.meet(org, rec.seq);
