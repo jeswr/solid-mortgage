@@ -3,26 +3,8 @@
  * Section registry. A demo other than the mortgage adds screens to an existing app only under
  * src/sections/<demo>/ and registers them here (build-plan.md §2).
  */
-import { type ComponentType, createElement, lazy, Suspense } from "react";
-
-/**
- * Sections load with their own page, so a demo's section adds nothing to the first load of the
- * app's own screens (acceptance test 15: under 400 kB compressed).
- */
-function lazySection(load: () => Promise<ComponentType>): ComponentType {
-  const Section = lazy(async () => ({ default: await load() }));
-  return function LazySection() {
-    return createElement(
-      Suspense,
-      { fallback: createElement("p", { className: "muted" }, "Loading…") },
-      createElement(Section),
-    );
-  };
-}
-
-const MovingAddressOnFile = lazySection(
-  async () => (await import("./moving-house/MovingHouse.tsx")).MovingAddressOnFile,
-);
+import type { ComponentType } from "react";
+import { MovingAddressOnFile } from "./moving-house/MovingHouse.tsx";
 
 export interface AppSection {
   /** The demo that owns this section, e.g. "moving-house". */
