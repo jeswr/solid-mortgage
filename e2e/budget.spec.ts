@@ -17,6 +17,7 @@
  */
 import { gzipSync } from "node:zlib";
 import { type BrowserContext, expect, type Page, type Response, test } from "@playwright/test";
+import { waitForSeed } from "./support/pod.ts";
 import {
   APP_SLUGS,
   type AppSlug,
@@ -41,12 +42,18 @@ function collect(context: BrowserContext): { responses: Response[] } {
   return { responses };
 }
 
-/** Start the pods from another app, as an earlier tour step would, and let it settle. */
+/**
+ * Start the pods from another app, as an earlier tour step would, and let it settle: the seed
+ * written, not just the worker in control. A page that finds the pods unseeded builds the seed
+ * itself (pod-runtime `ready()`), loading the SHACL validator, which is not the next app's
+ * first load.
+ */
 async function startPodsElsewhere(page: Page, slug: AppSlug): Promise<void> {
   const other: AppSlug = slug === "payroll" ? "bank" : "payroll";
   requireApps([other]);
   await page.goto(appPath(other));
   await waitForRuntime(page, { tour: false });
+  await waitForSeed(page);
   await page.waitForLoadState("networkidle");
 }
 
