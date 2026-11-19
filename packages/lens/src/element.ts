@@ -5,6 +5,7 @@
  * creates an entry. Four zones: step card, "Where Solid is", the map, the inspector.
  */
 import type { ChipKind, LensEntry } from "@mortgage/demo-kit/contracts";
+import { holdersActedFor, isHolderId } from "@mortgage/demo-kit/registry";
 import { describe, describeRules, possessive, revokeCaveat, type Sentence } from "./describe.js";
 import { h, replace } from "./dom.js";
 import { resourceHistory } from "./history.js";
@@ -13,7 +14,7 @@ import { computeTotals, type LedgerTotals } from "./ledger.js";
 import { LEDGER_CSS, type LedgerTab, type LedgerViewOptions, renderLedger } from "./ledger-view.js";
 import { LensMap } from "./map.js";
 import { isDenied, isOk, isPod, LensModel, type Received } from "./model.js";
-import { HOLDER, localName, nodeOf, podRelative } from "./paths.js";
+import { localName, nodeOf, podRelative } from "./paths.js";
 import { LENS_CSS } from "./styles.js";
 import type {
   LensConfig,
@@ -160,7 +161,14 @@ export class SolidLens extends HTMLElement {
   configure(config: LensConfig): void {
     if (!this.els) this.build();
     this._model = new LensModel(config);
-    const current = config.app ? nodeOf(config.registry, config.app) : undefined;
+    const holder = this._model.holder;
+    // The holder's own app (the wallet) is the holder on the map, whichever holder it shows.
+    const current =
+      config.app === undefined
+        ? undefined
+        : isHolderId(holder) && holdersActedFor(config.registry, config.app).includes(holder)
+          ? holder
+          : nodeOf(config.registry, config.app);
     this.lensMap = new LensMap(this._model, {
       ...(current === undefined ? {} : { currentNode: current }),
       reducedMotion: () => this.reducedMotion,
@@ -925,7 +933,7 @@ export class SolidLens extends HTMLElement {
         r.entry.kind === "verified" &&
         (r.entry.refs ?? []).some((ref) => podRelative(ref) === path),
     );
-    const readers = e.pod === HOLDER ? m.whoCanRead(path).map((o) => m.nameOf(o)) : [];
+    const readers = e.pod === m.holder ? m.whoCanRead(path).map((o) => m.nameOf(o)) : [];
     const types = e.resource?.types ?? [];
     replace(
       this.els.card,
@@ -954,7 +962,7 @@ export class SolidLens extends HTMLElement {
           ),
           ...row(
             "Who can read it now",
-            e.pod === HOLDER
+            e.pod === m.holder
               ? readers.length
                 ? readers.join(", ")
                 : `only ${m.holderName}`

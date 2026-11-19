@@ -1,8 +1,20 @@
 // AUTHORED-BY Claude Opus 5.5
 /** Pod path and identity helpers. Pure functions, no DOM. */
-import { isOrgSlug, type OrgRegistry, type PodOwner, webidPath } from "@mortgage/demo-kit/registry";
+import {
+  DEFAULT_HOLDER,
+  HOLDER_IDS,
+  isHolderId,
+  isOrgSlug,
+  type OrgRegistry,
+  type PodOwner,
+  webidPath,
+} from "@mortgage/demo-kit/registry";
 
-export const HOLDER = "alex" as const;
+/**
+ * The holder a Lens centres on when its config names none. Each Lens takes its own holder from
+ * `LensConfig.holder.id` (`LensModel.holder`); this is only the fallback.
+ */
+export const HOLDER = DEFAULT_HOLDER;
 
 /**
  * A pod path relative to its pod: strips an origin and a `/pods/<owner>` prefix, keeps the
@@ -54,17 +66,17 @@ export function isAclPath(path: string): boolean {
 
 /**
  * The map node for a slug: an app's `actsAs` owner (two apps of one organisation share a
- * node), `alex` for the holder. Unknown values are returned as they are.
+ * node), the holder's own id for a registered holder. Unknown values are returned as they are.
  */
 export function nodeOf(registry: OrgRegistry, slug: string): PodOwner | string {
-  if (slug === HOLDER) return HOLDER;
+  if (isHolderId(slug)) return slug;
   if (isOrgSlug(slug)) return registry[slug].actsAs;
   return slug;
 }
 
 /** The pod owner a WebID belongs to, by its `/pods/<owner>/profile/card#me` shape. */
 export function ownerOfWebid(registry: OrgRegistry, webid: string): PodOwner | undefined {
-  if (webid.endsWith(webidPath(HOLDER))) return HOLDER;
+  for (const id of HOLDER_IDS) if (webid.endsWith(webidPath(id))) return id;
   for (const record of Object.values(registry)) {
     if (webid.endsWith(webidPath(record.actsAs))) return record.actsAs;
   }
