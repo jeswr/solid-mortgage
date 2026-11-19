@@ -11,17 +11,27 @@ import { MORT } from "./vocab/mort.js";
  */
 export interface ZkFieldBudget {
   /** Constant key in the MORT vocabulary map. */
-  readonly key: "monthlyGrossIncomeUsd" | "totalMonthlyDebtUsd" | "creditScoreValue";
+  readonly key:
+    | "monthlyGrossIncomeUsd"
+    | "totalMonthlyDebtUsd"
+    | "creditScoreValue"
+    | "ownershipPercentageBps";
   /** Full IRI of the field (mort namespace). */
   readonly iri: string;
   /** Scaled unit of the integer value. */
-  readonly unit: "USD/month" | "score points";
+  readonly unit: "USD/month" | "score points" | "basis points";
   /** Decision 0005 digit budget. */
   readonly digits: 3 | 4;
   /** Inclusive minimum, mirrored by sh:minInclusive in the shapes. */
   readonly minInclusive: number;
   /** Inclusive maximum, mirrored by sh:maxInclusive in the shapes. */
   readonly maxInclusive: number;
+  /**
+   * The shape's own `sh:maxInclusive` when it is wider than the digit budget. A value above
+   * `maxInclusive` is valid data but cannot be proved (business KYB: a sole owner's 10000 bps
+   * does not fit the four-digit circuit).
+   */
+  readonly shapeMaxInclusive?: number;
   /** sparq circuit that proves threshold statements over the field. */
   readonly circuit: "filter_int_d3" | "filter_int_d4";
 }
@@ -54,16 +64,37 @@ export const ZK_FIELD_BUDGETS: readonly ZkFieldBudget[] = [
     maxInclusive: 850,
     circuit: "filter_int_d3",
   },
+  {
+    // Business KYB (flows.md section 3): one owner's share, proved against the 2500 bps
+    // (25 percent) beneficial-owner threshold of 31 CFR 1010.230(d)(1).
+    key: "ownershipPercentageBps",
+    iri: MORT.ownershipPercentageBps,
+    unit: "basis points",
+    digits: 4,
+    minInclusive: 0,
+    maxInclusive: 9999,
+    shapeMaxInclusive: 10000,
+    circuit: "filter_int_d4",
+  },
 ] as const;
+
+/**
+ * Anchorable fields whose anchored value is a commitment, not a digit-budgeted integer: the
+ * business KYB owner-array commitment that the completeness circuit binds to.
+ */
+export const ZK_COMMITMENT_FIELD_IRIS: readonly string[] = [
+  MORT.beneficialOwnershipArrayCommitment,
+];
 
 /**
  * IRIs a mort:ZkOperandAnchor may anchor (decision 0012). Equals the sh:in
  * list of mshape:ZkOperandAnchorSubjectShape's mort:field constraint
  * (test-enforced).
  */
-export const ZK_ANCHORABLE_FIELD_IRIS: readonly string[] = ZK_FIELD_BUDGETS.map(
-  (budget) => budget.iri,
-);
+export const ZK_ANCHORABLE_FIELD_IRIS: readonly string[] = [
+  ...ZK_FIELD_BUDGETS.map((budget) => budget.iri),
+  ...ZK_COMMITMENT_FIELD_IRIS,
+];
 
 /** Budget for a field IRI, or undefined when the field is not ZK-provable. */
 export function zkBudgetFor(fieldIri: string): ZkFieldBudget | undefined {

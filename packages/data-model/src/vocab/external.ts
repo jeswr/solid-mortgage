@@ -108,6 +108,7 @@ export const DCTERMS = {
   description: `${DCTERMS_NS}description`,
   issued: `${DCTERMS_NS}issued`,
   source: `${DCTERMS_NS}source`,
+  subject: `${DCTERMS_NS}subject`,
   type: `${DCTERMS_NS}type`,
 } as const;
 
