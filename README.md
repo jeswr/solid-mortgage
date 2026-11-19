@@ -11,7 +11,7 @@ through thirteen apps of twelve fictional organisations that all work from one p
 The rebuild is under way (decision [0017](decisions/0017-static-rebuild.md)). One static site:
 each organisation app is served under `/<slug>/`, and the pods run in the visitor's browser in
 a service worker backed by sparq's wasm Solid server (`@sparq-org/solid-server`). The previous
-Next.js apps are in `legacy/` until the new guided path replaces them.
+Next.js apps were deleted; they remain in git history.
 
 ## Run it
 
