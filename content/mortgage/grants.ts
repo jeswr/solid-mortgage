@@ -416,7 +416,7 @@ function fingerprint(rules: readonly Rule[]): string {
  * differ between `before` and `after` are written, so each change shows in the Lens as the ACL
  * documents it really touched.
  */
-async function syncAcls(
+export async function syncAcls(
   world: World,
   before: readonly GrantRecord[],
   after: readonly GrantRecord[],
@@ -466,7 +466,7 @@ function assertGrantable(world: World, request: AccessRequest): void {
   }
 }
 
-async function writeConsent(
+export async function writeConsent(
   world: World,
   record: { agreement: AccessAgreement; policy: string; code: string; since?: Date },
   status: string,
@@ -556,7 +556,7 @@ export async function approveRequest(
   return { acls: await syncAcls(world, before, after), code, consent, policy };
 }
 
-async function endGrant(
+export async function endGrant(
   world: World,
   code: string,
   status: string,
