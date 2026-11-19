@@ -5,7 +5,6 @@
  * old one. The journey also calls this in line at step 16; the message is answered once,
  * whichever runs first.
  */
-import "@mortgage/vc-kit/browser/buffer";
 import { agentWorld } from "@mortgage/content/mortgage/browser";
 import { agents } from "@mortgage/content/mortgage/journey";
 import { readMessage } from "@mortgage/content/mortgage/messages";

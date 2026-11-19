@@ -1,7 +1,6 @@
 // AUTHORED-BY Claude Opus 5.5
 import "@fontsource/ibm-plex-sans/latin-400.css";
 import "@fontsource/ibm-plex-sans/latin-600.css";
-import "@mortgage/vc-kit/browser/buffer";
 import "./app.css";
 import { trackTourContext } from "@mortgage/content/mortgage/browser";
 import { MORTGAGE_HOLDER, mortgageLens, mortgageTour } from "@mortgage/content/mortgage/mount";
