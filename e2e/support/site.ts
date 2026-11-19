@@ -61,7 +61,16 @@ export const APP_LANE: Readonly<Record<AppSlug, string>> = Object.freeze({
   clinic: "F5",
   repairer: "F7",
   "card-issuer": "F8",
+  feedback: "FB",
 });
+
+/**
+ * Does this app act as no organisation and run no pods? The front door (`welcome`) and the
+ * feedback page (`feedback`) are the convener's: every other app is an organisation's.
+ */
+export function isConvenerApp(slug: string): boolean {
+  return !(ORG_SLUGS as readonly string[]).includes(slug);
+}
 
 interface SiteJson {
   apps?: string[];
@@ -108,10 +117,10 @@ export function appPath(
   return appUrl(slug, path, params, { kind: "path" });
 }
 
-/** The pod owner an app's requests act as (registry `actsAs`); the welcome app acts as no one. */
+/** The pod owner an app's requests act as (registry `actsAs`); a convener app acts as no one. */
 export function actsAs(slug: AppSlug | PodOwner): PodOwner | undefined {
   if (slug === "alex") return "alex";
-  if (slug === "welcome") return undefined;
+  if (isConvenerApp(slug)) return undefined;
   return (ORGS as Record<string, { actsAs: PodOwner } | undefined>)[slug]?.actsAs;
 }
 
@@ -172,7 +181,7 @@ export async function openApp(
   const response = await page.goto(url);
   expect(response?.status(), `GET ${url}`).toBe(200);
   await waitForRuntime(page, {
-    runtime: slug !== "welcome",
+    runtime: !isConvenerApp(slug),
     timeout: options.timeout,
     tour: options.tour ?? false,
   });
@@ -188,8 +197,8 @@ export async function waitForRuntime(
   options: { tour?: boolean; timeout?: number; runtime?: boolean } = {},
 ): Promise<void> {
   const timeout = options.timeout ?? 30_000;
-  const onWelcome = new URL(page.url()).pathname.startsWith("/welcome/");
-  if (options.runtime ?? !onWelcome) {
+  const app = new URL(page.url()).pathname.split("/")[1] ?? "";
+  if (options.runtime ?? !isConvenerApp(app)) {
     await expect
       .poll(() => isControlled(page), {
         message: `the pod runtime service worker never controlled ${page.url()} (does the app call configure() and ready()?)`,

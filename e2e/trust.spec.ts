@@ -6,7 +6,16 @@
  */
 import { execFileSync } from "node:child_process";
 import { expect, test } from "@playwright/test";
-import { APP_SLUGS, appPath, DIST, ORGS, REPO_ROOT, requireApps } from "./support/site.ts";
+import {
+  APP_SLUGS,
+  appPath,
+  DIST,
+  isConvenerApp,
+  ORGS,
+  type OrgSlug,
+  REPO_ROOT,
+  requireApps,
+} from "./support/site.ts";
 
 /** Routes per app: its home, and a path no app serves (the not-found page). */
 const ROUTES = ["", "no-such-page-e2e/at-all"];
@@ -25,8 +34,9 @@ for (const slug of APP_SLUGS) {
         page.getByRole("note", { name: "Concept demonstration notice" }),
         `trust banner on ${url}`,
       ).toBeVisible();
-      if (slug !== "welcome") {
-        const line = `${ORGS[slug].organisation} is a fictional organisation.`;
+      // The convener's own pages (the front door, the feedback page) name no organisation.
+      if (!isConvenerApp(slug)) {
+        const line = `${ORGS[slug as OrgSlug].organisation} is a fictional organisation.`;
         await expect(page.getByText(line).first(), `"${line}" on ${url}`).toBeVisible();
       }
       await expect(page.locator('meta[name="robots"]'), `robots meta on ${url}`).toHaveAttribute(
