@@ -36,7 +36,7 @@ import type { OrgSlug } from "@mortgage/demo-kit/registry";
 import { DataFactory } from "n3";
 import { type KybGrantRecord, kybGrantRecords } from "../business-kyb/grants.js";
 import { type AclRule, aclDataset, aclTurtle, SIGNED_IN_APPEND } from "../mortgage/acl.js";
-import { membersOf } from "../mortgage/grants.js";
+import { managedAgents, membersOf, unmanagedRules } from "../mortgage/grants.js";
 import {
   at,
   dateOf,
@@ -285,6 +285,7 @@ async function syncAcls(
 ): Promise<string[]> {
   const holder = world.fetchAs(HOLDER);
   const had = targetsOf(before);
+  const managed = managedAgents(before, after);
   const written: string[] = [];
   for (const target of targetsOf(after)) {
     if (target.endsWith("/")) throw new Error(`a loan grant never covers a container: ${target}`);
@@ -293,10 +294,12 @@ async function syncAcls(
       continue;
     }
     const aclUrl = `${target}.acl`;
+    const owner = webid(world, HOLDER);
+    const kept = await unmanagedRules(holder, holderUrl(world), owner, target, managed);
     await put(
       holder,
       aclUrl,
-      await aclTurtle(aclDataset(webid(world, HOLDER), target, rules)),
+      await aclTurtle(aclDataset(owner, target, [...rules, ...kept])),
       "text/turtle",
     );
     written.push(aclUrl);

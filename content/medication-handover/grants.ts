@@ -33,7 +33,13 @@ import {
 import type { PodOwner } from "@mortgage/demo-kit/registry";
 import { DataFactory } from "n3";
 import { type AclRule, aclDataset, aclTurtle } from "../mortgage/acl.js";
-import { type GrantRecord, type GrantState, membersOf } from "../mortgage/grants.js";
+import {
+  type GrantRecord,
+  type GrantState,
+  managedAgents,
+  membersOf,
+  unmanagedRules,
+} from "../mortgage/grants.js";
 import {
   at,
   podUrl,
@@ -320,6 +326,7 @@ export async function syncMedAcls(
   const rosa = world.fetchAs(HOLDER);
   const beforeTargets = targetsOf(before);
   const afterTargets = targetsOf(after);
+  const managed = managedAgents(before, after);
   const written: string[] = [];
   for (const target of afterTargets) {
     const rules = rulesFor(after, afterTargets, target);
@@ -330,10 +337,12 @@ export async function syncMedAcls(
       continue;
     }
     const aclUrl = `${target}.acl`;
+    const owner = webid(world, HOLDER);
+    const kept = await unmanagedRules(rosa, podUrl(world, HOLDER, ""), owner, target, managed);
     await put(
       rosa,
       aclUrl,
-      await aclTurtle(aclDataset(webid(world, HOLDER), target, rules)),
+      await aclTurtle(aclDataset(owner, target, [...rules, ...kept])),
       "text/turtle",
     );
     written.push(aclUrl);

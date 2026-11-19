@@ -30,6 +30,8 @@ const DAY_ONE = "2026-08-03";
 const log: LensEntry[] = [];
 /** Beat name → log length when the beat finished. */
 const ends = new Map<string, number>();
+/** Beat name → the status an anonymous read of Alex's WebID profile got after it. */
+const profileStatus = new Map<string, number>();
 
 beforeAll(async () => {
   const calendar = createDemoCalendar(DAY_ONE);
@@ -65,6 +67,12 @@ beforeAll(async () => {
       podOrigin: ORIGIN,
     });
     ends.set(beat.name, log.length);
+    // Can anyone read Alex's WebID profile now? The runtime logs no anonymous request, so the
+    // probe stays out of the journey's log.
+    const anonymous = await host.fetchAs(null)(`${ORIGIN}/pods/alex/profile/card`, {
+      headers: { accept: "text/turtle" },
+    });
+    profileStatus.set(beat.name, anonymous.status);
   }
 }, 600_000);
 
@@ -189,6 +197,14 @@ describe("the Lens over the mortgage journey's log", () => {
       .drawers()
       .map((drawer) => drawer.path);
     expect(drawers.filter((path) => !configured.has(path))).toEqual([]);
+  });
+
+  test("Alex's WebID profile stays public through the journey, G6 included", () => {
+    // G6 (order-services) is the grant that writes profile/card.acl, beside the runtime's
+    // public read; the wallet must keep that rule.
+    expect(Object.fromEntries(profileStatus)).toEqual(
+      Object.fromEntries(JOURNEY.map((beat) => [beat.name, 200])),
+    );
   });
 
   test("step 23's refusal says Juniper's grant was withdrawn", () => {

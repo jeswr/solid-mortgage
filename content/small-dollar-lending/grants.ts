@@ -33,7 +33,7 @@ import {
 import type { PodOwner } from "@mortgage/demo-kit/registry";
 import { DataFactory } from "n3";
 import { type AclRule, aclDataset, aclTurtle } from "../mortgage/acl.js";
-import { membersOf } from "../mortgage/grants.js";
+import { managedAgents, membersOf, unmanagedRules } from "../mortgage/grants.js";
 import {
   at,
   dateOf,
@@ -373,6 +373,7 @@ export async function syncLendingAcls(
   const opened = new Set(fresh);
   const beforeTargets = targetsOf(before);
   const afterTargets = targetsOf(after);
+  const managed = managedAgents(before, after);
   const written: string[] = [];
   for (const target of afterTargets) {
     const rules = rulesFor(after, afterTargets, target, opened);
@@ -384,10 +385,12 @@ export async function syncLendingAcls(
       continue;
     }
     const aclUrl = `${target}.acl`;
+    const owner = webid(world, MAYA);
+    const kept = await unmanagedRules(maya(world), mayaUrl(world), owner, target, managed);
     await put(
       maya(world),
       aclUrl,
-      await aclTurtle(aclDataset(webid(world, MAYA), target, rules)),
+      await aclTurtle(aclDataset(owner, target, [...rules, ...kept])),
       "text/turtle",
     );
     written.push(aclUrl);

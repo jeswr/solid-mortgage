@@ -33,7 +33,7 @@ import type { PodOwner } from "@mortgage/demo-kit/registry";
 import { NamedNodeAs, NamedNodeFrom, SetFrom, TermWrapper } from "@rdfjs/wrapper";
 import { AclResource, type Authorization } from "@solid/object";
 import { DataFactory } from "n3";
-import { type AclRule, aclDataset, aclTurtle } from "./acl.js";
+import { ACL, type AclMode, type AclRule, aclDataset, aclTurtle } from "./acl.js";
 import { DAY } from "./facts.js";
 import {
   at,
@@ -450,6 +450,83 @@ async function oneTimeRulesInForce(
   return held;
 }
 
+const AGENT_CLASSES: Readonly<Record<string, AclRule["agent"]>> = Object.freeze({
+  "http://xmlns.com/foaf/0.1/Agent": { class: "anyone" } as const,
+  [`${ACL}AuthenticatedAgent`]: { class: "signed-in" } as const,
+});
+const ACL_MODES: readonly AclMode[] = ["Read", "Write", "Append", "Control"];
+
+/** The container a pod URL sits in, or undefined at the pod root. */
+function parentOf(url: string, root: string): string | undefined {
+  if (url === root || !url.startsWith(root)) return undefined;
+  const trimmed = url.endsWith("/") ? url.slice(0, -1) : url;
+  return trimmed.slice(0, trimmed.lastIndexOf("/") + 1);
+}
+
+/**
+ * The rules in force for `target` that no agreement manages: what the seed or the pod runtime put
+ * there, such as the public read on the WebID profile (`profile/card.acl`, written by the
+ * runtime's baseline) or a public drawer. The pod server uses only the nearest ACL document, so a
+ * document the wallet writes must repeat them, or writing it would take them away. They come from
+ * the target's own document when it has one, otherwise from the inheritable rules of the nearest
+ * document above it.
+ *
+ * Left out: the owner (every document names the owner), any agent in `managed` (the wallet
+ * recomputes those from the agreements), and rules narrowed by origin or group, which an
+ * `AclRule` cannot carry. Leaving a rule out can only narrow access, never widen it. Only HEAD
+ * and GET requests are made, as the owner.
+ */
+export async function unmanagedRules(
+  fetcher: typeof fetch,
+  root: string,
+  owner: string,
+  target: string,
+  managed: ReadonlySet<string>,
+): Promise<AclRule[]> {
+  for (let doc: string | undefined = target; doc !== undefined; doc = parentOf(doc, root)) {
+    const aclUrl = `${doc}.acl`;
+    const head = await fetcher(aclUrl, { method: "HEAD" });
+    if (head.status === 404) continue;
+    if (!head.ok) throw new PodRequestError("HEAD", aclUrl, head.status);
+    const own = doc === target;
+    const rules: AclRule[] = [];
+    for (const authorization of await readAcl(fetcher, aclUrl)) {
+      if (authorization.origin.size > 0 || authorization.agentGroup !== undefined) continue;
+      // Its own document's rules about the target itself; a document above, its rules for members.
+      if (own ? authorization.accessTo !== target : authorization.default !== doc) continue;
+      const modes = ACL_MODES.filter((mode) => authorization.mode.has(`${ACL}${mode}`));
+      if (modes.length === 0) continue;
+      const inheritable = own ? authorization.default === target : true;
+      for (const agent of authorization.agent) {
+        if (agent !== owner && !managed.has(agent)) rules.push({ agent, inheritable, modes });
+      }
+      for (const agentClass of authorization.agentClass) {
+        const agent = AGENT_CLASSES[agentClass];
+        if (agent !== undefined) rules.push({ agent, inheritable, modes });
+      }
+    }
+    return rules;
+  }
+  return [];
+}
+
+/** Every agent any agreement on record names: the agents whose rules the wallet recomputes. */
+export function managedAgents(
+  ...records: ReadonlyArray<
+    ReadonlyArray<{
+      readonly agreement: { readonly permissions: readonly { assigneeIri: string }[] };
+    }>
+  >
+): Set<string> {
+  const agents = new Set<string>();
+  for (const list of records) {
+    for (const record of list) {
+      for (const permission of record.agreement.permissions) agents.add(permission.assigneeIri);
+    }
+  }
+  return agents;
+}
+
 /** A stable description of a rule set, for telling whether a document has to be rewritten. */
 function fingerprint(rules: readonly Rule[]): string {
   return rules
@@ -461,7 +538,8 @@ function fingerprint(rules: readonly Rule[]): string {
 /**
  * Bring the pod's ACL documents in line with the grants on record. Only documents whose rules
  * differ between `before` and `after` are written, so each change shows in the Lens as the ACL
- * documents it really touched.
+ * documents it really touched. Each document written also repeats the rules no agreement manages
+ * ({@link unmanagedRules}), so a grant never takes away the public read on Alex's WebID profile.
  */
 export async function syncAcls(
   world: World,
@@ -476,6 +554,8 @@ export async function syncAcls(
   const held = await oneTimeRulesInForce(world, after);
   const keep: KeepOneTime = (policy, agent, target) =>
     fresh.includes(policy) || held.has(`${agent} ${target}`);
+  const owner = webid(world, "alex");
+  const managed = managedAgents(before, after);
   const written: string[] = [];
   for (const target of afterTargets) {
     const rules = rulesFor(after, afterTargets, target, keep);
@@ -483,10 +563,11 @@ export async function syncAcls(
     if (had && fingerprint(rulesFor(before, beforeTargets, target, keep)) === fingerprint(rules))
       continue;
     const aclUrl = `${target}.acl`;
+    const kept = await unmanagedRules(alex, alexUrl(world), owner, target, managed);
     await put(
       alex,
       aclUrl,
-      await aclTurtle(aclDataset(webid(world, "alex"), target, rules)),
+      await aclTurtle(aclDataset(owner, target, [...rules, ...kept])),
       "text/turtle",
     );
     written.push(aclUrl);
