@@ -575,7 +575,7 @@ export interface PodEvent {
   acl?: { granted: AccessRule[]; revoked: AccessRule[] };   // from the ACL body actually written
   grant?: string;                    // IRI of the policy that allowed it, when one matches
 }
-export interface AppNote { kind: "verified" | "proof-verified" | "org-to-org" | "no-solid" | "clock";
+export interface AppNote { kind: "verified" | "proof-verified" | "org-to-org" | "no-solid" | "clock" | "notified" | "grant-used";
                            org: OrgSlug; text: string; refs?: string[] }
 export type LensEntry = ({ source: "pod" } & PodEvent) | ({ source: "app"; id: number; at: string } & AppNote);
 ```
