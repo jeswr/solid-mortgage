@@ -33,7 +33,11 @@ export interface Recorder {
   websockets: string[];
   /** Resolve once every request seen so far has its outcome recorded. */
   flush(): Promise<void>;
-  /** Pod requests (`/pods/**` on the site origin) with a response, in the order sent. */
+  /**
+   * Every pod request (`/pods/**` on the site origin), in the order sent, answered or not: one
+   * with no response has no `status`, so it can never stand for a logged response, but a report
+   * can still say it was seen.
+   */
   podRequests(): ObservedRequest[];
   /**
    * Resolve once no pod request has been in flight for `quietMs` (or after `timeoutMs`). A page
@@ -104,10 +108,16 @@ export async function recordNetwork(context: BrowserContext): Promise<Recorder> 
     }
   });
 
-  const settle = (request: Request) => {
+  /**
+   * Record the response the browser received. A request can also fail after its response headers
+   * arrived (its body was cancelled or never read): the status it was answered with is still what
+   * the browser saw, so it is kept, beside the failure.
+   */
+  const settle = (request: Request, failed: boolean) => {
     podDone(request);
     const entry = byRequest.get(request);
     if (entry === undefined) return;
+    if (failed) entry.failure = request.failure()?.errorText ?? "failed";
     const job = (async () => {
       try {
         const response = await request.response();
@@ -123,12 +133,8 @@ export async function recordNetwork(context: BrowserContext): Promise<Recorder> 
     pending.add(job);
     void job.finally(() => pending.delete(job));
   };
-  context.on("requestfinished", settle);
-  context.on("requestfailed", (request) => {
-    podDone(request);
-    const entry = byRequest.get(request);
-    if (entry !== undefined) entry.failure = request.failure()?.errorText ?? "failed";
-  });
+  context.on("requestfinished", (request) => settle(request, false));
+  context.on("requestfailed", (request) => settle(request, true));
   context.on("page", (page) => {
     page.on("websocket", (socket) => websockets.push(socket.url()));
   });
@@ -141,7 +147,7 @@ export async function recordNetwork(context: BrowserContext): Promise<Recorder> 
       await Promise.all([...pending]);
     },
     podRequests() {
-      return requests.filter((r) => r.status !== undefined && isPodUrl(r.url));
+      return requests.filter((r) => isPodUrl(r.url));
     },
     async podIdle(quietMs = 750, timeoutMs = 8_000) {
       const deadline = Date.now() + timeoutMs;

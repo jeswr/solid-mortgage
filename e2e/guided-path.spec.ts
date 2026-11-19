@@ -185,7 +185,10 @@ test("9 Lens honesty: every 'pod saw' entry matches a request the test observed"
   if (record.loadError !== undefined) throw new Error(record.loadError);
   const report = checkHonesty(record.log, record.podRequests);
   expect(report.checked, "pod entries in the log").toBeGreaterThan(0);
-  expect(report.unmatched, "Lens entries with no matching request").toEqual([]);
+  expect(
+    report.unmatched,
+    `Lens entries with no matching request (pod requests observed: ${report.observed})`,
+  ).toEqual([]);
   expect(report.notInBrowser, "pod requests not answered in the browser").toEqual([]);
   requireWholeRun();
 });
