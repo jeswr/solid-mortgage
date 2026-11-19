@@ -14,6 +14,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App.tsx";
 import { setDayOne, setWalletDay } from "./runtime.tsx";
+import { linkTour } from "./tour-link.ts";
 
 configure({ app: "wallet", registry: ORGS, seed: mortgageSeed() });
 
@@ -32,6 +33,7 @@ void mountDemo({
   tour: mortgageTour(),
 }).then(({ tour }) => {
   if (tour === undefined) return;
+  linkTour(tour);
   // In the guided tour the wallet acts on the day of the step the visitor is on.
   const follow = () => {
     const day = tour.mode === "free" ? undefined : tour.current?.clock?.day;

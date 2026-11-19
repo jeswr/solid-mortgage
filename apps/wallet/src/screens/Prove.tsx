@@ -7,11 +7,13 @@ import {
 import { podUrl, statusOf } from "@mortgage/content/mortgage/world";
 import { ORGS } from "@mortgage/content/orgs";
 import { MORT } from "@mortgage/data-model";
+import { isAppSlug } from "@mortgage/demo-kit/registry";
 import { useState } from "react";
+import { useSearch } from "wouter";
 import { Screen } from "../App.tsx";
 import { Icon } from "../components/Icon.tsx";
 import { Loading, OrgBadge, Problem } from "../components/ui.tsx";
-import { labelOfPath } from "../explain.ts";
+import { labelOfPath, safeReturnUrl, slugOfReturnUrl } from "../explain.ts";
 import { usePodData, useWallet } from "../runtime.tsx";
 
 /** The two lenders that ask for pre-qualification, in the order the journey answers them. */
@@ -32,12 +34,23 @@ const OPS: Readonly<Record<string, string>> = {
   lt: "less than",
 };
 
+const nameOfApp = (slug: string) =>
+  Object.hasOwn(ORGS, slug)
+    ? ORGS[slug as keyof typeof ORGS].organisation
+    : "the app you came from";
+
 /**
  * Prove: answer both lenders' two questions with threshold proofs made on this device
  * (tour step 5). This route is served cross-origin isolated, so the prover can use threads.
  */
 export function Prove() {
-  const { run } = useWallet();
+  const { runApart } = useWallet();
+  // A lender that sent the visitor here may be returned to: only an app of this site.
+  const returnTo = safeReturnUrl(
+    new URLSearchParams(useSearch()).get("return"),
+    window.location,
+    isAppSlug,
+  );
   const sources = usePodData(async (world) => {
     const alex = world.fetchAs("alex");
     const entries = [];
@@ -60,7 +73,8 @@ export function Prove() {
     setError(undefined);
     const started = performance.now();
     try {
-      await run((world) => proveToLenders(world));
+      // The proofs grant nothing, so they run outside the grant queue (runtime.tsx).
+      await runApart((world) => proveToLenders(world));
       setSeconds(Math.round((performance.now() - started) / 1000));
       setState("done");
     } catch (caught) {
@@ -133,6 +147,11 @@ export function Prove() {
                 ? "This page can prove with several threads."
                 : "This page proves with one thread."}
         </p>
+        {state === "done" && returnTo !== undefined ? (
+          <a className="button ghost wide" href={returnTo}>
+            Back to {nameOfApp(slugOfReturnUrl(returnTo, window.location))}
+          </a>
+        ) : null}
       </section>
       <p className="small muted">
         The proofs go to each lender's own inbox. No access to your pod is granted.

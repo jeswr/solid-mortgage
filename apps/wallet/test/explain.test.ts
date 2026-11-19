@@ -16,6 +16,7 @@ import {
   orgOfWebid,
   ownerOfWebid,
   safeReturnUrl,
+  slugOfReturnUrl,
   verbOf,
 } from "../src/explain.ts";
 
@@ -149,5 +150,15 @@ describe("safeReturnUrl", () => {
     expect(safeReturnUrl("https://evil.demo.test/", wallet, isAppSlug)).toBeUndefined();
     expect(safeReturnUrl("https://lender.other.test/", wallet, isAppSlug)).toBeUndefined();
     expect(safeReturnUrl("http://lender.demo.test/", wallet, isAppSlug)).toBeUndefined();
+  });
+});
+
+describe("slugOfReturnUrl", () => {
+  it("keeps the hand-off's query and names the app in either URL mode", () => {
+    const here = { hostname: "demo.test", origin: "https://demo.test" };
+    const back = safeReturnUrl("/servicer/connect?from=wallet", here, isAppSlug);
+    expect(back).toBe("https://demo.test/servicer/connect?from=wallet");
+    expect(slugOfReturnUrl(back ?? "", here)).toBe("servicer");
+    expect(slugOfReturnUrl("https://lender-b.demo.test/received", here)).toBe("lender-b");
   });
 });

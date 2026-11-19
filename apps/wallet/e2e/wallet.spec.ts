@@ -187,6 +187,30 @@ test("step 7: Juniper's request explained, approved, enforced, and the visitor s
   expect(await harness.status("aus", "alex", "property/purchase-agreement")).toBe(403);
 });
 
+test("step 7 by Do it for me: the wallet points to Juniper, has it ask, then approves", async ({
+  context,
+  page,
+}) => {
+  const harness = await openHarness(context);
+  await harness.beats(ISSUED);
+  await page.goto("requests?tour=mortgage&step=apply-consent");
+  const handoff = page.locator("section.handoff");
+  await expect(handoff).toContainText("Waiting for Juniper Home Loans");
+  await expect(handoff.getByRole("link", { name: "Go to Juniper Home Loans" })).toHaveAttribute(
+    "href",
+    "/lender/",
+  );
+  await expectAxeClean(page);
+  // The tour's own "Do it for me": the cursor presses the stand-in, then the request's Approve.
+  await page.evaluate(() =>
+    (window as unknown as { __demo: { act(): Promise<string> } }).__demo.act(),
+  );
+  await page.waitForURL(/\/lender\/application$/, { timeout: 60_000 });
+  expect(await harness.status("alex", "alex", "policies/g4")).toBe(200);
+  expect(await harness.status("alex", "alex", "consents/g4-given")).toBe(200);
+  expect(await harness.status("lender", "alex", "credentials/assets")).toBe(200);
+});
+
 test("a return URL outside the site is never followed", async ({ context, page }) => {
   const harness = await openHarness(context);
   const request = await harness.request("G2", 1);

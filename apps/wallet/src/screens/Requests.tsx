@@ -1,9 +1,16 @@
 // AUTHORED-BY Claude Opus 5.5
 import { approveRequest } from "@mortgage/content/mortgage/grants";
+import {
+  requestApplicationAccess,
+  requestServicerAccess,
+} from "@mortgage/content/mortgage/journey";
+import type { World } from "@mortgage/content/mortgage/world";
 import { remove } from "@mortgage/content/mortgage/world";
+import { ORGS } from "@mortgage/content/orgs";
 import type { AccessRequest } from "@mortgage/data-model";
-import { isAppSlug } from "@mortgage/demo-kit/registry";
-import { useState } from "react";
+import { isAppSlug, type OrgSlug } from "@mortgage/demo-kit/registry";
+import { appUrl } from "@mortgage/demo-kit/urls";
+import { type MouseEvent, useState } from "react";
 import { Link, useSearch } from "wouter";
 import { Screen } from "../App.tsx";
 import { Icon } from "../components/Icon.tsx";
@@ -18,6 +25,7 @@ import {
 } from "../explain.ts";
 import { alexRoot, type RequestItem, readRequests } from "../pod-data.ts";
 import { usePodData, useWallet } from "../runtime.tsx";
+import { continueTour, useTourStep } from "../tour-link.ts";
 
 /** The `data-tour` names of the two approvals the tour drives (content/mortgage/README.md). */
 const TOUR_TARGETS: Readonly<Record<string, string>> = {
@@ -46,6 +54,91 @@ export function useRequestWords(request: AccessRequest) {
     purpose: explainPurpose(permissions[0]?.purposeIri),
     who: nameOfWebid(request.assigneeIri),
   };
+}
+
+/**
+ * Steps 7 and 21 start in another app: Juniper's Start screen and Marigold's Connect screen post
+ * the request, the wallet approves it, and the visitor goes back for the completion half
+ * (content/mortgage/tour.ts). When the tour is on one of these steps and the request has not
+ * arrived, the wallet says where it starts, and offers to have that organisation ask now, which
+ * is what "Do it for me" presses.
+ */
+interface Handoff {
+  readonly code: string;
+  readonly org: OrgSlug;
+  /** Where the request starts in the other app. */
+  readonly start: string;
+  readonly startLabel: string;
+  /** Where the other app finishes the step once the grant is in force. */
+  readonly back: string;
+  readonly ask: (world: World) => Promise<string>;
+}
+
+const HANDOFFS: Readonly<Record<string, Handoff>> = {
+  "apply-consent": {
+    ask: requestApplicationAccess,
+    back: "/application",
+    code: "G4",
+    org: "lender",
+    start: "/",
+    startLabel: "Start screen",
+  },
+  "servicer-connect": {
+    ask: requestServicerAccess,
+    back: "/connect",
+    code: "G8",
+    org: "servicer",
+    start: "/connect",
+    startLabel: "Connect screen",
+  },
+};
+
+function HandoffCard({ handoff, onAsked }: { handoff: Handoff; onAsked: (back: string) => void }) {
+  const { run } = useWallet();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<unknown>();
+  const name = ORGS[handoff.org].organisation;
+  const ask = async (event: MouseEvent<HTMLButtonElement>) => {
+    // The tour's cursor clicks with a synthetic event; a person's click is trusted.
+    const byTour = !event.nativeEvent.isTrusted;
+    setBusy(true);
+    setError(undefined);
+    try {
+      await run((world) => handoff.ask(world));
+      onAsked(appUrl(handoff.org, handoff.back));
+      // "Do it for me" carries on: the cursor moves to the request's Approve button.
+      if (byTour) void continueTour().catch(() => undefined);
+    } catch (caught) {
+      setError(caught);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <section className="card handoff" aria-labelledby="handoff-heading">
+      <h2 id="handoff-heading">Waiting for {name}</h2>
+      <p>
+        {name} has not sent its request yet. It starts on {name}'s{" "}
+        <a href={appUrl(handoff.org, handoff.start)}>{handoff.startLabel}</a>, and comes here for
+        your answer.
+      </p>
+      {error !== undefined ? <Problem error={error} /> : null}
+      <div className="actions">
+        <a className="button ghost" href={appUrl(handoff.org, handoff.start)}>
+          Go to {name}
+        </a>
+        <button
+          type="button"
+          className="button primary"
+          data-tour={TOUR_TARGETS[handoff.code]}
+          disabled={busy}
+          onClick={ask}
+        >
+          {busy ? "Asking…" : `Have ${name} ask now`}
+        </button>
+      </div>
+    </section>
+  );
 }
 
 type Outcome = { kind: "approved" | "declined"; who: string };
@@ -170,9 +263,15 @@ function ConsentCard({
 export function Requests() {
   const search = new URLSearchParams(useSearch());
   const focus = search.get("request");
-  const returnTo = safeReturnUrl(search.get("return"), window.location, isAppSlug);
   const requests = usePodData(readRequests);
   const [outcome, setOutcome] = useState<Outcome | undefined>();
+  const [handoffReturn, setHandoffReturn] = useState<string>();
+  const returnTo = safeReturnUrl(
+    search.get("return") ?? handoffReturn ?? null,
+    window.location,
+    isAppSlug,
+  );
+  const step = useTourStep();
 
   const onOutcome = (next: Outcome) => {
     setOutcome(next);
@@ -192,6 +291,14 @@ export function Requests() {
       targeted.set(code, item.url);
     }
   }
+  const handoff = step === undefined ? undefined : HANDOFFS[step];
+  // Only while that grant's request has neither arrived nor been answered.
+  const awaiting =
+    handoff !== undefined &&
+    requests.data !== undefined &&
+    !items.some((item) => item.request.grantCode === handoff.code)
+      ? handoff
+      : undefined;
   const targetOf = (item: RequestItem) =>
     targeted.get(item.request.grantCode) === item.url
       ? TOUR_TARGETS[item.request.grantCode]
@@ -223,7 +330,13 @@ export function Requests() {
       {focused !== undefined ? (
         <ConsentCard item={focused} tourTarget={targetOf(focused)} onOutcome={onOutcome} />
       ) : null}
-      {requests.data !== undefined && waiting.length === 0 && focused === undefined ? (
+      {awaiting !== undefined ? (
+        <HandoffCard handoff={awaiting} onAsked={setHandoffReturn} />
+      ) : null}
+      {requests.data !== undefined &&
+      waiting.length === 0 &&
+      focused === undefined &&
+      awaiting === undefined ? (
         <Empty>No organisation is waiting for an answer.</Empty>
       ) : null}
       {waiting.map((item) => (

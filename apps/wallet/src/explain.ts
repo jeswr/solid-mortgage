@@ -246,3 +246,10 @@ export function safeReturnUrl(
   if (url.protocol !== new URL(here.origin).protocol) return undefined;
   return isAppSlug(label) ? url.href : undefined;
 }
+
+/** The app slug a URL that passed `safeReturnUrl` points at (path or host mode). */
+export function slugOfReturnUrl(value: string, here: { origin: string }): string {
+  const url = new URL(value, here.origin);
+  if (url.origin === here.origin) return url.pathname.replace(/^\/+/, "").split("/")[0] ?? "";
+  return url.hostname.split(".")[0] ?? "";
+}
