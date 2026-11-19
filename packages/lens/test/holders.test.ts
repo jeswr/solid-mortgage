@@ -1,8 +1,13 @@
 // AUTHORED-BY Claude Opus 5.5
 /**
  * The Lens centres on the holder its demo names (lane E3), not on a constant. The same log read
- * by a Lens for Maya and by a Lens for Alex attributes each pod and each actor to the right one.
+ * by a Lens for Maya and by a Lens for Alex attributes each pod and each actor to the right one:
+ * first a hand-written log, then the same story as the real pod host emitted it
+ * (`fixtures/holders.json`, recorded and drift-checked by pod-runtime's
+ * `test/host/holders-lens-fixture.test.ts` against the real wasm).
  */
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import type { AccessRule, LensEntry, PodEvent } from "@mortgage/demo-kit/contracts";
 import type { PodOwner } from "@mortgage/demo-kit/registry";
 import { expect, it, describe as suite } from "vitest";
@@ -123,6 +128,41 @@ suite("holders as data", () => {
     expect(m.orgs().map((o) => o.key)).toEqual(["maya", "bank"]);
     expect(m.node("maya")?.label).toBe("Maya");
     expect(m.grant("bank")).toBeUndefined();
+    expect(computeTotals(m).uploads).toBe(0);
+    expect(computeLedger(m).rows.map((r) => r.path)).toEqual(["/profile/card"]);
+  });
+});
+
+const RECORDED: LensEntry[] = JSON.parse(
+  readFileSync(join(import.meta.dirname, "fixtures", "holders.json"), "utf8"),
+);
+
+suite("holders, on entries the real host emitted", () => {
+  it("a Lens for Maya attributes her pod, her grant and the bank's reads to the right holder", () => {
+    const m = lens({ id: "maya" }, RECORDED);
+    expect(m.holder).toBe("maya");
+    expect(m.drawer("/credentials/")?.resources.has("/credentials/income")).toBe(true);
+    expect(m.orgs().map((o) => o.key)).toEqual(["bank", "alex"]);
+    expect(m.grant("bank")?.state).toBe("revoked");
+    const first = describe(m, m.received[0] as (typeof m.received)[number]);
+    expect(first.parts.map((p) => (typeof p === "string" ? p : p.b)).join("")).toMatch(/^Maya /);
+    expect(
+      m.received.filter((r) => r.entry.source === "pod" && r.entry.kind === "denied"),
+    ).toHaveLength(1);
+    expect(
+      m
+        .notShared()
+        .find((row) => row.org.key === "bank")
+        ?.read.map((d) => d.path),
+    ).toEqual(["/credentials/"]);
+    expect(computeTotals(m)).toMatchObject({ denied: 1, uploads: 1 });
+  });
+
+  it("a Lens for Alex reads the same entries as Maya's business, not his own", () => {
+    const m = lens({ id: "alex" }, RECORDED);
+    expect(m.drawer("/credentials/")).toBeUndefined();
+    expect(m.grant("bank")).toBeUndefined();
+    expect(m.orgs().map((o) => o.key)).toEqual(["maya", "bank"]);
     expect(computeTotals(m).uploads).toBe(0);
     expect(computeLedger(m).rows.map((r) => r.path)).toEqual(["/profile/card"]);
   });
