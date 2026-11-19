@@ -1,0 +1,5 @@
+[
+  { "says": "Two issuers", "metric": "small-business-loan.issuers", "value": 2 },
+  { "says": "one lender", "metric": "small-business-loan.lenders", "value": 1 },
+  { "says": "one decision written back", "metric": "small-business-loan.decisions", "value": 1 }
+]
