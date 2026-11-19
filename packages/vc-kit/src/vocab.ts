@@ -93,6 +93,9 @@ const SHAPE_LOCAL_NAMES: Readonly<Record<CredentialKind, string>> = {
   "credit-score-credential": "CreditScoreCredentialShape",
   "appraisal-credential": "AppraisalCredentialShape",
   "title-clear-credential": "TitleClearCredentialShape",
+  "identity-credential": "IdentityCredentialShape",
+  "title-commitment-credential": "TitleCommitmentCredentialShape",
+  "evidence-of-insurance-credential": "EvidenceOfInsuranceCredentialShape",
   "zk-operand-anchor": "ZkOperandAnchorShape",
 };
 
@@ -103,6 +106,9 @@ export type CredentialKind =
   | "credit-score-credential"
   | "appraisal-credential"
   | "title-clear-credential"
+  | "identity-credential"
+  | "title-commitment-credential"
+  | "evidence-of-insurance-credential"
   | "zk-operand-anchor";
 
 /** `cred:credentialSchema` IRI per credential kind (decision 0004). */
