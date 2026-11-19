@@ -61,6 +61,9 @@ in their package manifests. `@jeswr` packages not on npm are vendored as packed 
 ```
 apps/<slug>/          one Vite + React app per organisation (13) plus welcome; slugs in demo-kit
 apps/_template/       the starting point for an app: copy its files, keep the app's manifest
+apps/feedback/        the feedback page (interview or questionnaire); banner links reach it
+packages/feedback/    feedback guide, validation, records; ./server holds the API handlers
+api/feedback/         Vercel functions (status, turn, audio, submit); env vars: packages/feedback/README.md
 apps/vocab/           the mort vocabulary site (its own Vercel project; do not move it)
 packages/demo-kit/    registry types, appUrl(), demo calendar, trust wiring, contract types
 packages/pod-runtime/ in-browser pods (lane L1)      packages/tour/, packages/lens/ (lane L2)

@@ -154,6 +154,18 @@ describe("home", () => {
     }
   });
 
+  it("links the feedback page from the join section and every watch page", () => {
+    render(<App hook={at("/")} probe={missing} />);
+    expect(
+      screen.getByRole("link", { name: "Give feedback on the demos" }).getAttribute("href"),
+    ).toBe("/feedback/?from=welcome");
+    cleanup();
+    render(<App hook={at("/watch/motor-claim")} probe={missing} />);
+    expect(
+      screen.getByRole("link", { name: "Give feedback on this demo" }).getAttribute("href"),
+    ).toBe("/feedback/?from=welcome&demo=motor-claim");
+  });
+
   it("links the weekly meeting, the forum and the source", () => {
     render(<App hook={at("/")} probe={missing} />);
     expect(
@@ -182,7 +194,7 @@ describe("watch pages", () => {
       expect(document.getElementById(`chapter-${chapter.id}`)).not.toBeNull();
       expect(chapter.transcript.length).toBeGreaterThan(0);
     }
-    expect(screen.getByText(/Thirteen applications\. Eight grants\./)).toBeTruthy();
+    expect(screen.getByText(/Thirteen applications\. Nine grants\./)).toBeTruthy();
   });
 
   it("gives no demo a Coming next page: every watch page is a live demo's", () => {
