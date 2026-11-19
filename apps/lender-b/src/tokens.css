@@ -1,0 +1,20 @@
+/* AUTHORED-BY Claude Opus 5.5
+ * Copperfield Mortgage: copper on charcoal, Archivo Black display over Archivo text, square
+ * corners, loud type (design.md §b.3). Original values; no real organisation's palette. */
+:root {
+  --copper: #b4532a;
+  --copper-bright: #e07a4a;
+  --copper-deep: #8f3d1c;
+  --charcoal: #1f1d1b;
+  --charcoal-soft: #2c2926;
+  --paper: #f7f3ee;
+  --ink: #1f1d1b;
+  --muted: #5a524b;
+  --on-dark: #f7f3ee;
+  --on-dark-muted: #cfc6bd;
+  --yes: #1f6b3a;
+  --no: #a12a17;
+  --focus: #2a6fdb;
+  --display: "Archivo Black", "Arial Black", sans-serif;
+  --text: "Archivo", system-ui, sans-serif;
+}
