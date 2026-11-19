@@ -10,6 +10,7 @@
 import { cpSync, existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import { mortgageAliases } from "@mortgage/content/vite";
 import { build } from "vite";
 import { createSiteServer } from "../../../tools/serve-dist.mjs";
 
@@ -27,13 +28,7 @@ await build({
   build: { emptyOutDir: true, outDir: join(site, "__wallet-e2e__"), target: "es2022" },
   configFile: false,
   logLevel: "warn",
-  resolve: {
-    alias: {
-      "@jeswr/guarded-fetch/node": "@mortgage/vc-kit/browser/guarded-fetch",
-      "node:crypto": "@mortgage/vc-kit/browser/crypto",
-      "node:zlib": "@mortgage/vc-kit/browser/zlib",
-    },
-  },
+  resolve: { alias: mortgageAliases() },
   root: join(app, "e2e", "harness"),
 });
 const portIndex = process.argv.indexOf("--port");

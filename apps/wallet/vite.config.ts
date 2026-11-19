@@ -1,4 +1,5 @@
 // AUTHORED-BY Claude Opus 5.5
+import { mortgageAliases } from "@mortgage/content/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
@@ -9,15 +10,9 @@ export default defineConfig({
   base: `/${SLUG}/`,
   build: { outDir: "dist", emptyOutDir: true, sourcemap: true, target: "es2022" },
   plugins: [react()],
-  resolve: {
-    // vc-kit's stand-ins for the three Node modules the pinned signing library imports
-    // (packages/vc-kit/README.md, "Running in a browser or a worker").
-    alias: {
-      "node:zlib": "@mortgage/vc-kit/browser/zlib",
-      "node:crypto": "@mortgage/vc-kit/browser/crypto",
-      "@jeswr/guarded-fetch/node": "@mortgage/vc-kit/browser/guarded-fetch",
-    },
-  },
+  // The browser stand-ins for the Node modules @jeswr/solid-vc imports (content/vite.ts).
+  // tools/build-site.mjs builds src/agent.ts with this config too.
+  resolve: { alias: mortgageAliases() },
   // The prover's wasm workers are loaded by bb.js itself; pre-bundling breaks their URLs.
   optimizeDeps: { exclude: ["@aztec/bb.js", "@noir-lang/noir_js"] },
   worker: { format: "es" },
