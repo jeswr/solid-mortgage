@@ -146,13 +146,15 @@ const visiting = new Map<string, Promise<AddressRecord | undefined>>();
 
 /**
  * The first visit to an organisation's page (steps 4 to 6): read the address once, if this
- * organisation has no copy yet. Concurrent calls (React's double effect) share one read. Returns
- * the copy, or `undefined` when the organisation has no grant (the refusal shows in the Lens).
+ * organisation has no copy yet, then run `after` (the state reads the evidence too). Concurrent
+ * calls (React's double effect) share one read. A refusal by the pod is thrown as the
+ * {@link PodRequestError} it is, so the page can show it.
  */
 export function firstLook(
   world: World,
   holder: Holder,
   time: string,
+  after?: () => Promise<unknown>,
 ): Promise<AddressRecord | undefined> {
   const key = `${world.podOrigin} ${holder}`;
   let pending = visiting.get(key);
@@ -160,14 +162,8 @@ export function firstLook(
     pending = (async () => {
       const existing = await readCopy(world, holder);
       if (existing !== undefined) return existing;
-      try {
-        await readAndKeep(world, holder, time);
-      } catch (error) {
-        if (error instanceof PodRequestError && (error.status === 401 || error.status === 403)) {
-          return undefined;
-        }
-        throw error;
-      }
+      await readAndKeep(world, holder, time);
+      await after?.();
       return readCopy(world, holder);
     })();
     visiting.set(key, pending);

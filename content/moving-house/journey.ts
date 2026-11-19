@@ -123,14 +123,10 @@ async function refreshProduct(world: World, time: string): Promise<void> {
 
 /**
  * Step 4, on opening the state's page: Driver Services reads the address and its evidence (once).
- * Returns the state's copy, or `undefined` when it has no grant.
+ * Returns the state's copy. Without a grant the pod refuses, and the refusal is thrown.
  */
-export async function stateLooks(world: World): Promise<AddressRecord | undefined> {
-  const had = await readCopy(world, "state");
-  if (had !== undefined) return had;
-  const copy = await firstLook(world, "state", "10:40");
-  if (copy !== undefined) await readEvidence(world);
-  return copy;
+export function stateLooks(world: World): Promise<AddressRecord | undefined> {
+  return firstLook(world, "state", "10:40", () => readEvidence(world));
 }
 
 /** Step 4, "Update licence": the state issues a licence at the address it read, revoking the old. */
@@ -148,11 +144,16 @@ export function holderLooks(
   return firstLook(world, holder, holder === "county" ? "10:50" : "10:55");
 }
 
-/** Step 8. Alex withdraws Alder Bank's grant (closing the old account). */
-export async function revokeBank(world: World): Promise<string[]> {
-  const acls = await withdrawHolder(world, "bank", "16:40");
+/** Alex withdraws one organisation's standing grant; the data product description follows. */
+export async function withdrawAddressGrant(world: World, holder: Holder): Promise<string[]> {
+  const acls = await withdrawHolder(world, holder, "16:40");
   await refreshProduct(world, "16:41");
   return acls;
+}
+
+/** Step 8. Alex withdraws Alder Bank's grant (closing the old account). */
+export function revokeBank(world: World): Promise<string[]> {
+  return withdrawAddressGrant(world, "bank");
 }
 
 /** Step 9. A week later Alex corrects the unit: 14 Larch Lane has none. */
