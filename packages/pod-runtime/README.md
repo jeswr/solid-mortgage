@@ -92,13 +92,14 @@ When the agent runs:
   acts as (`registry[app].actsAs`).
 - It does not run for the agent's own writes made through `ctx.podFetch`. Those writes act as that
   owner and show `viaAgent: true` in the Lens.
+- `ctx.note` always records the note as from the agent's app, whatever `org` the handler wrote.
 
 How it runs:
 
 - Each organisation's handlers run one at a time.
 - If a handler throws, the error is logged and the next message is still handled.
 - In service-worker mode every tab starts an agent worker, but only the holder of a Web Lock runs
-  the agents. The holder replays logged inbox writes it has not handled yet, so writes made before
+  the agents. In host mode the bridge page starts it, on the pod origin. The holder replays logged inbox writes it has not handled yet, so writes made before
   the worker started, or while another tab held the lock, still get handled.
 - Headless runs use `runAgentsOnHost({ host, agents, identities })`.
 
@@ -109,11 +110,18 @@ into a new ACL when the resource has none, write it with `If-Match` or `If-None-
 keep the owner's rule. `revokeAccess` refuses to revoke the owner. It splits authorisations shared
 with other agents, so only the named agent loses access.
 
+- **Conditions are kept.** Both helpers copy `acl:origin` onto every rule they rewrite.
+- **They fail closed.** If a rule has any other condition, they throw instead of copying it without
+  that condition, which would broaden it.
+- **Origins are reported.** `rulesOf` reports `acl:origin` as `origins` on a
+  `ConditionalAccessRule`. That is a subtype of demo-kit's `AccessRule`, so events carry it
+  without a contract change.
+
 The host enforces the same invariant on every ACL write, so a raw `podFetch` cannot remove it:
 
 | ACL write | Answer |
 |---|---|
-| An ACL that does not give the owner `acl:Control` on its target (and `acl:default` for a container) | 409 |
+| An ACL that does not give the owner unconditional `acl:Control` on its target (and `acl:default` for a container). An owner rule narrowed by `acl:origin`, or carrying anything other than type, agent, class, group, accessTo, default and mode, does not count. | 409 |
 | `PATCH` on any `.acl` | 409 (use the helpers) |
 | `DELETE /.acl` (the root ACL) | 409 |
 | A non-RDF ACL body | 415 |
@@ -127,8 +135,15 @@ WAC on every request.
 - **Path mode.** The page declares itself with `X-Demo-Agent: <app slug>`. The host maps the slug
   to `actsAs`, then to `<origin>/pods/<owner>/profile/card#me`. This is self-declared, as design.md
   §d.5 accepts.
-- **Host mode.** The bridge page sets the header from `event.origin`. A host-mode build of the
-  service worker honours the header only from the bridge page.
+- **Host mode.** The build reads owners and identities from the registry
+  (`MORTGAGE_HOST_MODE=1 MORTGAGE_HOST_REGISTRY=<module exporting ORGS>`), and nothing a page sends
+  changes them: the runtime ignores a hello's fields. The bridge page sets the identity header from
+  `event.origin` and sets a forwarded note's `org` the same way. The service worker accepts the
+  header from only two clients: the bridge page, and the agent worker the bridge page starts from
+  the same script. It accepts control messages only from the bridge page. The bridge relays events
+  to the app that embeds it.
+- **Identity keys** are slug-shaped app names that map to a real owner. Prototype names
+  (`constructor`, `__proto__`, …) are never identities.
 - **Unknown or missing identity.** It is anonymous (`undefined`), never `""`: the wasm treats `""`
   as an authenticated agent.
 - **Before dispatch.** The host strips every `x-demo-*` header before the wasm sees the request.
@@ -138,6 +153,13 @@ WAC on every request.
 
 - After a request that changed the revision, the host saves a `current` snapshot to IndexedDB.
 - When a stopped worker starts again, it restores every pod from those snapshots.
+- A snapshot that cannot be restored falls back, so a bad snapshot never stops the host. That
+  covers a corrupt or truncated snapshot, one from an incompatible server version, and one whose
+  pod fails the health check (the owner must be able to read the root ACL).
+  - The pod falls back to its seed snapshot, then to an empty baseline pod.
+  - Each fallback is listed in `info().restoreIssues`, which pages see in `RuntimeInfo`.
+  - The repaired pod is saved as its new current snapshot.
+- `reset()` works even after a failed start.
 - No events are emitted on restore.
 - No request journal is kept: snapshots are smaller, and restoring them does not re-run requests.
 
@@ -161,6 +183,10 @@ WAC on every request.
 **Events.** After every response except `OPTIONS` and anonymous requests, the host appends a
 `PodEvent` to IndexedDB and broadcasts it on the `pod-runtime-events` BroadcastChannel.
 
+- A state change (PUT, POST, PATCH, DELETE) is reported only when it succeeded (2xx) or was refused
+  by access control (401/403, kind `denied`). Any other failure changed nothing and emits no event,
+  so the Lens never shows a write that did not happen. Reads are always reported.
+
 - `path` is relative to the pod (`/documents/x`). For a POST it is the path of the created resource.
 - `grant` is the authorisation that allowed the request, found by walking up the ACLs.
 - `acl.granted` and `acl.revoked` compare the effective rules before and after an ACL write. The
@@ -171,7 +197,7 @@ WAC on every request.
 | Mode | When it is used | How it works |
 |---|---|---|
 | Service worker | The normal case | Same-origin pages are controlled after `clients.claim()`. A hard-reloaded page asks for a claim. |
-| Dedicated worker (`pod-host`) | No service worker, or `mode: "worker"` | The same bundle and the same IndexedDB. The page's agents run inside that worker. |
+| Dedicated worker (`pod-host`) | No service worker, or `mode: "worker"` | The same bundle and the same IndexedDB. Every tab starts one, but only the holder of the `pod-runtime-host` Web Lock runs the pods and the agents. The others forward their page's messages to it over a BroadcastChannel. When the hosting tab closes, the next worker restores from the snapshots and takes over. |
 | Host-mode bridge | `setUrlMode({ kind: "host" })` | A hidden iframe on `https://pods.<domain>/pods-bridge/` carries the requests. |
 
 ## Characterisation of the 0.1.8 wasm
@@ -217,13 +243,35 @@ The tests in `test/wasm/` pin down these behaviours. Treat any change as a break
 
 - **Anonymous requests emit no Lens event**, because `PodEvent.actor` cannot express "anonymous".
   Showing them would need a contract change.
-- **Dedicated-worker fallback.** Each tab runs its own host over the same IndexedDB. A second tab
-  sees another tab's writes only after a reload, and two live hosts can assign the same event id.
+- **Fallback hand-over.** A request in flight when the hosting tab closes is sent again to the new
+  host. If the old host had already applied it, it is applied twice.
 - **The bundle is about 3.7 MB** with the wasm inlined. It is served `no-cache`, so the HTTP cache
   revalidates it.
-- **Host mode** needs two things outside this package:
+- **Host mode** needs these outside this package:
   - a page at `pods.<domain>/pods-bridge/` that loads `/pods-sw.js` as a classic script;
-  - a CSP `frame-ancestors` limited to `*.<domain>`.
+  - a CSP `frame-ancestors` limited to `*.<domain>`;
+  - a host-mode build of `pods-sw.js` with `MORTGAGE_HOST_REGISTRY` set;
+  - nothing else served on the pod origin.
+
+## What is and is not enforced
+
+Access control is real: the wasm checks every request against the ACLs. Who is asking is a different
+matter.
+
+- **Path mode: identity is self-declared.** Any script on the site's origin can send
+  `X-Demo-Agent: <any app>` and act as that app's organisation. It can also send a hello that
+  remaps identities. Every app shares one origin, so the browser cannot tell them apart. This is
+  the trade-off design.md §d.5 accepts for path mode.
+- **Path mode: events can be forged.** Any same-origin script can post a fake event or reset on
+  the `pod-runtime-events` BroadcastChannel. The Lens on that origin would show it. The pods and
+  the stored event log would not change.
+- **Host mode: identity is the app's origin,** which the browser sets. In host mode, the following
+  are still open to any recognised app origin:
+  - Before the pods are first seeded, it can send the seed, which runs as each pod's owner.
+  - It can call `reset` and set the demo day.
+  - It can add notes, but only as itself.
+
+  Unrecognised origins are anonymous and cannot send control messages.
 
 ## Tests
 
@@ -231,8 +279,9 @@ The tests in `test/wasm/` pin down these behaviours. Treat any change as a break
 
 | Directory | What it checks |
 |---|---|
-| `test/host/` | Access (owner, Read, Append, refused, anonymous), the ACL policy, grant and revoke events, persistence and reset, the guard, and a real trap in a child process with recovery. |
+| `test/host/` | Access (owner, Read, Append, refused, anonymous), the ACL policy and `acl:origin` conditions, grant and revoke events, event kinds, persistence and reset, corrupt snapshots, the guard, and a real trap in a child process with recovery. |
 | `test/wasm/` | The characterisation tests above. |
 | `test/agents/`, `test/bridge/` | Agents and the bridge over the real host. |
-| `test/browser/` | The built `pods-sw.js` in Chrome. Skipped when `dist/` or a Chrome is missing; set `POD_RUNTIME_CHROME` to choose the binary. |
+| `test/sw/` | The real service-worker role and runtime over the Node wasm, through a fake worker scope. Covers host-mode identity, the client check, hello and note handling, and prototype names. |
+| `test/browser/` | The built `pods-sw.js` in Chrome, including fallback mode with several tabs. A host-mode build also runs on `*.demo.localhost`; it needs port 80 and skips without it. Everything here skips when `dist/` or a Chrome is missing; set `POD_RUNTIME_CHROME` to choose the binary. |
 | `test/domain-gate.test.ts` | No domain vocabulary anywhere in the package. |
