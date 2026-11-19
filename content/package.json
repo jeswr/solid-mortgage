@@ -1,0 +1,41 @@
+{
+  "name": "@mortgage/content",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Demo content: the organisation registry (orgs.ts, lane L0) and each demo's seed, tour and copy (mortgage/, lane L3).",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    "./orgs": {
+      "types": "./dist/orgs.d.ts",
+      "import": "./dist/orgs.js"
+    },
+    "./mortgage/*": {
+      "types": "./dist/mortgage/*.d.ts",
+      "import": "./dist/mortgage/*.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "lint": "biome check orgs.ts test package.json tsconfig.json",
+    "test": "vitest run --root . --config ../vitest.config.ts",
+    "typecheck": "tsc --project tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@jeswr/fetch-rdf": "^0.1.0",
+    "@mortgage/data-model": "workspace:*",
+    "@mortgage/demo-kit": "workspace:*",
+    "@mortgage/vc-kit": "workspace:*",
+    "@rdfjs/types": "^2.0.1",
+    "@rdfjs/wrapper": "^0.34.0",
+    "@solid/object": "^0.8.0",
+    "n3": "^2.1.1",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/n3": "^1.26.1",
+    "@types/node": "^25.9.2",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9"
+  }
+}
