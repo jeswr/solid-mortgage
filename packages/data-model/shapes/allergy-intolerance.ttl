@@ -1,0 +1,33 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix fhir: <http://hl7.org/fhir/> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+
+# AUTHORED-BY Claude Opus 5.5
+# An allergy (medication handover, flows.md section 5): rosa:/allergies/<name>, a FHIR R5
+# AllergyIntolerance with the substance coded in RxNorm.
+mshape:AllergyIntoleranceShape
+  a sh:NodeShape ;
+  sh:targetClass fhir:AllergyIntolerance ;
+  sh:closed true ;
+  sh:property [ sh:path rdf:type ; sh:in ( fhir:AllergyIntolerance ) ] ;
+  sh:property [ sh:path fhir:nodeRole ; sh:maxCount 1 ; sh:in ( fhir:treeRoot ) ] ;
+  sh:property [ sh:path fhir:id ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirIdShape ] ;
+  sh:property [ sh:path fhir:clinicalStatus ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirCodeableConceptShape ] ;
+  sh:property [ sh:path fhir:verificationStatus ; sh:maxCount 1 ; sh:node mshape:FhirCodeableConceptShape ] ;
+  sh:property [ sh:path fhir:category ; sh:maxCount 1 ] ;
+  sh:property [
+    sh:path ( fhir:category [ sh:zeroOrMorePath rdf:rest ] rdf:first fhir:v ) ;
+    sh:in ( "food" "medication" "environment" "biologic" ) ;
+  ] ;
+  sh:property [ sh:path fhir:criticality ; sh:maxCount 1 ; sh:node mshape:FhirStringShape ] ;
+  sh:property [ sh:path ( fhir:criticality fhir:v ) ; sh:in ( "low" "high" "unable-to-assess" ) ] ;
+  sh:property [ sh:path fhir:code ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirRxNormConceptShape ] ;
+  sh:property [ sh:path fhir:patient ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirLinkedReferenceShape ] ;
+  sh:property [ sh:path fhir:recordedDate ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirDateTimeShape ] ;
+  sh:property [ sh:path fhir:note ; sh:maxCount 1 ] ;
+  sh:property [
+    sh:path ( fhir:note [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+    sh:node mshape:FhirAnnotationShape ;
+  ] .

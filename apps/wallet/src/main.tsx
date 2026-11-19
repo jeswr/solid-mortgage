@@ -12,6 +12,12 @@ import {
   isBusinessKybPage,
   KYB_COMPLIANCE,
 } from "@mortgage/content/business-kyb/mount";
+import {
+  isMedicationPage,
+  MEDICATION_HOLDER,
+  medicationLens,
+  medicationTour,
+} from "@mortgage/content/medication-handover/mount";
 import { mortgageSeed, trackTourContext } from "@mortgage/content/mortgage/browser";
 import { MORTGAGE_HOLDER, mortgageLens, mortgageTour } from "@mortgage/content/mortgage/mount";
 import {
@@ -30,13 +36,22 @@ import { initialHolder } from "./holder.ts";
 import { setDayOne, setWalletDay } from "./runtime.tsx";
 import { linkTour } from "./tour-link.ts";
 
-// A page under moving/ belongs to the moving-house demo (src/sections/moving-house/).
-const movingHouse = isMovingHousePage(location.pathname, "wallet", location.search);
-// A page under kyb/ (or prove/kyb) belongs to the business KYB demo (src/sections/business-kyb/).
-const kyb = isBusinessKybPage(location.pathname, "wallet", location.search);
+// A page under moving/ belongs to the moving-house demo (src/sections/moving-house/); a page
+// under kyb/ (or prove/kyb) to the business KYB demo (src/sections/business-kyb/); a page under
+// health/ to the medication handover (src/sections/medication-handover/).
+const medication = isMedicationPage(location.pathname, "wallet", location.search);
+const kyb = !medication && isBusinessKybPage(location.pathname, "wallet", location.search);
+const movingHouse =
+  !medication && !kyb && isMovingHousePage(location.pathname, "wallet", location.search);
 
 // The demo the wallet is mounted for, and the holder it shows first (src/holder.ts).
-const demo = kyb ? businessKybTour() : movingHouse ? movingHouseTour() : mortgageTour();
+const demo = medication
+  ? medicationTour()
+  : kyb
+    ? businessKybTour()
+    : movingHouse
+      ? movingHouseTour()
+      : mortgageTour();
 const holder = initialHolder(window.location.href, demo.holder);
 
 configure({ app: "wallet", holder, registry: ORGS, seed: mortgageSeed() });
@@ -49,8 +64,20 @@ const started = ready().then((info) => {
 
 void mountDemo({
   app: "wallet",
-  holder: kyb ? BUSINESS_KYB_HOLDER : movingHouse ? MOVING_HOUSE_HOLDER : MORTGAGE_HOLDER,
-  lens: kyb ? businessKybLens() : movingHouse ? movingHouseLens() : mortgageLens(),
+  holder: medication
+    ? MEDICATION_HOLDER
+    : kyb
+      ? BUSINESS_KYB_HOLDER
+      : movingHouse
+        ? MOVING_HOUSE_HOLDER
+        : MORTGAGE_HOLDER,
+  lens: medication
+    ? medicationLens()
+    : kyb
+      ? businessKybLens()
+      : movingHouse
+        ? movingHouseLens()
+        : mortgageLens(),
   ...(kyb ? { ledger: { compliance: [...KYB_COMPLIANCE] } } : {}),
   registry: ORGS,
   runtime: { onEvent, resetDemo, setTourContext: trackTourContext(setTourContext) },

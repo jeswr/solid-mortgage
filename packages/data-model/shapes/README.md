@@ -145,3 +145,13 @@ Decisions specific to these shapes:
 - **Inbox messages are pointers.** An `as:Announce` names its sender, a
   `mort:MessageKindScheme` concept and the IRIs of the resources it is about.
   The payload stays in the sender's pod under the sender's ACL.
+
+## Medication handover (FHIR R5 in RDF)
+
+`medication-statement`, `medication-request`, `medication-dispense`, `allergy-intolerance`,
+`provenance-record`, `discharge-summary` (a `fhir:Composition`, LOINC 18842-5) and
+`encounter-record`, with the shared data types in `fhir-support`. Primitives carry `fhir:v`;
+repeating elements are RDF collections, validated through
+`( <element> [ sh:zeroOrMorePath rdf:rest ] rdf:first )`; medicines must be RxNorm codings (open
+question 6). The reason for each change lives in a `fhir:Provenance` (`fhir:why`), so the pod's
+own request log (who wrote) and the record (who decided, and why) can be read side by side.

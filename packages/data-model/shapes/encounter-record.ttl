@@ -1,0 +1,22 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix fhir: <http://hl7.org/fhir/> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+
+# AUTHORED-BY Claude Opus 5.5
+# The practice's own record of a consultation (medication handover, flows.md section 5): a FHIR R5
+# Encounter in the practice's pod. It points at Rosa (her WebID) and copies nothing from her
+# record: the medicines stay in her pod.
+mshape:EncounterRecordShape
+  a sh:NodeShape ;
+  sh:targetClass fhir:Encounter ;
+  sh:closed true ;
+  sh:property [ sh:path rdf:type ; sh:in ( fhir:Encounter ) ] ;
+  sh:property [ sh:path fhir:nodeRole ; sh:maxCount 1 ; sh:in ( fhir:treeRoot ) ] ;
+  sh:property [ sh:path fhir:id ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirIdShape ] ;
+  sh:property [ sh:path fhir:status ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirStringShape ] ;
+  sh:property [ sh:path ( fhir:status fhir:v ) ; sh:in ( "planned" "in-progress" "completed" "cancelled" ) ] ;
+  sh:property [ sh:path fhir:subject ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirLinkedReferenceShape ] ;
+  sh:property [ sh:path fhir:serviceProvider ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirLinkedReferenceShape ] ;
+  sh:property [ sh:path fhir:actualPeriod ; sh:minCount 1 ; sh:maxCount 1 ; sh:node mshape:FhirPeriodShape ] .

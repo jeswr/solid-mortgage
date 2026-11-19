@@ -1,0 +1,15 @@
+@prefix fhir: <http://hl7.org/fhir/>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+# A SNOMED-coded medicine (not RxNorm), a status outside R5's value set, and a stray property.
+<https://pods.example/pods/rosa/medications/lisinopril> a fhir:MedicationStatement;
+  fhir:id [ fhir:v "lisinopril" ];
+  fhir:status [ fhir:v "active" ];
+  fhir:medication [ fhir:concept [
+    fhir:coding ( [ fhir:system [ fhir:v "http://snomed.info/sct"^^xsd:anyURI ]; fhir:code [ fhir:v "108537001" ] ] );
+    fhir:text [ fhir:v "Lisinopril" ] ] ];
+  fhir:subject [ fhir:reference [ fhir:v "https://pods.example/pods/rosa/profile/card#me" ]; fhir:link <https://pods.example/pods/rosa/profile/card#me>; fhir:display [ fhir:v "Rosa Rivera" ] ];
+  fhir:dateAsserted [ fhir:v "2026-09-10T11:00:00Z"^^xsd:dateTime ];
+  fhir:dosage ( [ fhir:text [ fhir:v "One tablet each morning" ] ] );
+  fhir:adherence [
+    fhir:code [ fhir:coding ( [ fhir:system [ fhir:v "http://hl7.org/fhir/CodeSystem/medication-statement-adherence"^^xsd:anyURI ]; fhir:code [ fhir:v "taking-as-directed" ] ] ) ] ];
+  fhir:note "free text".

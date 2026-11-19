@@ -1,0 +1,348 @@
+/* AUTHORED-BY Claude Opus 5.5 */
+@import "./tokens.css";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--rx-panel);
+  color: var(--rx-ink);
+  font-family: var(--rx-font);
+  font-size: 1.0625rem;
+  line-height: 1.45;
+}
+
+a {
+  color: var(--rx-green-deep);
+  font-weight: 700;
+}
+
+:focus-visible {
+  outline: 3px solid var(--rx-focus);
+  outline-offset: 2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.small {
+  font-size: 0.9rem;
+}
+
+.block {
+  display: block;
+}
+
+.muted {
+  color: var(--rx-muted);
+}
+
+.mono {
+  font-family: var(--rx-mono);
+}
+
+/* A thin black toolbar: the workstation's own chrome. */
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.5rem;
+  padding: 0.5rem var(--rx-space);
+  background: var(--rx-ink);
+  color: var(--rx-paper);
+}
+
+.bar-name {
+  margin: 0;
+  font-weight: 700;
+  font-size: 1.125rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.bar-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  background: var(--rx-green);
+  color: var(--rx-paper);
+  font-weight: 700;
+}
+
+.bar-nav {
+  display: flex;
+  gap: 1rem;
+}
+
+.bar-nav a {
+  color: var(--rx-paper);
+}
+
+.bar-user {
+  margin: 0 0 0 auto;
+  font-size: 0.9rem;
+}
+
+/* Queue on the left, the patient and the label on the right. */
+.station {
+  display: grid;
+  grid-template-columns: minmax(14rem, 18rem) minmax(0, 1fr);
+  gap: 0;
+  min-height: calc(100vh - 6rem);
+}
+
+.queue {
+  background: var(--rx-paper);
+  border-right: 3px solid var(--rx-line);
+  padding: var(--rx-space);
+}
+
+.queue h1 {
+  margin: 0 0 0.75rem;
+  font-size: 1.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.queue-list {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+}
+
+.queue-list li {
+  padding: 0.75rem;
+  border: 2px solid var(--rx-line);
+  background: var(--rx-green-soft);
+  border-left: 8px solid var(--rx-green);
+}
+
+.patient {
+  padding: var(--rx-space) calc(var(--rx-space) * 1.5);
+  min-width: 0;
+}
+
+.patient.wide {
+  grid-column: 1 / -1;
+  max-width: 60rem;
+}
+
+.patient h1,
+.patient h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.5rem;
+}
+
+.patient h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+}
+
+.allergy {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border: 2px solid var(--rx-red);
+  background: var(--rx-red-soft);
+  color: var(--rx-red);
+  font-weight: 700;
+}
+
+.lines {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  background: var(--rx-paper);
+}
+
+.lines th,
+.lines td {
+  border: 2px solid var(--rx-line);
+  padding: 0.5rem 0.6rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.lines th {
+  background: var(--rx-ink);
+  color: var(--rx-paper);
+}
+
+.tag {
+  display: inline-block;
+  padding: 0 0.4rem;
+  font-weight: 700;
+  border: 2px solid currentColor;
+}
+
+.tag-new {
+  color: var(--rx-green-deep);
+  background: var(--rx-green-soft);
+}
+
+.tag-changed {
+  color: var(--rx-amber);
+  background: var(--rx-amber-soft);
+}
+
+.tag-stopped {
+  color: var(--rx-red);
+  background: var(--rx-red-soft);
+}
+
+.tag-unchanged {
+  color: var(--rx-muted);
+}
+
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 20rem);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+button.primary {
+  font: inherit;
+  font-weight: 700;
+  min-height: 48px;
+  padding: 0 1.5rem;
+  border: 3px solid var(--rx-ink);
+  background: var(--rx-green);
+  color: var(--rx-paper);
+  cursor: pointer;
+  margin: 0.5rem 0;
+}
+
+button.primary:hover:not(:disabled) {
+  background: var(--rx-green-deep);
+}
+
+button.primary:disabled {
+  background: var(--rx-panel);
+  color: var(--rx-muted);
+  border-color: var(--rx-muted);
+  cursor: not-allowed;
+}
+
+/* The label preview: a printed dispensing label, in mono, on white. */
+.label {
+  margin: 0;
+  border: 3px dashed var(--rx-ink);
+  background: var(--rx-paper);
+  padding: 0.75rem;
+}
+
+.label figcaption {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.5rem;
+}
+
+.label-body {
+  font-family: var(--rx-mono);
+  font-size: 0.9rem;
+}
+
+.label-body p {
+  margin: 0 0 0.25rem;
+}
+
+.label-drug {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.label-dose {
+  font-weight: 600;
+}
+
+.label-from {
+  border-top: 1px solid var(--rx-ink);
+  padding-top: 0.25rem;
+  font-size: 0.75rem;
+}
+
+.records {
+  list-style: none;
+  margin: 1rem 0;
+  padding: 0;
+  background: var(--rx-paper);
+  border: 2px solid var(--rx-line);
+}
+
+.records li {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--rx-line);
+}
+
+.alert {
+  border: 3px solid var(--rx-red);
+  background: var(--rx-red-soft);
+  padding: 0.5rem 0.75rem;
+}
+
+@media (max-width: 760px) {
+  .station {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .queue {
+    border-right: 0;
+    border-bottom: 3px solid var(--rx-line);
+  }
+
+  .split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .patient {
+    padding: var(--rx-space);
+  }
+
+  .lines,
+  .lines tbody,
+  .lines tr,
+  .lines td {
+    display: block;
+    width: 100%;
+  }
+
+  .lines thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .lines tr {
+    border: 2px solid var(--rx-line);
+    margin-bottom: 0.5rem;
+  }
+
+  .lines td {
+    border: 0;
+    border-bottom: 1px solid var(--rx-panel);
+  }
+
+  .bar-user {
+    margin-left: 0;
+  }
+}
+
+.labels {
+  display: grid;
+  gap: 0.75rem;
+}

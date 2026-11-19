@@ -50,8 +50,15 @@ function shouldSkip(iri) {
   );
 }
 
-export function extractIris(text) {
+// A literal typed xsd:anyURI is a value, not an IRI the data uses as a term. FHIR's
+// coding system identifiers (http://loinc.org, http://snomed.info/sct) are canonical
+// identifiers that are not required to dereference, so they are not checked.
+const ANYURI_LITERAL =
+  /"(?:[^"\\\n]|\\.)*"\^\^(?:xsd:anyURI|<http:\/\/www\.w3\.org\/2001\/XMLSchema#anyURI>)/g;
+
+export function extractIris(source) {
   const iris = new Set();
+  const text = source.replace(ANYURI_LITERAL, '""');
   for (const match of text.matchAll(/https?:\/\/[^\s"'<>)\]}\\,;`]+/g)) {
     const iri = match[0].replace(/[.>;,)`]+$/, "").split("#")[0];
     if (!shouldSkip(iri)) iris.add(iri);
