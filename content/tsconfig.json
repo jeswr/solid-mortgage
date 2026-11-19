@@ -5,6 +5,12 @@
     "rootDir": ".",
     "lib": ["ES2023", "DOM"]
   },
-  "include": ["orgs.ts", "vite.ts", "mortgage/**/*.ts", "moving-house/**/*.ts"],
+  "include": [
+    "orgs.ts",
+    "vite.ts",
+    "mortgage/**/*.ts",
+    "moving-house/**/*.ts",
+    "business-kyb/**/*.ts"
+  ],
   "exclude": ["dist", "node_modules", "test", "mortgage/**/*.test.ts"]
 }
