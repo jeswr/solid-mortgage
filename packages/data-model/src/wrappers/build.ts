@@ -155,7 +155,7 @@ export interface CredentialEnvelopeInit {
   credentialSubject: string;
 }
 
-function applyEnvelope(
+export function applyEnvelope(
   credential: CredentialResource,
   init: CredentialEnvelopeInit,
   mortType: string,
@@ -436,9 +436,15 @@ export interface ConsentReceiptInit {
   dataSubject: string;
   dataController: string;
   target: string;
+  /** Further covered resources, when a grant spans several. */
+  moreTargets?: readonly string[];
   /** One of `CONSENT_STATUS_IRIS`. */
   consentStatus: string;
   issued: Date;
+  /** The ODRL agreement this record is the audit entry for. */
+  policy?: string;
+  /** A DPV purpose IRI. */
+  purpose?: string;
 }
 
 /** Build one SHACL-validated app-level consent receipt (decision 0006). */
@@ -449,8 +455,11 @@ export function buildConsentReceipt(init: ConsentReceiptInit): ConsentReceipt {
   receipt.dataSubjectIri = init.dataSubject;
   receipt.dataControllerIri = init.dataController;
   receipt.targetIri = init.target;
+  for (const target of init.moreTargets ?? []) receipt.targetIris.add(target);
   receipt.consentStatus = init.consentStatus;
   receipt.issued = init.issued;
+  receipt.policyIri = init.policy;
+  receipt.purposeIri = init.purpose;
   return receipt;
 }
 
