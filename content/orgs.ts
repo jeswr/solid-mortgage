@@ -5,7 +5,13 @@
  * rename is a change to this file only. Theme colours are original values, never a real
  * organisation's palette.
  */
-import { HOLDERS, type OrgRegistry, type PodHolder } from "@mortgage/demo-kit/registry";
+import {
+  HOLDERS,
+  ORG_SLUGS,
+  type OrgRegistry,
+  type OrgSlug,
+  type PodHolder,
+} from "@mortgage/demo-kit/registry";
 
 /** The mortgage demo's holder; the holders themselves are registered in `@mortgage/demo-kit/holders`. */
 export const POD_HOLDER: PodHolder = Object.freeze({ name: HOLDERS.alex.name, owner: "alex" });
@@ -155,4 +161,55 @@ export const ORGS: OrgRegistry = Object.freeze({
     themeColor: "#E9A100",
     title: "Marigold Loan Servicing",
   },
+  // Demo 4, small-dollar lending (flows.md §1 and §4). Maya Torres is the person signed in.
+  idv: {
+    actsAs: "idv",
+    organisation: "Trueline Identity",
+    persona: { name: HOLDERS.maya.name, role: "identity check" },
+    role: "Identity verification service: checks a person once and issues an identity credential",
+    short: "Trueline",
+    slug: "idv",
+    themeColor: "#101412",
+    title: "Trueline Identity",
+  },
+  "fintech-lender": {
+    actsAs: "fintech-lender",
+    organisation: "Finchly Loans",
+    persona: { name: HOLDERS.maya.name },
+    role: "Online instalment lender: quotes, decides, pays out and services small loans",
+    short: "Finchly",
+    slug: "fintech-lender",
+    themeColor: "#5B3FD1",
+    title: "Finchly Loans",
+  },
+  payout: {
+    actsAs: "payout",
+    organisation: "Swiftline Payouts",
+    persona: null,
+    role: "Payment service: pushes a loan's funds to the borrower's debit card",
+    short: "Swiftline",
+    slug: "payout",
+    themeColor: "#0E1A2B",
+    title: "Swiftline Payouts",
+  },
 });
+
+/** The apps of demo 4 (flows.md §4): Maya's wallet, the three new apps and three mortgage apps. */
+const SMALL_DOLLAR_APPS: readonly OrgSlug[] = [
+  "wallet",
+  "idv",
+  "payroll",
+  "bank",
+  "bureau",
+  "fintech-lender",
+  "payout",
+];
+
+/**
+ * The apps each demo uses. The registry grows as demos are added, so a demo's own count (the
+ * mortgage video's "Thirteen applications.") is taken from its list here, never from `ORGS`.
+ */
+export const DEMO_APPS = Object.freeze({
+  mortgage: ORG_SLUGS.slice(0, 13),
+  "small-dollar-lending": SMALL_DOLLAR_APPS,
+} satisfies Record<string, readonly OrgSlug[]>);

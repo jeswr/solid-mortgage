@@ -4,7 +4,11 @@
  * fictional organisation is a change to that one file. Slugs are role names and stay fixed.
  */
 
-/** The thirteen organisation apps, in the order of design.md §b.1. Also the app directory names. */
+/**
+ * The organisation apps: the thirteen of design.md §b.1 in that order, then the apps later demos
+ * add (flows.md §1: `idv`, `fintech-lender` and `payout` from demo 4). Also the app directory
+ * names.
+ */
 export const ORG_SLUGS = [
   "wallet",
   "payroll",
@@ -19,6 +23,9 @@ export const ORG_SLUGS = [
   "insurer",
   "county",
   "servicer",
+  "idv",
+  "fintech-lender",
+  "payout",
 ] as const;
 
 export type OrgSlug = (typeof ORG_SLUGS)[number];
