@@ -2,8 +2,17 @@
   "name": "@mortgage/app-wallet",
   "version": "0.0.0",
   "private": true,
+  "description": "Cairn: Alex Rivera's personal data wallet. Home, documents, requests (consent), sharing (grants and revoke), prove (threshold proofs), activity (consent receipts) and inbox, over the in-browser pods.",
   "type": "module",
-  "description": "Scaffold manifest from lane L0: dependencies are fixed here so the lockfile is complete; lane A1 owns the package and adds scripts and source. Start from apps/_template and keep these dependencies.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "biome check src test e2e package.json tsconfig.json vite.config.ts playwright.config.ts",
+    "typecheck": "tsc --project tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test"
+  },
   "dependencies": {
     "@fontsource/nunito-sans": "^5.3.0",
     "@jeswr/fetch-rdf": "^0.1.0",

@@ -1,9 +1,13 @@
 // AUTHORED-BY Claude Opus 5.5
+
+import { TOUR } from "@mortgage/content/mortgage/tour";
 import { ORGS } from "@mortgage/content/orgs";
-import { isOrgSlug, ORG_SLUGS } from "@mortgage/demo-kit/registry";
+import { isAppSlug, ORG_SLUGS } from "@mortgage/demo-kit/registry";
+import { appUrl } from "@mortgage/demo-kit/urls";
 import { describe, expect, it } from "vitest";
 import { contrast, textOn } from "../src/colour.ts";
 import { DEMOS, demoById } from "../src/demos.ts";
+import { guidedDemo, tourUrl } from "../src/demos-links.ts";
 import { formatClock, formatDuration, isoDuration } from "../src/format.ts";
 
 describe("the demo list", () => {
@@ -35,7 +39,7 @@ describe("the demo list", () => {
     for (const demo of DEMOS) {
       if (demo.status === "live") {
         expect(demo.tour).toBeDefined();
-        expect(isOrgSlug(demo.tour?.app ?? "")).toBe(true);
+        expect(isAppSlug(demo.tour?.app ?? "")).toBe(true);
         for (const chapter of demo.chapters) expect(chapter.transcript.length).toBeGreaterThan(0);
       } else {
         expect(demo.tour).toBeUndefined();
@@ -43,9 +47,26 @@ describe("the demo list", () => {
     }
   });
 
+  it("starts the mortgage tour at its first step, on this page", () => {
+    const tour = demoById("mortgage")?.tour;
+    const first = TOUR[0];
+    expect(tour?.app).toBe(first?.app);
+    expect(tour?.step).toBe(first?.id);
+    expect(tour === undefined ? "" : tourUrl(tour)).toBe(
+      `${appUrl(first?.app ?? "welcome", first?.path ?? "")}?tour=mortgage&step=welcome`,
+    );
+  });
+
+  it("knows when a page is opened by the tour", () => {
+    expect(guidedDemo("?tour=mortgage&step=welcome")).toBe("mortgage");
+    expect(guidedDemo("?tour=off")).toBeUndefined();
+    expect(guidedDemo("?tour=")).toBeUndefined();
+    expect(guidedDemo("")).toBeUndefined();
+  });
+
   it("uses the mortgage step ids from video-scripts.md", () => {
     const mortgage = demoById("mortgage");
-    expect(mortgage?.tour).toEqual({ demo: "mortgage", app: "wallet", path: "", step: "welcome" });
+    expect(mortgage?.tour).toEqual({ demo: "mortgage", app: "welcome", path: "", step: "welcome" });
     expect(mortgage?.chapters.map((c) => c.id)).toEqual([
       "intro",
       "ready",

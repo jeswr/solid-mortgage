@@ -207,7 +207,7 @@ Solid storage in the demo, standing in for its existing systems). Grants are lis
   (Loan Estimate summary with deadline; "I intend to proceed"; later the Closing Disclosure with its waiting period and
   "I have received this") · Status (milestones; outstanding items) · Closing appointment.
 - **Does:** request access, prefill, submit, proceed, acknowledge.
-- **Pod:** R per G4; W `alex:/mortgage/juniper/` (application copy, LE, CD, notices); W `own:/loans/JHL-1001/`.
+- **Pod:** R per G4; R/W `alex:/mortgage/juniper/` (application copy, LE, CD, notices); W `own:/loans/JHL-1001/`.
 - **Grants needed:** G4.
 
 #### `lender-desk` — Juniper Loan Desk
@@ -292,7 +292,7 @@ Solid storage in the demo, standing in for its existing systems). Grants are lis
   insurance, autopay account) · Account · Escrow (taxes and insurance; initial statement) · Insurance tracking (reads
   the policy from the pod, so a renewal is seen without a letter).
 - **Does:** deliver notices, request access, set up autopay, show escrow.
-- **Pod:** R `alex:/profile/contact`, `alex:/insurance/`, `alex:/banking/payment-mandate`; W `alex:/mortgage/servicing/`.
+- **Pod:** R `alex:/profile/contact`, `alex:/insurance/`, `alex:/banking/payment-mandate`; RW `alex:/mortgage/servicing/` (it reads back its own letters).
 - **Grants needed:** G8.
 
 ### b.4 Alex's pod and the grants
@@ -319,11 +319,11 @@ alex:/
 | G1 | Ledgerly | Append `credentials/`; may re-issue on Juniper's request | Deliver employment verification | Closing | Expired |
 | G2 | Alder Bank | Append `credentials/` | Deliver asset verification | 7 days | Expired |
 | G3 | Quillon | Append `credentials/` | Deliver credit summary | 7 days | Expired |
-| G4 | Juniper; onward: Castellan (three credentials only); Quillon (the credit-report authorisation only) | Read `profile/`, `identity/`, `credentials/`, `property/`, `insurance/`; write `mortgage/juniper/` | Mortgage origination and underwriting | 60 days after closing (quality control) | **Revoked by Alex** |
+| G4 | Juniper; onward: Castellan (three credentials only); Quillon (the credit-report authorisation only) | Read `profile/`, `identity/`, `credentials/`, `property/`, `insurance/`; read and write `mortgage/juniper/` | Mortgage origination and underwriting | 60 days after closing (quality control) | **Revoked by Alex** |
 | G5 | Plumbline | Read two `property/` resources | Appraisal | Report delivered | Expired |
 | G6 | Sextant | Read `profile/card`, purchase agreement; write `mortgage/closing/` | Title and settlement | Policy issued | Expired |
 | G7 | Wrenfield | Read property facts; write `insurance/` | Insurance quote and policy | While the policy is in force | Active |
-| G8 | Marigold | Read `profile/contact`, `insurance/`, `banking/payment-mandate`; write `mortgage/servicing/` | Loan servicing | While Marigold services the loan | Active |
+| G8 | Marigold | Read `profile/contact`, `insurance/`, `banking/payment-mandate`; read and write `mortgage/servicing/` | Loan servicing | While Marigold services the loan | Active |
 
 A grant is three things written together by the wallet: the WAC change (enforcement), an ODRL policy (scope, purpose,
 expiry, onward recipients) and a DPV consent record (the audit entry). WAC has no expiry: the wallet removes the ACL

@@ -17,8 +17,8 @@ a threshold over a hidden value. Security-critical: every gate fails closed.
 
 Credential kinds: employment and income, assets, credit score, appraisal,
 identity, title commitment, evidence of insurance and the operand anchor.
-`title-clear-credential` remains only until the retired `packages/solid-kit`
-is deleted; new code uses the title commitment.
+`title-clear-credential` has had no importer since `packages/solid-kit` was
+deleted and is due for removal; new code uses the title commitment.
 
 Precomputed proof manifests were removed in the static rebuild. The only proof
 this package makes is the live threshold proof.

@@ -207,6 +207,12 @@ const AFTER: Record<string, () => Promise<void>> = {
   },
   "connect-servicer": async () => {
     await probe("servicer reads contact details under G8", "servicer", alex("profile/contact"));
+    await probe(
+      "servicer reads its own transfer notice",
+      "servicer",
+      alex("mortgage/servicing/transfer-notice"),
+    );
+    await probe("servicer lists its drawer", "servicer", alex("mortgage/servicing/"));
     await probe("servicer reads income", "servicer", alex("credentials/employment-income"));
     await probe("servicer reads the property", "servicer", alex("property/subject-property"));
     await probe(
@@ -219,6 +225,12 @@ const AFTER: Record<string, () => Promise<void>> = {
       "lender",
       alex("credentials/assets"),
     );
+    await probe(
+      "lender reads back its own Loan Estimate",
+      "lender",
+      alex("mortgage/juniper/loan-estimate"),
+    );
+    await probe("lender lists its drawer", "lender", alex("mortgage/juniper/"));
   },
   "revoke-juniper": async () => {
     for (const path of [
@@ -275,9 +287,15 @@ beforeAll(async () => {
   for (const owner of host.owners) pods.push(...(await crawl(host.world, owner)));
 }, 600_000);
 
+/**
+ * A pattern matches when every key it names is equal. The host records the actor as the acting
+ * pod owner, so a pattern's `actor: { org }` compares with that.
+ */
 const matches = (event: object, expected: object): boolean =>
-  Object.entries(expected).every(
-    ([key, value]) => (event as Record<string, unknown>)[key] === value,
+  Object.entries(expected).every(([key, value]) =>
+    key === "actor" && typeof value === "object" && value !== null
+      ? (event as Record<string, unknown>).actor === (value as { org?: unknown }).org
+      : (event as Record<string, unknown>)[key] === value,
   );
 
 describe("the journey runs on real pods", () => {
@@ -449,10 +467,14 @@ describe("grants are enforced by the pod", () => {
     "title reads the profile after the policy": 403,
     "title writes to closing after the policy": 403,
     "servicer reads contact details under G8": 200,
+    "servicer reads its own transfer notice": 200,
+    "servicer lists its drawer": 200,
     "servicer reads income": 403,
     "servicer reads the property": 403,
     "servicer reads Juniper's drawer": 403,
     "lender still reads assets before the revoke": 200,
+    "lender reads back its own Loan Estimate": 200,
+    "lender lists its drawer": 200,
     "lender reads profile/card after the revoke": 403,
     "lender reads profile/contact after the revoke": 403,
     "lender reads identity/identity-credential after the revoke": 403,

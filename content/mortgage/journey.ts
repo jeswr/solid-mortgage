@@ -13,6 +13,7 @@
  */
 
 import {
+  AccessRequest,
   AgentProfile,
   buildClosingDisclosure,
   buildClosingRecord,
@@ -51,7 +52,6 @@ import {
   loanEstimateDeadline,
 } from "@mortgage/demo-kit/calendar";
 import type { PodOwner } from "@mortgage/demo-kit/registry";
-import { deriveStatusIndex, mintCapturedOperandAnchor, validityOn } from "@mortgage/vc-kit";
 import { DataFactory } from "n3";
 import {
   ACCOUNTS,
@@ -85,7 +85,15 @@ import {
   sign,
   statusListOf,
 } from "./issuers.js";
-import { deliver, readMessage, shareInOwnPod } from "./messages.js";
+import {
+  answerOnce,
+  answerOrAwait,
+  answerOrAwaitReply,
+  deliver,
+  findMember,
+  readMessage,
+  shareInOwnPod,
+} from "./messages.js";
 import {
   openPrequalification,
   type PrequalifyingLender,
@@ -93,6 +101,7 @@ import {
   verifyPresentation,
 } from "./prequalification.js";
 import { identityCredentialUrl } from "./seed.js";
+import { vcKit } from "./vc.js";
 import {
   at,
   dateOf,
@@ -220,6 +229,7 @@ async function shareCredential(
   // The same issuer signs the encoding of the hidden value, so a later proof can be checked
   // against the issuer without showing the value.
   const anchorId = alexUrl(world, `${entry.path}-anchor`);
+  const { deriveStatusIndex, mintCapturedOperandAnchor, validityOn } = await vcKit();
   const anchor = await mintCapturedOperandAnchor({
     anchorId,
     credential,
@@ -307,10 +317,24 @@ export const lenderBReceived = async (world: World): Promise<void> => {
 
 export const CREDIT_AUTHORISATION = "consents/g4-credit-report-authorisation";
 
-/** Step 7. Juniper asks; Alex approves the grant and signs the credit-report authorisation. */
-export const approveApplicationAccess = async (world: World): Promise<void> => {
-  const request = await requestAccess(world, "G4", "10:00");
-  await approveRequest(world, request, "10:02");
+/** Throw unless grant `code` is active: a completion half runs only after Alex approved. */
+async function requireActive(world: World, code: GrantCode): Promise<void> {
+  const record = (await grantRecords(world)).find((candidate) => candidate.code === code);
+  if (record?.state !== "active") {
+    throw new Error(`${code} is not active: Alex has to approve the request in the wallet first`);
+  }
+}
+
+/** Step 7, first half (Juniper's Start screen). Juniper asks for G4. Returns the request URL. */
+export const requestApplicationAccess = (world: World): Promise<string> =>
+  requestAccess(world, "G4", "10:00");
+
+/**
+ * Step 7, second half, after Alex approved G4 in the wallet: Alex's credit-report authorisation
+ * is recorded. Safe to call again while G4 is active: it rewrites the same record.
+ */
+export const completeApplicationAccess = async (world: World): Promise<void> => {
+  await requireActive(world, "G4");
   // The authorisation is a record of its own: the lender has a permissible purpose because
   // Alex asked for credit. The grant makes this one record readable by the bureau.
   await putResource(
@@ -326,6 +350,12 @@ export const approveApplicationAccess = async (world: World): Promise<void> => {
       target: webid(world, "bureau"),
     }),
   );
+};
+
+/** Step 7 in one call: Juniper asks; Alex approves the grant and signs the credit-report authorisation. */
+export const approveApplicationAccess = async (world: World): Promise<void> => {
+  await approveRequest(world, await requestApplicationAccess(world), "10:02");
+  await completeApplicationAccess(world);
 };
 
 /** The six pieces of information that make an application under Regulation Z. */
@@ -396,104 +426,108 @@ export const submitApplication = async (world: World): Promise<void> => {
 /** What the agents do when a message lands in their inbox. Each acts only as its organisation. */
 export const agents = {
   /** Quillon checks the borrower's authorisation in the pod, then releases the report to Juniper. */
-  async bureauFulfilCreditOrder(world: World, messageUrl: string): Promise<string> {
-    const bureau = world.fetchAs("bureau");
-    const message = await readMessage(world, "bureau", messageUrl);
-    const authorisationUrl = alexUrl(world, CREDIT_AUTHORISATION);
-    if (!message.objectIris.has(authorisationUrl)) {
-      throw new Error("the order names no authorisation from the consumer");
-    }
-    const authorisation = new ConsentReceipt(
-      authorisationUrl,
-      await readDataset(bureau, authorisationUrl),
-      DataFactory,
-    );
-    if (
-      authorisation.consentStatus !== DPV.ConsentGiven ||
-      authorisation.dataControllerIri !== message.actorIri ||
-      authorisation.purposeIri !== DPV.CreditChecking
-    ) {
-      throw new Error("the authorisation does not cover a credit report for this lender");
-    }
-    const report = await putResource(
-      bureau,
-      buildCreditReport({
-        authorisedBy: authorisationUrl,
-        borrower: webid(world, "alex"),
-        creator: webid(world, "bureau"),
-        iri: podUrl(world, "bureau", `orders/${LOAN.loanNumber}/report`),
-        issued: at(world, "11:05"),
-        loanNumber: LOAN.loanNumber,
-        permissiblePurpose:
-          "Credit transaction initiated by the consumer (Fair Credit Reporting Act, section 604(a)(3)(A))",
-        reportNumber: "QCB-TM-20417",
-        scores: CREDIT.triMerge.map((entry) => ({
-          created: at(world, "11:05"),
-          score: entry.score,
-          scoreModel: MORT.ScoreModel_ClassicFICO,
-          source: entry.source,
-        })),
-        totalMonthlyDebtUsd: CREDIT.totalMonthlyDebtUsd,
-      }),
-    );
-    await shareInOwnPod(world, "bureau", `orders/${LOAN.loanNumber}/`, ["lender"]);
-    return deliver(world, {
-      from: "bureau",
-      inReplyTo: messageUrl,
-      kind: MORT.MessageKind_CreditReportDelivery,
-      objects: [report],
-      summary: "Tri-merge credit report for loan JHL-1001, released to Juniper Home Loans",
-      time: "11:06",
-      to: "lender",
+  async bureauFulfilCreditOrder(world: World, messageUrl: string): Promise<string | undefined> {
+    return answerOnce(world, "bureau", messageUrl, "11:01", async () => {
+      const bureau = world.fetchAs("bureau");
+      const message = await readMessage(world, "bureau", messageUrl);
+      const authorisationUrl = alexUrl(world, CREDIT_AUTHORISATION);
+      if (!message.objectIris.has(authorisationUrl)) {
+        throw new Error("the order names no authorisation from the consumer");
+      }
+      const authorisation = new ConsentReceipt(
+        authorisationUrl,
+        await readDataset(bureau, authorisationUrl),
+        DataFactory,
+      );
+      if (
+        authorisation.consentStatus !== DPV.ConsentGiven ||
+        authorisation.dataControllerIri !== message.actorIri ||
+        authorisation.purposeIri !== DPV.CreditChecking
+      ) {
+        throw new Error("the authorisation does not cover a credit report for this lender");
+      }
+      const report = await putResource(
+        bureau,
+        buildCreditReport({
+          authorisedBy: authorisationUrl,
+          borrower: webid(world, "alex"),
+          creator: webid(world, "bureau"),
+          iri: podUrl(world, "bureau", `orders/${LOAN.loanNumber}/report`),
+          issued: at(world, "11:05"),
+          loanNumber: LOAN.loanNumber,
+          permissiblePurpose:
+            "Credit transaction initiated by the consumer (Fair Credit Reporting Act, section 604(a)(3)(A))",
+          reportNumber: "QCB-TM-20417",
+          scores: CREDIT.triMerge.map((entry) => ({
+            created: at(world, "11:05"),
+            score: entry.score,
+            scoreModel: MORT.ScoreModel_ClassicFICO,
+            source: entry.source,
+          })),
+          totalMonthlyDebtUsd: CREDIT.totalMonthlyDebtUsd,
+        }),
+      );
+      await shareInOwnPod(world, "bureau", `orders/${LOAN.loanNumber}/`, ["lender"]);
+      return deliver(world, {
+        from: "bureau",
+        inReplyTo: messageUrl,
+        kind: MORT.MessageKind_CreditReportDelivery,
+        objects: [report],
+        summary: "Tri-merge credit report for loan JHL-1001, released to Juniper Home Loans",
+        time: "11:06",
+        to: "lender",
+      });
     });
   },
 
   /** Castellan reads the three credentials at source, by reference, and returns its findings. */
-  async ausRunCasefile(world: World, messageUrl: string): Promise<string> {
-    const aus = world.fetchAs("aus");
-    const message = await readMessage(world, "aus", messageUrl);
-    const casefile = `casefiles/${LOAN.loanNumber}/`;
-    for (const name of ["employment-income", "assets", "credit-summary"] as const) {
-      if (!message.objectIris.has(alexUrl(world, CREDENTIALS[name].path))) {
-        throw new Error(`the casefile does not reference ${name}`);
+  async ausRunCasefile(world: World, messageUrl: string): Promise<string | undefined> {
+    return answerOnce(world, "aus", messageUrl, "11:16", async () => {
+      const aus = world.fetchAs("aus");
+      const message = await readMessage(world, "aus", messageUrl);
+      const casefile = `casefiles/${LOAN.loanNumber}/`;
+      for (const name of ["employment-income", "assets", "credit-summary"] as const) {
+        if (!message.objectIris.has(alexUrl(world, CREDENTIALS[name].path))) {
+          throw new Error(`the casefile does not reference ${name}`);
+        }
+        await keepPointer(
+          world,
+          "aus",
+          podUrl(world, "aus", `${casefile}source-checks/${name}`),
+          name,
+          "11:20",
+        );
       }
-      await keepPointer(
-        world,
-        "aus",
-        podUrl(world, "aus", `${casefile}source-checks/${name}`),
-        name,
-        "11:20",
+      const applicationUrl = loanFile(world, "application");
+      await readDataset(aus, applicationUrl);
+      const findings = await putResource(
+        aus,
+        buildDeliveredDocument({
+          about: applicationUrl,
+          creator: webid(world, "aus"),
+          description: [
+            "Recommendation: Approve/Eligible. This is a recommendation; the lender's underwriter decides.",
+            "Income, assets and credit summary were each read at source and their signatures checked.",
+            "Conditions: appraisal supporting the value; title commitment; evidence of homeowner's insurance;",
+            "verification of employment no more than 10 business days before the note date.",
+          ].join(" "),
+          identifier: "CHF-2026-88104",
+          iri: podUrl(world, "aus", `${casefile}findings`),
+          issued: at(world, "11:25"),
+          loanNumber: LOAN.loanNumber,
+          name: "Underwriting findings",
+        }),
       );
-    }
-    const applicationUrl = loanFile(world, "application");
-    await readDataset(aus, applicationUrl);
-    const findings = await putResource(
-      aus,
-      buildDeliveredDocument({
-        about: applicationUrl,
-        creator: webid(world, "aus"),
-        description: [
-          "Recommendation: Approve/Eligible. This is a recommendation; the lender's underwriter decides.",
-          "Income, assets and credit summary were each read at source and their signatures checked.",
-          "Conditions: appraisal supporting the value; title commitment; evidence of homeowner's insurance;",
-          "verification of employment no more than 10 business days before the note date.",
-        ].join(" "),
-        identifier: "CHF-2026-88104",
-        iri: podUrl(world, "aus", `${casefile}findings`),
-        issued: at(world, "11:25"),
-        loanNumber: LOAN.loanNumber,
-        name: "Underwriting findings",
-      }),
-    );
-    await shareInOwnPod(world, "aus", casefile, ["lender"]);
-    return deliver(world, {
-      from: "aus",
-      inReplyTo: messageUrl,
-      kind: MORT.MessageKind_FindingsDelivery,
-      objects: [findings],
-      summary: "Underwriting findings for casefile JHL-1001: Approve/Eligible, with conditions",
-      time: "11:26",
-      to: "lender",
+      await shareInOwnPod(world, "aus", casefile, ["lender"]);
+      return deliver(world, {
+        from: "aus",
+        inReplyTo: messageUrl,
+        kind: MORT.MessageKind_FindingsDelivery,
+        objects: [findings],
+        summary: "Underwriting findings for casefile JHL-1001: Approve/Eligible, with conditions",
+        time: "11:26",
+        to: "lender",
+      });
     });
   },
 
@@ -502,168 +536,197 @@ export const agents = {
     world: World,
     owner: "appraisal" | "title",
     messageUrl: string,
-  ): Promise<string> {
-    await readMessage(world, owner, messageUrl);
-    return requestAccess(world, owner === "appraisal" ? "G5" : "G6", "09:40");
+  ): Promise<string | undefined> {
+    return answerOnce(world, owner, messageUrl, "09:35", async () => {
+      await readMessage(world, owner, messageUrl);
+      return requestAccess(world, owner === "appraisal" ? "G5" : "G6", "09:40");
+    });
   },
 
   /** Juniper, as creditor, gives the applicant a copy of the appraisal. */
   async lenderReceiveAppraisal(world: World, messageUrl: string): Promise<void> {
-    const lender = world.fetchAs("lender");
-    const message = await readMessage(world, "lender", messageUrl);
-    const [reportUrl] = [...message.objectIris];
-    if (reportUrl === undefined) throw new Error("the delivery names no report");
-    const check = await checkAtSource(
-      world,
-      "lender",
-      reportUrl,
-      "appraisal-credential",
-      ["appraisal"],
-      "15:10",
-    );
-    if (!check.result.verified) throw new Error("the appraisal did not verify");
-    world.note({
-      kind: "verified",
-      org: "lender-desk",
-      refs: [reportUrl],
-      text: "Appraisal report checked: signed by Plumbline Valuation, not revoked.",
+    await answerOnce(world, "lender", messageUrl, "15:05", async () => {
+      const lender = world.fetchAs("lender");
+      const message = await readMessage(world, "lender", messageUrl);
+      const [reportUrl] = [...message.objectIris];
+      if (reportUrl === undefined) throw new Error("the delivery names no report");
+      const check = await checkAtSource(
+        world,
+        "lender",
+        reportUrl,
+        "appraisal-credential",
+        ["appraisal"],
+        "15:10",
+      );
+      if (!check.result.verified) throw new Error("the appraisal did not verify");
+      world.note({
+        kind: "verified",
+        org: "lender-desk",
+        refs: [reportUrl],
+        text: "Appraisal report checked: signed by Plumbline Valuation, not revoked.",
+      });
+      await put(lender, alexUrl(world, "mortgage/juniper/appraisal"), check.body, "text/turtle");
+      await putResource(lender, serviceOrder(world, "appraisal", SCHEMA.OrderDelivered));
     });
-    await put(lender, alexUrl(world, "mortgage/juniper/appraisal"), check.body, "text/turtle");
-    await putResource(lender, serviceOrder(world, "appraisal", SCHEMA.OrderDelivered));
   },
 
   /** Ledgerly answers a refresh request from its own payroll record: a new credential, the old one revoked. */
-  async payrollRefresh(world: World, messageUrl: string): Promise<string> {
-    const message = await readMessage(world, "payroll", messageUrl);
-    const entry = CREDENTIALS["employment-income"];
-    const credentialId = alexUrl(world, entry.path);
-    if (message.actorIri !== webid(world, "lender") || !message.objectIris.has(credentialId)) {
-      throw new Error("only Juniper may ask for a refresh of this verification");
-    }
-    const list = await statusListOf(world, "payroll");
-    const newIndex = deriveStatusIndex(`${credentialId}#refresh-day-${world.day}`);
-    const refreshed = await sign(world, {
-      claims: {
-        employer: { name: EMPLOYMENT.employerName },
-        jobTitle: EMPLOYMENT.jobTitle,
-        kind: "employment-income-credential",
-        monthlyGrossIncomeUsd: EMPLOYMENT.monthlyGrossIncomeUsd,
-        startDate: EMPLOYMENT.startDate,
-      },
-      credentialId,
-      issuer: "payroll",
-      kind: entry.kind,
-      statusIndex: newIndex,
-      subject: webid(world, "alex"),
-      time: "09:30",
-      validDays: 120,
-    });
-    await put(world.fetchAs("payroll"), credentialId, refreshed.body, refreshed.contentType);
-    await list.revoke(deriveStatusIndex(credentialId), { now: at(world, "09:31") });
-    await recordIssuance(
-      world,
-      "payroll",
-      `employment-income-refresh-day-${world.day}`,
-      refreshed,
-      "09:30",
-    );
-    return deliver(world, {
-      from: "payroll",
-      inReplyTo: messageUrl,
-      kind: MORT.MessageKind_RefreshDelivery,
-      objects: [credentialId],
-      summary:
-        "Employment re-verified today from the payroll record. The earlier verification is revoked",
-      time: "09:32",
-      to: "lender",
+  async payrollRefresh(world: World, messageUrl: string): Promise<string | undefined> {
+    return answerOnce(world, "payroll", messageUrl, "09:25", async () => {
+      const message = await readMessage(world, "payroll", messageUrl);
+      const entry = CREDENTIALS["employment-income"];
+      const credentialId = alexUrl(world, entry.path);
+      if (message.actorIri !== webid(world, "lender") || !message.objectIris.has(credentialId)) {
+        throw new Error("only Juniper may ask for a refresh of this verification");
+      }
+      const list = await statusListOf(world, "payroll");
+      const { deriveStatusIndex } = await vcKit();
+      const newIndex = deriveStatusIndex(`${credentialId}#refresh-day-${world.day}`);
+      const refreshed = await sign(world, {
+        claims: {
+          employer: { name: EMPLOYMENT.employerName },
+          jobTitle: EMPLOYMENT.jobTitle,
+          kind: "employment-income-credential",
+          monthlyGrossIncomeUsd: EMPLOYMENT.monthlyGrossIncomeUsd,
+          startDate: EMPLOYMENT.startDate,
+        },
+        credentialId,
+        issuer: "payroll",
+        kind: entry.kind,
+        statusIndex: newIndex,
+        subject: webid(world, "alex"),
+        time: "09:30",
+        validDays: 120,
+      });
+      await put(world.fetchAs("payroll"), credentialId, refreshed.body, refreshed.contentType);
+      await list.revoke(deriveStatusIndex(credentialId), { now: at(world, "09:31") });
+      await recordIssuance(
+        world,
+        "payroll",
+        `employment-income-refresh-day-${world.day}`,
+        refreshed,
+        "09:30",
+      );
+      return deliver(world, {
+        from: "payroll",
+        inReplyTo: messageUrl,
+        kind: MORT.MessageKind_RefreshDelivery,
+        objects: [credentialId],
+        summary:
+          "Employment re-verified today from the payroll record. The earlier verification is revoked",
+        time: "09:32",
+        to: "lender",
+      });
     });
   },
 
   /** The county records the two instruments. The register is public: no pod of Alex's is involved. */
-  async countyRecord(world: World, messageUrl: string): Promise<string> {
-    const county = world.fetchAs("county");
-    await readMessage(world, "county", messageUrl);
-    const instruments = [
-      {
-        grantees: [BORROWER.name],
-        grantors: [SELLER_NAME],
-        name: "Warranty deed",
-        reference: "2026-0048113",
-      },
-      {
-        grantees: ["Juniper Home Loans"],
-        grantors: [BORROWER.name],
-        name: "Mortgage",
-        reference: "2026-0048114",
-      },
-    ];
-    const recorded: string[] = [];
-    for (const instrument of instruments) {
-      recorded.push(
-        await putResource(
-          county,
-          buildRecordedInstrument({
-            creator: webid(world, "county"),
-            grantees: instrument.grantees,
-            grantors: instrument.grantors,
-            iri: podUrl(world, "county", `records/${instrument.reference}`),
-            name: instrument.name,
-            parcelNumber: PROPERTY.parcelNumber,
-            recordedAt: at(world, "15:40"),
-            recordingReference: instrument.reference,
-          }),
-        ),
-      );
-    }
-    world.note({
-      kind: "no-solid",
-      org: "county",
-      refs: recorded,
-      text: "The land register is public by law. The deed and the mortgage are recorded in the county's own system, readable by anyone. Nothing was read from Alex's pod.",
-    });
-    return deliver(world, {
-      from: "county",
-      inReplyTo: messageUrl,
-      kind: MORT.MessageKind_RecordingConfirmation,
-      objects: recorded,
-      summary: "Recorded: warranty deed 2026-0048113 and mortgage 2026-0048114",
-      time: "15:41",
-      to: "title",
+  async countyRecord(world: World, messageUrl: string): Promise<string | undefined> {
+    return answerOnce(world, "county", messageUrl, "15:35", async () => {
+      const county = world.fetchAs("county");
+      await readMessage(world, "county", messageUrl);
+      const instruments = [
+        {
+          grantees: [BORROWER.name],
+          grantors: [SELLER_NAME],
+          name: "Warranty deed",
+          reference: "2026-0048113",
+        },
+        {
+          grantees: ["Juniper Home Loans"],
+          grantors: [BORROWER.name],
+          name: "Mortgage",
+          reference: "2026-0048114",
+        },
+      ];
+      const recorded: string[] = [];
+      for (const instrument of instruments) {
+        recorded.push(
+          await putResource(
+            county,
+            buildRecordedInstrument({
+              creator: webid(world, "county"),
+              grantees: instrument.grantees,
+              grantors: instrument.grantors,
+              iri: podUrl(world, "county", `records/${instrument.reference}`),
+              name: instrument.name,
+              parcelNumber: PROPERTY.parcelNumber,
+              recordedAt: at(world, "15:40"),
+              recordingReference: instrument.reference,
+            }),
+          ),
+        );
+      }
+      world.note({
+        kind: "no-solid",
+        org: "county",
+        refs: recorded,
+        text: "The land register is public by law. The deed and the mortgage are recorded in the county's own system, readable by anyone. Nothing was read from Alex's pod.",
+      });
+      return deliver(world, {
+        from: "county",
+        inReplyTo: messageUrl,
+        kind: MORT.MessageKind_RecordingConfirmation,
+        objects: recorded,
+        summary: "Recorded: warranty deed 2026-0048113 and mortgage 2026-0048114",
+        time: "15:41",
+        to: "title",
+      });
     });
   },
 
   /** Castellan accepts delivery of the closed loan and confirms the purchase. */
-  async ausPurchaseLoan(world: World, messageUrl: string): Promise<string> {
-    const aus = world.fetchAs("aus");
-    const message = await readMessage(world, "aus", messageUrl);
-    for (const object of message.objectIris) await readDataset(aus, object);
-    const confirmation = await putResource(
-      aus,
-      buildDeliveredDocument({
-        creator: webid(world, "aus"),
-        description: `Castellan Housing Finance purchased loan ${LOAN.loanNumber} (${usd(LOAN.principalUsd)}) from Juniper Home Loans. Juniper continues to service it until further notice.`,
-        identifier: "CHF-PUR-2026-31177",
-        iri: podUrl(world, "aus", `deliveries/${LOAN.loanNumber}`),
-        issued: at(world, "14:00"),
-        loanNumber: LOAN.loanNumber,
-        name: "Purchase confirmation",
-      }),
-    );
-    await shareInOwnPod(world, "aus", `deliveries/${LOAN.loanNumber}`, ["lender"]);
-    return deliver(world, {
-      from: "aus",
-      inReplyTo: messageUrl,
-      kind: MORT.MessageKind_PurchaseConfirmation,
-      objects: [confirmation],
-      summary: "Castellan purchased loan JHL-1001",
-      time: "14:01",
-      to: "lender",
+  async ausPurchaseLoan(world: World, messageUrl: string): Promise<string | undefined> {
+    return answerOnce(world, "aus", messageUrl, "13:55", async () => {
+      const aus = world.fetchAs("aus");
+      const message = await readMessage(world, "aus", messageUrl);
+      for (const object of message.objectIris) await readDataset(aus, object);
+      const confirmation = await putResource(
+        aus,
+        buildDeliveredDocument({
+          creator: webid(world, "aus"),
+          description: `Castellan Housing Finance purchased loan ${LOAN.loanNumber} (${usd(LOAN.principalUsd)}) from Juniper Home Loans. Juniper continues to service it until further notice.`,
+          identifier: "CHF-PUR-2026-31177",
+          iri: podUrl(world, "aus", `deliveries/${LOAN.loanNumber}`),
+          issued: at(world, "14:00"),
+          loanNumber: LOAN.loanNumber,
+          name: "Purchase confirmation",
+        }),
+      );
+      await shareInOwnPod(world, "aus", `deliveries/${LOAN.loanNumber}`, ["lender"]);
+      return deliver(world, {
+        from: "aus",
+        inReplyTo: messageUrl,
+        kind: MORT.MessageKind_PurchaseConfirmation,
+        objects: [confirmation],
+        summary: "Castellan purchased loan JHL-1001",
+        time: "14:01",
+        to: "lender",
+      });
     });
   },
 
   /** The wallet applies expiry: grants whose end has been reached lose their ACL entries. */
   walletApplyExpiries: (world: World): Promise<string[]> => applyExpiries(world),
 } as const;
+
+/**
+ * The access request `code` in Alex's inbox, if it has landed. Looked for when the asking
+ * organisation's agent found the order already claimed: whoever claimed it posts the request.
+ */
+function findRequest(world: World, code: GrantCode): Promise<string | undefined> {
+  const alex = world.fetchAs("alex");
+  return findMember(alex, alexUrl(world, "inbox/"), async (url) =>
+    new AccessRequest(url, await readDataset(alex, url), DataFactory).grantCode === code
+      ? url
+      : undefined,
+  );
+}
+
+/** `true` once a document Alex holds exists: what another caller is writing has landed. */
+async function alexHolds(world: World, url: string): Promise<true | undefined> {
+  return (await world.fetchAs("alex")(url, { method: "HEAD" })).ok ? true : undefined;
+}
 
 function serviceOrder(
   world: World,
@@ -714,7 +777,9 @@ export const pullCreditAndRunAus = async (world: World): Promise<void> => {
     time: "11:00",
     to: "bureau",
   });
-  const delivery = await agents.bureauFulfilCreditOrder(world, orderMessage);
+  const delivery = await answerOrAwaitReply(world, "lender", "bureau", orderMessage, () =>
+    agents.bureauFulfilCreditOrder(world, orderMessage),
+  );
   const [reportUrl] = [...(await readMessage(world, "lender", delivery)).objectIris];
   if (reportUrl === undefined) throw new Error("the bureau delivered no report");
   await readDataset(lender, reportUrl);
@@ -759,7 +824,9 @@ export const pullCreditAndRunAus = async (world: World): Promise<void> => {
     time: "11:15",
     to: "aus",
   });
-  const findings = await agents.ausRunCasefile(world, casefile);
+  const findings = await answerOrAwaitReply(world, "lender", "aus", casefile, () =>
+    agents.ausRunCasefile(world, casefile),
+  );
   for (const object of (await readMessage(world, "lender", findings)).objectIris) {
     await readDataset(lender, object);
   }
@@ -827,7 +894,14 @@ export const orderServices = async (world: World): Promise<void> => {
       time: "09:30",
       to: service,
     });
-    requests.push(await agents.requestFromOrder(world, service, message));
+    requests.push(
+      await answerOrAwait(world, {
+        answer: () => agents.requestFromOrder(world, service, message),
+        claimant: service,
+        look: () => findRequest(world, service === "appraisal" ? "G5" : "G6"),
+        messageUrl: message,
+      }),
+    );
   }
   world.note({
     kind: "no-solid",
@@ -882,7 +956,17 @@ export const submitAppraisal = async (world: World): Promise<void> => {
     time: "15:05",
     to: "lender",
   });
-  await agents.lenderReceiveAppraisal(world, delivery);
+  // When Juniper's own agent took the delivery in hand first, wait for the copy it writes.
+  const copy = alexUrl(world, "mortgage/juniper/appraisal");
+  await answerOrAwait(world, {
+    answer: async () => {
+      await agents.lenderReceiveAppraisal(world, delivery);
+      return alexHolds(world, copy);
+    },
+    claimant: "lender",
+    look: () => alexHolds(world, copy),
+    messageUrl: delivery,
+  });
   // The report is delivered, so Plumbline's access ends.
   await agents.walletApplyExpiries(world);
 };
@@ -995,7 +1079,9 @@ export const refreshEmploymentAndClear = async (world: World): Promise<void> => 
     time: "09:00",
     to: "payroll",
   });
-  const delivery = await agents.payrollRefresh(world, request);
+  const delivery = await answerOrAwaitReply(world, "lender", "payroll", request, () =>
+    agents.payrollRefresh(world, request),
+  );
   await readMessage(world, "lender", delivery);
   await keepPointer(
     world,
@@ -1187,7 +1273,9 @@ export const recordWithCounty = async (world: World): Promise<void> => {
     time: "15:30",
     to: "county",
   });
-  const confirmation = await agents.countyRecord(world, submission);
+  const confirmation = await answerOrAwaitReply(world, "title", "county", submission, () =>
+    agents.countyRecord(world, submission),
+  );
   const recorded = [...(await readMessage(world, "title", confirmation)).objectIris].sort();
   const references: string[] = [];
   for (const url of recorded) {
@@ -1253,7 +1341,9 @@ export const deliverLoan = async (world: World): Promise<void> => {
     time: "13:00",
     to: "aus",
   });
-  const purchase = await agents.ausPurchaseLoan(world, delivery);
+  const purchase = await answerOrAwaitReply(world, "lender", "aus", delivery, () =>
+    agents.ausPurchaseLoan(world, delivery),
+  );
   for (const object of (await readMessage(world, "lender", purchase)).objectIris) {
     await readDataset(lender, object);
   }
@@ -1319,8 +1409,11 @@ export const announceServicingTransfer = async (world: World): Promise<void> => 
   );
 };
 
-/** Step 21. The new servicer asks for three things; Alex approves and sets up autopay. */
-export const connectServicer = async (world: World): Promise<void> => {
+/**
+ * Step 21, first half (Marigold's Connect screen). Juniper tells Marigold the loan is boarding,
+ * and Marigold asks Alex for G8. Returns the request URL.
+ */
+export const requestServicerAccess = async (world: World): Promise<string> => {
   await deliver(world, {
     from: "lender",
     kind: MORT.MessageKind_ServicingBoarding,
@@ -1329,8 +1422,16 @@ export const connectServicer = async (world: World): Promise<void> => {
     time: "08:00",
     to: "servicer",
   });
-  const request = await requestAccess(world, "G8", "10:00");
-  await approveRequest(world, request, "10:02");
+  return requestAccess(world, "G8", "10:00");
+};
+
+/**
+ * Step 21, second half, after Alex approved G8 in the wallet: Alex sets up autopay, Marigold
+ * reads what G8 gives it and writes its welcome notice and escrow statement. Safe to call again
+ * while G8 is active: every write replaces the same resource.
+ */
+export const completeServicerConnection = async (world: World): Promise<void> => {
+  await requireActive(world, "G8");
   await putResource(
     world.fetchAs("alex"),
     buildPaymentMandate({
@@ -1384,6 +1485,12 @@ export const connectServicer = async (world: World): Promise<void> => {
       name: "Escrow account as transferred",
     }),
   );
+};
+
+/** Step 21 in one call: the new servicer asks for three things; Alex approves and sets up autopay. */
+export const connectServicer = async (world: World): Promise<void> => {
+  await approveRequest(world, await requestServicerAccess(world), "10:02");
+  await completeServicerConnection(world);
 };
 
 /** Step 22. Alex withdraws Juniper's grant. */

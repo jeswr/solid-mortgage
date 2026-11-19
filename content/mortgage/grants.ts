@@ -146,7 +146,8 @@ export const GRANTS: Readonly<Record<GrantCode, GrantSpec>> = Object.freeze({
         modes: ["Read"],
         paths: ["profile/", "identity/", "credentials/", "property/", "insurance/"],
       },
-      { modes: ["Write"], paths: ["mortgage/juniper/"] },
+      // Juniper reads back what it delivered (the Loan Estimate, the Closing Disclosure).
+      { modes: ["Read", "Write"], paths: ["mortgage/juniper/"] },
       {
         modes: ["Read"],
         paths: [
@@ -211,7 +212,8 @@ export const GRANTS: Readonly<Record<GrantCode, GrantSpec>> = Object.freeze({
     name: "Loan servicing",
     permissions: [
       { modes: ["Read"], paths: ["profile/contact", "insurance/", "banking/payment-mandate"] },
-      { modes: ["Write"], paths: ["mortgage/servicing/"] },
+      // Marigold reads back the letters it writes into its own drawer (its portal shows them).
+      { modes: ["Read", "Write"], paths: ["mortgage/servicing/"] },
     ],
     purpose: DPV.ServiceProvision,
     to: "servicer",

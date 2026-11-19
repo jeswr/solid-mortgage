@@ -5,7 +5,7 @@
  */
 import { Link } from "wouter";
 import type { Demo } from "../demos.ts";
-import { tourUrl } from "../demos-links.ts";
+import { startTourFresh, tourUrl } from "../demos-links.ts";
 import { formatDuration, isoDuration } from "../format.ts";
 import { ArrowIcon } from "./icons.tsx";
 import { VideoPlayer } from "./VideoPlayer.tsx";
@@ -77,7 +77,11 @@ export function DemoCard({ demo, probe }: DemoCardProps) {
             Watch<span className="visually-hidden"> the {demo.title} video</span>
           </Link>
           {demo.tour === undefined ? null : (
-            <a href={tourUrl(demo.tour)} className="button button--primary">
+            <a
+              href={tourUrl(demo.tour)}
+              onClick={startTourFresh}
+              className="button button--primary"
+            >
               Try it yourself<span className="visually-hidden">: {demo.title}</span> <ArrowIcon />
             </a>
           )}

@@ -76,4 +76,6 @@ test("rendered-source directories are clean (the gate itself)", () => {
   expect(directories.some((directory) => directory.endsWith(join("apps", "_template")))).toBe(true);
   expect(directories.some((directory) => directory.endsWith("content"))).toBe(true);
   expect(scanInsignia(directories)).toEqual([]);
-});
+  // Scans every app's source and built output, which grows with each app: allow well over the
+  // 5 s default.
+}, 120_000);

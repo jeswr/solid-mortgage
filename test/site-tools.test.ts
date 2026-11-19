@@ -58,6 +58,12 @@ describe("site routes", () => {
     expect(headersFor("/wallet/prove/run")["Cross-Origin-Opener-Policy"]).toBe("same-origin");
     expect(headersFor("/wallet/")["Cross-Origin-Embedder-Policy"]).toBeUndefined();
     expect(headersFor("/wallet/prover")["Cross-Origin-Embedder-Policy"]).toBeUndefined();
+    // Workers an isolated page starts must carry the same embedder policy, or they are blocked.
+    for (const worker of ["/wallet/assets/main.worker-x.js", "/pods-sw.js", "/agents/wallet.js"]) {
+      expect(headersFor(worker)["Cross-Origin-Embedder-Policy"]).toBe("require-corp");
+      expect(headersFor(worker)["Cross-Origin-Opener-Policy"]).toBeUndefined();
+    }
+    expect(headersFor("/lender/assets/x.js")["Cross-Origin-Embedder-Policy"]).toBeUndefined();
     expect(headersFor("/bank/assets/x.js")["Cache-Control"]).toContain("immutable");
   });
 });
@@ -96,6 +102,17 @@ describe("serve-dist", () => {
     expect(asset.headers.get("content-type")).toContain("text/javascript");
     expect(asset.headers.get("cache-control")).toContain("immutable");
     expect((await fetch(`${origin}/lender/assets/gone.js`)).status).toBe(404);
+  });
+
+  it("answers 404 for an app that is not built, and revalidates with Last-Modified", async () => {
+    expect((await fetch(`${origin}/wallet/requests`)).status).toBe(404);
+    const first = await fetch(`${origin}/lender/assets/app.js`);
+    const lastModified = first.headers.get("last-modified");
+    expect(lastModified).toBeTruthy();
+    const again = await fetch(`${origin}/lender/assets/app.js`, {
+      headers: { "If-Modified-Since": lastModified ?? "" },
+    });
+    expect(again.status).toBe(304);
   });
 
   it("never serves a file outside dist/", async () => {

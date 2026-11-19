@@ -14,7 +14,6 @@
   "pnpm": {
     "overrides": {
       "@jeswr/rdf-serialize": "github:jeswr/rdf-serialize#9c3a34dd93f318fd00d9e6f22081123e502a0578",
-      "@jeswr/synthetic-rdf": "file:packages/solid-kit/vendor/jeswr-synthetic-rdf-0.1.0.tgz",
       "@jeswr/solid-showcase-kit": "file:vendor/jeswr-solid-showcase-kit-0.1.0.tgz",
       "@jeswr/solid-showcase-kit>@jeswr/app-shell": "file:vendor/jeswr-app-shell-0.1.0.tgz"
     }
@@ -27,7 +26,7 @@
     "build:packages": "turbo run build --concurrency=4",
     "preview": "node tools/serve-dist.mjs",
     "lint": "pnpm run lint:root && pnpm run check:packages && turbo run lint --concurrency=4",
-    "lint:root": "biome check package.json turbo.json biome.json vercel.json vitest.config.ts playwright.config.ts tools guardrails test e2e",
+    "lint:root": "biome check package.json turbo.json biome.json vercel.json vitest.config.ts playwright.config.ts tools guardrails test test-support e2e",
     "lint:fix": "biome check --write .",
     "lint:iris": "node tools/lint-iris.mjs",
     "check:vocab": "node tools/check-mort-terms.mjs",
@@ -46,7 +45,6 @@
     "@biomejs/biome": "^2.5.1",
     "@jeswr/solid-showcase-kit": "file:vendor/jeswr-solid-showcase-kit-0.1.0.tgz",
     "@mortgage/data-model": "workspace:*",
-    "@mortgage/solid-kit": "workspace:*",
     "@mortgage/vc-kit": "workspace:*",
     "@playwright/test": "~1.63.0",
     "@types/n3": "^1.26.1",

@@ -1,0 +1,16 @@
+/* AUTHORED-BY Claude Opus 5.5
+ * Sextant's tokens: a legal document room in navy and parchment (design.md §b.3). */
+:root {
+  --st-navy: #1b2a49;
+  --st-navy-2: #2c3e66;
+  --st-parchment: #f3ebdd;
+  --st-paper: #fffdf8;
+  --st-ink: #1d1b17;
+  --st-muted: #5a5246;
+  --st-rule: #c9bba2;
+  --st-brass: #7a5a14;
+  --st-refused: #8f1d1d;
+  --st-focus: #b4530a;
+  --st-serif: "Libre Caslon Text", Georgia, serif;
+  --st-sans: "Source Sans 3", system-ui, sans-serif;
+}

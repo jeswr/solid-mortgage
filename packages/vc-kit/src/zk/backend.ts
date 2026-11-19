@@ -214,8 +214,8 @@ export function fieldHexEquals(a: string, b: string, label: string): boolean {
 
 /**
  * Deterministically derive the circuit's `challenge` public input from a
- * transport nonce (the solid-kit {@link NonceStore} mints 32-byte base64url
- * strings, which are NOT valid BN254 field elements): SHA-256(nonce), first
+ * transport nonce (challenges are 32-byte base64url strings, which are NOT
+ * valid BN254 field elements): SHA-256(nonce), first
  * 31 bytes, as 0x-hex - always < 2^248 < the BN254 modulus. Prover and
  * verifier derive independently from the same nonce string, so a proof only
  * verifies against the exact nonce it was produced for (the challenge is
