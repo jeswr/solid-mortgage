@@ -12,7 +12,7 @@ The **Solid mortgage demo**: one static site on which thirteen fictional organis
 US purchase-mortgage journey against pods that live in the visitor's browser (sparq's wasm Solid
 server in a service worker). No server, no identity provider: sign-in is simulated, access
 control is real. Decision of record: [`decisions/0017-static-rebuild.md`](decisions/0017-static-rebuild.md),
-which summarises the rebuild design (`design.md`) and its lane plan (`build-plan.md`).
+which summarises the rebuild design (`docs/rebuild/design.md`) and its lane plan (`docs/rebuild/build-plan.md`).
 Research grounding lives in `docs/research/`; autonomous decisions in `decisions/<nnnn>-<slug>.md`.
 
 ## Non-negotiable conventions
