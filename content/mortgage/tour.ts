@@ -63,6 +63,9 @@ const revoke = (path: string): Partial<PodEvent> => ({
 });
 const note = (kind: AppNote["kind"], org: OrgSlug): Partial<AppNote> => ({ kind, org });
 
+/** The tour's demo id (`TourStep` tags and `?tour=<demo>`). */
+export const DEMO = "mortgage";
+
 export const CHAPTERS = Object.freeze([
   "Welcome",
   "1 Get ready",
