@@ -52,6 +52,12 @@ export const RESOURCE_TARGET_CLASSES = {
   "settlement-statement": MORT.SettlementStatement,
   "subject-property": "https://schema.org/SingleFamilyResidence",
   "title-commitment-credential": MORT.TitleCommitmentCredential,
+  // Small-dollar lending (flows.md section 4).
+  "adverse-action-notice": MORT.AdverseActionNotice,
+  "cash-flow-credential": MORT.CashFlowCredential,
+  "closed-end-disclosure": MORT.ClosedEndCreditDisclosure,
+  "payout-instruction": MORT.PayoutInstruction,
+  "repayment-history-credential": MORT.RepaymentHistoryCredential,
 } as const;
 
 /** The mortgage resource kinds validate() can be told to expect. */

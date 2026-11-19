@@ -35,10 +35,13 @@ test("committed shapes module matches shapes/*.ttl (codegen freshness)", () => {
 test("every shape document is bundled", () => {
   expect([...SHAPES_DOCUMENT_KEYS].sort()).toEqual([
     "access-request",
+    "adverse-action-notice",
     "agent-profile",
     "appraisal-credential",
     "asset-credential",
     "borrower-profile",
+    "cash-flow-credential",
+    "closed-end-disclosure",
     "closing-disclosure",
     "closing-record",
     "common",
@@ -57,9 +60,11 @@ test("every shape document is bundled", () => {
     "loan-estimate",
     "odrl-policy",
     "payment-mandate",
+    "payout-instruction",
     "purchase-agreement",
     "recorded-instrument",
     "recording-receipt",
+    "repayment-history-credential",
     "score-notice",
     "service-order",
     "servicing-notice",
@@ -76,7 +81,7 @@ test("every shape document is bundled", () => {
 test("every targeted resource shape is closed", () => {
   const store = shapesStore();
   const targeted = store.getSubjects(`${SH}targetClass`, null, null);
-  expect(targeted.length).toBe(34);
+  expect(targeted.length).toBe(39);
   for (const shape of targeted) {
     const closed = store.getObjects(shape, `${SH}closed`, null);
     expect(
@@ -203,6 +208,15 @@ const cases: readonly {
   { name: "inbox-message", expectedViolations: ["NodeKindConstraintComponent"] },
   { name: "credential-pointer", expectedViolations: ["PatternConstraintComponent"] },
   { name: "document", expectedViolations: ["MinCountConstraintComponent"] },
+  // Small-dollar lending (flows.md section 4).
+  {
+    name: "cash-flow-credential",
+    expectedViolations: ["MaxInclusiveConstraintComponent", "InConstraintComponent"],
+  },
+  { name: "repayment-history-credential", expectedViolations: ["MinCountConstraintComponent"] },
+  { name: "closed-end-disclosure", expectedViolations: ["MaxInclusiveConstraintComponent"] },
+  { name: "adverse-action-notice", expectedViolations: ["MinCountConstraintComponent"] },
+  { name: "payout-instruction", expectedViolations: ["PatternConstraintComponent"] },
 ];
 
 // Generous timeout: the first validation pays comunica's cold start for the
