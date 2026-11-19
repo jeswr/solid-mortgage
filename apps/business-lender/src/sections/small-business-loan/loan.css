@@ -1,0 +1,64 @@
+/* AUTHORED-BY Claude Opus 5.5 */
+/* Brackenridge's equipment loan pages (small business loan demo), on the app's own tokens. */
+.loan-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  margin: 0 0 1.25rem;
+  padding: 0 0 0.5rem;
+  border-bottom: 1px solid var(--bb-rule);
+  list-style: none;
+  font-family: var(--bb-sans);
+}
+
+.loan-tabs a {
+  color: var(--bb-burgundy-deep);
+}
+
+.loan-tabs a[aria-current="page"] {
+  font-weight: 600;
+  text-decoration-thickness: 2px;
+}
+
+.loan-button {
+  display: inline-block;
+  margin: 0.75rem 0 0;
+  padding: 0.6rem 1.1rem;
+  border: 0;
+  border-radius: 2px;
+  background: var(--bb-burgundy);
+  color: #fff;
+  font: 600 1rem var(--bb-sans);
+  cursor: pointer;
+}
+
+.loan-button:hover:not(:disabled) {
+  background: var(--bb-burgundy-deep);
+}
+
+.loan-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.loan-button:focus-visible {
+  outline: 3px solid var(--bb-focus);
+  outline-offset: 2px;
+}
+
+.loan-ok {
+  background: var(--bb-met-soft);
+  border-left: 4px solid var(--bb-met);
+  padding: 0.6rem 0.8rem;
+  margin: 0.75rem 0 0;
+}
+
+.loan-figure {
+  font: 600 1.6rem var(--bb-serif);
+  margin: 0;
+}
+
+.loan-notice {
+  white-space: pre-line;
+  margin: 0.5rem 0 0;
+}
