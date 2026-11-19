@@ -3,7 +3,41 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "In-browser pods: service-worker host, client, bridge, journal, events, organisation agents. Scaffold manifest from lane L0: dependencies are fixed here so the lockfile is complete; lane L1 owns the package and adds scripts and source.",
+  "description": "In-browser pods: one wasm Solid server per pod in a service worker, snapshot persistence, trap recovery, Lens events, organisation agents, host-mode bridge.",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./host": {
+      "types": "./dist/host/index.d.ts",
+      "import": "./dist/host/index.js"
+    },
+    "./node": {
+      "types": "./dist/node.d.ts",
+      "import": "./dist/node.js"
+    },
+    "./acl": {
+      "types": "./dist/acl.d.ts",
+      "import": "./dist/acl.js"
+    },
+    "./agents": {
+      "types": "./dist/agents/index.d.ts",
+      "import": "./dist/agents/index.js"
+    },
+    "./bridge": {
+      "types": "./dist/bridge/index.d.ts",
+      "import": "./dist/bridge/index.js"
+    },
+    "./pods-sw.js": "./dist/pods-sw.js"
+  },
+  "scripts": {
+    "build": "node scripts/glue-factory.mjs && tsc --project tsconfig.json && vite build",
+    "lint": "biome check src/*.ts src/host src/client src/agents src/bridge src/sw test scripts package.json tsconfig.json tsconfig.test.json vite.config.ts vitest.config.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --project tsconfig.json --noEmit && tsc --project tsconfig.test.json && tsc --project tsconfig.sw.json"
+  },
   "dependencies": {
     "@jeswr/fetch-rdf": "^0.1.0",
     "@mortgage/demo-kit": "workspace:*",
