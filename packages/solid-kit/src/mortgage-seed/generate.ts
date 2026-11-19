@@ -60,10 +60,13 @@ export async function generateMortgageInstances(
   options: GenerateMortgageInstancesOptions,
 ): Promise<SyntheticRdfResult> {
   const shapes = await mortgageShapesDataset(options.targets.map((target) => target.document));
-  const targets: TargetSpec[] = options.targets.map((target) => ({
-    shape: DataFactory.namedNode(MORT_SHAPE_IRIS[target.document]),
-    count: target.count,
-  }));
+  const targets: TargetSpec[] = options.targets.map((target) => {
+    const iri = MORT_SHAPE_IRIS[target.document];
+    if (iri === undefined) {
+      throw new Error(`no seed generator shape for ${target.document}`);
+    }
+    return { shape: DataFactory.namedNode(iri), count: target.count };
+  });
   return generate({
     shapes,
     seed: options.seed,

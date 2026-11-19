@@ -1,0 +1,36 @@
+@prefix as: <https://www.w3.org/ns/activitystreams#>.
+@prefix cred: <https://www.w3.org/2018/credentials#>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix dpv: <https://w3id.org/dpv#>.
+@prefix fibo-fbc-dae-dbt: <https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Debt/>.
+@prefix fibo-fnd-arr-asmt: <https://spec.edmcouncil.org/fibo/ontology/FND/Arrangements/Assessments/>.
+@prefix fibo-fnd-arr-rep: <https://spec.edmcouncil.org/fibo/ontology/FND/Arrangements/Reporting/>.
+@prefix fibo-fnd-plc-rp: <https://spec.edmcouncil.org/fibo/ontology/FND/Places/RealProperty/>.
+@prefix fibo-fnd-rel-rel: <https://spec.edmcouncil.org/fibo/ontology/FND/Relations/Relations/>.
+@prefix fibo-loan-ln-app: <https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoanApplications/>.
+@prefix fibo-loan-ln-ln: <https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/Loans/>.
+@prefix fibo-loan-reln-mtg: <https://spec.edmcouncil.org/fibo/ontology/LOAN/RealEstateLoans/Mortgages/>.
+@prefix fibo-loan-reln-org: <https://spec.edmcouncil.org/fibo/ontology/LOAN/RealEstateLoans/MortgageOrigination/>.
+@prefix foaf: <http://xmlns.com/foaf/0.1/>.
+@prefix ldp: <http://www.w3.org/ns/ldp#>.
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#>.
+@prefix odrl: <http://www.w3.org/ns/odrl/2/>.
+@prefix pim: <http://www.w3.org/ns/pim/space#>.
+@prefix schema: <https://schema.org/>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+<https://alex.pod.example/mortgage/servicing/transfer-notice> a mort:LoanTransferNotice;
+    mort:loanNumber "JHL-1001";
+    fibo-fbc-dae-dbt:hasBorrower <https://alex.pod.example/profile/card#me>;
+    dcterms:creator <https://servicer.example/profile/card#me>;
+    dcterms:issued "2026-10-12"^^xsd:date;
+    schema:name "Notice of servicing transfer";
+    dcterms:type mort:NoticeKind-ServicingTransferFromTransferee;
+    mort:transferEffectiveDate "2026-10-11"^^xsd:date;
+    mort:transferor _:transferor;
+    mort:transferee _:transferee;
+    mort:paymentProtectionEnds "2026-12-10"^^xsd:date.
+_:transferor a schema:Organization;
+    schema:name "Juniper Home Loans".
+_:transferee a schema:Organization;
+    schema:name "Marigold Loan Servicing".

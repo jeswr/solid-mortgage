@@ -1,5 +1,5 @@
 /**
- * Typed claim-graph construction for the six sm-19 credential kinds. Claims are
+ * Typed claim-graph construction for every credential kind. Claims are
  * lowered to RDF through `@rdfjs/wrapper` typed accessors over the data-model
  * terms - never string-built JSON-LD or hand-concatenated Turtle. The matching
  * SHACL shape is the authority on validity; issue() refuses (fail-closed) any
@@ -12,7 +12,14 @@
  * the shapes' `sh:datatype xsd:date` constraints catch any regression.
  */
 
-import { MORT } from "@mortgage/data-model";
+import {
+  type AddressFields,
+  MORT,
+  TypedNode,
+  writeEvidenceOfInsuranceClaims,
+  writeIdentityClaims,
+  writeTitleCommitmentClaims,
+} from "@mortgage/data-model";
 import type { DataFactory, DatasetCore, Term } from "@rdfjs/types";
 import {
   LiteralFrom,
@@ -215,6 +222,51 @@ export interface ZkOperandAnchorClaims {
   readonly operandEnc: string;
 }
 
+/** Identity VC subject (`mshape:IdentitySubjectShape`): never a full tax identifier. */
+export interface IdentityClaims {
+  readonly kind: "identity-credential";
+  readonly name: string;
+  /** `YYYY-MM-DD`. */
+  readonly birthDate: string;
+  readonly address: PostalAddressClaims;
+  /** Exactly four digits. */
+  readonly taxIdLast4: string;
+}
+
+/** Title commitment VC subject (`mshape:TitleCommitmentSubjectShape`). */
+export interface TitleCommitmentClaims {
+  readonly kind: "title-commitment-credential";
+  readonly commitmentNumber: string;
+  readonly propertyAddress: PostalAddressClaims;
+  /** The commitment date, `YYYY-MM-DD`. */
+  readonly searchedThrough: string;
+  /** Schedule A. */
+  readonly vestedOwner: string;
+  readonly proposedInsured: readonly string[];
+  readonly ownerPolicyAmountUsd: number;
+  readonly loanPolicyAmountUsd: number;
+  /** Schedule B, part I. */
+  readonly requirements: readonly string[];
+  /** Schedule B, part II. */
+  readonly exceptions: readonly string[];
+}
+
+/** Evidence of insurance VC subject (`mshape:EvidenceOfInsuranceSubjectShape`). */
+export interface EvidenceOfInsuranceClaims {
+  readonly kind: "evidence-of-insurance-credential";
+  readonly policyNumber: string;
+  readonly propertyAddress: PostalAddressClaims;
+  readonly dwellingCoverageUsd: number;
+  readonly annualPremiumUsd: number;
+  readonly deductibleUsd: number;
+  /** `YYYY-MM-DD`. */
+  readonly policyStart: string;
+  /** `YYYY-MM-DD`. */
+  readonly policyEnd: string;
+  readonly mortgageeClause: string;
+  readonly loanNumber?: string;
+}
+
 /** The typed claims union - discriminated by the credential kind. */
 export type CredentialClaims =
   | EmploymentIncomeClaims
@@ -222,6 +274,9 @@ export type CredentialClaims =
   | CreditScoreClaims
   | AppraisalClaims
   | TitleClearClaims
+  | IdentityClaims
+  | TitleCommitmentClaims
+  | EvidenceOfInsuranceClaims
   | ZkOperandAnchorClaims;
 
 /** Base wrapper: typed multi-valued `rdf:type` plus single-valued setters. */
@@ -326,6 +381,25 @@ class SubjectNode extends GraphNode {
   }
 }
 
+/** The same subject node as a data-model typed node (the data-model writers take one). */
+function typedSubject(subject: TermWrapper): TypedNode {
+  return new TypedNode(subject as Term, subject.dataset, subject.factory);
+}
+
+/** A validated `YYYY-MM-DD` lexical as the UTC midnight the data-model writers expect. */
+function dateOf(lexical: string, label: string): Date {
+  return new Date(`${assertDateLexical(lexical, label)}T00:00:00Z`);
+}
+
+function addressFieldsOf(address: PostalAddressClaims): AddressFields {
+  return {
+    addressLocality: address.addressLocality,
+    addressRegion: address.addressRegion,
+    postalCode: address.postalCode,
+    streetAddress: address.streetAddress,
+  };
+}
+
 /** The credential-node claims (evidence links) some kinds carry. */
 export interface CredentialNodeClaims {
   readonly evidence?: string;
@@ -427,6 +501,43 @@ export function writeSubjectClaims(
       if (claims.evidence !== undefined) {
         credential.setIri(VC_EVIDENCE, claims.evidence, "evidence");
       }
+      return;
+    }
+    case "identity-credential": {
+      writeIdentityClaims(typedSubject(subject), {
+        address: addressFieldsOf(claims.address),
+        birthDate: dateOf(claims.birthDate, "birthDate"),
+        name: claims.name,
+        taxIdLast4: claims.taxIdLast4,
+      });
+      return;
+    }
+    case "title-commitment-credential": {
+      writeTitleCommitmentClaims(typedSubject(subject), {
+        commitmentNumber: claims.commitmentNumber,
+        exceptions: claims.exceptions,
+        loanPolicyAmountUsd: claims.loanPolicyAmountUsd,
+        ownerPolicyAmountUsd: claims.ownerPolicyAmountUsd,
+        propertyAddress: addressFieldsOf(claims.propertyAddress),
+        proposedInsured: claims.proposedInsured,
+        requirements: claims.requirements,
+        searchedThrough: dateOf(claims.searchedThrough, "searchedThrough"),
+        vestedOwner: claims.vestedOwner,
+      });
+      return;
+    }
+    case "evidence-of-insurance-credential": {
+      writeEvidenceOfInsuranceClaims(typedSubject(subject), {
+        annualPremiumUsd: claims.annualPremiumUsd,
+        deductibleUsd: claims.deductibleUsd,
+        dwellingCoverageUsd: claims.dwellingCoverageUsd,
+        ...(claims.loanNumber === undefined ? {} : { loanNumber: claims.loanNumber }),
+        mortgageeClause: claims.mortgageeClause,
+        policyEnd: dateOf(claims.policyEnd, "policyEnd"),
+        policyNumber: claims.policyNumber,
+        policyStart: dateOf(claims.policyStart, "policyStart"),
+        propertyAddress: addressFieldsOf(claims.propertyAddress),
+      });
       return;
     }
     case "zk-operand-anchor": {

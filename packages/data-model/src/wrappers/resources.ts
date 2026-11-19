@@ -112,7 +112,11 @@ export const AUS_RECOMMENDATION_IRIS = [
 ] as const;
 
 /** Consent receipt states used by the app-level decision-0006 ledger. */
-export const CONSENT_STATUS_IRIS = [DPV.ConsentGiven, DPV.ConsentWithdrawn] as const;
+export const CONSENT_STATUS_IRIS = [
+  DPV.ConsentGiven,
+  DPV.ConsentWithdrawn,
+  DPV.ConsentExpired,
+] as const;
 
 /**
  * Resource 1: the `/mortgage/profile` borrower document the wallet writes
@@ -722,11 +726,33 @@ export class ConsentReceipt extends MortgageResource {
     RequiredAs.object(this, DPV.hasDataController, value, NamedNodeFrom.string);
   }
 
+  /** The single covered resource. Throws when the receipt covers several: use `targetIris`. */
   get targetIri(): string {
     return RequiredFrom.subjectPredicate(this, ODRL.target, NamedNodeAs.string);
   }
   set targetIri(value: string) {
     RequiredAs.object(this, ODRL.target, value, NamedNodeFrom.string);
+  }
+
+  /** Every pod resource or container the receipt covers (a grant spans several). */
+  get targetIris(): Set<string> {
+    return SetFrom.subjectPredicate(this, ODRL.target, NamedNodeAs.string, NamedNodeFrom.string);
+  }
+
+  /** The ODRL agreement in `policies/` this record is the audit entry for. */
+  get policyIri(): string | undefined {
+    return OptionalFrom.subjectPredicate(this, DPV.hasPolicy, NamedNodeAs.string);
+  }
+  set policyIri(value: string | undefined) {
+    OptionalAs.object(this, DPV.hasPolicy, value, NamedNodeFrom.string);
+  }
+
+  /** The DPV purpose IRI. */
+  get purposeIri(): string | undefined {
+    return OptionalFrom.subjectPredicate(this, DPV.hasPurpose, NamedNodeAs.string);
+  }
+  set purposeIri(value: string | undefined) {
+    OptionalAs.object(this, DPV.hasPurpose, value, NamedNodeFrom.string);
   }
 
   get consentStatus(): string {

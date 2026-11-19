@@ -1,7 +1,6 @@
 /**
  * The COMMITTED circuit registry (sm-25; decisions 0005/0012). Tier A proofs
- * verify ONLY against circuit artifacts committed in this package (or, for
- * Tier B manifests, artifacts the consuming app itself commits and injects) -
+ * verify ONLY against circuit artifacts committed in this package -
  * never against caller- or network-supplied bytecode: the verification key is
  * derived from the artifact, so accepting foreign bytecode would let a
  * presenter choose the very circuit their proof is checked against.
@@ -88,8 +87,7 @@ export async function loadCommittedCircuit(
 }
 
 /**
- * Structural + toolchain-pin gate for a circuit artifact (committed or, for
- * Tier B, injected by the consuming app). Throws on anything malformed.
+ * Structural + toolchain-pin gate for a circuit artifact (committed here, or compiled by the Node-only seed tooling). Throws on anything malformed.
  */
 export function assertCircuitArtifact(
   artifact: CompiledCircuitArtifact,

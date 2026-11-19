@@ -3,7 +3,27 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Guided tour engine and step schema. Scaffold manifest from lane L0: dependencies are fixed here so the lockfile is complete; lane L2 owns the package and adds scripts and source.",
+  "description": "Guided tour engine and step schema, plus mountDemo(): one call that gives an app the Solid Lens, the step card, view transitions and window.__demo.",
+  "sideEffects": [
+    "./dist/mount.js"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./mount": {
+      "types": "./dist/mount.d.ts",
+      "import": "./dist/mount.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "lint": "biome check src test e2e package.json tsconfig.json tsconfig.test.json playwright.config.ts",
+    "test": "vitest run --root . --config ../../vitest.config.ts",
+    "test:e2e": "playwright test",
+    "typecheck": "tsc --project tsconfig.json --noEmit && tsc --project tsconfig.test.json"
+  },
   "dependencies": {
     "@mortgage/demo-kit": "workspace:*",
     "@mortgage/lens": "workspace:*",

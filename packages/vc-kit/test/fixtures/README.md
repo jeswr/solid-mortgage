@@ -41,34 +41,12 @@ a HIDING index commitment (sparq sq-ayv discipline). Produced by
 `sparq_zk::sig` via the helper binary. Issuer keys are deterministic DEMO seeds
 (`SecretKey::from_seed` — a sparq test/tooling path, never production).
 
-## `mortgage-composite-manifest.json`
+## Removed in the static rebuild
 
-The Tier B composite capture (decision 0005 row 3): REAL UltraHonk sub-proofs
-of `join_eq_na64_nb64` (hidden same-subject equality across the two committed
-credential graphs), `revoke_unset_d10` (status bit unset at a HIDDEN index) and
-`hidden_issuer_d4` (a trusted-set issuer signed the commitment — which one
-stays hidden), sharing ONE capture-time challenge. Native witness build
-(commitments, Merkle roots, Schnorr witnesses) by `scripts/sparq-helper`;
-proving mirrors sparq's `site/scripts/capture-zk-manifest.mjs`. Tier B posture
-(decision 0012): "proved offline · verified live" — capture-time challenges are
-NEVER challenge-fresh.
-
-## `car-hire-manifest.json`
-
-A re-capture of the sparq site's car-hire age-gate manifest with the SAME
-inputs its `site/scripts/capture-zk-manifest.mjs` uses (`filter_int_d2`,
-`age >= 25` over hidden age 30, challenge `0x1`, the committed operand anchor
-for 30) against this package's committed `filter_int_d2` artifact — whose
-bytecode is byte-identical to the circuit the sparq site ships.
-
-## `circuits/*.json`
-
-Compiled ACIR artifacts for the composite members, `nargo compile` (pinned
-1.0.0-beta.21) over an unmodified copy of sparq's `zk/compose` workspace.
-Slimmed to `noir_version`/`hash`/`abi`/`bytecode` (+ a provenance stub):
-`debug_symbols`/`file_map` are unused by noir_js/bb.js and embed
-build-machine paths. Tests INJECT these into `verifyProofManifest` exactly as
-a consuming app commits its own family members (sm-25 injection seam).
+The precomputed proof manifests (`mortgage-composite-manifest.json`,
+`car-hire-manifest.json`) and the composite circuit artifacts (`circuits/`)
+were deleted with the code that verified them (decision 0017). The capture
+script no longer produces them.
 
 ## HONESTY
 

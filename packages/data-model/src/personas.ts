@@ -48,9 +48,17 @@ import { resourceToTurtle } from "./wrappers/serialize.js";
 export type PersonaId = "alex-rivera" | "jordan-avery";
 
 /** Resource kinds present in a deterministic persona seed (action receipts are written later). */
-export type PersonaResourceKind = Exclude<
+export type PersonaResourceKind = Extract<
   MortgageResourceKind,
-  "consent-receipt" | "zk-operand-anchor"
+  | "borrower-profile"
+  | "employment-income-credential"
+  | "asset-credential"
+  | "credit-score-credential"
+  | "appraisal-credential"
+  | "title-clear-credential"
+  | "loan-application"
+  | "underwriting-decision"
+  | "closing-record"
 >;
 
 /**

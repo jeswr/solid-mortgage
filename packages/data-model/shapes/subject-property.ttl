@@ -1,0 +1,85 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+@prefix fibo-fnd-plc-rp: <https://spec.edmcouncil.org/fibo/ontology/FND/Places/RealProperty/> .
+
+# property/subject-property: facts about the home (seeded). Read by the lender (G4), the
+# appraiser (G5) and the insurer (G7). The node is also a fibo-fnd-plc-rp:RealEstate.
+mshape:SubjectPropertyShape
+  a sh:NodeShape ;
+  sh:targetClass schema:SingleFamilyResidence ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue schema:SingleFamilyResidence ;
+  ] ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue fibo-fnd-plc-rp:RealEstate ;
+  ] ;
+  sh:property [
+    sh:path schema:address ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:PostalAddressShape ;
+  ] ;
+  sh:property [
+    sh:path schema:yearBuilt ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:integer ;
+    sh:minInclusive 1600 ;
+    sh:maxInclusive 2100 ;
+  ] ;
+  sh:property [
+    sh:path schema:floorSize ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:FloorSizeShape ;
+  ] ;
+  sh:property [
+    sh:path schema:numberOfBedrooms ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:integer ;
+    sh:minInclusive 0 ;
+    sh:maxInclusive 50 ;
+  ] ;
+  sh:property [
+    sh:path schema:numberOfBathroomsTotal ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:integer ;
+    sh:minInclusive 0 ;
+    sh:maxInclusive 50 ;
+  ] ;
+  sh:property [
+    sh:path mort:constructionType ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:roofType ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:parcelNumber ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path mort:legalDescription ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] .

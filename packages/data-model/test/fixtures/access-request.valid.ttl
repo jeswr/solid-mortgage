@@ -1,0 +1,49 @@
+@prefix as: <https://www.w3.org/ns/activitystreams#>.
+@prefix cred: <https://www.w3.org/2018/credentials#>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix dpv: <https://w3id.org/dpv#>.
+@prefix fibo-fbc-dae-dbt: <https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Debt/>.
+@prefix fibo-fnd-arr-asmt: <https://spec.edmcouncil.org/fibo/ontology/FND/Arrangements/Assessments/>.
+@prefix fibo-fnd-arr-rep: <https://spec.edmcouncil.org/fibo/ontology/FND/Arrangements/Reporting/>.
+@prefix fibo-fnd-plc-rp: <https://spec.edmcouncil.org/fibo/ontology/FND/Places/RealProperty/>.
+@prefix fibo-fnd-rel-rel: <https://spec.edmcouncil.org/fibo/ontology/FND/Relations/Relations/>.
+@prefix fibo-loan-ln-app: <https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoanApplications/>.
+@prefix fibo-loan-ln-ln: <https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/Loans/>.
+@prefix fibo-loan-reln-mtg: <https://spec.edmcouncil.org/fibo/ontology/LOAN/RealEstateLoans/Mortgages/>.
+@prefix fibo-loan-reln-org: <https://spec.edmcouncil.org/fibo/ontology/LOAN/RealEstateLoans/MortgageOrigination/>.
+@prefix foaf: <http://xmlns.com/foaf/0.1/>.
+@prefix ldp: <http://www.w3.org/ns/ldp#>.
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#>.
+@prefix odrl: <http://www.w3.org/ns/odrl/2/>.
+@prefix pim: <http://www.w3.org/ns/pim/space#>.
+@prefix schema: <https://schema.org/>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+<https://alex.pod.example/inbox/request-g4> a odrl:Request;
+    schema:identifier "G4";
+    schema:name "Mortgage application";
+    dcterms:description "Mortgage origination and underwriting";
+    odrl:assigner <https://alex.pod.example/profile/card#me>;
+    odrl:assignee <https://lender.example/profile/card#me>;
+    odrl:permission _:permission1, _:permission2;
+    dcterms:issued "2026-08-05T10:00:00.000Z"^^xsd:dateTime.
+_:permission1 odrl:assignee <https://lender.example/profile/card#me>;
+    odrl:target <https://alex.pod.example/credentials/>, <https://alex.pod.example/property/>;
+    odrl:action odrl:read;
+    odrl:constraint _:permission1_constraint1, _:permission1_constraint2.
+_:permission1_constraint1 odrl:leftOperand odrl:purpose;
+    odrl:operator odrl:eq;
+    odrl:rightOperand dpv:ServiceProvision.
+_:permission1_constraint2 odrl:leftOperand odrl:dateTime;
+    odrl:operator odrl:lteq;
+    odrl:rightOperand "2026-11-20T00:00:00.000Z"^^xsd:dateTime.
+_:permission2 odrl:assignee <https://aus.example/profile/card#me>;
+    odrl:target <https://alex.pod.example/credentials/assets>;
+    odrl:action odrl:read;
+    odrl:constraint _:permission2_constraint1, _:permission2_constraint2.
+_:permission2_constraint1 odrl:leftOperand odrl:purpose;
+    odrl:operator odrl:eq;
+    odrl:rightOperand dpv:ServiceProvision.
+_:permission2_constraint2 odrl:leftOperand odrl:event;
+    odrl:operator odrl:lt;
+    odrl:rightOperand mort:GrantEnd-Closing.

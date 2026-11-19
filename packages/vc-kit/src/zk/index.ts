@@ -1,9 +1,17 @@
 /**
  * `@mortgage/vc-kit`'s ZK layer (sm-25; decisions 0005/0012). Tier A live
- * prove/verify with MANDATORY operand-anchor binding, Tier B precomputed
- * manifests verified live, and the decision-0005 honesty-panel content.
+ * prove/verify with MANDATORY operand-anchor binding, anchors minted from
+ * captured encodings, and the decision-0005 honesty-panel content. The
+ * precomputed (Tier B) proof manifests were dropped in the static rebuild.
  */
 
+export {
+  CAPTURED_OPERAND_ENCODINGS,
+  type CapturedAnchor,
+  capturedOperandEncoding,
+  type MintCapturedAnchorOptions,
+  mintCapturedOperandAnchor,
+} from "./anchors.js";
 export {
   challengeFieldOf,
   fieldHexEquals,
@@ -25,24 +33,7 @@ export {
   PINNED_NARGO_VERSION,
   PINNED_NOIR_JS_VERSION,
 } from "./circuits/registry.js";
-export {
-  type CompositeBindingOptions,
-  type CompositeBindingResult,
-  verifyCompositeBindings,
-  type ZkCommitmentAttestation,
-} from "./composite-binding.js";
 export { type HonestyItem, ZK_HONESTY, ZK_HONESTY_ITEMS, ZK_TOOLCHAIN } from "./honesty.js";
-export {
-  loadProofManifest,
-  type ManifestSubProof,
-  type ManifestVerifyResult,
-  type ProofManifest,
-  parseProofManifest,
-  type SubProofResult,
-  TIER_B_LABEL,
-  type VerifyManifestOptions,
-  verifyProofManifest,
-} from "./manifest.js";
 export {
   OP_CODES,
   type ProveTierAOptions,

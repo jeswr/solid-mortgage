@@ -29,8 +29,19 @@ mshape:ConsentReceiptShape
     sh:nodeKind sh:IRI ;
   ] ;
   sh:property [
+    # One receipt may cover several pod resources (a grant spans containers).
     sh:path odrl:target ;
     sh:minCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    # The ODRL policy (policies/<grant>) this record is the audit entry for.
+    sh:path dpv:hasPolicy ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path dpv:hasPurpose ;
     sh:maxCount 1 ;
     sh:nodeKind sh:IRI ;
   ] ;
@@ -38,7 +49,7 @@ mshape:ConsentReceiptShape
     sh:path dpv:hasConsentStatus ;
     sh:minCount 1 ;
     sh:maxCount 1 ;
-    sh:in ( dpv:ConsentGiven dpv:ConsentWithdrawn ) ;
+    sh:in ( dpv:ConsentGiven dpv:ConsentWithdrawn dpv:ConsentExpired ) ;
     sh:nodeKind sh:IRI ;
   ] ;
   sh:property [

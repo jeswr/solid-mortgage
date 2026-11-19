@@ -13,7 +13,9 @@ const XSD_NS = "http://www.w3.org/2001/XMLSchema#";
 
 /** XSD datatypes needed by the custom literal mappings in wrappers/mappings.ts. */
 export const XSD = {
+  boolean: `${XSD_NS}boolean`,
   date: `${XSD_NS}date`,
+  dateTime: `${XSD_NS}dateTime`,
   decimal: `${XSD_NS}decimal`,
 } as const;
 
@@ -21,29 +23,55 @@ const SCHEMA_NS = "https://schema.org/";
 
 /** schema.org terms (person/address/org/money display fields, vocab.md section 3). */
 export const SCHEMA = {
+  ContactPoint: `${SCHEMA_NS}ContactPoint`,
   DepositAccount: `${SCHEMA_NS}DepositAccount`,
+  DigitalDocument: `${SCHEMA_NS}DigitalDocument`,
   MonetaryAmount: `${SCHEMA_NS}MonetaryAmount`,
+  Order: `${SCHEMA_NS}Order`,
+  OrderDelivered: `${SCHEMA_NS}OrderDelivered`,
+  OrderProcessing: `${SCHEMA_NS}OrderProcessing`,
   Organization: `${SCHEMA_NS}Organization`,
   Person: `${SCHEMA_NS}Person`,
   PostalAddress: `${SCHEMA_NS}PostalAddress`,
+  QuantitativeValue: `${SCHEMA_NS}QuantitativeValue`,
+  SingleFamilyResidence: `${SCHEMA_NS}SingleFamilyResidence`,
+  about: `${SCHEMA_NS}about`,
   address: `${SCHEMA_NS}address`,
   addressLocality: `${SCHEMA_NS}addressLocality`,
   addressRegion: `${SCHEMA_NS}addressRegion`,
   amount: `${SCHEMA_NS}amount`,
   birthDate: `${SCHEMA_NS}birthDate`,
+  buyer: `${SCHEMA_NS}buyer`,
   currency: `${SCHEMA_NS}currency`,
+  customer: `${SCHEMA_NS}customer`,
+  description: `${SCHEMA_NS}description`,
   email: `${SCHEMA_NS}email`,
+  expires: `${SCHEMA_NS}expires`,
+  floorSize: `${SCHEMA_NS}floorSize`,
+  identifier: `${SCHEMA_NS}identifier`,
   interestRate: `${SCHEMA_NS}interestRate`,
   jobTitle: `${SCHEMA_NS}jobTitle`,
   name: `${SCHEMA_NS}name`,
+  numberOfBathroomsTotal: `${SCHEMA_NS}numberOfBathroomsTotal`,
+  numberOfBedrooms: `${SCHEMA_NS}numberOfBedrooms`,
+  orderDate: `${SCHEMA_NS}orderDate`,
+  orderNumber: `${SCHEMA_NS}orderNumber`,
+  orderStatus: `${SCHEMA_NS}orderStatus`,
   owns: `${SCHEMA_NS}owns`,
   postalCode: `${SCHEMA_NS}postalCode`,
   provider: `${SCHEMA_NS}provider`,
+  seller: `${SCHEMA_NS}seller`,
+  sha256: `${SCHEMA_NS}sha256`,
   startDate: `${SCHEMA_NS}startDate`,
   streetAddress: `${SCHEMA_NS}streetAddress`,
   telephone: `${SCHEMA_NS}telephone`,
+  unitCode: `${SCHEMA_NS}unitCode`,
+  url: `${SCHEMA_NS}url`,
+  validFrom: `${SCHEMA_NS}validFrom`,
+  validThrough: `${SCHEMA_NS}validThrough`,
   value: `${SCHEMA_NS}value`,
   worksFor: `${SCHEMA_NS}worksFor`,
+  yearBuilt: `${SCHEMA_NS}yearBuilt`,
 } as const;
 
 const CRED_NS = "https://www.w3.org/2018/credentials#";
@@ -69,7 +97,9 @@ const DCTERMS_NS = "http://purl.org/dc/terms/";
 export const DCTERMS = {
   created: `${DCTERMS_NS}created`,
   creator: `${DCTERMS_NS}creator`,
+  description: `${DCTERMS_NS}description`,
   issued: `${DCTERMS_NS}issued`,
+  source: `${DCTERMS_NS}source`,
   type: `${DCTERMS_NS}type`,
 } as const;
 
@@ -77,19 +107,71 @@ const DPV_NS = "https://w3id.org/dpv#";
 
 /** DPV consent-receipt terms (decision 0006 app-level ledger). */
 export const DPV = {
+  ConsentExpired: `${DPV_NS}ConsentExpired`,
   ConsentGiven: `${DPV_NS}ConsentGiven`,
   ConsentReceipt: `${DPV_NS}ConsentReceipt`,
   ConsentWithdrawn: `${DPV_NS}ConsentWithdrawn`,
+  CreditChecking: `${DPV_NS}CreditChecking`,
+  IdentityVerification: `${DPV_NS}IdentityVerification`,
+  ServiceProvision: `${DPV_NS}ServiceProvision`,
   hasConsentStatus: `${DPV_NS}hasConsentStatus`,
   hasDataController: `${DPV_NS}hasDataController`,
   hasDataSubject: `${DPV_NS}hasDataSubject`,
+  hasPolicy: `${DPV_NS}hasPolicy`,
+  hasPurpose: `${DPV_NS}hasPurpose`,
 } as const;
 
 const ODRL_NS = "http://www.w3.org/ns/odrl/2/";
 
-/** ODRL relation used to identify the pod resource covered by a receipt. */
+/** ODRL terms: the receipt's target, and the request and agreement policies of a grant. */
 export const ODRL = {
+  Agreement: `${ODRL_NS}Agreement`,
+  Request: `${ODRL_NS}Request`,
+  action: `${ODRL_NS}action`,
+  append: `${ODRL_NS}append`,
+  assignee: `${ODRL_NS}assignee`,
+  assigner: `${ODRL_NS}assigner`,
+  constraint: `${ODRL_NS}constraint`,
+  dateTime: `${ODRL_NS}dateTime`,
+  eq: `${ODRL_NS}eq`,
+  event: `${ODRL_NS}event`,
+  leftOperand: `${ODRL_NS}leftOperand`,
+  lt: `${ODRL_NS}lt`,
+  lteq: `${ODRL_NS}lteq`,
+  operator: `${ODRL_NS}operator`,
+  permission: `${ODRL_NS}permission`,
+  purpose: `${ODRL_NS}purpose`,
+  read: `${ODRL_NS}read`,
+  rightOperand: `${ODRL_NS}rightOperand`,
   target: `${ODRL_NS}target`,
+  write: `${ODRL_NS}write`,
+} as const;
+
+const AS_NS = "https://www.w3.org/ns/activitystreams#";
+
+/** ActivityStreams 2.0 terms for organisation-to-organisation inbox messages. */
+export const AS = {
+  Announce: `${AS_NS}Announce`,
+  actor: `${AS_NS}actor`,
+  inReplyTo: `${AS_NS}inReplyTo`,
+  object: `${AS_NS}object`,
+  published: `${AS_NS}published`,
+  summary: `${AS_NS}summary`,
+} as const;
+
+const FOAF_NS = "http://xmlns.com/foaf/0.1/";
+
+/** FOAF terms of a WebID profile document. */
+export const FOAF = {
+  Agent: `${FOAF_NS}Agent`,
+  PersonalProfileDocument: `${FOAF_NS}PersonalProfileDocument`,
+  primaryTopic: `${FOAF_NS}primaryTopic`,
+} as const;
+
+/** Solid / LDP terms of a WebID profile. */
+export const SOLID_TERMS = {
+  inbox: "http://www.w3.org/ns/ldp#inbox",
+  storage: "http://www.w3.org/ns/pim/space#storage",
 } as const;
 
 const FIBO_NS = "https://spec.edmcouncil.org/fibo/ontology/";
@@ -157,6 +239,7 @@ export const FIBO = {
 
 /** Prefix map for Turtle serialisation of the mortgage resources. */
 export const TURTLE_PREFIXES: Readonly<Record<string, string>> = {
+  as: AS_NS,
   cred: CRED_NS,
   dcterms: DCTERMS_NS,
   dpv: DPV_NS,
@@ -169,8 +252,11 @@ export const TURTLE_PREFIXES: Readonly<Record<string, string>> = {
   "fibo-loan-ln-ln": LOAN_LOANS,
   "fibo-loan-reln-mtg": LOAN_MTG,
   "fibo-loan-reln-org": LOAN_ORIG,
+  foaf: FOAF_NS,
+  ldp: "http://www.w3.org/ns/ldp#",
   mort: "https://solid-mortgage-vocab.vercel.app/mort#",
   odrl: ODRL_NS,
+  pim: "http://www.w3.org/ns/pim/space#",
   schema: SCHEMA_NS,
   xsd: XSD_NS,
 };
