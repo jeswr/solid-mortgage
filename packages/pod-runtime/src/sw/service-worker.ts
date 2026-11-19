@@ -1,53 +1,82 @@
 // AUTHORED-BY Claude Opus 5.5
 /** The service-worker role: install, activate, claim, route `/pods/**`, answer control messages. */
 import { BRIDGE_PATH } from "../protocol.js";
-import { getHost, identityOf, onControlMessage, serveRequest } from "./serve.js";
+import { identityOf, type SwRuntime } from "./runtime.js";
 
-async function identityFor(
-  sw: ServiceWorkerGlobalScope,
-  event: FetchEvent,
-): Promise<string | null> {
-  if (!__HOST_MODE__) return identityOf(event.request);
-  // Host mode: identity is established by the bridge page (from the caller's origin), never by
-  // whichever page on this origin happens to send the header.
-  const client = event.clientId === "" ? undefined : await sw.clients.get(event.clientId);
-  if (client === undefined || new URL(client.url).pathname !== BRIDGE_PATH) return null;
-  return identityOf(event.request);
+export interface ServiceWorkerOptions {
+  /** Host mode: identity and control messages are accepted only from the bridge page. */
+  hostMode: boolean;
 }
 
-export function startServiceWorker(sw: ServiceWorkerGlobalScope): void {
-  sw.addEventListener("install", (event) => event.waitUntil(sw.skipWaiting()));
-  sw.addEventListener("activate", (event) =>
+/** The parts of `ServiceWorkerGlobalScope` this role uses (a fake one in tests). */
+export interface ServiceWorkerScope {
+  addEventListener(type: string, listener: (event: never) => void): void;
+  clients: { get(id: string): Promise<{ url: string } | undefined>; claim(): Promise<void> };
+  location: { origin: string };
+  skipWaiting(): Promise<void>;
+}
+
+interface FetchEventLike {
+  request: Request;
+  clientId: string;
+  respondWith(response: Promise<Response>): void;
+}
+
+interface MessageEventLike {
+  data: unknown;
+  ports: readonly MessagePort[];
+  source: unknown;
+  waitUntil(promise: Promise<unknown>): void;
+}
+
+const isBridge = (url: string | undefined) =>
+  url !== undefined && new URL(url).pathname === BRIDGE_PATH;
+
+export function startServiceWorker(
+  sw: ServiceWorkerScope,
+  runtime: SwRuntime,
+  options: ServiceWorkerOptions,
+): void {
+  async function identityFor(event: FetchEventLike): Promise<string | null> {
+    if (!options.hostMode) return identityOf(event.request);
+    // Host mode: identity is established by the bridge page (from the caller's origin), never by
+    // whichever page on this origin happens to send the header.
+    const client = event.clientId === "" ? undefined : await sw.clients.get(event.clientId);
+    return isBridge(client?.url) ? identityOf(event.request) : null;
+  }
+
+  sw.addEventListener("install", (event: { waitUntil(p: Promise<unknown>): void }) =>
+    event.waitUntil(sw.skipWaiting()),
+  );
+  sw.addEventListener("activate", (event: { waitUntil(p: Promise<unknown>): void }) =>
     event.waitUntil(
       (async () => {
         await sw.clients.claim();
-        await getHost().catch(() => undefined);
+        await runtime.getHost().catch(() => undefined);
       })(),
     ),
   );
-  sw.addEventListener("fetch", (event) => {
+  sw.addEventListener("fetch", (event: FetchEventLike) => {
     const url = new URL(event.request.url);
     if (url.origin !== sw.location.origin) return;
     if (url.pathname !== "/pods" && !url.pathname.startsWith("/pods/")) return;
     event.respondWith(
-      identityFor(sw, event).then((identity) => serveRequest(event.request, identity)),
+      identityFor(event).then((identity) => runtime.serveRequest(event.request, identity)),
     );
   });
-  sw.addEventListener("message", (event) => {
+  sw.addEventListener("message", (event: MessageEventLike) => {
     const data = event.data as { type?: string } | null;
+    const port = event.ports[0];
     if (data?.type === "claim") {
-      event.waitUntil(sw.clients.claim().then(() => event.ports[0]?.postMessage({ ok: true })));
+      event.waitUntil(sw.clients.claim().then(() => port?.postMessage({ ok: true })));
       return;
     }
     // A pod request must arrive as a fetch, where the identity rules above apply.
     if (data?.type === "fetch" || data?.type === "agents") {
-      event.ports[0]?.postMessage({
-        error: `${data.type} is not accepted by the service worker`,
-        ok: false,
-      });
+      port?.postMessage({ error: `${data.type} is not accepted by the service worker`, ok: false });
       return;
     }
     // Keep the worker alive until the reply is sent.
-    event.waitUntil(onControlMessage(event as unknown as MessageEvent));
+    event.waitUntil(runtime.onControlMessage(event));
   });
 }

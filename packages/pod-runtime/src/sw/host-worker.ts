@@ -4,20 +4,20 @@ import { runAgentsOnHost } from "../agents/headless.js";
 import type { AgentRunner } from "../agents/runner.js";
 import type { ControlRequest } from "../protocol.js";
 import { loadAgents } from "./agent-worker.js";
-import { getHost, onControlMessage } from "./serve.js";
+import type { SwRuntime } from "./runtime.js";
 
 let runner: AgentRunner | undefined;
 
-export function startHostWorker(): void {
+export function startHostWorker(runtime: SwRuntime): void {
   self.addEventListener("message", (event: MessageEvent) => {
     const message = event.data as ControlRequest;
     if (message?.type !== "agents") {
-      void onControlMessage(event);
+      void runtime.onControlMessage(event);
       return;
     }
     const port = event.ports[0];
     (async () => {
-      const host = await getHost();
+      const host = await runtime.getHost();
       if (host === undefined) throw new Error("send hello first");
       runner?.stop();
       runner = runAgentsOnHost({

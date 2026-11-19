@@ -7,23 +7,43 @@
  * - Dedicated worker named `pod-agents`: the organisation agents, one runner across all tabs.
  * - Window on the pod origin (host-mode build only): the bridge page.
  */
-import { AGENTS_WORKER_NAME } from "../protocol.js";
+import base64 from "virtual:pod-runtime-wasm";
+import { idbStorage } from "../host/storage.js";
+import { AGENTS_WORKER_NAME, EVENTS_CHANNEL } from "../protocol.js";
 import { startAgentWorker } from "./agent-worker.js";
 import { startBridgePage } from "./bridge-page.js";
 import { startHostWorker } from "./host-worker.js";
-import { startServiceWorker } from "./service-worker.js";
+import { createSwRuntime } from "./runtime.js";
+import { type ServiceWorkerScope, startServiceWorker } from "./service-worker.js";
 
 const scope = globalThis as unknown as { name?: string; document?: unknown };
+
+function decode(text: string): Uint8Array<ArrayBuffer> {
+  const binary = atob(text);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+const runtime = () =>
+  createSwRuntime({
+    channel: new BroadcastChannel(EVENTS_CHANNEL),
+    compile: () => WebAssembly.compile(decode(base64)),
+    origin: self.location.origin,
+    storage: idbStorage(),
+  });
 
 if (
   typeof ServiceWorkerGlobalScope !== "undefined" &&
   globalThis instanceof ServiceWorkerGlobalScope
 ) {
-  startServiceWorker(globalThis as unknown as ServiceWorkerGlobalScope);
+  startServiceWorker(globalThis as unknown as ServiceWorkerScope, runtime(), {
+    hostMode: __HOST_MODE__,
+  });
 } else if (scope.document !== undefined) {
   if (__HOST_MODE__) startBridgePage();
 } else if (scope.name === AGENTS_WORKER_NAME) {
   startAgentWorker();
 } else {
-  startHostWorker();
+  startHostWorker(runtime());
 }
