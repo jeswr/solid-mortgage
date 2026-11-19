@@ -34,6 +34,10 @@
       "types": "./dist/small-business-loan/*.d.ts",
       "import": "./dist/small-business-loan/*.js"
     },
+    "./reusable-kyc/*": {
+      "types": "./dist/reusable-kyc/*.d.ts",
+      "import": "./dist/reusable-kyc/*.js"
+    },
     "./vite": {
       "types": "./dist/vite.d.ts",
       "import": "./dist/vite.js"
@@ -41,7 +45,7 @@
   },
   "scripts": {
     "build": "tsc --project tsconfig.json",
-    "lint": "biome check orgs.ts vite.ts mortgage moving-house small-dollar-lending business-kyb medication-handover small-business-loan test package.json tsconfig.json",
+    "lint": "biome check orgs.ts vite.ts mortgage moving-house small-dollar-lending business-kyb medication-handover small-business-loan reusable-kyc test package.json tsconfig.json",
     "test": "vitest run --root . --config ../vitest.config.ts",
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },

@@ -47,7 +47,9 @@ export const MORT = {
     "https://solid-mortgage-vocab.vercel.app/mort#CddDecisionStatus-PendingReview",
   CddDecisionStatusScheme: "https://solid-mortgage-vocab.vercel.app/mort#CddDecisionStatusScheme",
   checkedAt: "https://solid-mortgage-vocab.vercel.app/mort#checkedAt",
+  checkedAttribute: "https://solid-mortgage-vocab.vercel.app/mort#checkedAttribute",
   checkedCredential: "https://solid-mortgage-vocab.vercel.app/mort#checkedCredential",
+  checkMethod: "https://solid-mortgage-vocab.vercel.app/mort#checkMethod",
   ClosedEndCreditDisclosure:
     "https://solid-mortgage-vocab.vercel.app/mort#ClosedEndCreditDisclosure",
   closingBalanceUsd: "https://solid-mortgage-vocab.vercel.app/mort#closingBalanceUsd",
@@ -112,11 +114,22 @@ export const MORT = {
   grantor: "https://solid-mortgage-vocab.vercel.app/mort#grantor",
   identifiedBeneficialOwner:
     "https://solid-mortgage-vocab.vercel.app/mort#identifiedBeneficialOwner",
+  identityCheck: "https://solid-mortgage-vocab.vercel.app/mort#identityCheck",
+  IdentityCheck: "https://solid-mortgage-vocab.vercel.app/mort#IdentityCheck",
+  IdentityCheckMethod_Documentary:
+    "https://solid-mortgage-vocab.vercel.app/mort#IdentityCheckMethod-Documentary",
+  IdentityCheckMethod_GovernmentList:
+    "https://solid-mortgage-vocab.vercel.app/mort#IdentityCheckMethod-GovernmentList",
+  IdentityCheckMethod_NonDocumentary:
+    "https://solid-mortgage-vocab.vercel.app/mort#IdentityCheckMethod-NonDocumentary",
+  IdentityCheckMethodScheme:
+    "https://solid-mortgage-vocab.vercel.app/mort#IdentityCheckMethodScheme",
   IdentityCredential: "https://solid-mortgage-vocab.vercel.app/mort#IdentityCredential",
   inflowUsd: "https://solid-mortgage-vocab.vercel.app/mort#inflowUsd",
   intentToProceedDate: "https://solid-mortgage-vocab.vercel.app/mort#intentToProceedDate",
   isIllustrativeLei: "https://solid-mortgage-vocab.vercel.app/mort#isIllustrativeLei",
   keyFactor: "https://solid-mortgage-vocab.vercel.app/mort#keyFactor",
+  KycAttestationCredential: "https://solid-mortgage-vocab.vercel.app/mort#KycAttestationCredential",
   latePaymentCount: "https://solid-mortgage-vocab.vercel.app/mort#latePaymentCount",
   legalDescription: "https://solid-mortgage-vocab.vercel.app/mort#legalDescription",
   lineItem: "https://solid-mortgage-vocab.vercel.app/mort#lineItem",
@@ -262,6 +275,7 @@ export const MORT = {
   transferee: "https://solid-mortgage-vocab.vercel.app/mort#transferee",
   transferEffectiveDate: "https://solid-mortgage-vocab.vercel.app/mort#transferEffectiveDate",
   transferor: "https://solid-mortgage-vocab.vercel.app/mort#transferor",
+  TrustedIssuerList: "https://solid-mortgage-vocab.vercel.app/mort#TrustedIssuerList",
   TurnoverBand_1MTo5M: "https://solid-mortgage-vocab.vercel.app/mort#TurnoverBand-1MTo5M",
   TurnoverBand_500kTo1M: "https://solid-mortgage-vocab.vercel.app/mort#TurnoverBand-500kTo1M",
   TurnoverBand_Over5M: "https://solid-mortgage-vocab.vercel.app/mort#TurnoverBand-Over5M",

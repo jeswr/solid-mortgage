@@ -23,6 +23,7 @@ import {
   writeCashFlowClaims,
   writeEvidenceOfInsuranceClaims,
   writeIdentityClaims,
+  writeKycAttestationClaims,
   writeOfficerAuthorisationClaims,
   writeOrganisationalIdentityClaims,
   writeRepaymentHistoryClaims,
@@ -53,6 +54,7 @@ import {
   SCHEMA_ADDRESS_LOCALITY,
   SCHEMA_ADDRESS_REGION,
   SCHEMA_AMOUNT,
+  SCHEMA_BIRTH_DATE,
   SCHEMA_CURRENCY,
   SCHEMA_DEPOSIT_ACCOUNT,
   SCHEMA_JOB_TITLE,
@@ -276,6 +278,62 @@ export interface EvidenceOfInsuranceClaims {
   readonly loanNumber?: string;
 }
 
+/** How a KYC check was performed (mort:IdentityCheckMethodScheme). */
+export type IdentityCheckMethod = "documentary" | "non-documentary" | "government-list";
+
+/** An attribute a KYC check can cover. */
+export type CheckedAttribute = "name" | "birthDate" | "address" | "taxIdLast4";
+
+/** One check behind a KYC attestation (`mshape:IdentityCheckShape`). */
+export interface IdentityCheckClaims {
+  readonly method: IdentityCheckMethod;
+  /** One to four attributes, without repeats. */
+  readonly attributes: readonly CheckedAttribute[];
+  /** The day the check was run, `YYYY-MM-DD`. */
+  readonly date: string;
+  /** One line (at most 200 characters). Never a document number or image. */
+  readonly description: string;
+}
+
+/**
+ * KYC attestation subject (`mshape:KycAttestationSubjectShape`): the verified attributes and
+ * the checks behind them. There is deliberately no field for a document image, scan, number
+ * or tax identifier, and the closed shape refuses any that is added to the graph.
+ */
+export interface KycAttestationClaims {
+  readonly kind: "kyc-attestation-credential";
+  readonly name: string;
+  /** `YYYY-MM-DD`. */
+  readonly birthDate: string;
+  readonly address: PostalAddressClaims;
+  /** One to eight checks. */
+  readonly checks: readonly IdentityCheckClaims[];
+}
+
+const CHECK_METHOD_IRIS: Readonly<Record<IdentityCheckMethod, string>> = {
+  documentary: MORT.IdentityCheckMethod_Documentary,
+  "government-list": MORT.IdentityCheckMethod_GovernmentList,
+  "non-documentary": MORT.IdentityCheckMethod_NonDocumentary,
+};
+
+const CHECKED_ATTRIBUTE_IRIS: Readonly<Record<CheckedAttribute, string>> = {
+  address: SCHEMA_ADDRESS,
+  birthDate: SCHEMA_BIRTH_DATE,
+  name: SCHEMA_NAME,
+  taxIdLast4: MORT.taxIdLast4,
+};
+
+function lookup<T extends string>(
+  table: Readonly<Record<T, string>>,
+  key: T,
+  label: string,
+): string {
+  if (!Object.hasOwn(table, key)) {
+    throw new ClaimInputError(`${label} is not one of ${Object.keys(table).join(", ")}: ${key}`);
+  }
+  return table[key];
+}
+
 /**
  * Cash-flow VC subject (`mshape:CashFlowSubjectShape`; small-dollar lending, ported from
  * jeswr/solid-lending). `nsf90Count` and `cashFlowScoreValue` are ZK-provable fields.
@@ -360,6 +418,7 @@ export type CredentialClaims =
   | IdentityClaims
   | TitleCommitmentClaims
   | EvidenceOfInsuranceClaims
+  | KycAttestationClaims
   | ZkOperandAnchorClaims
   | CashFlowClaims
   | RepaymentHistoryClaims
@@ -627,6 +686,28 @@ export function writeSubjectClaims(
         policyStart: dateOf(claims.policyStart, "policyStart"),
         propertyAddress: addressFieldsOf(claims.propertyAddress),
       });
+      return;
+    }
+    case "kyc-attestation-credential": {
+      const checks = claims.checks.map((check, index) => ({
+        attributes: check.attributes.map((attribute) =>
+          lookup(CHECKED_ATTRIBUTE_IRIS, attribute, `checks[${index}].attributes`),
+        ),
+        date: dateOf(check.date, `checks[${index}].date`),
+        description: check.description,
+        method: lookup(CHECK_METHOD_IRIS, check.method, `checks[${index}].method`),
+      }));
+      try {
+        writeKycAttestationClaims(typedSubject(subject), {
+          address: addressFieldsOf(claims.address),
+          birthDate: dateOf(claims.birthDate, "birthDate"),
+          checks,
+          name: claims.name,
+        });
+      } catch (error) {
+        if (error instanceof RangeError) throw new ClaimInputError(error.message);
+        throw error;
+      }
       return;
     }
     case "organisational-identity-credential": {

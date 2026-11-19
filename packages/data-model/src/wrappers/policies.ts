@@ -101,6 +101,20 @@ export class Permission extends TypedNode {
     const event = this.constraintOn(ODRL.event)?.rightOperand;
     return event === undefined ? undefined : { event: event.value };
   }
+  /**
+   * How many times the permission may be used (`odrl:count`), if it says: 1 for a one-time
+   * grant. WAC cannot count; the holder's wallet closes the grant after the use.
+   */
+  get maxUses(): number | undefined {
+    const count = this.constraintOn(ODRL.count)?.rightOperand;
+    if (count === undefined) return undefined;
+    const value = Number(count.value);
+    if (!Number.isSafeInteger(value) || value < 1) {
+      throw new RangeError(`odrl:count must be a positive integer: ${count.value}`);
+    }
+    return value;
+  }
+
   /** The recurring interval between permitted uses (`odrl:timeInterval`), e.g. "P3M". */
   get interval(): string | undefined {
     return this.constraintOn(ODRL.timeInterval)?.rightOperand.value;
@@ -114,6 +128,8 @@ export interface PermissionInit {
   /** A DPV purpose IRI. */
   purpose: string;
   end?: GrantEnd;
+  /** How many times the permission may be used (`odrl:count`); 1 for a one-time grant. */
+  maxUses?: number;
   /** A recurring use, at most once per this `xsd:duration` (e.g. "P3M", quarterly). */
   interval?: string;
 }
@@ -228,6 +244,17 @@ function applyPolicy(policy: AccessPolicy, init: AccessPolicyInit, type: string)
         setIri(constraint, ODRL.rightOperand, end.event),
       );
     }
+    const maxUses = permissionInit.maxUses;
+    if (maxUses !== undefined) {
+      if (!Number.isSafeInteger(maxUses) || maxUses < 1) {
+        throw new RangeError(`maxUses must be a positive integer: ${maxUses}`);
+      }
+      addConstraint(permission, 3, ODRL.count, ODRL.lteq, (constraint) =>
+        RequiredAs.object(constraint, ODRL.rightOperand, maxUses, (value, factory) =>
+          factory.literal(String(value), factory.namedNode(XSD.integer)),
+        ),
+      );
+    }
     const interval = permissionInit.interval;
     if (interval !== undefined) {
       if (!INTERVAL_PATTERN.test(interval)) {
@@ -235,7 +262,7 @@ function applyPolicy(policy: AccessPolicy, init: AccessPolicyInit, type: string)
           `an interval is an xsd:duration of years, months or days: ${interval}`,
         );
       }
-      addConstraint(permission, 3, ODRL.timeInterval, ODRL.eq, (constraint) =>
+      addConstraint(permission, 4, ODRL.timeInterval, ODRL.eq, (constraint) =>
         RequiredAs.object(constraint, ODRL.rightOperand, interval, (value, factory) =>
           factory.literal(value, factory.namedNode(XSD.duration)),
         ),
@@ -280,6 +307,7 @@ export function permissionInits(policy: AccessPolicy): PermissionInit[] {
     const purpose = permission.purposeIri;
     if (purpose === undefined) throw new TypeError("a permission needs a purpose constraint");
     const end = permission.end;
+    const maxUses = permission.maxUses;
     const interval = permission.interval;
     return {
       assignee: permission.assigneeIri,
@@ -287,6 +315,7 @@ export function permissionInits(policy: AccessPolicy): PermissionInit[] {
       purpose,
       targets: [...permission.targetIris].sort(),
       ...(end === undefined ? {} : { end }),
+      ...(maxUses === undefined ? {} : { maxUses }),
       ...(interval === undefined ? {} : { interval }),
     };
   });

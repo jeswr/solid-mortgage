@@ -10,18 +10,44 @@ a threshold over a hidden value. Security-critical: every gate fails closed.
 |---|---|
 | Issue | `issueCredential` signs a typed claim set after its SHACL shape passes |
 | Verify | `verifyCredential` checks signature, shape, validity window, issuer and status |
+| Rely | `verifyWithTrustList` adds a required status entry and membership of a scheme's trusted-issuer list |
 | Status | `StatusListClient` hosts one Bitstring Status List per issuer |
 | Re-issue | `reissueCredential` revokes the old credential and issues its successor |
 | Threshold proof | `proveTierA` / `verifyTierA`, bound to an issuer operand anchor |
 | Operand anchors | `mintCapturedOperandAnchor` for the captured values |
 
 Credential kinds: employment and income, assets, credit score, appraisal,
-identity, title commitment, evidence of insurance and the operand anchor.
+identity, title commitment, evidence of insurance, KYC attestation and the
+operand anchor.
 `title-clear-credential` has had no importer since `packages/solid-kit` was
 deleted and is due for removal; new code uses the title commitment.
 
 Precomputed proof manifests were removed in the static rebuild. The only proof
 this package makes is the live threshold proof.
+
+## Relying on another institution's checks
+
+`verifyWithTrustList(body, { expectShape, now, trustList: { iri, document }, ... })` is what a
+relying party runs on a KYC attestation (reusable KYC demo). It passes only when every
+`verifyCredential` gate passes and also:
+
+- the credential carries a status entry (`STATUS_MISSING` otherwise: `verifyCredential` alone
+  accepts a credential without one);
+- the list conforms to `mshape:TrustedIssuerListShape` under the given IRI, is in force at
+  `now` and covers the credential's class (`TRUST_LIST_INVALID`, `TRUST_LIST_OUT_OF_FORCE`,
+  `TRUST_LIST_WRONG_TYPE`);
+- the issuer has an entry in force both when the credential took effect and at `now`
+  (`ISSUER_NOT_LISTED`, `LISTING_NOT_IN_FORCE`);
+- for a KYC attestation, no check is dated after the credential took effect
+  (`CHECK_AFTER_ISSUANCE`).
+
+The result names each gate (`gates.signature`, `status`, `content`, `list`, `listed`) so a
+screen can show what was checked, and the entry (agreement reference) that admitted the
+issuer. The list is unsigned: it is only as trustworthy as the place the caller read it from,
+which in the demo is the relying party's own pod copy of the scheme's publication.
+
+The KYC attestation's shape is closed and has no evidence link, so no document image, scan,
+document number or tax identifier can be signed into it.
 
 ## Time comes from the caller
 

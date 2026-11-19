@@ -1,0 +1,104 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+
+# AUTHORED-BY Claude Opus 5.5
+# A scheme's published list of the issuers whose attestations of one credential type
+# (schema:about) its participants accept (reusable KYC demo, flows.md section 8). It stands for
+# the reliance agreement between institutions; each entry names the agreement and its period.
+mshape:TrustedIssuerListShape
+  a sh:NodeShape ;
+  sh:targetClass mort:TrustedIssuerList ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue mort:TrustedIssuerList ;
+    sh:in ( mort:TrustedIssuerList schema:ItemList ) ;
+  ] ;
+  sh:property [
+    sh:path schema:name ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path schema:publisher ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:OrganizationShape ;
+  ] ;
+  sh:property [
+    sh:path schema:about ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path schema:datePublished ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dateTime ;
+    sh:lessThan schema:validThrough ;
+  ] ;
+  sh:property [
+    sh:path schema:validThrough ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dateTime ;
+    sh:message "a trusted-issuer list must say until when it is in force" ;
+  ] ;
+  sh:property [
+    sh:path schema:itemListElement ;
+    sh:maxCount 64 ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:node mshape:TrustedIssuerEntryShape ;
+  ] .
+
+mshape:TrustedIssuerEntryShape
+  a sh:NodeShape ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:hasValue schema:ListItem ;
+  ] ;
+  sh:property [
+    # The issuer's WebID.
+    sh:path schema:item ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path schema:name ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    # The reference of the reliance agreement behind the entry.
+    sh:path schema:identifier ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path schema:validFrom ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dateTime ;
+    sh:lessThan schema:validThrough ;
+  ] ;
+  sh:property [
+    sh:path schema:validThrough ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dateTime ;
+  ] .

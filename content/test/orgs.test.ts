@@ -71,4 +71,8 @@ describe("the apps each demo uses", () => {
       new Set(DEMO_APPS["small-business-loan"].map((slug) => ORGS[slug].organisation)).size,
     ).toBe(4);
   });
+
+  it("reusable KYC: Alex's wallet, the bank that checked Alex and the card issuer that relies", () => {
+    expect(DEMO_APPS["reusable-kyc"]).toEqual(["wallet", "bank", "card-issuer"]);
+  });
 });
