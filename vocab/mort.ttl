@@ -1244,3 +1244,92 @@ mort:GrantEnd-ServicingEnds
   skos:inScheme mort:GrantEndScheme ;
   skos:topConceptOf mort:GrantEndScheme ;
   rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+#################################################################
+# Reusable KYC demo (docs/rebuild/flows.md section 8)
+#################################################################
+
+mort:KycAttestationCredential
+  a owl:Class ;
+  rdfs:label "KYC attestation credential"@en ;
+  rdfs:comment "A verifiable credential in which a financial institution states which checks of the subject's identity it ran, by which method and on which date, with the attributes it verified. It carries no image of any identity document. Another institution may rely on it only under the conditions the law sets for reliance, which a trusted-issuer list stands for in the demo."@en ;
+  skos:definition "A verifiable credential in which a financial institution states which checks of the subject's identity it ran, by which method and on which date, with the attributes it verified. It carries no image of any identity document. Another institution may rely on it only under the conditions the law sets for reliance, which a trusted-issuer list stands for in the demo."@en ;
+  rdfs:subClassOf cred:VerifiableCredential ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:IdentityCheck
+  a owl:Class ;
+  rdfs:label "Identity check"@en ;
+  rdfs:comment "One check of a person's identity that a financial institution ran: what it checked (the attributes), how (the method) and when (the date). Approximates one verification procedure of a customer identification program."@en ;
+  skos:definition "One check of a person's identity that a financial institution ran: what it checked (the attributes), how (the method) and when (the date). Approximates one verification procedure of a customer identification program."@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:identityCheck
+  a owl:ObjectProperty ;
+  rdfs:label "identity check"@en ;
+  rdfs:comment "Links the subject of a KYC attestation to one identity check the issuer ran."@en ;
+  skos:definition "Links the subject of a KYC attestation to one identity check the issuer ran."@en ;
+  rdfs:range mort:IdentityCheck ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:checkMethod
+  a owl:ObjectProperty ;
+  rdfs:label "check method"@en ;
+  rdfs:comment "How an identity check was made, from mort:IdentityCheckMethodScheme."@en ;
+  skos:definition "How an identity check was made, from mort:IdentityCheckMethodScheme."@en ;
+  rdfs:domain mort:IdentityCheck ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:checkedAttribute
+  a owl:ObjectProperty ;
+  rdfs:label "checked attribute"@en ;
+  rdfs:comment "An attribute of the person that an identity check verified, named by the property that carries it (for example schema:birthDate)."@en ;
+  skos:definition "An attribute of the person that an identity check verified, named by the property that carries it (for example schema:birthDate)."@en ;
+  rdfs:domain mort:IdentityCheck ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:IdentityCheckMethodScheme
+  a skos:ConceptScheme ;
+  rdfs:label "Identity check method scheme"@en ;
+  rdfs:comment "Methods a financial institution uses to verify a customer's identity."@en ;
+  skos:definition "Methods a financial institution uses to verify a customer's identity."@en ;
+  skos:prefLabel "Identity check method scheme"@en ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:IdentityCheckMethod-Documentary
+  a skos:Concept ;
+  rdfs:label "documentary"@en ;
+  rdfs:comment "An unexpired government-issued identity document bearing a photograph was inspected."@en ;
+  skos:definition "An unexpired government-issued identity document bearing a photograph was inspected."@en ;
+  skos:prefLabel "documentary"@en ;
+  skos:inScheme mort:IdentityCheckMethodScheme ;
+  skos:topConceptOf mort:IdentityCheckMethodScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:IdentityCheckMethod-NonDocumentary
+  a skos:Concept ;
+  rdfs:label "non-documentary"@en ;
+  rdfs:comment "The information the customer gave was compared with an independent source, such as a consumer reporting agency or a public database."@en ;
+  skos:definition "The information the customer gave was compared with an independent source, such as a consumer reporting agency or a public database."@en ;
+  skos:prefLabel "non-documentary"@en ;
+  skos:inScheme mort:IdentityCheckMethodScheme ;
+  skos:topConceptOf mort:IdentityCheckMethodScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:IdentityCheckMethod-GovernmentList
+  a skos:Concept ;
+  rdfs:label "government list screening"@en ;
+  rdfs:comment "The customer's name was compared with the government lists of known or suspected terrorists and terrorist organisations a bank must consult."@en ;
+  skos:definition "The customer's name was compared with the government lists of known or suspected terrorists and terrorist organisations a bank must consult."@en ;
+  skos:prefLabel "government list screening"@en ;
+  skos:inScheme mort:IdentityCheckMethodScheme ;
+  skos:topConceptOf mort:IdentityCheckMethodScheme ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .
+
+mort:TrustedIssuerList
+  a owl:Class ;
+  rdfs:label "Trusted issuer list"@en ;
+  rdfs:comment "A list, published by a scheme, of the institutions whose attestations of a given credential type (schema:about) its participants accept, each entry with the reference of the agreement behind it and the period it covers. A verifier accepts an attestation only from an issuer listed, inside its entry's period, while the list itself is in force."@en ;
+  skos:definition "A list, published by a scheme, of the institutions whose attestations of a given credential type (schema:about) its participants accept, each entry with the reference of the agreement behind it and the period it covers. A verifier accepts an attestation only from an issuer listed, inside its entry's period, while the list itself is in force."@en ;
+  rdfs:subClassOf <https://schema.org/ItemList> ;
+  rdfs:isDefinedBy <https://solid-mortgage-vocab.vercel.app/mort> .

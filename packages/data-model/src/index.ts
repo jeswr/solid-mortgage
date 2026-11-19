@@ -78,6 +78,7 @@ export {
 } from "./wrappers/build.js";
 export * from "./wrappers/documents.js";
 export { type AddressFields, addressFields } from "./wrappers/fields.js";
+export * from "./wrappers/kyc.js";
 export { literalFromXsdDate, literalFromXsdDecimal } from "./wrappers/mappings.js";
 export * from "./wrappers/policies.js";
 export * from "./wrappers/records.js";

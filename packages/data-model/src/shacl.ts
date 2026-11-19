@@ -55,6 +55,9 @@ export const RESOURCE_TARGET_CLASSES = {
   // Moving-house demo (flows.md section 2).
   "address-record": "http://www.w3.org/ns/locn#Address",
   "data-product": "https://ekgf.github.io/dprod/DataProduct",
+  // Reusable KYC demo (flows.md section 8).
+  "kyc-attestation-credential": MORT.KycAttestationCredential,
+  "trusted-issuer-list": MORT.TrustedIssuerList,
 } as const;
 
 /** The mortgage resource kinds validate() can be told to expect. */
