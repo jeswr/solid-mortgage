@@ -1,0 +1,4 @@
+[
+  { "says": "Three parties", "metric": "motor-claim.parties", "value": 3 },
+  { "says": "two grants, each scoped to one job.", "metric": "grants.total", "value": 2 }
+]

@@ -45,6 +45,10 @@ export const GRANT_END_IRIS = [
   MORT.GrantEnd_PolicyIssued,
   MORT.GrantEnd_PolicyLapses,
   MORT.GrantEnd_ServicingEnds,
+  // Motor claim demo (flows.md section 7).
+  MORT.GrantEnd_ClaimClosed,
+  MORT.GrantEnd_JobCompleted,
+  MORT.GrantEnd_MotorPolicyLapses,
 ] as const;
 
 /** One ODRL constraint (mshape:ConstraintShape). */

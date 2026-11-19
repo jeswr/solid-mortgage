@@ -173,6 +173,17 @@ export const ORGS: OrgRegistry = Object.freeze({
     themeColor: "#17375E",
     title: "State Online Services",
   },
+  // Demo 7, motor claim (flows.md §1 and §7): a collision repair workshop.
+  repairer: {
+    actsAs: "repairer",
+    organisation: "Anvil Collision Repair",
+    persona: { name: "Sam Okafor", role: "workshop manager" },
+    role: "Collision repair workshop Alex's insurer refers the car to",
+    short: "Anvil",
+    slug: "repairer",
+    themeColor: "#1F1D1A",
+    title: "Anvil Collision Repair",
+  },
 });
 
 /**
@@ -180,6 +191,7 @@ export const ORGS: OrgRegistry = Object.freeze({
  * mortgage video's "Thirteen applications.") is taken from its list here, never from `ORGS`.
  */
 export const DEMO_APPS = Object.freeze({
-  mortgage: ORG_SLUGS.filter((slug) => slug !== "state"),
+  mortgage: ORG_SLUGS.filter((slug) => slug !== "state" && slug !== "repairer"),
   "moving-house": ["wallet", "state", "county", "bank", "insurer", "payroll", "servicer"],
+  "motor-claim": ["wallet", "insurer", "repairer", "state"],
 } satisfies Record<string, readonly OrgSlug[]>);
