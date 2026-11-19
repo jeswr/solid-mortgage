@@ -287,8 +287,8 @@ export const TOUR: readonly TourStep[] = Object.freeze([
     title: "Ownership changes at the register",
   },
   {
-    app: "wallet",
-    body: "Both banks' back offices read the new ownership credential under their existing grants and check it at Halyard. Nobody sent a form.",
+    app: "business-lender",
+    body: "Brackenridge's deal sheet, and Alder Bank's monitoring, read the new ownership credential under the grants they already hold, and check it at Halyard. Nobody sent a form.",
     chapter: "4 Ownership changes",
     clock: { day: DAY.sale },
     done: { event: read("northwind", "/credentials/beneficial-ownership", "business-lender") },
@@ -302,7 +302,7 @@ export const TOUR: readonly TourStep[] = Object.freeze([
       headline: "Both banks are current from the same record",
     },
     mode: "summary",
-    path: "kyb/readers",
+    path: "deal",
     realWorld: {
       rule: "Ongoing customer due diligence includes keeping ownership information up to date.",
       stage: "Ongoing monitoring",

@@ -19,6 +19,7 @@
 import {
   BeneficialOwnershipCredential,
   buildDeliveredDocument,
+  DeliveredDocument,
   MORT,
   ZkOperandAnchor,
 } from "@mortgage/data-model";
@@ -311,4 +312,15 @@ export async function verifyAtLender(
     provedMs: presentation.provedMs,
     result,
   };
+}
+
+/** Brackenridge's recorded pre-decision (its own pod), if the proof has been verified. */
+export async function readPreDecision(
+  world: World,
+): Promise<{ description: string; issued: Date } | undefined> {
+  const lender = world.fetchAs(LENDER);
+  const url = resultUrl(world);
+  if ((await statusOf(lender, url)) !== 200) return undefined;
+  const document = new DeliveredDocument(url, await readDataset(lender, url), DataFactory);
+  return { description: document.description, issued: document.issued };
 }

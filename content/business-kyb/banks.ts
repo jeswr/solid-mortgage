@@ -16,14 +16,17 @@ import { parseRdf } from "@jeswr/fetch-rdf";
 import {
   BeneficialOwnershipCredential,
   buildCddDecisionRecord,
+  buildCredentialPointer,
   CddDecisionRecord,
+  CredentialPointer,
   type MortgageResourceKind,
   OfficerAuthorisationCredential,
   OrganisationalIdentityCredential,
+  RESOURCE_TARGET_CLASSES,
 } from "@mortgage/data-model";
 import type { OrgSlug } from "@mortgage/demo-kit/registry";
 import { DataFactory } from "n3";
-import { checkAtSource, type SourceCheck } from "../mortgage/issuers.js";
+import { checkAtSource, digestOf, type SourceCheck } from "../mortgage/issuers.js";
 import {
   at,
   dateOf,
@@ -223,8 +226,66 @@ export async function readDealSheet(world: World, time = "14:10") {
     legalName: subject.legalName,
     lei: subject.lei.text,
     ownership: await ownershipOf(ownership.check),
+    ownershipCheck: ownership,
     verified: identity.verified && ownership.verified,
   };
+}
+
+export type DealSheet = Awaited<ReturnType<typeof readDealSheet>>;
+
+export const DEAL_PATH = "kyb/deals/northwind-ownership";
+
+/** Brackenridge's pointer to the ownership credential its deal sheet was built on. */
+export function dealUrl(world: Pick<World, "podOrigin">): string {
+  return podUrl(world, "business-lender", DEAL_PATH);
+}
+
+/** Record which ownership credential (by digest) the deal sheet rests on, in Brackenridge's pod. */
+export async function recordDealSource(
+  world: World,
+  check: SourceCheck,
+  time = "14:15",
+): Promise<string> {
+  return putResource(
+    world.fetchAs("business-lender"),
+    buildCredentialPointer({
+      asOf: at(world, time),
+      credentialType: RESOURCE_TARGET_CLASSES["beneficial-ownership-credential"],
+      iri: dealUrl(world),
+      issuer: webid(world, "registry"),
+      sha256: digestOf(check.body),
+      url: check.url,
+    }),
+  );
+}
+
+export interface DealDesk {
+  readonly sheet: DealSheet;
+  /** The register re-issued the ownership credential since the deal sheet was built. */
+  readonly changed: boolean;
+  /** Alder Bank's monitoring read of the same re-issue, under K1 (only when it changed). */
+  readonly alder?: Reread;
+}
+
+/**
+ * Brackenridge's deal page (step 10). Its desk reads the deal sheet under K2 (a refusal throws:
+ * no K2, no deal sheet). When the ownership credential is not the one the deal sheet was built
+ * on, the register has re-issued it: Brackenridge records the new one, and Alder Bank's
+ * monitoring reads it too under K1 (its back office, shown as such in the Lens).
+ */
+export async function dealDesk(world: World, time = "10:20"): Promise<DealDesk> {
+  const sheet = await readDealSheet(world, time);
+  const lender = world.fetchAs("business-lender");
+  const url = dealUrl(world);
+  const seen =
+    (await statusOf(lender, url)) === 200
+      ? new CredentialPointer(url, await readDataset(lender, url), DataFactory).sha256
+      : undefined;
+  const digest = digestOf(sheet.ownershipCheck.check.body);
+  if (seen === digest) return { changed: false, sheet };
+  await recordDealSource(world, sheet.ownershipCheck.check, time);
+  if (seen === undefined) return { changed: false, sheet };
+  return { alder: await rereadOwnership(world, "bank", time), changed: true, sheet };
 }
 
 export type { OrgSlug };

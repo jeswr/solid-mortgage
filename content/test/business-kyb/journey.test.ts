@@ -18,8 +18,8 @@ import { KYB_GRANTS, kybGrantRecords, pendingRequest } from "../../business-kyb/
 import {
   approveCredit,
   approveOnboarding,
-  bothBanksRead,
   closeAccount,
+  dealPage,
   dueDiligence,
   ensureChallenge,
   ensureRequest,
@@ -194,7 +194,11 @@ describe("business KYB, step by step", () => {
     expect(challenge?.threshold).toBe(2500);
     expect(await challengeIsLive(h.world())).toBe(true);
     const stages: string[] = [];
-    const { decision, presentation } = await proveOwnership(h.world(), (s) => stages.push(s));
+    const { decision, presentation, request } = await proveOwnership(h.world(), (s) =>
+      stages.push(s),
+    );
+    expect(request).toBeDefined();
+    expect(await pendingRequest(h.world(), "K2")).toBe(request);
     expect(decision.errors).toEqual([]);
     expect(decision.passed).toBe(true);
     expect(decision.disclosed).toEqual(["Jordan Blake", "Priya Nandakumar"]);
@@ -250,15 +254,19 @@ describe("business KYB, step by step", () => {
     slices.set("ownership-change", [start, h.log.length]);
   }, 60_000);
 
-  test("10. both banks read the new record under their existing grants", async () => {
+  test("10. the deal page: Brackenridge and Alder's monitoring read the new record", async () => {
     const start = h.log.length;
-    const reads = await bothBanksRead(h.world());
-    for (const read of reads) {
-      expect(read.status).toBe(200);
-      expect(read.verified).toBe(true);
-      expect(read.ownership?.beneficialOwners).toEqual(["Jordan Blake", "Priya Nandakumar"]);
-      expect(read.ownership?.owners.find((o) => o.name === "Jordan Blake")?.bps).toBe(6000);
-    }
+    const desk = await dealPage(h.world());
+    expect(desk.changed).toBe(true);
+    expect(desk.sheet.verified).toBe(true);
+    expect(desk.sheet.ownership.owners.find((o) => o.name === "Jordan Blake")?.bps).toBe(6000);
+    expect(desk.alder?.status).toBe(200);
+    expect(desk.alder?.verified).toBe(true);
+    expect(desk.alder?.ownership?.beneficialOwners).toEqual(["Jordan Blake", "Priya Nandakumar"]);
+    // Opening the page again reads, but finds nothing new: no second monitoring read.
+    const again = await dealPage(h.world());
+    expect(again.changed).toBe(false);
+    expect(again.alder).toBeUndefined();
     slices.set("both-banks", [start, h.log.length]);
   }, 60_000);
 

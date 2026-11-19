@@ -10,9 +10,12 @@
 
 import type { World } from "../mortgage/world.js";
 import {
+  type DealDesk,
   type DueDiligence,
+  dealDesk,
   type Reread,
   readDealSheet,
+  recordDealSource,
   rereadOwnership,
   runDueDiligence,
 } from "./banks.js";
@@ -124,21 +127,27 @@ export async function ensureChallenge(world: World) {
   return openChallenge(credit);
 }
 
-/** Step 7. Northwind proves in the browser; Brackenridge verifies on arrival. */
+/**
+ * Step 7. Northwind proves in the browser; Brackenridge verifies on arrival and, proceeding, asks
+ * for the credentials themselves (K2).
+ */
 export async function proveOwnership(world: World, onProgress?: (stage: string) => void) {
   const credit = on(world, DAY.credit);
   await ensureChallenge(credit);
   const { presentation, url } = await proveToLender(credit, onProgress);
   const decision = await verifyAtLender(credit, url, "13:40");
-  return { decision, presentation, url };
+  // Proceeding: to lend, the rule needs the values themselves, so Brackenridge asks for K2.
+  const request = decision.passed ? await ensureRequest(credit, "K2") : undefined;
+  return { decision, presentation, request, url };
 }
 
-/** Step 8. Northwind approves Brackenridge's request (K2); its desk reads the deal sheet. */
+/** Step 8. Northwind approves Brackenridge's request (K2); its desk builds the deal sheet. */
 export async function approveCredit(world: World) {
   const request = await ensureRequest(world, "K2");
   const credit = on(world, DAY.credit);
   const approval = await approveKybRequest(credit, request, "14:00");
   const sheet = await readDealSheet(credit, "14:10");
+  await recordDealSource(credit, sheet.ownershipCheck.check, "14:15");
   return { approval, sheet };
 }
 
@@ -150,14 +159,8 @@ export const recordSale = (world: World) => {
   );
 };
 
-/** Step 10. Both banks' back offices read the new ownership under their grants. */
-export async function bothBanksRead(world: World): Promise<Reread[]> {
-  const sale = on(world, DAY.sale);
-  return [
-    await rereadOwnership(sale, "bank", "10:20"),
-    await rereadOwnership(sale, "business-lender", "10:25"),
-  ];
-}
+/** Step 10. Brackenridge's deal page: its desk, and Alder's monitoring, read the re-issue. */
+export const dealPage = (world: World): Promise<DealDesk> => dealDesk(on(world, DAY.sale), "10:20");
 
 /** Step 11. Northwind closes its Alder account and withdraws K1; Alder's next read is refused. */
 export async function closeAccount(world: World): Promise<{ acls: string[]; reread: Reread }> {
