@@ -1,0 +1,261 @@
+/* AUTHORED-BY Claude Opus 5.5 */
+@import "./tokens.css";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--cas-paper);
+  color: var(--cas-ink);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+a {
+  color: var(--cas-navy-2);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 18px;
+  background: var(--cas-navy);
+  color: #ffffff;
+  padding: 8px 16px;
+}
+.bar-name {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.bar-sys {
+  font-size: 12px;
+  color: #c6d2e3;
+}
+.bar-link {
+  margin-left: auto;
+  color: #ffffff;
+  font-size: 13px;
+}
+
+.split {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  min-height: calc(100vh - 120px);
+  border-top: 1px solid var(--cas-rule);
+}
+
+.list {
+  border-right: 1px solid var(--cas-rule);
+  padding: 12px 0;
+}
+.list ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.list-head {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cas-dim);
+  margin: 8px 16px 6px;
+}
+.case {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--cas-hair);
+  text-decoration: none;
+  color: var(--cas-ink);
+}
+.case:hover {
+  background: var(--cas-select);
+}
+.case-on {
+  background: var(--cas-select);
+  box-shadow: inset 3px 0 0 var(--cas-navy);
+}
+.case-sub {
+  font-size: 12px;
+  color: var(--cas-dim);
+}
+
+.pane {
+  padding: 16px 20px 40px;
+  min-width: 0;
+}
+.report h1 {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+.report-head {
+  border-bottom: 1px solid var(--cas-rule);
+  margin-bottom: 12px;
+}
+.report-tabs {
+  display: flex;
+  gap: 0;
+}
+.rt {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 6px 12px;
+  color: var(--cas-dim);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+}
+.rt-on {
+  color: var(--cas-ink);
+  border-bottom-color: var(--cas-navy);
+  font-weight: 600;
+}
+
+.sys {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--cas-dim);
+  max-width: 70ch;
+}
+.sys-fail {
+  color: var(--cas-fail);
+}
+
+.kv {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 2px 18px;
+  margin: 0 0 14px;
+}
+.kv dt {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  color: var(--cas-dim);
+}
+.kv dd {
+  margin: 0;
+}
+.rec {
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+.messages {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--cas-rule);
+}
+.msg {
+  display: grid;
+  grid-template-columns: 4.5em 10em minmax(0, 1fr);
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--cas-hair);
+}
+.msg-no {
+  color: var(--cas-dim);
+}
+.msg-kind {
+  font-size: 12px;
+  font-weight: 600;
+}
+.msg-condition .msg-kind {
+  color: #8a4b00;
+}
+.msg-recommendation .msg-kind {
+  color: var(--cas-pass);
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+table.checks {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13px;
+}
+table.checks caption {
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 8px 0;
+}
+table.checks th,
+table.checks td {
+  text-align: left;
+  vertical-align: top;
+  padding: 6px 12px 6px 0;
+  border-bottom: 1px solid var(--cas-hair);
+}
+table.checks thead th {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cas-dim);
+  border-bottom: 1px solid var(--cas-rule);
+}
+table.checks tbody th {
+  font-weight: 400;
+  color: var(--cas-dim);
+}
+
+.mark {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.mark-pass {
+  color: var(--cas-pass);
+}
+.mark-fail {
+  color: var(--cas-fail);
+  background: var(--cas-fail-bg);
+  padding: 0 4px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--cas-focus);
+  outline-offset: 2px;
+}
+
+@media (max-width: 760px) {
+  .split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .list {
+    border-right: 0;
+    border-bottom: 1px solid var(--cas-rule);
+  }
+  .msg {
+    grid-template-columns: 4em minmax(0, 1fr);
+  }
+  .msg-text {
+    grid-column: 1 / -1;
+  }
+}

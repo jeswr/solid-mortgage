@@ -1,0 +1,23 @@
+/* AUTHORED-BY Claude Opus 5.5
+ * Wrenfield Mutual's tokens (design.md §b.3): sky and sun, DM Sans, large type, soft round
+ * shapes. Original values; the button blue is the brand sky darkened for 4.5:1 contrast. */
+:root {
+  --sky: #2f80ed;
+  --sky-deep: #1858b4;
+  --sky-soft: #dcebfd;
+  --sun: #f5c518;
+  --sun-soft: #fff6d1;
+  --ink: #10213a;
+  --ink-soft: #4a5a72;
+  --canvas: #f5f9ff;
+  --paper: #ffffff;
+  --line: #d5e2f4;
+  --refusal: #8a1c1c;
+  --refusal-bg: #fdecec;
+  --ok: #17663a;
+  --ok-bg: #e6f6ec;
+  --focus: #b8860b;
+  --font: "DM Sans", system-ui, sans-serif;
+  --radius-pill: 999px;
+  --radius-card: 24px;
+}
