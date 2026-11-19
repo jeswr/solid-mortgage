@@ -1,4 +1,8 @@
 [
   { "says": "One list", "metric": "medication-handover.lists", "value": 1 },
-  { "says": "three organisations writing to it", "metric": "medication-handover.writers", "value": 3 }
+  {
+    "says": "three organisations writing to it",
+    "metric": "medication-handover.writers",
+    "value": 3
+  }
 ]

@@ -195,7 +195,7 @@ describe("watch pages", () => {
       expect(document.getElementById(`chapter-${chapter.id}`)).not.toBeNull();
       expect(chapter.transcript.length).toBeGreaterThan(0);
     }
-    expect(screen.getByText(/Thirteen applications\. Eight grants\./)).toBeTruthy();
+    expect(screen.getByText(/Thirteen applications\. Nine grants\./)).toBeTruthy();
   });
 
   it("gives no demo a Coming next page: every watch page is a live demo's", () => {

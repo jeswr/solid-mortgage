@@ -83,8 +83,11 @@ describe("loadSiteCrs", () => {
     const { calls, fetch } = siteFetch();
     const crs = await loadSiteCrs({ baseUrl: BASE, fetch });
     expect(crs.numPoints).toBe(CRS_G1_POINTS);
-    expect(crs.g1).toEqual(committed(CRS_G1.file));
-    expect(crs.g2).toEqual(committed(CRS_G2.file));
+    // Compare bytes with Buffer.equals: toEqual walks a 2 MiB array element by element and
+    // ran past the 30 s timeout on a loaded CI runner.
+    expect(crs.g1).toBeInstanceOf(Uint8Array);
+    expect(Buffer.from(crs.g1).equals(committed(CRS_G1.file))).toBe(true);
+    expect(Buffer.from(crs.g2).equals(committed(CRS_G2.file))).toBe(true);
     expect(calls.map((call) => call.url).sort()).toEqual(
       [`${BASE}${CRS_G1.file}`, `${BASE}${CRS_G2.file}`].sort(),
     );
