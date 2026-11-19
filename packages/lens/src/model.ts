@@ -82,6 +82,11 @@ export interface GrantRecord {
   endedAt?: number;
   /** Rules removed by the event that ended the grant. */
   removed: AccessRule[];
+  /**
+   * Modes an inherited rule no longer gives on one resource below it: the resource got an ACL
+   * document of its own without them (the runtime reports that as a removal scoped to it).
+   */
+  cutOff?: AccessRule[];
 }
 
 export function isPod(entry: LensEntry): entry is PodEntry {
@@ -109,6 +114,13 @@ type LimitedRule = AccessRule & { readonly origins?: readonly string[] };
  */
 const ruleKey = (r: LimitedRule) =>
   JSON.stringify([r.agent, podRelative(r.resource), r.inherited, [...(r.origins ?? [])].sort()]);
+
+/** True when `rule` is inherited from a container strictly above `resource`. */
+function coversBelow(rule: AccessRule, resource: string): boolean {
+  const res = podRelative(rule.resource);
+  const target = podRelative(resource);
+  return rule.inherited && res !== target && within(target, res);
+}
 
 /** `rules` with `removed`'s modes taken away; a rule left with no mode is dropped. */
 function withoutModes<R extends AccessRule>(rules: R[], removed: AccessRule): R[] {
@@ -267,6 +279,10 @@ export class LensModel {
       if (JSON.stringify(g.active) !== before) {
         g.removed.push(rule);
         touched.add(org);
+      } else if (g.active.some((r) => coversBelow(r, rule.resource))) {
+        // A resource below an inherited rule got its own ACL document without it: the pod uses
+        // only the nearest document, so the inherited rule no longer reaches that resource.
+        g.cutOff = withModes(g.cutOff ?? [], rule);
       }
     }
     for (const rule of acl.granted) {
@@ -287,6 +303,7 @@ export class LensModel {
         this.grantMap.set(org, g);
       }
       g.active = withModes(g.active, rule);
+      if (g.cutOff !== undefined) g.cutOff = withoutModes(g.cutOff, rule);
       for (const d of this.coverage(rule, rec.seq)) g.everCovered.add(d);
       touched.delete(org);
     }
@@ -489,10 +506,20 @@ export class LensModel {
     const out: string[] = [];
     for (const g of this.grants()) {
       if (g.state !== "active") continue;
+      // A resource cut off from an inherited Read has a document of its own: only rules about
+      // the resource itself (or inherited from a container at or below its own document) count.
+      const cut = (g.cutOff ?? []).find(
+        (c) =>
+          c.modes.includes("Read") &&
+          (podRelative(c.resource) === rel ||
+            (c.inherited && within(rel, podRelative(c.resource)))),
+      );
       const ok = g.active.some((r) => {
         if (!r.modes.includes("Read")) return false;
         const res = podRelative(r.resource);
-        return res === rel || (r.inherited && within(rel, res));
+        if (res === rel) return true;
+        if (!r.inherited || !within(rel, res)) return false;
+        return cut === undefined || within(res, podRelative(cut.resource));
       });
       if (ok) out.push(g.org);
     }

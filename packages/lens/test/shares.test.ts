@@ -227,3 +227,40 @@ suite("an access change that takes away only part of a rule", () => {
     expect(describe(m, stopped).text).toBe("Cobble Huts stopped sharing Hut orders with Kestrel");
   });
 });
+
+suite("a resource that gets an ACL document of its own", () => {
+  it("is no longer read by an agent whose inherited rule its new document leaves out", () => {
+    const m = new LensModel(CONFIG);
+    // Alex lets Kestrel read the whole Certificates drawer.
+    m.push(
+      acl("alex", "alex", "/certificates/.acl", {
+        granted: [rule("aus", "/certificates/")],
+        revoked: [],
+      }),
+      { replayed: true },
+    );
+    expect(m.whoCanRead("/certificates/first-aid")).toEqual(["aus"]);
+    // One certificate gets a document of its own, for Sorrel only. The runtime reports Kestrel's
+    // inherited read as removed from that certificate (a removal scoped to it).
+    m.push(
+      acl("alex", "alex", "/certificates/first-aid.acl", {
+        granted: [rule("bank", "/certificates/first-aid")],
+        revoked: [rule("aus", "/certificates/first-aid")],
+      }),
+      { replayed: true },
+    );
+    expect(m.whoCanRead("/certificates/first-aid")).toEqual(["bank"]);
+    // Kestrel still reads the rest of the drawer, and its grant is still in force.
+    expect(m.whoCanRead("/certificates/sailing")).toEqual(["aus"]);
+    expect(m.grant("aus")?.state).toBe("active");
+    // Given the certificate again in its own document, Kestrel reads it again.
+    m.push(
+      acl("alex", "alex", "/certificates/first-aid.acl", {
+        granted: [rule("aus", "/certificates/first-aid")],
+        revoked: [],
+      }),
+      { replayed: true },
+    );
+    expect(m.whoCanRead("/certificates/first-aid").sort()).toEqual(["aus", "bank"]);
+  });
+});

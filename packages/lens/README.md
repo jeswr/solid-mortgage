@@ -66,7 +66,13 @@ const stop = onEvent((entry) => lens.push(entry), { replay: true });
   `acl:origin` limits, and an event lists only the modes it removed, so a rule keeps the modes it
   still has: taking one mode away, or an origin-limited rule beside an unlimited one, narrows a
   grant without ending it, and the entry reads "{holder} narrowed {org}'s access to {resource}"
-  ("{org} narrowed what {other org} may do with {resource}" between organisations).
+  ("{org} narrowed what {other org} may do with {resource}" between organisations). The test is
+  per ACL document and from what the log has shown: a change that leaves one organisation some
+  rules and another none reads as stopping sharing (or a withdrawal) for both, and rules the log
+  never showed (the seed's) are not counted as left. When a resource below an inherited rule gets
+  an ACL document of its own without that rule, the runtime reports a removal scoped to the
+  resource; the inherited rule stays in force for the rest of the container but no longer makes
+  its agent a reader of that resource (`whoCanRead`).
 - **Untagged entries** (app notes carry no `tour`) belong to the current step when they arrive
   live, and to the step of the latest tagged entry when replayed.
 - **Organisation-to-organisation notes** name the other party in `refs`, as an org slug or a
