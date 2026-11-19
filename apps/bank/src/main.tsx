@@ -27,6 +27,13 @@ import {
   reusableKycTour,
 } from "@mortgage/content/reusable-kyc/mount";
 import {
+  isSmallBusinessLoanPage,
+  LOAN_COMPLIANCE,
+  SMALL_BUSINESS_LOAN_HOLDER,
+  smallBusinessLoanLens,
+  smallBusinessLoanTour,
+} from "@mortgage/content/small-business-loan/mount";
+import {
   isSmallDollarPage,
   SMALL_DOLLAR_HOLDER,
   smallDollarLens,
@@ -46,6 +53,8 @@ const movingHouse = isMovingHousePage(location.pathname, "bank", location.search
 const lending = isSmallDollarPage(location.pathname, "bank", location.search);
 // A page under kyb/ belongs to the business KYB demo (src/sections/business-kyb/).
 const kyb = isBusinessKybPage(location.pathname, "bank", location.search);
+// A page under business/ belongs to the small business loan (src/sections/small-business-loan/).
+const loan = isSmallBusinessLoanPage(location.pathname, "bank", location.search);
 // A page under kyc/ belongs to the reusable-KYC demo (src/sections/reusable-kyc/).
 const reusableKyc = isReusableKycPage(location.pathname, "bank", location.search);
 const root = document.getElementById("root");
@@ -68,37 +77,55 @@ startPods(APP).then(
     );
     const runtime = { onEvent, resetDemo, setTourContext: trackTourContext(setTourContext) };
     void mountDemo(
-      kyb
+      loan
         ? {
             app: APP,
-            holder: BUSINESS_KYB_HOLDER,
-            ledger: { compliance: [...KYB_COMPLIANCE] },
-            lens: businessKybLens(),
+            holder: SMALL_BUSINESS_LOAN_HOLDER,
+            ledger: { compliance: [...LOAN_COMPLIANCE] },
+            lens: smallBusinessLoanLens(),
             registry: ORGS,
             runtime,
-            tour: businessKybTour(),
+            tour: smallBusinessLoanTour(),
           }
-        : reusableKyc
+        : kyb
           ? {
               app: APP,
-              holder: REUSABLE_KYC_HOLDER,
-              lens: reusableKycLens(),
+              holder: BUSINESS_KYB_HOLDER,
+              ledger: { compliance: [...KYB_COMPLIANCE] },
+              lens: businessKybLens(),
               registry: ORGS,
               runtime,
-              tour: reusableKycTour(),
+              tour: businessKybTour(),
             }
-          : {
-              app: APP,
-              holder: lending
-                ? SMALL_DOLLAR_HOLDER
-                : movingHouse
-                  ? MOVING_HOUSE_HOLDER
-                  : MORTGAGE_HOLDER,
-              lens: lending ? smallDollarLens() : movingHouse ? movingHouseLens() : mortgageLens(),
-              registry: ORGS,
-              runtime,
-              tour: lending ? smallDollarTour() : movingHouse ? movingHouseTour() : mortgageTour(),
-            },
+          : reusableKyc
+            ? {
+                app: APP,
+                holder: REUSABLE_KYC_HOLDER,
+                lens: reusableKycLens(),
+                registry: ORGS,
+                runtime,
+                tour: reusableKycTour(),
+              }
+            : {
+                app: APP,
+                holder: lending
+                  ? SMALL_DOLLAR_HOLDER
+                  : movingHouse
+                    ? MOVING_HOUSE_HOLDER
+                    : MORTGAGE_HOLDER,
+                lens: lending
+                  ? smallDollarLens()
+                  : movingHouse
+                    ? movingHouseLens()
+                    : mortgageLens(),
+                registry: ORGS,
+                runtime,
+                tour: lending
+                  ? smallDollarTour()
+                  : movingHouse
+                    ? movingHouseTour()
+                    : mortgageTour(),
+              },
     );
   },
   (error: unknown) => console.error("bank: the pods did not start", error),

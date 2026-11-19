@@ -1,10 +1,12 @@
 // AUTHORED-BY Claude Opus 5.5
-
+import { isBusinessKybPage } from "@mortgage/content/business-kyb/mount";
 import { BORROWER } from "@mortgage/content/mortgage/facts";
+import { isSmallBusinessLoanPage } from "@mortgage/content/small-business-loan/mount";
 import {
   isSmallDollarPage,
   smallDollarPersona,
 } from "@mortgage/content/small-dollar-lending/mount";
+import { HOLDERS } from "@mortgage/demo-kit/holders";
 import { applyDocumentMeta, DemoTrust, TrustBanner } from "@mortgage/demo-kit/trust";
 import { appUrl } from "@mortgage/demo-kit/urls";
 import { useEffect } from "react";
@@ -34,8 +36,34 @@ const NAV = [
   },
 ] as const;
 
+/**
+ * Who the bank shows as signed in on this page: on the business pages (business KYB under `kyb/`,
+ * the small business loan under `business/`) Northwind, whose pod Jordan Blake operates; on the
+ * small-dollar lending pages (`lending/`) Maya; elsewhere Alex, the registry's persona. Returns
+ * `undefined` for Alex, so the banner keeps the registry's own line.
+ */
+function usePagePersona(): { name: string; role?: string } | undefined {
+  const [location] = useLocation();
+  const path = `/bank${location}`;
+  if (isBusinessKybPage(path, "bank") || isSmallBusinessLoanPage(path, "bank")) {
+    const { name, operator } = HOLDERS.northwind;
+    return { name: operator ?? name, role: `for ${name}` };
+  }
+  // The lending demo also claims a page whose query names its tour.
+  if (isSmallDollarPage(path, "bank", globalThis.location?.search ?? "")) {
+    return smallDollarPersona("online banking");
+  }
+  return undefined;
+}
+
+function BankTrustBanner() {
+  const business = usePagePersona();
+  return business === undefined ? <TrustBanner /> : <TrustBanner signedInAs={business} />;
+}
+
 function TopNav() {
   const [location] = useLocation();
+  const business = usePagePersona();
   return (
     <header className="masthead">
       <div className="masthead-inner">
@@ -64,7 +92,16 @@ function TopNav() {
         </nav>
         <p className="signed-in">
           <span className="sr-only">Signed in as </span>
-          {BORROWER.name}
+          {business === undefined ? (
+            BORROWER.name
+          ) : (
+            <>
+              {business.name}
+              {business.role === undefined ? null : (
+                <span className="sr-only"> {business.role}</span>
+              )}
+            </>
+          )}
         </p>
       </div>
     </header>
@@ -95,16 +132,10 @@ function Connecting() {
 
 /** `hook` swaps the browser location for another (tests pass wouter's `memoryLocation`). */
 export function App({ hook }: { hook?: BaseLocationHook }) {
-  // On a lending page the consumer is Maya, not the mortgage's Alex.
-  const lending = isSmallDollarPage(
-    globalThis.location.pathname,
-    "bank",
-    globalThis.location.search,
-  );
   return (
     <DemoTrust org={org}>
-      <TrustBanner {...(lending ? { signedInAs: smallDollarPersona("online banking") } : {})} />
       <Router {...(hook === undefined ? { base: ROUTER_BASE } : { hook })}>
+        <BankTrustBanner />
         <TopNav />
         <main id="main">
           <Connecting />

@@ -514,33 +514,53 @@ export const DEMOS: readonly Demo[] = [
       "Twelve months of cash flow kept current in the business's pod by its bank, and covenant monitoring as a standing quarterly read.",
     sectors: ["Finance"],
     durationSeconds: 180,
-    status: "coming",
+    status: "live",
     media: mediaFor("small-business-loan"),
+    // Step 1 of content/small-business-loan/tour.ts: Alder Bank's business banking page.
+    tour: { demo: "small-business-loan", app: "bank", path: "business", step: "publish-cash-flow" },
     chapters: [
       {
         id: "intro",
         title: "Borrowing to grow",
-        transcript: [],
+        transcript: [
+          "Northwind Logistics wants a loan for new equipment. A lender will ask for a year of bank statements, tax records, and the company's ownership.",
+          "Northwind already proved who it is and who owns it, when it opened its bank account. That work does not need doing twice.",
+        ],
       },
       {
         id: "source",
         title: "Data from the source",
-        transcript: [],
+        transcript: [
+          "Northwind asks its bank to keep a record of its cash flow up to date in the company's pod. The bank publishes the business's own data to the business.",
+          "The state revenue department confirms that Northwind's tax filings are up to date.",
+        ],
       },
       {
         id: "apply",
         title: "The application",
-        transcript: [],
+        transcript: [
+          "The lender asks for four things: identity, ownership, tax status and cash flow. Northwind approves, for thirty days, for one purpose: a credit decision.",
+          "The lender reads twelve months of cash flow at source. No statements are exported, and nothing is retyped. Each signature is checked.",
+          "The decision, and the reasons for it, are written back to Northwind's pod.",
+        ],
       },
       {
         id: "monitor",
         title: "A standing grant",
-        transcript: [],
+        transcript: [
+          "Loans like this come with conditions, checked every quarter.",
+          "Northwind grants the lender a quarterly read of its cash flow, for as long as the loan is open. The frequency and the end date are part of the grant.",
+          "Three months on, the check is a read. Nobody prepares a certificate.",
+        ],
       },
       {
         id: "revoke",
         title: "Repaid",
-        transcript: [],
+        transcript: [
+          "When the loan is repaid, Northwind withdraws the grant, and the lender's next read is refused.",
+          "Two issuers, one lender, one decision written back, and a monitoring arrangement the borrower could read and end.",
+          "If you lend to small businesses, or supply data to those who do, join the EDMA Solid Community of Practice.",
+        ],
       },
     ],
   },

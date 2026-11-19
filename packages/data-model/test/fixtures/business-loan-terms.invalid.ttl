@@ -1,0 +1,29 @@
+@prefix cred: <https://www.w3.org/2018/credentials#>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#>.
+@prefix schema: <https://schema.org/>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix fibo-fbc-dae-dbt: <https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Debt/>.
+@prefix fibo-loan-ln-ln: <https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/Loans/>.
+
+<https://northwind.pod.example/loans/brackenridge/terms> a mort:BusinessLoanTerms;
+    schema:name "Equipment term loan: terms";
+    mort:loanNumber "BRK-EQ-2026-0417";
+    fibo-fbc-dae-dbt:hasBorrower <https://northwind.pod.example/profile/card#me>;
+    dcterms:creator <https://business-lender.pod.example/profile/card#me>;
+    dcterms:issued "2026-09-24T15:00:00.000Z"^^xsd:dateTime;
+    fibo-loan-ln-ln:hasPrincipalAmount _:principal;
+    schema:interestRate "31.5"^^xsd:decimal;
+    mort:loanTermMonths 60;
+    mort:monthlyPrincipalAndInterest _:payment;
+    mort:covenant _:c1, _:c2.
+_:principal a schema:MonetaryAmount; schema:value "150000.00"^^xsd:decimal; schema:currency "USD".
+_:payment a schema:MonetaryAmount; schema:value "3059.41"^^xsd:decimal; schema:currency "USD".
+_:c1 a mort:FinancialCovenant;
+    schema:name "Debt service coverage at least 1.25x";
+    mort:covenantMetric mort:CovenantMetric-DebtServiceCoverage;
+    mort:covenantThreshold "1.25"^^xsd:decimal.
+_:c2 a mort:FinancialCovenant;
+    schema:name "Average balance at least $40,000";
+    mort:covenantMetric mort:TurnoverBand-Over5M;
+    mort:covenantThreshold "40000.00"^^xsd:decimal.

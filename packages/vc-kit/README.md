@@ -96,6 +96,16 @@ from it, including the demo's 8,500 (monthly income) and 742 (credit score).
 BLAKE3 is written out for one chunk in `blake3.ts` (no new dependency) and checked against the
 published test vectors and, end to end, by the circuit itself.
 
+## Small business loan (demo 6)
+
+One credential kind, `tax-compliance-credential`: a state revenue department attests that a
+business's filings are up to date (`status`, `filingsCurrentThrough`) and the band its annual
+turnover falls in (`turnoverBand`; the figure itself is never signed). The claim writer refuses
+an unknown status or band and a tax ID suffix that is not four digits before anything is signed.
+`test/tax-compliance.test.ts` covers issue and the fail-closed verify matrix (tampered band,
+date or status, transplanted subject, extra disclosed property, wrong shape, untrusted issuer,
+unknown key, validity window, revocation, unreachable status list, stripped proof).
+
 ## Running in a browser or a worker
 
 This package's own code uses only web platform APIs. The pinned

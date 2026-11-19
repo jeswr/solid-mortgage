@@ -7,6 +7,7 @@ import type { ComponentType } from "react";
 import { KybDueDiligence, KybOnboarding } from "./business-kyb/BusinessKyb.tsx";
 import { MovingAddressOnFile } from "./moving-house/MovingHouse.tsx";
 import { YourIdentity } from "./reusable-kyc/YourIdentity.tsx";
+import { BusinessBanking } from "./small-business-loan/SmallBusinessLoan.tsx";
 import { LendingCashFlow } from "./small-dollar-lending/CashFlow.tsx";
 import { LendingLoans } from "./small-dollar-lending/Loans.tsx";
 
@@ -44,6 +45,12 @@ export const sections: readonly AppSection[] = [
     demo: "business-kyb",
     path: "kyb/due-diligence",
     title: "Customer due diligence",
+  },
+  {
+    Component: BusinessBanking,
+    demo: "small-business-loan",
+    path: "business",
+    title: "Business banking",
   },
   { Component: YourIdentity, demo: "reusable-kyc", path: "kyc", title: "Your identity" },
 ];

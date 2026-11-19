@@ -2,12 +2,15 @@
 import type { AddressRecord } from "@mortgage/content/moving-house/address";
 import { streetLine } from "@mortgage/content/moving-house/facts";
 import { issuedVersions, readIssuance } from "@mortgage/content/moving-house/issuer";
+import { isSmallBusinessLoanPage } from "@mortgage/content/small-business-loan/mount";
+import { HOLDERS } from "@mortgage/demo-kit/holders";
 import { applyDocumentMeta, DemoTrust, TrustBanner } from "@mortgage/demo-kit/trust";
 import { appUrl } from "@mortgage/demo-kit/urls";
 import { type ReactNode, useEffect } from "react";
-import { type BaseLocationHook, Link, Route, Router, Switch } from "wouter";
+import { type BaseLocationHook, Link, Route, Router, Switch, useLocation } from "wouter";
 import { org } from "./org.ts";
 import { journey, type Outcome, stateWorld, useAction, usePodState } from "./runtime.ts";
+import { sections } from "./sections/index.ts";
 
 /** The router base: Vite's `base` without its trailing slash ("/state"). */
 export const ROUTER_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -52,10 +55,12 @@ function Home() {
           <p>Address on your driver licence, and a new licence credential when it changes.</p>
         </li>
         <li>
-          <h2>Department of Revenue</h2>
+          <h2>
+            <Link href="/revenue">Department of Revenue</Link>
+          </h2>
           <p>
             State tax records use the same address on file as Driver Services. There is no separate
-            form.
+            form. Businesses can ask for a tax compliance credential.
           </p>
         </li>
       </ul>
@@ -203,6 +208,17 @@ function DriverServices() {
   );
 }
 
+/**
+ * The Department of Revenue's business page belongs to the small business loan, whose customer is
+ * Northwind (Jordan Blake signs in for it); every other page is Alex's.
+ */
+function StateTrustBanner() {
+  const [location] = useLocation();
+  if (!isSmallBusinessLoanPage(`/state${location}`, "state")) return <TrustBanner />;
+  const { name, operator } = HOLDERS.northwind;
+  return <TrustBanner signedInAs={{ name: operator ?? name, role: `for ${name}` }} />;
+}
+
 function NotFound() {
   return (
     <Page title="Page not found">
@@ -215,12 +231,15 @@ function NotFound() {
 export function App({ hook }: { hook?: BaseLocationHook }) {
   return (
     <DemoTrust org={org}>
-      <TrustBanner />
       <Router {...(hook === undefined ? { base: ROUTER_BASE } : { hook })}>
+        <StateTrustBanner />
         <Band />
         <Switch>
           <Route path="/" component={Home} />
           <Route path="/driver-services" component={DriverServices} />
+          {sections.map((section) => (
+            <Route key={section.path} path={`/${section.path}`} component={section.Component} />
+          ))}
           <Route component={NotFound} />
         </Switch>
       </Router>

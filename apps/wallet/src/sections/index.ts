@@ -34,6 +34,12 @@ import {
 } from "./moving-house/MovingHouse.tsx";
 import { KycConsent, KycHome, KycLedger } from "./reusable-kyc/ReusableKyc.tsx";
 import {
+  LoanHome,
+  LoanLedger,
+  LoanRequests,
+  LoanSharing,
+} from "./small-business-loan/SmallBusinessLoan.tsx";
+import {
   LendingHome,
   LendingLedger,
   LendingProve,
@@ -118,6 +124,20 @@ export const sections: readonly AppSection[] = [
     Component: MedLedger,
     demo: "medication-handover",
     path: "health/ledger",
+    title: "Journey ledger",
+  },
+  { Component: LoanHome, demo: "small-business-loan", path: "loan", title: "Northwind's loan" },
+  {
+    Component: LoanRequests,
+    demo: "small-business-loan",
+    path: "loan/requests",
+    title: "Requests",
+  },
+  { Component: LoanSharing, demo: "small-business-loan", path: "loan/sharing", title: "Grants" },
+  {
+    Component: LoanLedger,
+    demo: "small-business-loan",
+    path: "loan/ledger",
     title: "Journey ledger",
   },
   { Component: MotorClaimFile, demo: "motor-claim", path: "claim", title: "Claim CLM-1" },

@@ -40,6 +40,13 @@ import {
   reusableKycTour,
 } from "@mortgage/content/reusable-kyc/mount";
 import {
+  isSmallBusinessLoanPage,
+  LOAN_COMPLIANCE,
+  SMALL_BUSINESS_LOAN_HOLDER,
+  smallBusinessLoanLens,
+  smallBusinessLoanTour,
+} from "@mortgage/content/small-business-loan/mount";
+import {
   isSmallDollarPage,
   SMALL_DOLLAR_HOLDER,
   smallDollarLens,
@@ -56,20 +63,24 @@ import { linkTour } from "./tour-link.ts";
 
 // A page under moving/ belongs to the moving-house demo (src/sections/moving-house/); a page
 // under kyb/ (or prove/kyb) to the business KYB demo (src/sections/business-kyb/); a page under
-// health/ to the medication handover (src/sections/medication-handover/); a page under kyc/ to
-// the reusable-KYC demo (src/sections/reusable-kyc/).
+// health/ to the medication handover (src/sections/medication-handover/); a page under loan/ to
+// the small business loan (src/sections/small-business-loan/); a page under kyc/ to the
+// reusable-KYC demo (src/sections/reusable-kyc/).
 const medication = isMedicationPage(location.pathname, "wallet", location.search);
-const kyb = !medication && isBusinessKybPage(location.pathname, "wallet", location.search);
+const loan = !medication && isSmallBusinessLoanPage(location.pathname, "wallet", location.search);
+const kyb = !medication && !loan && isBusinessKybPage(location.pathname, "wallet", location.search);
 const reusableKyc =
-  !medication && !kyb && isReusableKycPage(location.pathname, "wallet", location.search);
+  !medication && !loan && !kyb && isReusableKycPage(location.pathname, "wallet", location.search);
 const movingHouse =
   !medication &&
+  !loan &&
   !kyb &&
   !reusableKyc &&
   isMovingHousePage(location.pathname, "wallet", location.search);
 // A page under claim/ belongs to the motor claim (src/sections/motor-claim/).
 const motorClaim =
   !medication &&
+  !loan &&
   !kyb &&
   !reusableKyc &&
   !movingHouse &&
@@ -83,15 +94,17 @@ const demo = lending
   ? smallDollarTour()
   : medication
     ? medicationTour()
-    : kyb
-      ? businessKybTour()
-      : reusableKyc
-        ? reusableKycTour()
-        : movingHouse
-          ? movingHouseTour()
-          : motorClaim
-            ? motorClaimTour()
-            : mortgageTour();
+    : loan
+      ? smallBusinessLoanTour()
+      : kyb
+        ? businessKybTour()
+        : reusableKyc
+          ? reusableKycTour()
+          : movingHouse
+            ? movingHouseTour()
+            : motorClaim
+              ? motorClaimTour()
+              : mortgageTour();
 const holder = initialHolder(window.location.href, demo.holder);
 
 configure({ app: "wallet", holder, registry: ORGS, seed: mortgageSeed() });
@@ -108,29 +121,37 @@ void mountDemo({
     ? SMALL_DOLLAR_HOLDER
     : medication
       ? MEDICATION_HOLDER
-      : kyb
-        ? BUSINESS_KYB_HOLDER
-        : reusableKyc
-          ? REUSABLE_KYC_HOLDER
-          : movingHouse
-            ? MOVING_HOUSE_HOLDER
-            : motorClaim
-              ? MOTOR_CLAIM_HOLDER
-              : MORTGAGE_HOLDER,
+      : loan
+        ? SMALL_BUSINESS_LOAN_HOLDER
+        : kyb
+          ? BUSINESS_KYB_HOLDER
+          : reusableKyc
+            ? REUSABLE_KYC_HOLDER
+            : movingHouse
+              ? MOVING_HOUSE_HOLDER
+              : motorClaim
+                ? MOTOR_CLAIM_HOLDER
+                : MORTGAGE_HOLDER,
   lens: lending
     ? smallDollarLens()
     : medication
       ? medicationLens()
-      : kyb
-        ? businessKybLens()
-        : reusableKyc
-          ? reusableKycLens()
-          : movingHouse
-            ? movingHouseLens()
-            : motorClaim
-              ? motorClaimLens()
-              : mortgageLens(),
-  ...(kyb ? { ledger: { compliance: [...KYB_COMPLIANCE] } } : {}),
+      : loan
+        ? smallBusinessLoanLens()
+        : kyb
+          ? businessKybLens()
+          : reusableKyc
+            ? reusableKycLens()
+            : movingHouse
+              ? movingHouseLens()
+              : motorClaim
+                ? motorClaimLens()
+                : mortgageLens(),
+  ...(loan
+    ? { ledger: { compliance: [...LOAN_COMPLIANCE] } }
+    : kyb
+      ? { ledger: { compliance: [...KYB_COMPLIANCE] } }
+      : {}),
   registry: ORGS,
   runtime: { onEvent, resetDemo, setTourContext: trackTourContext(setTourContext) },
   tour: demo,
