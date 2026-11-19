@@ -1,0 +1,26 @@
+/* AUTHORED-BY Claude Opus 5.5
+ * Cairn's own tokens (design.md section b.3): warm off-white, teal, coral kept for revoking.
+ * Coral text and fills use the darker --coral-ink so they meet WCAG AA on white. */
+:root {
+  --paper: #faf6ef;
+  --desk: #ece4d6;
+  --card: #ffffff;
+  --ink: #1d2826;
+  --ink-2: #4a5654;
+  --line: #e2d9ca;
+  --teal: #0f5c5a;
+  --teal-soft: #e3efed;
+  --on-teal: #ffffff;
+  --coral: #d9482b;
+  --coral-ink: #a8361c;
+  --coral-soft: #fbe9e4;
+  --ok: #1e6b3a;
+  --ok-soft: #e4f2e8;
+  --amber-ink: #7a4b00;
+  --amber-soft: #fbf0d9;
+  --focus: #b4560a;
+  --font: "Nunito Sans", system-ui, sans-serif;
+  --radius: 20px;
+  --radius-s: 14px;
+  --tap: 48px;
+}

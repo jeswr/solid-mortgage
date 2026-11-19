@@ -4,7 +4,8 @@
  * for runtimes that have no `Buffer` global (a browser page or worker):
  * `Buffer.from(bytes)`, `Buffer.from(text, "base64url")`,
  * `buffer.toString("base64url" | "utf8")`, `Buffer.byteLength(text, "utf8")`
- * and `Buffer.concat(chunks)`.
+ * and `Buffer.concat(chunks)`; plus `alloc`/`allocUnsafe`/`allocUnsafeSlow`, `isBuffer`,
+ * `from(arrayBuffer)`, `from(text, "hex" | "base64")` and `toString("hex" | "base64")` for other libraries that detect the global.
  *
  * Importing this module for its side effect installs the stand-in only when
  * `globalThis.Buffer` is missing, so Node keeps its own. Import it before
@@ -55,6 +56,17 @@ function encodeBase64Url(bytes: Uint8Array): string {
   return out;
 }
 
+function decodeHex(text: string): Uint8Array {
+  const out = new Uint8Array(text.length >> 1);
+  let length = 0;
+  for (; length < out.length; length += 1) {
+    const byte = Number.parseInt(text.slice(length * 2, length * 2 + 2), 16);
+    if (Number.isNaN(byte)) break; // Node stops at the first pair that is not hex.
+    out[length] = byte;
+  }
+  return out.subarray(0, length);
+}
+
 /** A `Uint8Array` with Node's `toString(encoding)` for the two encodings solid-vc uses. */
 export class BufferShim extends Uint8Array {
   static override from(source: ArrayLike<number> | Iterable<number> | string, encoding?: unknown) {
@@ -63,9 +75,37 @@ export class BufferShim extends Uint8Array {
       if (encoding === undefined || encoding === "utf8" || encoding === "utf-8") {
         return BufferShim.wrap(new TextEncoder().encode(source));
       }
+      if (encoding === "hex") return BufferShim.wrap(decodeHex(source));
+      // Node's base64 decoder accepts both alphabets and ignores padding, as decodeBase64Url does.
+      if (encoding === "base64") return BufferShim.wrap(decodeBase64Url(source.replace(/=+$/, "")));
       throw new Error(`BufferShim.from does not support the ${String(encoding)} encoding`);
     }
+    // Node's Buffer.from(arrayBuffer) views the bytes; a copy is equivalent for every caller here.
+    if (source instanceof ArrayBuffer) return BufferShim.wrap(new Uint8Array(source));
     return BufferShim.wrap(Uint8Array.from(source as ArrayLike<number>));
+  }
+
+  /**
+   * Zero-filled allocation. Other libraries in the same bundle (msgpackr, which the proof
+   * toolchain uses) see a `Buffer` global and call these; Node's unsafe variants may return
+   * uninitialised memory, so zero-filled is a strictly safer substitute.
+   */
+  static alloc(size: number, fill = 0): BufferShim {
+    const buffer = new BufferShim(size);
+    if (fill !== 0) buffer.fill(fill);
+    return buffer;
+  }
+
+  static allocUnsafe(size: number): BufferShim {
+    return new BufferShim(size);
+  }
+
+  static allocUnsafeSlow(size: number): BufferShim {
+    return new BufferShim(size);
+  }
+
+  static isBuffer(value: unknown): value is BufferShim {
+    return value instanceof BufferShim;
   }
 
   private static wrap(bytes: Uint8Array): BufferShim {
@@ -94,6 +134,15 @@ export class BufferShim extends Uint8Array {
 
   override toString(encoding: string = "utf8"): string {
     if (encoding === "base64url") return encodeBase64Url(this);
+    if (encoding === "base64") {
+      const url = encodeBase64Url(this).replaceAll("-", "+").replaceAll("_", "/");
+      return url.padEnd(Math.ceil(url.length / 4) * 4, "=");
+    }
+    if (encoding === "hex") {
+      let out = "";
+      for (const byte of this) out += byte.toString(16).padStart(2, "0");
+      return out;
+    }
     if (encoding === "utf8" || encoding === "utf-8") return new TextDecoder().decode(this);
     throw new Error(`BufferShim.toString does not support the ${encoding} encoding`);
   }
