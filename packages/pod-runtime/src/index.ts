@@ -17,5 +17,6 @@ export {
   session,
   setDay,
   setTour,
+  setTourContext,
 } from "./client/index.js";
 export type { Seed, SeedContext, SeedRequest } from "./host/host.js";

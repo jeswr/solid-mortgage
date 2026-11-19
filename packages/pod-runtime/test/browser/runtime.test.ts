@@ -273,6 +273,29 @@ describe("pod runtime in Chrome", () => {
     await context.close();
   });
 
+  it("setTourContext tags the requests that follow; null clears it", async (ctx) => {
+    if (skipReason) return ctx.skip(skipReason);
+    const context = await (browser as Browser).newContext();
+    const page = await open(context);
+    await page.evaluate(() => rt.ready());
+    const text = { "content-type": "text/plain" };
+    await page.evaluate(() => rt.setTourContext({ demo: "demo-a", step: "step-3" }));
+    expect((await call(page, "PUT", "/pods/bank/t/a.txt", "a", text)).status).toBe(201);
+    await page.evaluate(() => rt.setTourContext(null));
+    expect((await call(page, "PUT", "/pods/bank/t/b.txt", "b", text)).status).toBe(201);
+    await page.waitForFunction(() => events.filter((e) => e.path?.startsWith("/t/")).length >= 2);
+    const tours = await page.evaluate(() =>
+      events
+        .filter((e) => e.path?.startsWith("/t/"))
+        .map((e) => [e.path, (e as unknown as { tour?: unknown }).tour ?? null]),
+    );
+    expect(tours).toEqual([
+      ["/t/a.txt", { demo: "demo-a", step: "step-3" }],
+      ["/t/b.txt", null],
+    ]);
+    await context.close();
+  });
+
   it("returns to the seed on resetDemo", async (ctx) => {
     if (skipReason) return ctx.skip(skipReason);
     const context = await (browser as Browser).newContext();

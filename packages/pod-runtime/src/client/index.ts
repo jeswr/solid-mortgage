@@ -272,9 +272,17 @@ export async function setDay(day: number): Promise<void> {
   await control((t) => t.control({ day, type: "day" }));
 }
 
-/** Tag later `podFetch` requests with a tour step (`PodEvent.tour`); `undefined` clears it. */
-export function setTour(step: { demo: string; step: string } | undefined): void {
-  if (step !== undefined && (step.demo.includes(":") || step.demo === "" || step.step === ""))
+/**
+ * Tag later `podFetch` requests with a tour step (`PodEvent.tour`); `null` clears it. The
+ * signature `packages/tour`'s `mountDemo({ runtime })` expects, so apps can pass this module in.
+ */
+export function setTourContext(ctx: { demo: string; step: string } | null): void {
+  if (ctx !== null && (ctx.demo.includes(":") || ctx.demo === "" || ctx.step === ""))
     throw new Error("pod-runtime: a tour demo id must be non-empty and contain no colon");
-  tour = step;
+  tour = ctx === null ? undefined : { demo: ctx.demo, step: ctx.step };
+}
+
+/** The same as `setTourContext`; `undefined` also clears it. */
+export function setTour(step: { demo: string; step: string } | undefined | null): void {
+  setTourContext(step ?? null);
 }

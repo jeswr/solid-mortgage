@@ -11,7 +11,7 @@ seed and the agents are inputs (design.md §d.2, §d.3, §d.5).
 
 | Import | For |
 |---|---|
-| `@mortgage/pod-runtime` | Apps (browser only). The design.md §d.2 contract: `ready`, `session`, `podFetch`, `podUrl`, `onEvent`, `note`, `resetDemo`. It also exports `configure`, `onReset`, `setDay` and `setTour`. |
+| `@mortgage/pod-runtime` | Apps (browser only). The design.md §d.2 contract: `ready`, `session`, `podFetch`, `podUrl`, `onEvent`, `note`, `resetDemo`. It also exports `configure`, `onReset`, `setDay` and `setTourContext` (the signature `packages/tour`'s `mountDemo({ runtime })` takes; `setTour` is an alias). |
 | `@mortgage/pod-runtime/node` | Headless journeys in Vitest: `createNodePodHost` runs the same host over the same wasm. |
 | `@mortgage/pod-runtime/host` | `createPodHost` (any JS runtime; you provide `loadWasm`), the body guard and the storage. |
 | `@mortgage/pod-runtime/acl` | `grantAccess`, `revokeAccess`, `readAcl` and `aclDocument`: the safe way to change ACLs. |
@@ -41,7 +41,7 @@ await podFetch(podUrl("alex", "/inbox/"), { method: "POST", body, headers });
 - `onEvent(cb, { replay: true })` delivers the logged entries, then live ones from every tab, with
   no duplicates.
 - `setDay(n)` moves the demo clock that `PodEvent.at` reads.
-- `setTour({ demo, step })` tags later requests so their events carry `tour`.
+- `setTourContext({ demo, step } | null)` tags later requests so their events carry `tour`; `null` clears it. Pass the module to `mountDemo({ runtime })` as it is.
 
 ### Seed contract
 
