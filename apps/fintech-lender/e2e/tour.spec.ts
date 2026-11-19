@@ -87,13 +87,15 @@ test("the small-dollar lending tour, all twelve steps, with the pods read back",
   await act(page, "prove");
   await expect(page.getByTestId("sd-proved-fintech-lender")).toBeVisible();
   await expect(page.getByTestId("sd-proved-bank")).toBeVisible();
-  expect(guard.cdn).toEqual([]);
-  expect(guard.outside).toEqual([]);
-  expect(guard.crs.some((path) => path.startsWith("/crs/bn254-g1-"))).toBe(true);
   const quote = await readAs(page, "fintech-lender", "fintech-lender/quotes/maya");
   expect(quote.status).toBe(200);
   expect(quote.body).not.toContain("2860");
   expect((await readAs(page, "bank", "bank/quotes/maya")).status).toBe(200);
+  // Checked once both lenders have written their quotes, so their verification of the proofs is
+  // covered as well as the proving: nothing loaded from off the site, and the site's G1 file was used.
+  expect(guard.cdn).toEqual([]);
+  expect(guard.outside).toEqual([]);
+  expect(guard.crs.some((path) => path.startsWith("/crs/bn254-g1-"))).toBe(true);
   // Neither lender can read anything in Maya's pod yet.
   expect([401, 403]).toContain(
     (await readAs(page, "fintech-lender", "maya/credentials/cash-flow")).status,
@@ -184,4 +186,7 @@ test("the small-dollar lending tour, all twelve steps, with the pods read back",
   await expect(metric(page, "credentials")).toHaveAttribute("data-value", "5");
   await expect(metric(page, "denied")).not.toHaveAttribute("data-value", "0");
   await checkPage(page);
+  // And nothing left the site in the rest of the tour either.
+  expect(guard.cdn).toEqual([]);
+  expect(guard.outside).toEqual([]);
 });

@@ -7,6 +7,7 @@
  */
 import AxeBuilder from "@axe-core/playwright";
 import { type BrowserContext, expect, type Page, test } from "@playwright/test";
+import { CRS_G1 } from "../../../packages/vc-kit/src/zk/crs-pins.ts";
 import { keepToOrigin } from "../../../test-support/origin-guard.ts";
 
 type Owner =
@@ -183,6 +184,65 @@ test("step 5: prove to two lenders, cross-origin isolated, no grant given", asyn
     expect(await harness.status(lender, "alex", "credentials/employment-income")).toBe(403);
     expect(await harness.status(lender, "alex", "credentials/credit-summary")).toBe(403);
   }
+});
+
+test("step 5 fails closed on a CRS one bit off, writes nothing, and proves once the right file is back", async ({
+  baseURL,
+  context,
+  page,
+}) => {
+  test.setTimeout(300_000);
+  const origin = new URL(baseURL as string).origin;
+  const guard = await keepToOrigin(context, origin);
+  // The one response this suite alters: the site's G1 file, served at its pinned length with its last
+  // bit flipped. Only a SHA-256 check over every byte can tell it from the real file, so a browser
+  // path that checked the length alone, or nothing, would prove here instead of failing.
+  const g1Path = `/crs/${CRS_G1.file}`;
+  let tampered = 0;
+  await context.route(`${origin}${g1Path}`, async (route) => {
+    const real = await route.fetch();
+    const body = await real.body();
+    expect(real.status()).toBe(200);
+    expect(body.length).toBe(CRS_G1.bytes);
+    body[body.length - 1] = (body[body.length - 1] ?? 0) ^ 1;
+    tampered += 1;
+    // no-store, so the browser cannot keep the altered bytes for the retry below.
+    await route.fulfill({
+      body,
+      headers: { ...real.headers(), "cache-control": "no-store" },
+      status: 200,
+    });
+  });
+  const harness = await openHarness(context);
+  await harness.beats(["share-employment", "share-credit-summary"]);
+  await page.goto("prove");
+  const prove = page.locator('[data-tour="wallet-prove"]');
+  await expect(prove).toBeEnabled();
+  await prove.click();
+  const problem = page.getByRole("alert");
+  await expect(problem).toContainText(`the CRS file ${g1Path} does not match its pinned SHA-256`, {
+    timeout: 120_000,
+  });
+  await expect(prove).toBeEnabled();
+  expect(tampered).toBeGreaterThan(0);
+  await expect(page.getByText("Checked: yes")).toHaveCount(0);
+  // Nothing reached either lender, and bb.js did not go to its CDN instead.
+  for (const lender of ["lender-b", "lender"] as const) {
+    expect(await harness.status(lender, lender, "quotes/prequalification")).toBe(404);
+  }
+  expect(guard.cdn).toEqual([]);
+  expect(guard.outside).toEqual([]);
+
+  // The site serves the right file again: the same tab retries, and proves.
+  await context.unroute(`${origin}${g1Path}`);
+  await prove.click();
+  await expect(page.getByText("Checked: yes")).toHaveCount(2, { timeout: 180_000 });
+  await expect(problem).toHaveCount(0);
+  for (const lender of ["lender-b", "lender"] as const) {
+    expect(await harness.status(lender, lender, "quotes/prequalification")).toBe(200);
+  }
+  expect(guard.cdn).toEqual([]);
+  expect(guard.outside).toEqual([]);
 });
 
 test("step 7: Juniper's request explained, approved, enforced, and the visitor sent back", async ({

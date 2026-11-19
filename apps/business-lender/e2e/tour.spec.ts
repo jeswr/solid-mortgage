@@ -93,15 +93,17 @@ test("the business KYB tour, all twelve steps, with the pods read back", async (
   const ms = Number(await live.getAttribute("data-ms"));
   expect(ms).toBeGreaterThan(0);
   console.log(`business KYB: proved live in the browser in ${ms} ms`);
-  expect(guard.cdn).toEqual([]);
-  expect(guard.outside).toEqual([]);
-  expect(guard.crs.some((path) => path.startsWith("/crs/bn254-g1-"))).toBe(true);
   await expect(page.getByTestId("kyb-pre-decision")).toContainText(
     "Jordan Blake and Priya Nandakumar",
   );
   const pre = await readAs(page, "business-lender", "business-lender/kyb/pre-decisions/northwind");
   expect(pre.body).toContain("Pre-decision: proceed");
   expect(pre.body).not.toContain("Marcus Webb");
+  // Checked once Brackenridge has decided, so its verification of the proof is covered as well as
+  // the proving: neither loaded anything from off the site, and the site's G1 file was used.
+  expect(guard.cdn).toEqual([]);
+  expect(guard.outside).toEqual([]);
+  expect(guard.crs.some((path) => path.startsWith("/crs/bn254-g1-"))).toBe(true);
   // The challenge was single-use: it is gone.
   expect(
     (await readAs(page, "business-lender", "business-lender/kyb/challenges/northwind")).status,
@@ -168,6 +170,9 @@ test("the business KYB tour, all twelve steps, with the pods read back", async (
   }
   await expectAccessible(page, OUTSIDE_LENS);
   await expectNoSideScroll(page);
+  // And nothing left the site in the rest of the tour either.
+  expect(guard.cdn).toEqual([]);
+  expect(guard.outside).toEqual([]);
 });
 
 test("before Northwind grants K1, Alder Bank's due diligence is refused by the pod", async ({
