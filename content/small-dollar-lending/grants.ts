@@ -304,10 +304,24 @@ function targetsOf(records: readonly LendingGrantRecord[]): string[] {
   return [...targets].sort();
 }
 
-function directRules(records: readonly LendingGrantRecord[], target: string): Rule[] {
+/**
+ * Is this a one-time grant (L2)? Its rule exists only from Maya's approval until the agent's first
+ * read, when the runtime closes it; the grant records still say "active" until the wallet writes
+ * the "used" consent record. So no recompute may put the rule back: it is computed only for the
+ * approval that opens it (or the withdrawal that closes it unused), named in `fresh`.
+ */
+const isOneTime = (record: LendingGrantRecord) =>
+  isLendingGrantCode(record.code) && LENDING_GRANTS[record.code].oneTime === true;
+
+function directRules(
+  records: readonly LendingGrantRecord[],
+  target: string,
+  fresh: ReadonlySet<string>,
+): Rule[] {
   const rules: Rule[] = [];
   for (const record of records) {
     if (record.state !== "active") continue;
+    if (isOneTime(record) && !fresh.has(record.policy)) continue;
     for (const permission of record.agreement.permissions) {
       if (!permission.targetIris.has(target)) continue;
       const modes = permission.modes;
@@ -327,6 +341,7 @@ function rulesFor(
   records: readonly LendingGrantRecord[],
   targets: readonly string[],
   target: string,
+  fresh: ReadonlySet<string>,
 ): Rule[] {
   const ancestor = targets
     .filter((other) => other !== target && isContainer(other) && target.startsWith(other))
@@ -334,8 +349,8 @@ function rulesFor(
   const inherited =
     ancestor === undefined
       ? []
-      : rulesFor(records, targets, ancestor).filter((rule) => rule.inheritable);
-  return [...inherited, ...directRules(records, target)];
+      : rulesFor(records, targets, ancestor, fresh).filter((rule) => rule.inheritable);
+  return [...inherited, ...directRules(records, target, fresh)];
 }
 
 function fingerprint(rules: readonly Rule[]): string {
@@ -345,19 +360,27 @@ function fingerprint(rules: readonly Rule[]): string {
     .join("\n");
 }
 
-/** Rewrite only the ACL documents whose rules differ between `before` and `after`. */
+/**
+ * Rewrite only the ACL documents whose rules differ between `before` and `after`. A one-time
+ * grant's rule counts only when its policy is in `fresh` (see {@link isOneTime}).
+ */
 export async function syncLendingAcls(
   world: World,
   before: readonly LendingGrantRecord[],
   after: readonly LendingGrantRecord[],
+  fresh: readonly string[] = [],
 ): Promise<string[]> {
+  const opened = new Set(fresh);
   const beforeTargets = targetsOf(before);
   const afterTargets = targetsOf(after);
   const written: string[] = [];
   for (const target of afterTargets) {
-    const rules = rulesFor(after, afterTargets, target);
+    const rules = rulesFor(after, afterTargets, target, opened);
     const had = beforeTargets.includes(target);
-    if (had && fingerprint(rulesFor(before, beforeTargets, target)) === fingerprint(rules)) {
+    if (
+      had &&
+      fingerprint(rulesFor(before, beforeTargets, target, opened)) === fingerprint(rules)
+    ) {
       continue;
     }
     const aclUrl = `${target}.acl`;
@@ -524,7 +547,8 @@ export async function approveLendingRequest(
     }
   }
   const after = await lendingGrantRecords(world);
-  return { acls: await syncLendingAcls(world, before, after), code, consent, policy };
+  // Only this approval opens a one-time grant's rule; no later recompute does.
+  return { acls: await syncLendingAcls(world, before, after, [policy]), code, consent, policy };
 }
 
 /** The organisation asks and Maya approves, in one step (the issuer pages and the lenders). */
@@ -567,7 +591,8 @@ export async function endLendingGrant(
   }
   await writeConsent(world, record, status, suffix, time);
   if (!syncAcl) return [];
-  return syncLendingAcls(world, before, await lendingGrantRecords(world));
+  // An unused one-time grant ended here still has its rule: name it, so the rule is removed.
+  return syncLendingAcls(world, before, await lendingGrantRecords(world), [record.policy]);
 }
 
 /** The inbox slug of the wallet's withdrawal notice to an organisation. */
