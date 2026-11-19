@@ -10,6 +10,49 @@ import {
 } from "../../../test-support/e2e.ts";
 import { act, actThroughWallet, gotoStep, PENNANT, STATEMENT, startTour } from "./demo.ts";
 
+test("a person's click: the wallet's Requests screen sends Y1 to the one-time screen, not Approve", async ({
+  page,
+}) => {
+  test.setTimeout(300_000);
+  // Step 1 by its tour button, then the tour is left: Alex clicks for themselves.
+  await startTour(page);
+  await act(page, "attestation");
+  await open(page, "/card-issuer/apply?tour=off");
+  await page.locator('[data-tour="card-use-verified-identity"]').click();
+  await page.waitForURL((url) => url.pathname === "/wallet/kyc/consent", { timeout: 60_000 });
+  // A person's click is not approved for them.
+  await expect(page.locator('[data-tour="wallet-kyc-approve"]')).toBeEnabled({ timeout: 60_000 });
+  expect((await readAs(page, "alex", "alex/policies/y1")).status).toBe(404);
+
+  // The general Requests screen lists Y1 but offers no Approve for it.
+  await page.goto("/wallet/requests?tour=off");
+  const card = page.locator("article.consent").filter({ hasText: "Y1" });
+  await expect(card).toBeVisible({ timeout: 60_000 });
+  await expect(card.getByRole("button", { name: "Approve" })).toHaveCount(0);
+  const link = card.getByTestId("request-one-time");
+  await expect(link).toHaveAttribute("href", /\/wallet\/kyc\/consent\?request=/);
+  await expectAccessible(page, OUTSIDE_LENS);
+  await expectNoSideScroll(page);
+
+  // Followed, it is the one-time screen; approving there registers the one-time grant.
+  await link.click();
+  await page.waitForURL((url) => url.pathname === "/wallet/kyc/consent", { timeout: 60_000 });
+  await page.locator('[data-tour="wallet-kyc-approve"]').click();
+  await expect(page.getByRole("status").filter({ hasText: "Shared once" })).toBeVisible({
+    timeout: 60_000,
+  });
+  expect((await readAs(page, "alex", "alex/policies/y1")).status).toBe(200);
+  expect((await readAs(page, "alex", `${STATEMENT}.acl`)).body).toContain(PENNANT);
+  const pending = await page.evaluate(async () => {
+    const response = await fetch("/pods/.runtime/one-time-grants", {
+      headers: { "x-demo-agent": "alex" },
+    });
+    return { body: await response.text(), status: response.status };
+  });
+  expect(pending.status).toBe(200);
+  expect(pending.body).toContain("kyc-attestation");
+});
+
 test("the offer page renders with the trust banner and its own metadata", async ({ page }) => {
   await open(page, "./");
   await expect(page.getByRole("note", { name: "Concept demonstration notice" })).toBeVisible();
