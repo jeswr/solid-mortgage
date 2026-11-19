@@ -35,6 +35,7 @@ test("committed shapes module matches shapes/*.ttl (codegen freshness)", () => {
 test("every shape document is bundled", () => {
   expect([...SHAPES_DOCUMENT_KEYS].sort()).toEqual([
     "access-request",
+    "address-record",
     "agent-profile",
     "appraisal-credential",
     "asset-credential",
@@ -47,6 +48,7 @@ test("every shape document is bundled", () => {
     "credential-pointer",
     "credit-report",
     "credit-score-credential",
+    "data-product",
     "document",
     "employment-income-credential",
     "escrow-statement",
@@ -76,7 +78,7 @@ test("every shape document is bundled", () => {
 test("every targeted resource shape is closed", () => {
   const store = shapesStore();
   const targeted = store.getSubjects(`${SH}targetClass`, null, null);
-  expect(targeted.length).toBe(34);
+  expect(targeted.length).toBe(36);
   for (const shape of targeted) {
     const closed = store.getObjects(shape, `${SH}closed`, null);
     expect(
