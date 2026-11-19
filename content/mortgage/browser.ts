@@ -36,6 +36,11 @@
  * whichever page starts the runtime first seeds the pods for all of them.
  */
 
+// The pinned @jeswr/solid-vc build uses the Buffer global (status lists, signing). Install the
+// stand-in before anything here can reach it; vite aliases for its Node imports come from
+// `@mortgage/content/vite`.
+import "@mortgage/vc-kit/browser/buffer";
+
 import { createDemoCalendar, type DemoCalendar } from "@mortgage/demo-kit/calendar";
 import type { AppNote } from "@mortgage/demo-kit/contracts";
 import type { PodOwner } from "@mortgage/demo-kit/registry";
