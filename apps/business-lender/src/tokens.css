@@ -1,0 +1,26 @@
+/* AUTHORED-BY Claude Opus 5.5
+ * Brackenridge Bank Commercial Credit's own tokens: burgundy on warm stone, a credit-committee
+ * voice, Libre Caslon Text headings over a DM Sans body (both self-hosted, SIL Open Font License).
+ * Original values, no imagery (design.md §b.2). */
+:root {
+  --bb-burgundy: #7a2335;
+  --bb-burgundy-deep: #5a1726;
+  --bb-burgundy-soft: #f4e6e8;
+  --bb-stone: #ece6dc;
+  --bb-stone-deep: #d9d0c2;
+  --bb-paper: #fbf8f3;
+  --bb-ink: #261d1b;
+  --bb-muted: #5d534d;
+  --bb-rule: #cfc4b4;
+  --bb-met: #2c5e3a;
+  --bb-met-soft: #e5efe6;
+  --bb-pending: #7a5200;
+  --bb-pending-soft: #f7edd8;
+  --bb-alert: #8e2318;
+  --bb-alert-soft: #fbe9e6;
+  --bb-focus: #b5761c;
+  --bb-serif: "Libre Caslon Text", Georgia, serif;
+  --bb-sans: "DM Sans", system-ui, sans-serif;
+  --bb-mono: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --bb-measure: 72rem;
+}
