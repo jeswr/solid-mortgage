@@ -4,6 +4,8 @@
  * arithmetic). Tests and headless tools import this without defining any custom element.
  */
 export * from "./describe.js";
+export * from "./examiner.js";
+export * from "./history.js";
 export * from "./ledger.js";
 export * from "./model.js";
 export * from "./paths.js";

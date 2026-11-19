@@ -4,7 +4,7 @@
  * the editorial limits (title ≤ 8 words, body ≤ 45 words) and the cross-step rules, and returns
  * them typed as the `TourStep` contract from demo-kit.
  */
-import { TOUR_STEP_LIMITS, type TourStep } from "@mortgage/demo-kit/contracts";
+import { type AppNote, TOUR_STEP_LIMITS, type TourStep } from "@mortgage/demo-kit/contracts";
 import { isAppSlug, isOrgSlug } from "@mortgage/demo-kit/registry";
 import { z } from "zod";
 
@@ -19,7 +19,16 @@ export const CHIP_KINDS = [
 ] as const;
 
 const POD_KINDS = ["read", "write", "delete", "grant", "revoke", "denied"] as const;
-const NOTE_KINDS = ["verified", "proof-verified", "org-to-org", "no-solid", "clock"] as const;
+/** App-note kinds (demo-kit's `AppNote["kind"]`), including the runtime's own two. */
+export const NOTE_KINDS = [
+  "verified",
+  "proof-verified",
+  "org-to-org",
+  "no-solid",
+  "clock",
+  "notified",
+  "grant-used",
+] as const satisfies ReadonlyArray<AppNote["kind"]>;
 
 /** `data-tour` names: lower-case words joined by hyphens. */
 export const TARGET_NAME = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;

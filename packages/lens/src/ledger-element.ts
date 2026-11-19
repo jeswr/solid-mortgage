@@ -6,7 +6,7 @@
 import type { LensEntry } from "@mortgage/demo-kit/contracts";
 import { h } from "./dom.js";
 import { computeTotals, type LedgerTotals } from "./ledger.js";
-import { LEDGER_CSS, type LedgerViewOptions, renderLedger } from "./ledger-view.js";
+import { LEDGER_CSS, type LedgerTab, type LedgerViewOptions, renderLedger } from "./ledger-view.js";
 import { LensModel } from "./model.js";
 import type { LensConfig } from "./types.js";
 
@@ -15,6 +15,7 @@ export class JourneyLedger extends HTMLElement {
   private model: LensModel | undefined;
   private options: LedgerViewOptions = {};
   private scheduled = false;
+  private tab: LedgerTab | undefined;
 
   constructor() {
     super();
@@ -41,11 +42,25 @@ export class JourneyLedger extends HTMLElement {
     return this.model ? computeTotals(this.model) : undefined;
   }
 
+  /** Show a tab of the ledger ("examiner" for the examiner view). */
+  show(tab: LedgerTab): void {
+    this.tab = tab;
+    this.schedule();
+  }
+
   /** Render now (normally batched to the next microtask). */
   render(): void {
     this.scheduled = false;
     if (!this.model) return;
-    const { el } = renderLedger(this.model, { headingLevel: 1, ...this.options });
+    const { el } = renderLedger(this.model, {
+      headingLevel: 1,
+      ...this.options,
+      onTab: (tab) => {
+        this.tab = tab;
+        this.options.onTab?.(tab);
+      },
+      view: this.tab ?? this.options.view ?? urlTab(),
+    });
     this.root.replaceChildren(h("style", {}, `:host{display:block}${LEDGER_CSS}`), el);
   }
 
@@ -53,6 +68,17 @@ export class JourneyLedger extends HTMLElement {
     if (this.scheduled) return;
     this.scheduled = true;
     queueMicrotask(() => this.scheduled && this.render());
+  }
+}
+
+/** `?view=examiner` on the page URL (the Lens links there for its examiner view). */
+function urlTab(): LedgerTab | undefined {
+  try {
+    return new URLSearchParams(globalThis.location?.search ?? "").get("view") === "examiner"
+      ? "examiner"
+      : undefined;
+  } catch {
+    return undefined;
   }
 }
 

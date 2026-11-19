@@ -11,6 +11,12 @@
  */
 import type { AppNote, LensEntry, PodEvent } from "@mortgage/demo-kit/contracts";
 import type { PodOwner } from "@mortgage/demo-kit/registry";
+import {
+  type ChangeActivity,
+  parseChangeNotice,
+  unwatchResource,
+  watchResource,
+} from "../runtime-api.js";
 
 /** A write that landed in the organisation's `inbox/`. */
 export interface InboxMessage {
@@ -22,6 +28,21 @@ export interface InboxMessage {
   from: PodEvent["actor"];
   /** The Lens event that announced the write. */
   event: PodEvent;
+}
+
+/**
+ * A change to a resource the organisation subscribed to (`ctx.watch`). Sent by the demo runtime,
+ * not the pod server (the 0.1.8 wasm has no Solid Notifications). It carries no data: read the
+ * resource with `ctx.podFetch`, and WAC decides whether the organisation still may.
+ */
+export interface ChangeMessage {
+  /** The URL subscribed to (the resource, or its container). */
+  topic: string;
+  /** Absolute URL of the resource that changed. */
+  url: string;
+  activity: ChangeActivity;
+  /** The `notified` Lens note that announced it. */
+  note: Extract<LensEntry, { source: "app" }>;
 }
 
 export interface AgentContext {
@@ -37,11 +58,16 @@ export interface AgentContext {
   now(): string;
   /** Add an "app said" entry to the Lens. */
   note(note: AppNote): void;
+  /** Subscribe this organisation to changes of `topic` (it must be able to read it). */
+  watch(topic: string): Promise<void>;
+  unwatch(topic: string): Promise<void>;
 }
 
 /** What `export const handlers` in an app's `src/agent.ts` may contain. */
 export interface AgentHandlers {
   inbox?: (message: InboxMessage, context: AgentContext) => unknown | Promise<unknown>;
+  /** Runs when the runtime notifies this app of a change to a resource it watches. */
+  changed?: (message: ChangeMessage, context: AgentContext) => unknown | Promise<unknown>;
 }
 
 /** Type helper for an app's `src/agent.ts`: `export const handlers = defineAgent({ inbox… })`. */
@@ -60,7 +86,7 @@ export interface AgentRunnerOptions {
   podUrl(owner: PodOwner, path?: string): string;
   webid(owner: PodOwner): string;
   note(note: AppNote): void;
-  onError?(error: unknown, app: string, message: InboxMessage): void;
+  onError?(error: unknown, app: string, message: InboxMessage | ChangeMessage): void;
 }
 
 export interface AgentRunner {
@@ -88,7 +114,57 @@ export function createAgentRunner(options: AgentRunnerOptions): AgentRunner {
       ? (options.identities[app] as PodOwner)
       : (app as PodOwner);
 
+  const contextFor = (app: string, owner: PodOwner, at: string): AgentContext => {
+    const podFetch = options.fetchFor(owner);
+    return {
+      app,
+      // The note is from this organisation, whatever the handler wrote in it.
+      note: (note) => options.note({ ...note, org: app as AppNote["org"] }),
+      now: () => at,
+      owner,
+      podFetch,
+      podUrl: options.podUrl,
+      unwatch: (topic) => unwatchResource(podFetch, topic, { app }),
+      async watch(topic) {
+        await watchResource(podFetch, topic, { app });
+      },
+      webid: options.webid,
+    };
+  };
+
+  const enqueue = <M extends InboxMessage | ChangeMessage>(
+    app: string,
+    message: M,
+    run: () => unknown,
+  ) => {
+    const previous = queues.get(app) ?? Promise.resolve();
+    const next = previous.then(run).then(
+      () => undefined,
+      (error: unknown) => {
+        const what = "path" in message ? message.path : message.url;
+        if (options.onError) options.onError(error, app, message);
+        else console.error(`agent ${app} failed on ${what}`, error);
+      },
+    );
+    queues.set(app, next);
+  };
+
+  const onChange = (entry: LensEntry) => {
+    if (entry.source !== "app") return;
+    const notice = parseChangeNotice(entry);
+    if (notice === undefined) return;
+    const handlers = Object.hasOwn(options.agents, entry.org)
+      ? options.agents[entry.org]
+      : undefined;
+    const changed = handlers?.changed;
+    if (changed === undefined) return;
+    const message: ChangeMessage = { ...notice, note: entry };
+    const context = contextFor(entry.org, ownerOf(entry.org), entry.at);
+    enqueue(entry.org, message, () => changed(message, context));
+  };
+
   const unsubscribe = options.subscribe((entry) => {
+    onChange(entry);
     const event = inboxWrite(entry);
     if (event === undefined) return;
     for (const [app, handlers] of Object.entries(options.agents)) {
@@ -104,27 +180,8 @@ export function createAgentRunner(options: AgentRunnerOptions): AgentRunner {
         path,
         url: options.podUrl(owner, path),
       };
-      const context: AgentContext = {
-        app,
-        // The note is from this organisation, whatever the handler wrote in it.
-        note: (note) => options.note({ ...note, org: app as AppNote["org"] }),
-        now: () => event.at,
-        owner,
-        podFetch: options.fetchFor(owner),
-        podUrl: options.podUrl,
-        webid: options.webid,
-      };
-      const previous = queues.get(app) ?? Promise.resolve();
-      const next = previous
-        .then(() => inbox(message, context))
-        .then(
-          () => undefined,
-          (error: unknown) => {
-            if (options.onError) options.onError(error, app, message);
-            else console.error(`agent ${app} failed on ${message.path}`, error);
-          },
-        );
-      queues.set(app, next);
+      const context = contextFor(app, owner, event.at);
+      enqueue(app, message, () => inbox(message, context));
     }
   });
 

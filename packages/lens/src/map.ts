@@ -469,7 +469,13 @@ export class LensMap {
         this.opts.onCaption("no Solid in this step", "no-solid");
       } else {
         this.opts.onCaption(
-          e.kind === "clock" ? e.text : `checked by ${this.model.nameOf(e.org)}`,
+          e.kind === "clock"
+            ? e.text
+            : e.kind === "notified"
+              ? "change notice from the demo runtime, not the pod"
+              : e.kind === "grant-used"
+                ? "one-time grant used"
+                : `checked by ${this.model.nameOf(e.org)}`,
           "verified",
         );
         await this.flash(nodeOf(this.model.registry, e.org), reduced);

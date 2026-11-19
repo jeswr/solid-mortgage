@@ -6,6 +6,7 @@
  * entry's path ends with the pattern's (so `/documents/a` matches `/pods/alex/documents/a`).
  */
 import type { AppNote, LensEntry, PodEvent, TourStep } from "@mortgage/demo-kit/contracts";
+import { NOTE_KINDS } from "./schema.js";
 
 export function matchesPartial(value: unknown, pattern: unknown, key?: string): boolean {
   if (pattern === undefined) return true;
@@ -30,8 +31,7 @@ export function matchesExpectation(
   pattern: Partial<PodEvent> | Partial<AppNote>,
 ): boolean {
   const isNotePattern =
-    typeof pattern.kind === "string" &&
-    ["verified", "proof-verified", "org-to-org", "no-solid", "clock"].includes(pattern.kind);
+    typeof pattern.kind === "string" && (NOTE_KINDS as readonly string[]).includes(pattern.kind);
   if (isNotePattern !== (entry.source === "app")) return false;
   return matchesPartial(entry, pattern);
 }

@@ -5,6 +5,7 @@ import type { PodHost } from "../host/host.js";
 import {
   type AgentHandlers,
   type AgentRunner,
+  type ChangeMessage,
   createAgentRunner,
   type InboxMessage,
 } from "./runner.js";
@@ -13,7 +14,7 @@ export interface HostAgentOptions {
   host: PodHost;
   agents: Readonly<Record<string, AgentHandlers>>;
   identities?: Readonly<Record<string, PodOwner>>;
-  onError?(error: unknown, app: string, message: InboxMessage): void;
+  onError?(error: unknown, app: string, message: InboxMessage | ChangeMessage): void;
 }
 
 export function runAgentsOnHost(options: HostAgentOptions): AgentRunner {

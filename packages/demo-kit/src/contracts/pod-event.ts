@@ -37,8 +37,17 @@ export interface PodEvent {
   grant?: string;                    // IRI of the policy that allowed it, when one matches
 }
 
-// biome-ignore format: kept verbatim from design.md so the two can be compared line by line
-export interface AppNote { kind: "verified" | "proof-verified" | "org-to-org" | "no-solid" | "clock";
+/**
+ * Lane E2 added two kinds to design.md's list (the design doc must follow):
+ * - `notified`: the demo runtime told `org` that a resource it subscribed to changed. The 0.1.8
+ *   wasm has no Solid Notifications, so the runtime, not the pod server, sends it. `refs` is
+ *   `[topic, changed resource, ActivityStreams activity IRI]`.
+ * - `grant-used`: a one-time grant was used, and `org` (the holder's wallet) is closing it. `refs`
+ *   is `[resource, agent WebID]`; the revoke event that closes it follows.
+ */
+// biome-ignore format: kept close to design.md so the two can be compared line by line
+export interface AppNote { kind: "verified" | "proof-verified" | "org-to-org" | "no-solid" | "clock"
+                                 | "notified" | "grant-used";
                            org: OrgSlug; text: string; refs?: string[] }
 
 // biome-ignore format: kept verbatim from design.md so the two can be compared line by line

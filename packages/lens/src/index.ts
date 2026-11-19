@@ -9,7 +9,12 @@ import { defineJourneyLedger } from "./ledger-element.js";
 
 export { chipSeen, defineSolidLens, SolidLens } from "./element.js";
 export { defineJourneyLedger, JourneyLedger } from "./ledger-element.js";
-export { LEDGER_CSS, type LedgerViewOptions, renderLedger } from "./ledger-view.js";
+export {
+  LEDGER_CSS,
+  type LedgerTab,
+  type LedgerViewOptions,
+  renderLedger,
+} from "./ledger-view.js";
 export { LensMap, type MotionKind } from "./map.js";
 export * from "./model-index.js";
 

@@ -1,0 +1,849 @@
+[
+  {
+    "source": "pod",
+    "actor": {
+      "org": "alex",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/alex/profile/card#me"
+    },
+    "at": "2026-08-31T09:00:00.000Z",
+    "id": 1,
+    "kind": "read",
+    "method": "HEAD",
+    "path": "/profile/address",
+    "pod": "alex",
+    "status": 200,
+    "tour": {
+      "demo": "trail",
+      "step": "share"
+    },
+    "resource": {
+      "drawer": "profile",
+      "label": "address",
+      "types": []
+    }
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "alex",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/alex/profile/card#me"
+    },
+    "at": "2026-08-31T09:01:00.000Z",
+    "id": 2,
+    "kind": "read",
+    "method": "GET",
+    "path": "/profile/address.acl",
+    "pod": "alex",
+    "status": 404,
+    "tour": {
+      "demo": "trail",
+      "step": "share"
+    }
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "alex",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/alex/profile/card#me"
+    },
+    "at": "2026-08-31T09:02:00.000Z",
+    "id": 3,
+    "kind": "read",
+    "method": "HEAD",
+    "path": "/profile/",
+    "pod": "alex",
+    "status": 200,
+    "tour": {
+      "demo": "trail",
+      "step": "share"
+    },
+    "resource": {
+      "drawer": "profile",
+      "label": "profile/",
+      "types": []
+    }
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "alex",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/alex/profile/card#me"
+    },
+    "at": "2026-08-31T09:03:00.000Z",
+    "id": 4,
+    "kind": "read",
+    "method": "GET",
+    "path": "/profile/.acl",
+    "pod": "alex",
+    "status": 404,
+    "tour": {
+      "demo": "trail",
+      "step": "share"
+    }
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "alex",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/alex/profile/card#me"
+    },
+    "at": "2026-08-31T09:04:00.000Z",
+    "id": 5,
+    "kind": "read",
+    "method": "HEAD",
+    "path": "/",
+    "pod": "alex",
+    "status": 200,
+    "tour": {
+      "demo": "trail",
+      "step": "share"
+    },
+    "resource": {
+      "drawer": "",
+      "label": "/",
+      "types": []
+    }
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "alex",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/alex/profile/card#me"
+    },
+    "at": "2026-08-31T09:05:00.000Z",
+    "id": 6,
+    "kind": "read",
+    "method": "GET",
+    "path": "/.acl",
+    "pod": "alex",
+    "status": 200,
+    "tour": {
+      "demo": "trail",
+      "step": "share"
+    },
+    "resource": {
+      "drawer": "",
+      "label": ".acl",
+      "types": ["http://www.w3.org/ns/auth/acl#Authorization"]
+    }
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "alex",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/alex/profile/card#me"
+    },
+    "at": "2026-08-31T09:06:00.000Z",
+    "id": 7,
+    "kind": "grant",
+    "method": "PUT",
+    "path": "/profile/address.acl",
+    "pod": "alex",
+    "status": 201,
+    "tour": {
+      "demo": "trail",
+      "step": "share"
+    },
+    "acl": {
+      "granted": [
+        {
+          "agent": "https://pods.example/pods/bank/profile/card#me",
+          "inherited": false,
+          "modes": ["Read"],
+          "resource": "/profile/address"
+        }
+      ],
+      "revoked": []
+    },
+    "resource": {
+      "drawer": "profile",
+      "label": "address",
+      "types": []
+    }
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "alex",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/alex/profile/card#me"
+    },
+    "at": "2026-08-31T09:07:00.000Z",
+    "id": 8,
+    "kind": "read",
+    "method": "HEAD",
+    "path": "/profile/address",
+    "pod": "alex",
+    "status": 200,
+    "tour": {
+      "demo": "trail",
+      "step": "share"
+    },
+    "resource": {
+      "drawer": "profile",
+      "label": "address",
+      "types": []
+    }
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "alex",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/alex/profile/card#me"
+    },
+    "at": "2026-08-31T09:08:00.000Z",
+    "id": 9,
+    "kind": "read",
+    "method": "GET",
+    "path": "/profile/address.acl",
+    "pod": "alex",
+    "status": 200,
+    "tour": {
+      "demo": "trail",
+      "step": "share"
+    },
+    "resource": {
+      "drawer": "profile",
+      "label": "address.acl",
+      "types": ["http://www.w3.org/ns/auth/acl#Authorization"]
+    }
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "alex",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/alex/profile/card#me"
+    },
+    "at": "2026-08-31T09:09:00.000Z",
+    "id": 10,
+    "kind": "grant",
+    "method": "PUT",
+    "path": "/profile/address.acl",
+    "pod": "alex",
+    "status": 204,
+    "tour": {
+      "demo": "trail",
+      "step": "share"
+    },
+    "acl": {
+      "granted": [
+        {
+          "agent": "https://pods.example/pods/payroll/profile/card#me",
+          "inherited": false,
+          "modes": ["Read"],
+          "resource": "/profile/address"
+        }
+      ],
+      "revoked": []
+    },
+    "resource": {
+      "drawer": "profile",
+      "label": "address",
+      "types": []
+    }
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "alex",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/alex/profile/card#me"
+    },
+    "at": "2026-08-31T09:12:00.000Z",
+    "id": 11,
+    "kind": "write",
+    "method": "PUT",
+    "path": "/profile/address",
+    "pod": "alex",
+    "status": 204,
+    "tour": {
+      "demo": "trail",
+      "step": "change"
+    },
+    "resource": {
+      "drawer": "profile",
+      "label": "address",
+      "types": ["https://schema.org/Place"]
+    }
+  },
+  {
+    "kind": "notified",
+    "org": "bank",
+    "refs": [
+      "https://pods.example/pods/alex/profile/address",
+      "https://pods.example/pods/alex/profile/address",
+      "https://www.w3.org/ns/activitystreams#Update"
+    ],
+    "text": "address: changed. Notified by the demo runtime; the Solid Notifications Protocol in production. The notice carries no data.",
+    "at": "2026-08-31T09:13:00.000Z",
+    "id": 12,
+    "source": "app"
+  },
+  {
+    "kind": "notified",
+    "org": "payroll",
+    "refs": [
+      "https://pods.example/pods/alex/profile/address",
+      "https://pods.example/pods/alex/profile/address",
+      "https://www.w3.org/ns/activitystreams#Update"
+    ],
+    "text": "address: changed. Notified by the demo runtime; the Solid Notifications Protocol in production. The notice carries no data.",
+    "at": "2026-08-31T09:14:00.000Z",
+    "id": 13,
+    "source": "app"
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "bank",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/bank/profile/card#me"
+    },
+    "at": "2026-08-31T09:15:00.000Z",
+    "id": 14,
+    "kind": "read",
+    "method": "GET",
+    "path": "/profile/address",
+    "pod": "alex",
+    "status": 200,
+    "tour": {
+      "demo": "trail",
+      "step": "change"
+    },
+    "resource": {
+      "drawer": "profile",
+      "label": "address",
+      "types": ["https://schema.org/Place"]
+    },
+    "grant": "https://pods.example/pods/alex/profile/address.acl#grant-1"
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "payroll",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/payroll/profile/card#me"
+    },
+    "at": "2026-08-31T09:16:00.000Z",
+    "id": 15,
+    "kind": "read",
+    "method": "GET",
+    "path": "/profile/address",
+    "pod": "alex",
+    "status": 200,
+    "tour": {
+      "demo": "trail",
+      "step": "change"
+    },
+    "resource": {
+      "drawer": "profile",
+      "label": "address",
+      "types": ["https://schema.org/Place"]
+    },
+    "grant": "https://pods.example/pods/alex/profile/address.acl#grant-2"
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "alex",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/alex/profile/card#me"
+    },
+    "at": "2026-08-31T09:17:00.000Z",
+    "id": 16,
+    "kind": "read",
+    "method": "HEAD",
+    "path": "/profile/address",
+    "pod": "alex",
+    "status": 200,
+    "tour": {
+      "demo": "trail",
+      "step": "withdraw"
+    },
+    "resource": {
+      "drawer": "profile",
+      "label": "address",
+      "types": []
+    }
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "alex",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/alex/profile/card#me"
+    },
+    "at": "2026-08-31T09:18:00.000Z",
+    "id": 17,
+    "kind": "read",
+    "method": "GET",
+    "path": "/profile/address.acl",
+    "pod": "alex",
+    "status": 200,
+    "tour": {
+      "demo": "trail",
+      "step": "withdraw"
+    },
+    "resource": {
+      "drawer": "profile",
+      "label": "address.acl",
+      "types": ["http://www.w3.org/ns/auth/acl#Authorization"]
+    }
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "alex",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/alex/profile/card#me"
+    },
+    "at": "2026-08-31T09:19:00.000Z",
+    "id": 18,
+    "kind": "revoke",
+    "method": "PUT",
+    "path": "/profile/address.acl",
+    "pod": "alex",
+    "status": 204,
+    "tour": {
+      "demo": "trail",
+      "step": "withdraw"
+    },
+    "acl": {
+      "granted": [],
+      "revoked": [
+        {
+          "agent": "https://pods.example/pods/bank/profile/card#me",
+          "inherited": false,
+          "modes": ["Read"],
+          "resource": "/profile/address"
+        }
+      ]
+    },
+    "resource": {
+      "drawer": "profile",
+      "label": "address",
+      "types": []
+    }
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "alex",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/alex/profile/card#me"
+    },
+    "at": "2026-08-31T09:20:00.000Z",
+    "id": 19,
+    "kind": "write",
+    "method": "PUT",
+    "path": "/profile/address",
+    "pod": "alex",
+    "status": 204,
+    "tour": {
+      "demo": "trail",
+      "step": "correct"
+    },
+    "resource": {
+      "drawer": "profile",
+      "label": "address",
+      "types": ["https://schema.org/Thing"]
+    }
+  },
+  {
+    "kind": "notified",
+    "org": "bank",
+    "refs": [
+      "https://pods.example/pods/alex/profile/address",
+      "https://pods.example/pods/alex/profile/address",
+      "https://www.w3.org/ns/activitystreams#Update"
+    ],
+    "text": "address: changed. Notified by the demo runtime; the Solid Notifications Protocol in production. The notice carries no data.",
+    "at": "2026-08-31T09:21:00.000Z",
+    "id": 20,
+    "source": "app"
+  },
+  {
+    "kind": "notified",
+    "org": "payroll",
+    "refs": [
+      "https://pods.example/pods/alex/profile/address",
+      "https://pods.example/pods/alex/profile/address",
+      "https://www.w3.org/ns/activitystreams#Update"
+    ],
+    "text": "address: changed. Notified by the demo runtime; the Solid Notifications Protocol in production. The notice carries no data.",
+    "at": "2026-08-31T09:22:00.000Z",
+    "id": 21,
+    "source": "app"
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "bank",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/bank/profile/card#me"
+    },
+    "at": "2026-08-31T09:23:00.000Z",
+    "id": 22,
+    "kind": "denied",
+    "method": "GET",
+    "path": "/profile/address",
+    "pod": "alex",
+    "status": 403,
+    "tour": {
+      "demo": "trail",
+      "step": "correct"
+    },
+    "resource": {
+      "drawer": "profile",
+      "label": "address",
+      "types": []
+    }
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "payroll",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/payroll/profile/card#me"
+    },
+    "at": "2026-08-31T09:24:00.000Z",
+    "id": 23,
+    "kind": "read",
+    "method": "GET",
+    "path": "/profile/address",
+    "pod": "alex",
+    "status": 200,
+    "tour": {
+      "demo": "trail",
+      "step": "correct"
+    },
+    "resource": {
+      "drawer": "profile",
+      "label": "address",
+      "types": ["https://schema.org/Thing"]
+    },
+    "grant": "https://pods.example/pods/alex/profile/address.acl#grant-2"
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "alex",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/alex/profile/card#me"
+    },
+    "at": "2026-08-31T09:25:00.000Z",
+    "id": 24,
+    "kind": "read",
+    "method": "HEAD",
+    "path": "/certificates/badge",
+    "pod": "alex",
+    "status": 200,
+    "tour": {
+      "demo": "trail",
+      "step": "once"
+    },
+    "resource": {
+      "drawer": "certificates",
+      "label": "badge",
+      "types": []
+    }
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "alex",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/alex/profile/card#me"
+    },
+    "at": "2026-08-31T09:26:00.000Z",
+    "id": 25,
+    "kind": "read",
+    "method": "GET",
+    "path": "/certificates/badge.acl",
+    "pod": "alex",
+    "status": 404,
+    "tour": {
+      "demo": "trail",
+      "step": "once"
+    }
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "alex",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/alex/profile/card#me"
+    },
+    "at": "2026-08-31T09:27:00.000Z",
+    "id": 26,
+    "kind": "read",
+    "method": "HEAD",
+    "path": "/certificates/",
+    "pod": "alex",
+    "status": 200,
+    "tour": {
+      "demo": "trail",
+      "step": "once"
+    },
+    "resource": {
+      "drawer": "certificates",
+      "label": "certificates/",
+      "types": []
+    }
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "alex",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/alex/profile/card#me"
+    },
+    "at": "2026-08-31T09:28:00.000Z",
+    "id": 27,
+    "kind": "read",
+    "method": "GET",
+    "path": "/certificates/.acl",
+    "pod": "alex",
+    "status": 404,
+    "tour": {
+      "demo": "trail",
+      "step": "once"
+    }
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "alex",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/alex/profile/card#me"
+    },
+    "at": "2026-08-31T09:29:00.000Z",
+    "id": 28,
+    "kind": "read",
+    "method": "HEAD",
+    "path": "/",
+    "pod": "alex",
+    "status": 200,
+    "tour": {
+      "demo": "trail",
+      "step": "once"
+    },
+    "resource": {
+      "drawer": "",
+      "label": "/",
+      "types": []
+    }
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "alex",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/alex/profile/card#me"
+    },
+    "at": "2026-08-31T09:30:00.000Z",
+    "id": 29,
+    "kind": "read",
+    "method": "GET",
+    "path": "/.acl",
+    "pod": "alex",
+    "status": 200,
+    "tour": {
+      "demo": "trail",
+      "step": "once"
+    },
+    "resource": {
+      "drawer": "",
+      "label": ".acl",
+      "types": ["http://www.w3.org/ns/auth/acl#Authorization"]
+    }
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "alex",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/alex/profile/card#me"
+    },
+    "at": "2026-08-31T09:31:00.000Z",
+    "id": 30,
+    "kind": "grant",
+    "method": "PUT",
+    "path": "/certificates/badge.acl",
+    "pod": "alex",
+    "status": 201,
+    "tour": {
+      "demo": "trail",
+      "step": "once"
+    },
+    "acl": {
+      "granted": [
+        {
+          "agent": "https://pods.example/pods/bank/profile/card#me",
+          "inherited": false,
+          "modes": ["Read"],
+          "resource": "/certificates/badge"
+        }
+      ],
+      "revoked": []
+    },
+    "resource": {
+      "drawer": "certificates",
+      "label": "badge",
+      "types": []
+    }
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "bank",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/bank/profile/card#me"
+    },
+    "at": "2026-08-31T09:33:00.000Z",
+    "id": 31,
+    "kind": "read",
+    "method": "GET",
+    "path": "/certificates/badge",
+    "pod": "alex",
+    "status": 200,
+    "tour": {
+      "demo": "trail",
+      "step": "once"
+    },
+    "resource": {
+      "drawer": "certificates",
+      "label": "badge",
+      "types": ["https://schema.org/Thing"]
+    },
+    "grant": "https://pods.example/pods/alex/certificates/badge.acl#grant-1"
+  },
+  {
+    "kind": "grant-used",
+    "org": "wallet",
+    "refs": [
+      "https://pods.example/pods/alex/certificates/badge",
+      "https://pods.example/pods/bank/profile/card#me"
+    ],
+    "text": "One-time grant used. The holder's wallet closes it.",
+    "at": "2026-08-31T09:34:00.000Z",
+    "id": 32,
+    "source": "app"
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "alex",
+      "viaAgent": true,
+      "webid": "https://pods.example/pods/alex/profile/card#me"
+    },
+    "at": "2026-08-31T09:35:00.000Z",
+    "id": 33,
+    "kind": "read",
+    "method": "HEAD",
+    "path": "/certificates/badge",
+    "pod": "alex",
+    "status": 200,
+    "tour": {
+      "demo": "trail",
+      "step": "once"
+    },
+    "resource": {
+      "drawer": "certificates",
+      "label": "badge",
+      "types": []
+    }
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "alex",
+      "viaAgent": true,
+      "webid": "https://pods.example/pods/alex/profile/card#me"
+    },
+    "at": "2026-08-31T09:36:00.000Z",
+    "id": 34,
+    "kind": "read",
+    "method": "GET",
+    "path": "/certificates/badge.acl",
+    "pod": "alex",
+    "status": 200,
+    "tour": {
+      "demo": "trail",
+      "step": "once"
+    },
+    "resource": {
+      "drawer": "certificates",
+      "label": "badge.acl",
+      "types": ["http://www.w3.org/ns/auth/acl#Authorization"]
+    }
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "alex",
+      "viaAgent": true,
+      "webid": "https://pods.example/pods/alex/profile/card#me"
+    },
+    "at": "2026-08-31T09:37:00.000Z",
+    "id": 35,
+    "kind": "revoke",
+    "method": "PUT",
+    "path": "/certificates/badge.acl",
+    "pod": "alex",
+    "status": 204,
+    "tour": {
+      "demo": "trail",
+      "step": "once"
+    },
+    "acl": {
+      "granted": [],
+      "revoked": [
+        {
+          "agent": "https://pods.example/pods/bank/profile/card#me",
+          "inherited": false,
+          "modes": ["Read"],
+          "resource": "/certificates/badge"
+        }
+      ]
+    },
+    "resource": {
+      "drawer": "certificates",
+      "label": "badge",
+      "types": []
+    }
+  },
+  {
+    "source": "pod",
+    "actor": {
+      "org": "bank",
+      "viaAgent": false,
+      "webid": "https://pods.example/pods/bank/profile/card#me"
+    },
+    "at": "2026-08-31T09:38:00.000Z",
+    "id": 36,
+    "kind": "denied",
+    "method": "GET",
+    "path": "/certificates/badge",
+    "pod": "alex",
+    "status": 403,
+    "tour": {
+      "demo": "trail",
+      "step": "once"
+    },
+    "resource": {
+      "drawer": "certificates",
+      "label": "badge",
+      "types": []
+    }
+  }
+]

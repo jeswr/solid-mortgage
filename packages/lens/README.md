@@ -9,7 +9,7 @@ each step, fed only by the entries the pod runtime emits (`onEvent()`) and by ap
 | Import | Gives you |
 |---|---|
 | `@mortgage/lens` | defines `<solid-lens>` and `<journey-ledger>`; exports both classes, `renderLedger`, and everything in `./model` |
-| `@mortgage/lens/model` | the DOM-free fold (`LensModel`), sentences (`describe`), ledger arithmetic (`computeLedger`, `computeTotals`, `ledgerCsv`), path helpers |
+| `@mortgage/lens/model` | the DOM-free fold (`LensModel`), sentences (`describe`), ledger arithmetic (`computeLedger`, `computeTotals`, `ledgerCsv`), the examiner view (`examine`, `registerCsv`, `matchesEvidence`), provenance history (`resourceHistory`), path helpers |
 
 Apps normally get the Lens through `@mortgage/tour/mount`, not directly.
 
@@ -31,8 +31,10 @@ const stop = onEvent((entry) => lens.push(entry), { replay: true });
 - `push(entry, { replayed })`: replayed entries rebuild state silently; live ones animate and
   are announced in the polite live region. Duplicates (same `source` and `id`) are ignored.
 - `setStep(step | null)`, `setSteps(outline)`, `setMode("guided" | "free" | "present")`,
-  `view("step" | "grants" | "not-shared" | "raw" | "ledger")`, `collapsed`, `totals()`,
-  `flush()`; `ledgerOptions` (illustrative comparison, calls to action, restart).
+  `view("step" | "grants" | "not-shared" | "raw" | "ledger" | "examiner")`, `collapsed`,
+  `totals()`, `flush()`; `ledgerOptions` (illustrative comparison, calls to action, restart,
+  `compliance`). `view("examiner")` opens the ledger on its examiner tab; with `ledgerHref` it
+  goes there with `?view=examiner`, which `<journey-ledger>` reads.
 - Events (bubbling, composed): `lens-act`, `lens-next`, `lens-back`, `lens-restart`,
   `lens-popout`, `lens-toggle`, and `lens-inset` (`{ right, bottom }` in px: the space the host
   page should leave free; mount.ts applies it).
@@ -64,6 +66,34 @@ const stop = onEvent((entry) => lens.push(entry), { replay: true });
 - **Before/after card** (§c.4): a refusal by an organisation whose grant has ended is compared
   with that organisation's latest successful request for the same method and path.
 
+- **Runtime notes.** `notified` and `grant-used` notes come from the demo runtime, not an app
+  (pod-runtime README, "Runtime services"). They are dashed like app notes but read "Runtime
+  said". A notice says "{org} was told that {resource} changed", labelled "notified by the demo
+  runtime; the Solid Notifications Protocol in production". A back-office revoke that follows a
+  `grant-used` note for the same organisation is labelled "one-time grant, closed by {holder}'s
+  wallet" instead of "expiry applied automatically".
+- **Change history.** A resource card lists every write and delete the pod accepted for that
+  resource in this session (writer, created/changed/deleted, back-office or not, time):
+  `resourceHistory(model, pod, path)`. It comes from pod entries only, never from what the
+  resource says about itself; seeded writes are not in the log and are not listed.
+
+## Examiner view
+
+A tab of the journey ledger ("Journey" | "Examiner view"), available to every demo:
+
+- **Obligations.** `ledgerOptions.compliance` (or `<journey-ledger>`'s options) is a list of
+  `{ id, obligation, rule, source?, evidence }`. `evidence` holds entry patterns matched like a
+  tour step's `expect` (keys match recursively, a `path` also matches by suffix, an app-note
+  `kind` matches notes only). An obligation is "evidenced" only when every pattern has at least
+  one matching entry; the matching entries are listed under it. Otherwise it reads "Not
+  evidenced in this session".
+- **Access register.** One row per request a pod answered for an organisation other than its
+  owner: when, who (and whether its back-office agent), read / wrote / deleted / refused, which
+  resource, the status, and "under": the policy handle from `grants`, the policy IRI's local
+  name, "a rule in the access list that names no policy", or "none: refused, {reason}". Exports
+  as CSV.
+- **Changes to access.** Every successful ACL write, in the Lens's own words.
+
 ## Journey ledger totals (the definitions test 13 recomputes)
 
 Counted over all received entries:
@@ -84,6 +114,9 @@ they are not counted as uploads.
 ## Tests
 
 `pnpm test` (Vitest, the model against `test/fixtures/events.json`, a hand-written log covering
-every event and note kind in a fictional trail-expedition story) and `pnpm test:e2e`
+every event and note kind in a fictional trail-expedition story, and against
+`test/fixtures/runtime-services.json`, recorded from the real pod host and wasm by pod-runtime's
+`test/host/lens-fixture.test.ts`, which fails if the host's output drifts) and `pnpm test:e2e`
 (Playwright against `test/harness/`: every map state, refusal text, reduced motion, axe with the
-dock open, collapsed and as a 390 px sheet, keyboard, ledger totals and CSV).
+dock open, collapsed and as a 390 px sheet, keyboard, ledger totals and CSV, the examiner view
+and change history with axe; `?fixture=services` loads the recorded log).

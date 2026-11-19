@@ -77,4 +77,17 @@ describe("step completion", () => {
     expect(matchesExpectation(write, { kind: "write", pod: "alex" })).toBe(true);
     expect(matchesExpectation(note, { kind: "write" })).toBe(false);
   });
+
+  it("treats the runtime's notified and grant-used notes as notes", () => {
+    const notice: LensEntry = {
+      ...note,
+      kind: "notified",
+      org: "payroll",
+      refs: ["https://t.example/pods/alex/x", "https://t.example/pods/alex/x", "u"],
+    };
+    expect(matchesExpectation(notice, { kind: "notified", org: "payroll" })).toBe(true);
+    expect(matchesExpectation(write, { kind: "notified" })).toBe(false);
+    const used: LensEntry = { ...note, kind: "grant-used", org: "wallet" };
+    expect(matchesExpectation(used, { kind: "grant-used" })).toBe(true);
+  });
 });

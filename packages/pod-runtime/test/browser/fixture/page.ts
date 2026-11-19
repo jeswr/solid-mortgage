@@ -3,6 +3,7 @@
 import type { LensEntry } from "@mortgage/demo-kit/contracts";
 import type { OrgSlug } from "@mortgage/demo-kit/registry";
 import { setUrlMode } from "@mortgage/demo-kit/urls";
+import * as acl from "../../../dist/acl.js";
 import * as runtime from "../../../dist/index.js";
 import { ORGS } from "./registry.js";
 
@@ -32,4 +33,4 @@ runtime.configure({
 });
 runtime.onEvent((entry) => events.push(entry), { replay: true });
 
-Object.assign(globalThis, { events, rt: runtime });
+Object.assign(globalThis, { acl, events, rt: runtime });

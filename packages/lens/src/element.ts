@@ -7,9 +7,10 @@
 import type { ChipKind, LensEntry } from "@mortgage/demo-kit/contracts";
 import { describe, describeRules, possessive, revokeCaveat, type Sentence } from "./describe.js";
 import { h, replace } from "./dom.js";
+import { resourceHistory } from "./history.js";
 import { chipIcon, icon } from "./icons.js";
 import { computeTotals, type LedgerTotals } from "./ledger.js";
-import { LEDGER_CSS, type LedgerViewOptions, renderLedger } from "./ledger-view.js";
+import { LEDGER_CSS, type LedgerTab, type LedgerViewOptions, renderLedger } from "./ledger-view.js";
 import { LensMap } from "./map.js";
 import { isDenied, isOk, isPod, LensModel, type Received } from "./model.js";
 import { HOLDER, localName, nodeOf, podRelative } from "./paths.js";
@@ -23,7 +24,7 @@ import type {
   TimelineStep,
 } from "./types.js";
 
-const TABS: Array<{ id: Exclude<LensView, "ledger">; label: string }> = [
+const TABS: Array<{ id: Exclude<LensView, "ledger" | "examiner">; label: string }> = [
   { id: "step", label: "This step" },
   { id: "grants", label: "Grants" },
   { id: "not-shared", label: "Not shared" },
@@ -43,6 +44,16 @@ type Pinned =
 type Selection = { type: "entry"; rec: Received } | { type: "drawer"; path: string } | null;
 
 let uid = 0;
+
+/** Notes the demo runtime emits itself (not an organisation's app). */
+const RUNTIME_NOTES = new Set(["notified", "grant-used"]);
+const NOTE_SOURCE: Record<string, string> = {
+  default: "The pod cannot show this; the app reports it.",
+  "grant-used":
+    "Web Access Control has no one-time rule. The demo runtime closes the grant for the holder's wallet; the rule's removal is the pod request that follows.",
+  notified:
+    "The pod server in this demo has no Solid Notifications, so the demo runtime sends the notice. It says only that the resource changed; reading it is an ordinary request the pod decides.",
+};
 
 /** Does an entry show the involvement a chip names? */
 export function chipSeen(kind: ChipKind, rec: Received): boolean {
@@ -88,7 +99,7 @@ export class SolidLens extends HTMLElement {
   private lensMap: LensMap | undefined;
   private step: LensStep | null = null;
   private steps: TimelineStep[] = [];
-  private tab: Exclude<LensView, "ledger"> = "step";
+  private tab: Exclude<LensView, "ledger" | "examiner"> = "step";
   private pinned: Pinned | null = null;
   private selection: Selection = null;
   private dirty = false;
@@ -254,8 +265,8 @@ export class SolidLens extends HTMLElement {
 
   /** Switch the inspector tab, or open the journey ledger. */
   view(v: LensView): void {
-    if (v === "ledger") {
-      this.openLedger();
+    if (v === "ledger" || v === "examiner") {
+      this.openLedger(v === "examiner" ? "examiner" : "journey");
       return;
     }
     this.tab = v;
@@ -889,16 +900,19 @@ export class SolidLens extends HTMLElement {
           "div",
           { class: "card", tabindex: -1, role: "region", "aria-label": "Entry details" },
           close,
-          h("h3", {}, "App said"),
-          h("p", {}, e.text),
+          h("h3", {}, RUNTIME_NOTES.has(e.kind) ? "Runtime said" : "App said"),
+          h("p", {}, RUNTIME_NOTES.has(e.kind) ? sentence.text : e.text),
           h(
             "dl",
             {},
-            ...row("Reported by", m.nameOf(e.org)),
-            ...row("Kind", sentence.meta.at(-1) ?? e.kind),
+            ...row(RUNTIME_NOTES.has(e.kind) ? "Addressed to" : "Reported by", m.nameOf(e.org)),
+            ...row(
+              "Kind",
+              (RUNTIME_NOTES.has(e.kind) ? sentence.meta[0] : sentence.meta.at(-1)) ?? e.kind,
+            ),
             ...row("Refers to", (e.refs ?? []).join(", ")),
           ),
-          h("p", { class: "chips-note" }, "The pod cannot show this; the app reports it."),
+          h("p", { class: "chips-note" }, NOTE_SOURCE[e.kind] ?? NOTE_SOURCE.default),
         ),
       );
       return;
@@ -967,11 +981,47 @@ export class SolidLens extends HTMLElement {
             : []),
           ...row("Request", `${e.method} · ${e.status}`),
         ),
+        ...this.historySection(e.pod, path),
       ),
     );
   }
 
-  private renderPanel(id: Exclude<LensView, "ledger">, panel: HTMLElement): void {
+  /** "Change history": who wrote each version, from the writes the pod accepted (pod saw). */
+  private historySection(pod: string, path: string): HTMLElement[] {
+    const m = this.model;
+    const versions = resourceHistory(m, pod, path);
+    if (versions.length === 0) return [];
+    const when = (at: string) => {
+      const date = at.slice(0, 10);
+      const cal = m.config.calendar;
+      const day = cal ? cal.label(cal.dayOf(date)) : date;
+      return `${day} ${at.slice(11, 16)}`.trim();
+    };
+    return [
+      h("h4", { class: "history-h" }, "Change history"),
+      h(
+        "ol",
+        { class: "history", "data-history": path },
+        ...versions.map((v) =>
+          h(
+            "li",
+            { "data-writer": v.writer, "data-change": v.change },
+            h("strong", {}, v.writerName),
+            ` ${v.change} it`,
+            v.viaAgent ? " (back-office agent)" : "",
+            h("span", { class: "history-when" }, ` · ${when(v.at)}`),
+          ),
+        ),
+      ),
+      h(
+        "p",
+        { class: "chips-note" },
+        "Pod saw: every write the pod server accepted in this session. Writes made before the demo started are not listed.",
+      ),
+    ];
+  }
+
+  private renderPanel(id: Exclude<LensView, "ledger" | "examiner">, panel: HTMLElement): void {
     const m = this.model;
     if (id === "step") {
       const recs =
@@ -1204,7 +1254,15 @@ export class SolidLens extends HTMLElement {
       h(
         "span",
         { class: "line" },
-        h("span", { class: "src" }, sentence.source === "pod" ? "Pod saw" : "App said"),
+        h(
+          "span",
+          { class: "src" },
+          sentence.source === "pod"
+            ? "Pod saw"
+            : RUNTIME_NOTES.has(sentence.kind)
+              ? "Runtime said"
+              : "App said",
+        ),
         ...sentence.parts.map((p) => (typeof p === "string" ? p : h("b", {}, p.b))),
       ),
       sentence.meta.length
@@ -1227,16 +1285,19 @@ export class SolidLens extends HTMLElement {
     }
   }
 
-  private openLedger(): void {
+  private openLedger(view: LedgerTab = "journey"): void {
     const href = this._model?.config.ledgerHref;
     if (href) {
-      window.location.assign(href);
+      const url = new URL(href, window.location.href);
+      if (view === "examiner") url.searchParams.set("view", "examiner");
+      window.location.assign(url.href);
       return;
     }
     const { el } = renderLedger(this.model, {
       ...this.ledgerOptions,
       steps: this.steps,
       headingLevel: 2,
+      view,
     });
     replace(this.els.dialogBody, el);
     if (!this.els.dialog.open) this.els.dialog.showModal();

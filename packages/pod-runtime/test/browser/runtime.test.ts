@@ -57,6 +57,7 @@ async function open(context: BrowserContext, query = ""): Promise<Page> {
 
 type Rt = typeof import("../../src/index.js");
 declare const rt: Rt;
+declare const acl: typeof import("../../src/acl.js");
 declare const events: Array<{
   source: string;
   kind?: string;
@@ -203,6 +204,65 @@ describe("pod runtime in Chrome", () => {
         ).length,
     );
     expect(handled).toBe(1);
+    await context.close();
+  });
+
+  it("notifies a subscribed agent of a change and closes a one-time grant after one read", async (ctx) => {
+    if (skipReason) return ctx.skip(skipReason);
+    const context = await (browser as Browser).newContext();
+    const wallet = await open(context, "?app=wallet");
+    await wallet.evaluate(() => rt.ready());
+    const text = { "content-type": "text/plain" };
+    expect((await call(wallet, "PUT", "/pods/alex/documents/addr.txt", "v1", text)).status).toBe(
+      201,
+    );
+    const granted = await wallet.evaluate(async () => {
+      const response = await acl.grantAccess({
+        fetch: rt.podFetch,
+        grant: { agent: rt.podUrl("bank", "/profile/card#me"), modes: ["Read"] },
+        owner: rt.podUrl("alex", "/profile/card#me"),
+        podRoot: rt.podUrl("alex", "/"),
+        resourceUrl: rt.podUrl("alex", "/documents/addr.txt"),
+      });
+      return response.status;
+    });
+    expect(granted).toBe(201);
+    // The bank subscribes from its page; its agent (in the agent worker) handles the notices.
+    const bank = await open(context);
+    const sub = await bank.evaluate(async () => rt.watch(rt.podUrl("alex", "/documents/addr.txt")));
+    expect(sub).toMatchObject({ app: "bank", path: "/documents/addr.txt" });
+    expect((await call(wallet, "PUT", "/pods/alex/documents/addr.txt", "v2", text)).status).toBe(
+      204,
+    );
+    await bank.waitForFunction(
+      () => events.some((e) => e.source === "pod" && e.path === "/outbox/changed.txt"),
+      undefined,
+      { timeout: 10_000 },
+    );
+    expect(await call(bank, "GET", "/pods/bank/outbox/changed.txt")).toEqual({
+      body: "Update 200 v2",
+      status: 200,
+    });
+    expect(
+      await bank.evaluate(() => events.some((e) => e.source === "app" && e.kind === "notified")),
+    ).toBe(true);
+
+    // One-time: the wallet marks the bank's read as one-time; the second read is refused.
+    await wallet.evaluate(() =>
+      rt.oneTimeGrant({
+        agent: rt.podUrl("bank", "/profile/card#me"),
+        resource: rt.podUrl("alex", "/documents/addr.txt"),
+      }),
+    );
+    expect((await call(bank, "GET", "/pods/alex/documents/addr.txt")).status).toBe(200);
+    expect((await call(bank, "GET", "/pods/alex/documents/addr.txt")).status).toBe(403);
+    await wallet.waitForFunction(
+      () =>
+        events.some((e) => e.source === "app" && e.kind === "grant-used") &&
+        events.some((e) => e.source === "pod" && e.kind === "revoke" && e.actor?.viaAgent),
+      undefined,
+      { timeout: 5000 },
+    );
     await context.close();
   });
 
