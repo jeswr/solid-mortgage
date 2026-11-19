@@ -204,6 +204,30 @@ export const ORGS: OrgRegistry = Object.freeze({
     themeColor: "#0E1A2B",
     title: "Swiftline Payouts",
   },
+  // Demo 3, business KYB (flows.md §1 and §3): the business register and LEI issuer.
+  registry: {
+    actsAs: "registry",
+    organisation: "Halyard LEI Services",
+    persona: { name: "Imani Clarke", role: "registry analyst" },
+    product: "Business Register",
+    role: "Business register and illustrative LEI issuer: identity, officers and ownership",
+    short: "Halyard",
+    slug: "registry",
+    themeColor: "#0E6E6E",
+    title: "Halyard LEI Services",
+  },
+  // Demo 3: a second bank's commercial credit desk.
+  "business-lender": {
+    actsAs: "business-lender",
+    organisation: "Brackenridge Bank",
+    persona: { name: "Tomas Whitfield", role: "credit officer" },
+    product: "Commercial Credit",
+    role: "Commercial lender: a business credit line, decided on proofs and credentials",
+    short: "Brackenridge",
+    slug: "business-lender",
+    themeColor: "#7A2335",
+    title: "Brackenridge Bank Commercial Credit",
+  },
 });
 
 /** The apps of demo 4 (flows.md §4): Maya's wallet, the three new apps and three mortgage apps. */
@@ -222,7 +246,9 @@ const SMALL_DOLLAR_APPS: readonly OrgSlug[] = [
  * mortgage video's "Thirteen applications.") is taken from its list here, never from `ORGS`.
  */
 export const DEMO_APPS = Object.freeze({
+  // The first thirteen apps are the mortgage's; later demos' apps follow (flows.md §1).
   mortgage: ORG_SLUGS.slice(0, 13),
   "moving-house": ["wallet", "state", "county", "bank", "insurer", "payroll", "servicer"],
   "small-dollar-lending": SMALL_DOLLAR_APPS,
+  "business-kyb": ["wallet", "registry", "bank", "business-lender"],
 } satisfies Record<string, readonly OrgSlug[]>);

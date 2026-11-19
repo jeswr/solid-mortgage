@@ -11,10 +11,12 @@ import {
 } from "../src/registry.js";
 
 describe("registry types", () => {
-  it("has the thirteen mortgage apps, the later demos' apps, and the front door", () => {
+  it("has the thirteen mortgage apps, the later demos' apps and the front door", () => {
+    expect(ORG_SLUGS).toHaveLength(19);
     expect(ORG_SLUGS.slice(0, 13)).toContain("servicer");
     expect(ORG_SLUGS.at(13)).toBe("state");
     expect(ORG_SLUGS).toEqual(expect.arrayContaining(["idv", "fintech-lender", "payout"]));
+    expect(ORG_SLUGS.slice(-2)).toEqual(["registry", "business-lender"]);
     expect(APP_SLUGS).toContain("welcome");
     expect(isOrgSlug("welcome")).toBe(false);
     expect(isOrgSlug("lender-desk")).toBe(true);

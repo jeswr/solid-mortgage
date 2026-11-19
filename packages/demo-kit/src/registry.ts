@@ -27,6 +27,8 @@ export const ORG_SLUGS = [
   "idv",
   "fintech-lender",
   "payout",
+  "registry",
+  "business-lender",
 ] as const;
 
 export type OrgSlug = (typeof ORG_SLUGS)[number];

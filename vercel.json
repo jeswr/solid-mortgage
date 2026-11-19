@@ -12,14 +12,14 @@
       "permanent": false
     },
     {
-      "source": "/:app(wallet|payroll|bank|bureau|lender|lender-desk|lender-b|aus|appraisal|title|insurer|county|servicer|state|idv|fintech-lender|payout|welcome|_template)",
+      "source": "/:app(wallet|payroll|bank|bureau|lender|lender-desk|lender-b|aus|appraisal|title|insurer|county|servicer|state|idv|fintech-lender|payout|registry|business-lender|welcome|_template)",
       "destination": "/:app/",
       "permanent": false
     }
   ],
   "rewrites": [
     {
-      "source": "/:app(wallet|payroll|bank|bureau|lender|lender-desk|lender-b|aus|appraisal|title|insurer|county|servicer|state|idv|fintech-lender|payout|welcome|_template)/:path((?!assets/).*)",
+      "source": "/:app(wallet|payroll|bank|bureau|lender|lender-desk|lender-b|aus|appraisal|title|insurer|county|servicer|state|idv|fintech-lender|payout|registry|business-lender|welcome|_template)/:path((?!assets/).*)",
       "destination": "/:app/index.html"
     }
   ],
@@ -64,7 +64,7 @@
       ]
     },
     {
-      "source": "/:app(wallet|payroll|bank|bureau|lender|lender-desk|lender-b|aus|appraisal|title|insurer|county|servicer|state|idv|fintech-lender|payout|welcome|_template)/assets/(.*)",
+      "source": "/:app(wallet|payroll|bank|bureau|lender|lender-desk|lender-b|aus|appraisal|title|insurer|county|servicer|state|idv|fintech-lender|payout|registry|business-lender|welcome|_template)/assets/(.*)",
       "headers": [
         {
           "key": "Cache-Control",

@@ -5,6 +5,13 @@ import "@fontsource/nunito-sans/400.css";
 import "@fontsource/nunito-sans/600.css";
 import "@fontsource/nunito-sans/800.css";
 import "./app.css";
+import {
+  BUSINESS_KYB_HOLDER,
+  businessKybLens,
+  businessKybTour,
+  isBusinessKybPage,
+  KYB_COMPLIANCE,
+} from "@mortgage/content/business-kyb/mount";
 import { mortgageSeed, trackTourContext } from "@mortgage/content/mortgage/browser";
 import { MORTGAGE_HOLDER, mortgageLens, mortgageTour } from "@mortgage/content/mortgage/mount";
 import {
@@ -31,12 +38,20 @@ import { linkTour } from "./tour-link.ts";
 
 // A page under moving/ belongs to the moving-house demo (src/sections/moving-house/).
 const movingHouse = isMovingHousePage(location.pathname, "wallet", location.search);
+// A page under kyb/ (or prove/kyb) belongs to the business KYB demo (src/sections/business-kyb/).
+const kyb = isBusinessKybPage(location.pathname, "wallet", location.search);
 
 // A page under lending/ belongs to the small-dollar lending demo (src/sections/small-dollar-lending/).
 const lending = isSmallDollarPage(location.pathname, "wallet", location.search);
 
 // The demo the wallet is mounted for, and the holder it shows first (src/holder.ts).
-const demo = lending ? smallDollarTour() : movingHouse ? movingHouseTour() : mortgageTour();
+const demo = lending
+  ? smallDollarTour()
+  : kyb
+    ? businessKybTour()
+    : movingHouse
+      ? movingHouseTour()
+      : mortgageTour();
 const holder = initialHolder(window.location.href, demo.holder);
 
 configure({ app: "wallet", holder, registry: ORGS, seed: mortgageSeed() });
@@ -49,8 +64,21 @@ const started = ready().then((info) => {
 
 void mountDemo({
   app: "wallet",
-  holder: lending ? SMALL_DOLLAR_HOLDER : movingHouse ? MOVING_HOUSE_HOLDER : MORTGAGE_HOLDER,
-  lens: lending ? smallDollarLens() : movingHouse ? movingHouseLens() : mortgageLens(),
+  holder: lending
+    ? SMALL_DOLLAR_HOLDER
+    : kyb
+      ? BUSINESS_KYB_HOLDER
+      : movingHouse
+        ? MOVING_HOUSE_HOLDER
+        : MORTGAGE_HOLDER,
+  lens: lending
+    ? smallDollarLens()
+    : kyb
+      ? businessKybLens()
+      : movingHouse
+        ? movingHouseLens()
+        : mortgageLens(),
+  ...(kyb ? { ledger: { compliance: [...KYB_COMPLIANCE] } } : {}),
   registry: ORGS,
   runtime: { onEvent, resetDemo, setTourContext: trackTourContext(setTourContext) },
   tour: demo,

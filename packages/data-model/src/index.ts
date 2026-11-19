@@ -1,4 +1,39 @@
 export {
+  BENEFICIAL_OWNER_THRESHOLD_BPS,
+  type BeneficialOwnershipClaimsInit,
+  BeneficialOwnershipCredential,
+  BeneficialOwnershipSubject,
+  buildCddDecisionRecord,
+  buildIllustrativeLei,
+  CDD_DECISIONS,
+  type CddDecision,
+  CddDecisionRecord,
+  type CddDecisionRecordInit,
+  EntityOwnershipNode,
+  ILLUSTRATIVE_LOU_PREFIX,
+  isIllustrativeLei,
+  isValidLei,
+  KYB_TERMS,
+  LEGAL_FORMS,
+  LegalEntityIdentifierNode,
+  type LegalForm,
+  leiCheckDigits,
+  MAX_DIRECT_OWNERS,
+  type OfficerAuthorisationClaimsInit,
+  OfficerAuthorisationCredential,
+  OfficerAuthorisationSubject,
+  type OfficerInit,
+  OfficerNode,
+  type OrganisationalIdentityClaimsInit,
+  OrganisationalIdentityCredential,
+  OrganisationalIdentitySubject,
+  type OwnerInit,
+  PersonNode,
+  writeBeneficialOwnershipClaims,
+  writeOfficerAuthorisationClaims,
+  writeOrganisationalIdentityClaims,
+} from "./kyb.js";
+export {
   ALEX_CLOSING_COST_ITEMS,
   type ClosingCostItem,
   closingCostTotalUsd,
@@ -82,7 +117,6 @@ export * from "./wrappers/lending.js";
 export { literalFromXsdDate, literalFromXsdDecimal } from "./wrappers/mappings.js";
 export * from "./wrappers/policies.js";
 export * from "./wrappers/records.js";
-
 export {
   AMORTIZATION_TYPE_IRIS,
   AppraisalCredential,
@@ -128,6 +162,7 @@ export {
 export {
   fitsZkBudget,
   ZK_ANCHORABLE_FIELD_IRIS,
+  ZK_COMMITMENT_FIELD_IRIS,
   ZK_FIELD_BUDGETS,
   type ZkFieldBudget,
   zkBudgetFor,

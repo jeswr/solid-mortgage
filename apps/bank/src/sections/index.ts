@@ -4,6 +4,7 @@
  * src/sections/<demo>/ and registers them here (build-plan.md §2).
  */
 import type { ComponentType } from "react";
+import { KybDueDiligence, KybOnboarding } from "./business-kyb/BusinessKyb.tsx";
 import { MovingAddressOnFile } from "./moving-house/MovingHouse.tsx";
 import { LendingCashFlow } from "./small-dollar-lending/CashFlow.tsx";
 import { LendingLoans } from "./small-dollar-lending/Loans.tsx";
@@ -35,5 +36,12 @@ export const sections: readonly AppSection[] = [
     demo: "small-dollar-lending",
     path: "lending/loans",
     title: "Personal loans",
+  },
+  { Component: KybOnboarding, demo: "business-kyb", path: "kyb", title: "Business onboarding" },
+  {
+    Component: KybDueDiligence,
+    demo: "business-kyb",
+    path: "kyb/due-diligence",
+    title: "Customer due diligence",
   },
 ];

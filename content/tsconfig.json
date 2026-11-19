@@ -10,7 +10,8 @@
     "vite.ts",
     "mortgage/**/*.ts",
     "moving-house/**/*.ts",
-    "small-dollar-lending/**/*.ts"
+    "small-dollar-lending/**/*.ts",
+    "business-kyb/**/*.ts"
   ],
   "exclude": ["dist", "node_modules", "test", "mortgage/**/*.test.ts"]
 }

@@ -52,6 +52,12 @@ export const CAPTURED_OPERAND_ENCODINGS: Readonly<Record<string, string>> = Obje
   "7000": "0x205e4dd0c2526b48ae2a94bfcdbbe30e19de4e8b85ce29ec0e7b35cba051b053",
   "8500": "0x205f3625597a2bc55792ed23304c85f878e5caa3d3d1decdd94fb477ef6ff6bc",
   "9999": "0x0ad5c5f2163a0400c5cd2a1a80fb43229689797c2b53ac9f93c6af28930e3c91",
+  // Business KYB owner shares in basis points (test/fixtures/operand-enc-kyb.json): Dana Reyes,
+  // Marcus Webb, Priya Nandakumar, Jordan Blake. Same sparq commit and toolchain.
+  "1200": "0x03ba3e08637a48f1960b41c88eb697ed6c6dedaeef8e362d4f6c9d0e35cf8f95",
+  "1800": "0x099b001db07d4133f375846dc5d36e64353e12191e23695c2c73b1a0b58eb734",
+  "2800": "0x1f2027ca53100ba894a3287f5e0ad692464203bd8be74e38590ed9b8a3aa7e74",
+  "4200": "0x0a0e87fb4532734a93ef0d3e31ea031d853b1688b98f7f1572b61ad057d37d96",
 });
 
 /** The captured encoding of `value`. Throws `NO_CAPTURED_ENCODING` for any other value. */
