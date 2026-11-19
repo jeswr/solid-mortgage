@@ -8,7 +8,7 @@
  * waits until the tour marks the step done from the pod's own events. Nothing on screen is
  * staged except the title and end cards (`video/<demo>/cards.html`).
  */
-import type { Locator } from "@playwright/test";
+import type { ElementHandle, Locator } from "@playwright/test";
 import type { Claim, Demo, DemoTotals, OrgLite, TourStepLite } from "./lib/demo.ts";
 import { type Director, sleep } from "./lib/director.ts";
 import type { PageGlobals } from "./lib/page-globals.ts";
@@ -90,6 +90,28 @@ async function until(ms: number, test: () => Promise<boolean>) {
   while (performance.now() < end) {
     if (await test().catch(() => false)) return true;
     await sleep(300);
+  }
+  return false;
+}
+
+/**
+ * Waits while a pressed button says it is busy: the apps relabel a button "Revoking…",
+ * "Signing…" and so on (or set aria-busy) until its handler finishes. Done once it is detached,
+ * its label no longer ends in an ellipsis, or its page has gone. A button that stays disabled
+ * once its work is done ("Issued") does not hold the recording.
+ */
+async function finished(button: ElementHandle, ms: number) {
+  const end = performance.now() + ms;
+  while (performance.now() < end) {
+    const idle = await button
+      .evaluate((el) => {
+        if (!el.isConnected) return true;
+        const label = (el.textContent ?? "").trim();
+        return !/(…|\.\.\.)$/.test(label) && el.getAttribute("aria-busy") !== "true";
+      })
+      .catch(() => true); // The page navigated: the handle's context is gone.
+    if (idle) return true;
+    await sleep(200);
   }
   return false;
 }
@@ -348,6 +370,10 @@ export const actions: Record<string, Action> = {
     if (!s.action) return c.d.warn(`step ${s.id} has no action`);
     await c.d.clearHighlight();
     await handOff(c, s);
+    const pressed = await targetOf(c, s)
+      .first()
+      .elementHandle({ timeout: 8000 })
+      .catch(() => null);
     if (
       !(await c.d.click(targetOf(c, s), `${s.action.label} [data-tour="${s.action.target}"]`, {
         settle: false,
@@ -362,6 +388,13 @@ export const actions: Record<string, Action> = {
       ),
     );
     if (!done) c.d.warn(`step ${s.id}: the tour never marked it done`);
+    // The tour marks a step done on its first matching write, and the app may still be writing:
+    // revoking writes the consent record (the done event) and then rewrites the access rules.
+    // Leaving the page now would abandon those writes, so wait while the pressed button still
+    // says it is busy ("Revoking…").
+    if (pressed && !(await finished(pressed, 30_000)))
+      console.log(`  · ${s.id}: "${s.action.label}" still busy after 30 s; carrying on`);
+    await pressed?.dispose().catch(() => {});
     await c.d.settle();
     if (c.state.chip) await chip(c, c.state.chip);
   },
@@ -387,7 +420,12 @@ export const actions: Record<string, Action> = {
       case "totals": {
         const where = await openLedger(c);
         await sleep(600);
-        await ringExact(c, where.locator(".totals"), "the ledger totals");
+        // The ledger's totals strip; a ledger opened on its examiner view has none, and the page
+        // shows the demo's own totals beside it (small-business-loan: `wallet-loan-totals`).
+        const strip = where.locator(".totals").filter({ visible: true });
+        const own = page(c).locator('[data-testid$="-totals"]').filter({ visible: true });
+        const shown = (await strip.count()) > 0 || !(await own.count()) ? strip : own;
+        await ringExact(c, shown, "the ledger totals");
         await checkTotals(c);
         return;
       }
