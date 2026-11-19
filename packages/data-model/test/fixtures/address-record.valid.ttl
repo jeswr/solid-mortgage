@@ -1,0 +1,23 @@
+@prefix schema: <https://schema.org/>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix locn: <http://www.w3.org/ns/locn#>.
+@prefix prov: <http://www.w3.org/ns/prov#>.
+@prefix odrl: <http://www.w3.org/ns/odrl/2/>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+<https://pods.example/pods/bank/customers/alex-address#it> a schema:PostalAddress, locn:Address;
+  schema:streetAddress "14 Larch Lane";
+  schema:addressLocality "Marlow";
+  schema:addressRegion "OH";
+  schema:postalCode "43004";
+  schema:addressCountry "US";
+  locn:fullAddress "14 Larch Lane, Marlow, OH 43004, US";
+  locn:locatorDesignator "14";
+  locn:thoroughfare "Larch Lane";
+  locn:postName "Marlow";
+  locn:postCode "43004";
+  schema:validFrom "2026-09-15"^^xsd:date;
+  dcterms:modified "2026-09-15T09:10:00Z"^^xsd:dateTime;
+  prov:wasDerivedFrom <https://pods.example/pods/alex/profile/address#it>;
+  prov:generatedAtTime "2026-09-15T09:10:00Z"^^xsd:dateTime;
+  odrl:hasPolicy <https://pods.example/pods/alex/policies/h3>.

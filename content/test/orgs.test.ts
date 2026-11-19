@@ -9,9 +9,9 @@ describe("organisation registry", () => {
     for (const slug of ORG_SLUGS) expect(ORGS[slug].slug).toBe(slug);
   });
 
-  it("covers fifteen fictional organisations across sixteen apps", () => {
+  it("covers sixteen fictional organisations across seventeen apps", () => {
     const organisations = new Set(ORG_SLUGS.map((slug) => ORGS[slug].organisation));
-    expect(organisations.size).toBe(15);
+    expect(organisations.size).toBe(16);
     expect(displayName(ORGS["lender-desk"])).toBe("Juniper Home Loans, Loan Desk");
   });
 
@@ -38,6 +38,11 @@ describe("the apps each demo uses", () => {
   it("the mortgage keeps its thirteen applications and twelve organisations", () => {
     expect(DEMO_APPS.mortgage).toHaveLength(13);
     expect(new Set(DEMO_APPS.mortgage.map((slug) => ORGS[slug].organisation)).size).toBe(12);
+  });
+
+  it("moving house: Alex's wallet and the six organisations that read the address", () => {
+    expect(DEMO_APPS["moving-house"]).toHaveLength(7);
+    for (const slug of DEMO_APPS["moving-house"]) expect(ORGS[slug]).toBeDefined();
   });
 
   it("small-dollar lending: Maya's wallet, three new apps and three mortgage apps", () => {

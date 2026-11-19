@@ -52,6 +52,9 @@ export const RESOURCE_TARGET_CLASSES = {
   "settlement-statement": MORT.SettlementStatement,
   "subject-property": "https://schema.org/SingleFamilyResidence",
   "title-commitment-credential": MORT.TitleCommitmentCredential,
+  // Moving-house demo (flows.md section 2).
+  "address-record": "http://www.w3.org/ns/locn#Address",
+  "data-product": "https://ekgf.github.io/dprod/DataProduct",
   // Small-dollar lending (flows.md section 4).
   "adverse-action-notice": MORT.AdverseActionNotice,
   "cash-flow-credential": MORT.CashFlowCredential,

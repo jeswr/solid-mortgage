@@ -8,6 +8,7 @@ import { Escrow } from "./screens/Escrow.tsx";
 import { Insurance } from "./screens/Insurance.tsx";
 import { Shell } from "./screens/Shell.tsx";
 import { Welcome } from "./screens/Welcome.tsx";
+import { sections } from "./sections/index.ts";
 
 /** The router base: Vite's `base` without its trailing slash ("/servicer"). */
 export const ROUTER_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -37,6 +38,9 @@ export function App({ hook }: { hook?: BaseLocationHook }) {
           <Route path="/account" component={Account} />
           <Route path="/escrow" component={Escrow} />
           <Route path="/insurance" component={Insurance} />
+          {sections.map((section) => (
+            <Route key={section.path} path={`/${section.path}`} component={section.Component} />
+          ))}
           <Route component={NotFound} />
         </Switch>
       </Router>

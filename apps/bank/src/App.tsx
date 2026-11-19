@@ -10,6 +10,7 @@ import { AccountDetail } from "./screens/AccountDetail.tsx";
 import { Accounts } from "./screens/Accounts.tsx";
 import { Connected } from "./screens/Connected.tsx";
 import { Share } from "./screens/Share.tsx";
+import { sections } from "./sections/index.ts";
 
 /** The router base: Vite's `base` without its trailing slash ("/bank"). */
 export const ROUTER_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -103,6 +104,9 @@ export function App({ hook }: { hook?: BaseLocationHook }) {
             </Route>
             <Route path="/share" component={Share} />
             <Route path="/connected" component={Connected} />
+            {sections.map((section) => (
+              <Route key={section.path} path={`/${section.path}`} component={section.Component} />
+            ))}
             <Route component={NotFound} />
           </Switch>
         </main>

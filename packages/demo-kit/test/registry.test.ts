@@ -13,6 +13,7 @@ import {
 describe("registry types", () => {
   it("has the thirteen mortgage apps, the later demos' apps, and the front door", () => {
     expect(ORG_SLUGS.slice(0, 13)).toContain("servicer");
+    expect(ORG_SLUGS.at(13)).toBe("state");
     expect(ORG_SLUGS).toEqual(expect.arrayContaining(["idv", "fintech-lender", "payout"]));
     expect(APP_SLUGS).toContain("welcome");
     expect(isOrgSlug("welcome")).toBe(false);

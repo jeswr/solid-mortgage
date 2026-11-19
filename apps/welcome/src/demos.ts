@@ -190,33 +190,57 @@ export const DEMOS: readonly Demo[] = [
       "One address in the pod, changed once: six organisations read it under standing grants, and the one that loses access sees the refusal.",
     sectors: ["Government"],
     durationSeconds: 180,
-    status: "coming",
+    status: "live",
     media: mediaFor("moving-house"),
+    // Step 1 of content/moving-house/tour.ts: the address record in Alex's wallet.
+    tour: { demo: "moving-house", app: "wallet", path: "moving", step: "address" },
     chapters: [
       {
         id: "intro",
         title: "One address",
-        transcript: [],
+        transcript: [
+          "Alex has just bought a house. Now six organisations need the new address: the state, the county, the bank, the insurer, the employer's payroll, and the mortgage servicer.",
+          "Usually that is six forms, and six copies of an address that slowly drift apart.",
+          "In Alex's pod there is one address. It is described the way a data team would describe a data product: one owner, a stated purpose, and a list of consumers.",
+        ],
       },
       {
         id: "change",
         title: "Change it once",
-        transcript: [],
+        transcript: [
+          "Alex changes it once. The proof of address is already in the pod: the deed recorded at closing.",
+          "Then Alex chooses who should know.",
+          "Six standing grants, all to the same record, each for one purpose: keeping the address current.",
+        ],
       },
       {
         id: "read",
         title: "Everyone reads the same record",
-        transcript: [],
+        transcript: [
+          "The state's driver services reads the address and its evidence.",
+          "It issues a new licence credential, and withdraws the old one.",
+          "The county treasurer reads it, so tax bills go to the right house.",
+          "The insurer reads it, and the car policy follows Alex to the new address.",
+          "The bank, the payroll provider and the servicer read the same record. Six readers, one copy, no forms.",
+        ],
       },
       {
         id: "revoke",
         title: "Taking one away",
-        transcript: [],
+        transcript: [
+          "Alex is closing the old bank account, so the bank no longer needs to know.",
+          "Its grant is withdrawn.",
+          "A week later Alex corrects the unit number. Five organisations pick up the correction. The bank asks, and the pod refuses.",
+          "The bank's copy is now out of date, and it knows it is. That is the difference between holding a copy and reading the source.",
+        ],
       },
       {
         id: "ledger",
         title: "One record, six organisations",
-        transcript: [],
+        transcript: [
+          "One record. Six organisations. Eleven reads. Every one of them is listed here with the grant that allowed it.",
+          "This is the same pod that carried Alex's mortgage. To build the next sector with us, join the EDMA Solid Community of Practice.",
+        ],
       },
     ],
   },

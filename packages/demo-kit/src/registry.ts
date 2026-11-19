@@ -6,8 +6,8 @@
 
 /**
  * The organisation apps: the thirteen of design.md §b.1 in that order, then the apps later demos
- * add (flows.md §1: `idv`, `fintech-lender` and `payout` from demo 4). Also the app directory
- * names.
+ * add (flows.md §1: `state` from demo 2; `idv`, `fintech-lender` and `payout` from demo 4). Also
+ * the app directory names.
  */
 export const ORG_SLUGS = [
   "wallet",
@@ -23,6 +23,7 @@ export const ORG_SLUGS = [
   "insurer",
   "county",
   "servicer",
+  "state",
   "idv",
   "fintech-lender",
   "payout",

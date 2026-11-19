@@ -161,6 +161,18 @@ export const ORGS: OrgRegistry = Object.freeze({
     themeColor: "#E9A100",
     title: "Marigold Loan Servicing",
   },
+  // Demo 2, moving house (flows.md §1 and §2): a state government services portal.
+  state: {
+    actsAs: "state",
+    organisation: "State Online Services",
+    persona: alex("resident account"),
+    product: "Driver Services",
+    role: "State government services: Driver Services and the Department of Revenue",
+    short: "State",
+    slug: "state",
+    themeColor: "#17375E",
+    title: "State Online Services",
+  },
   // Demo 4, small-dollar lending (flows.md §1 and §4). Maya Torres is the person signed in.
   idv: {
     actsAs: "idv",
@@ -211,5 +223,6 @@ const SMALL_DOLLAR_APPS: readonly OrgSlug[] = [
  */
 export const DEMO_APPS = Object.freeze({
   mortgage: ORG_SLUGS.slice(0, 13),
+  "moving-house": ["wallet", "state", "county", "bank", "insurer", "payroll", "servicer"],
   "small-dollar-lending": SMALL_DOLLAR_APPS,
 } satisfies Record<string, readonly OrgSlug[]>);
