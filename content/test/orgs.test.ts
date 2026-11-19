@@ -9,17 +9,17 @@ describe("organisation registry", () => {
     for (const slug of ORG_SLUGS) expect(ORGS[slug].slug).toBe(slug);
   });
 
-  it("covers twelve fictional organisations across thirteen apps", () => {
+  it("covers thirteen fictional organisations across fourteen apps", () => {
     const organisations = new Set(ORG_SLUGS.map((slug) => ORGS[slug].organisation));
-    expect(organisations.size).toBe(12);
+    expect(organisations.size).toBe(13);
     expect(displayName(ORGS["lender-desk"])).toBe("Juniper Home Loans, Loan Desk");
   });
 
   it("gives every app its own title and theme colour", () => {
     const titles = ORG_SLUGS.map((slug) => ORGS[slug].title);
     const colours = ORG_SLUGS.map((slug) => ORGS[slug].themeColor.toLowerCase());
-    expect(new Set(titles).size).toBe(13);
-    expect(new Set(colours).size).toBe(13);
+    expect(new Set(titles).size).toBe(14);
+    expect(new Set(colours).size).toBe(14);
     for (const colour of colours) expect(colour).toMatch(/^#[0-9a-f]{6}$/);
   });
 
@@ -28,6 +28,6 @@ describe("organisation registry", () => {
     expect(owners).toContain("alex");
     expect(owners).not.toContain("wallet");
     expect(owners).not.toContain("lender-desk");
-    expect(owners).toHaveLength(12); // Alex plus the eleven organisations other than Cairn
+    expect(owners).toHaveLength(13); // Alex plus the twelve organisations other than Cairn
   });
 });

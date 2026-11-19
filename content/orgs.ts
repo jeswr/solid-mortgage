@@ -154,4 +154,16 @@ export const ORGS: OrgRegistry = Object.freeze({
     themeColor: "#E9A100",
     title: "Marigold Loan Servicing",
   },
+  // Demo 2, moving house (flows.md §1 and §2): a state government services portal.
+  state: {
+    actsAs: "state",
+    organisation: "State Online Services",
+    persona: alex("resident account"),
+    product: "Driver Services",
+    role: "State government services: Driver Services and the Department of Revenue",
+    short: "State",
+    slug: "state",
+    themeColor: "#17375E",
+    title: "State Online Services",
+  },
 });

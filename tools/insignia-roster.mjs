@@ -24,6 +24,12 @@
 
 /** @type {Array<{ id: string; pattern: string; reason: string }>} */
 export const INSIGNIA_ROSTER = [
+  // flows.md §2: the moving-house demo is not the UK government's service of this name.
+  {
+    id: "tell-us-once",
+    pattern: "\\b[Tt]ell [Uu]s [Oo]nce\\b",
+    reason: "The name of a real UK government service (flows.md §2); the moving-house demo avoids it",
+  },
   // --- Regulatory insignia and product marks -------------------------------------------------
   {
     id: "fdic-mark",
