@@ -33,6 +33,7 @@ export const ORG_SLUGS = [
   "hospital",
   "pharmacy",
   "clinic",
+  "card-issuer",
 ] as const;
 
 export type OrgSlug = (typeof ORG_SLUGS)[number];

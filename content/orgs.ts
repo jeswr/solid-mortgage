@@ -261,6 +261,18 @@ export const ORGS: OrgRegistry = Object.freeze({
     themeColor: "#5B4F7C",
     title: "Larch Lane Family Practice",
   },
+  // Demo 8, reusable KYC (flows.md §8): the card issuer that relies on the bank's checks.
+  "card-issuer": {
+    actsAs: "card-issuer",
+    organisation: "Pennant Card",
+    persona: alex("card applicant"),
+    product: "Card application",
+    role: "Credit card issuer: relies on another institution's identity checks (reusable KYC)",
+    short: "Pennant",
+    slug: "card-issuer",
+    themeColor: "#B3122B",
+    title: "Pennant Card",
+  },
 });
 
 /** The apps of demo 4 (flows.md §4): Maya's wallet, the three new apps and three mortgage apps. */
@@ -288,6 +300,7 @@ const LATER_DEMO_APPS: readonly OrgSlug[] = [
   "hospital",
   "pharmacy",
   "clinic",
+  "card-issuer",
 ];
 
 export const DEMO_APPS = Object.freeze({
@@ -296,4 +309,5 @@ export const DEMO_APPS = Object.freeze({
   "small-dollar-lending": SMALL_DOLLAR_APPS,
   "business-kyb": ["wallet", "registry", "bank", "business-lender"],
   "medication-handover": ["wallet", "hospital", "pharmacy", "clinic"],
+  "reusable-kyc": ["wallet", "bank", "card-issuer"],
 } satisfies Record<string, readonly OrgSlug[]>);

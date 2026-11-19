@@ -9,6 +9,7 @@ import { trackTourContext } from "@mortgage/content/mortgage/browser";
 import { MORTGAGE_HOLDER, mortgageLens, mortgageTour } from "@mortgage/content/mortgage/mount";
 import { isMovingHousePage } from "@mortgage/content/moving-house/pages";
 import { ORGS } from "@mortgage/content/orgs";
+import { isReusableKycPage } from "@mortgage/content/reusable-kyc/pages";
 import { isSmallDollarPage } from "@mortgage/content/small-dollar-lending/pages";
 import { onEvent, resetDemo, setTourContext } from "@mortgage/pod-runtime";
 import { mountDemo } from "@mortgage/tour/mount";
@@ -24,6 +25,8 @@ const movingHouse = isMovingHousePage(location.pathname, "bank", location.search
 const lending = isSmallDollarPage(location.pathname, "bank", location.search);
 // A page under kyb/ belongs to the business KYB demo (src/sections/business-kyb/).
 const kyb = isBusinessKybPage(location.pathname, "bank", location.search);
+// A page under kyc/ belongs to the reusable-KYC demo (src/sections/reusable-kyc/).
+const reusableKyc = isReusableKycPage(location.pathname, "bank", location.search);
 const root = document.getElementById("root");
 if (root === null) throw new Error("index.html is missing #root");
 const view = createRoot(root);
@@ -34,9 +37,9 @@ view.render(
 );
 
 /**
- * The demo this page belongs to. The moving-house, business KYB and small-dollar lending demos
- * load only on their own pages, so none adds to the first load of the bank's mortgage screens
- * (acceptance test 15).
+ * The demo this page belongs to. The moving-house, business KYB, reusable-KYC and small-dollar
+ * lending demos load only on their own pages, so none adds to the first load of the bank's
+ * mortgage screens (acceptance test 15).
  */
 async function demoOptions() {
   if (kyb) {
@@ -47,6 +50,10 @@ async function demoOptions() {
       lens: k.businessKybLens(),
       tour: k.businessKybTour(),
     };
+  }
+  if (reusableKyc) {
+    const r = await import("@mortgage/content/reusable-kyc/mount");
+    return { holder: r.REUSABLE_KYC_HOLDER, lens: r.reusableKycLens(), tour: r.reusableKycTour() };
   }
   if (lending) {
     const l = await import("@mortgage/content/small-dollar-lending/mount");

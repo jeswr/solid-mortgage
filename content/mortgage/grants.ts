@@ -44,6 +44,7 @@ import {
   put,
   putResource,
   readDataset,
+  statusOf,
   type World,
   webid,
 } from "./world.js";
@@ -365,12 +366,29 @@ function targetsOf(records: readonly GrantRecord[]): string[] {
   return [...targets].sort();
 }
 
-function directRules(records: readonly GrantRecord[], target: string): Rule[] {
+/**
+ * Whether a one-time permission (`maxUses`) still belongs in an ACL document. The pod runtime
+ * closes a one-time grant after its first use by removing the rule, while the grant stays active
+ * on record until the wallet records the use. So a one-time rule is written only by the approval
+ * that creates it (`fresh`), and kept afterwards only while the document still holds it: a sync
+ * never puts back a rule the runtime removed.
+ */
+type KeepOneTime = (policy: string, agent: string, target: string) => boolean;
+
+const NO_ONE_TIME: KeepOneTime = () => false;
+
+function directRules(records: readonly GrantRecord[], target: string, keep: KeepOneTime): Rule[] {
   const rules: Rule[] = [];
   for (const record of records) {
     if (record.state !== "active") continue;
     for (const permission of record.agreement.permissions) {
       if (!permission.targetIris.has(target)) continue;
+      if (
+        permission.maxUses !== undefined &&
+        !keep(record.policy, permission.assigneeIri, target)
+      ) {
+        continue;
+      }
       const modes = permission.modes;
       rules.push({
         agent: permission.assigneeIri,
@@ -392,6 +410,7 @@ function rulesFor(
   records: readonly GrantRecord[],
   targets: readonly string[],
   target: string,
+  keep: KeepOneTime = NO_ONE_TIME,
 ): Rule[] {
   const ancestor = targets
     .filter((other) => other !== target && isContainer(other) && target.startsWith(other))
@@ -399,8 +418,36 @@ function rulesFor(
   const inherited =
     ancestor === undefined
       ? []
-      : rulesFor(records, targets, ancestor).filter((rule) => rule.inheritable);
-  return [...inherited, ...directRules(records, target)];
+      : rulesFor(records, targets, ancestor, keep).filter((rule) => rule.inheritable);
+  return [...inherited, ...directRules(records, target, keep)];
+}
+
+/**
+ * The one-time rules each target's ACL document holds now (`agent target` keys), read for the
+ * targets of active one-time permissions only.
+ */
+async function oneTimeRulesInForce(
+  world: World,
+  records: readonly GrantRecord[],
+): Promise<Set<string>> {
+  const targets = new Set<string>();
+  for (const record of records) {
+    if (record.state !== "active") continue;
+    for (const permission of record.agreement.permissions) {
+      if (permission.maxUses === undefined) continue;
+      for (const target of permission.targetIris) targets.add(target);
+    }
+  }
+  const alex = world.fetchAs("alex");
+  const held = new Set<string>();
+  for (const target of targets) {
+    const aclUrl = `${target}.acl`;
+    if ((await statusOf(alex, aclUrl)) !== 200) continue;
+    for (const rule of await readAcl(alex, aclUrl)) {
+      for (const agent of rule.agent) held.add(`${agent} ${target}`);
+    }
+  }
+  return held;
 }
 
 /** A stable description of a rule set, for telling whether a document has to be rewritten. */
@@ -420,15 +467,20 @@ export async function syncAcls(
   world: World,
   before: readonly GrantRecord[],
   after: readonly GrantRecord[],
+  /** Policies approved by this change: their one-time rules are written (see `KeepOneTime`). */
+  fresh: readonly string[] = [],
 ): Promise<string[]> {
   const alex = world.fetchAs("alex");
   const beforeTargets = targetsOf(before);
   const afterTargets = targetsOf(after);
+  const held = await oneTimeRulesInForce(world, after);
+  const keep: KeepOneTime = (policy, agent, target) =>
+    fresh.includes(policy) || held.has(`${agent} ${target}`);
   const written: string[] = [];
   for (const target of afterTargets) {
-    const rules = rulesFor(after, afterTargets, target);
+    const rules = rulesFor(after, afterTargets, target, keep);
     const had = beforeTargets.includes(target);
-    if (had && fingerprint(rulesFor(before, beforeTargets, target)) === fingerprint(rules))
+    if (had && fingerprint(rulesFor(before, beforeTargets, target, keep)) === fingerprint(rules))
       continue;
     const aclUrl = `${target}.acl`;
     await put(
@@ -509,14 +561,54 @@ export interface ApprovalResult {
 }
 
 /**
+ * Registers a one-time grant with the pod runtime, which closes it after the agent's first read
+ * (`oneTimeGrant` / `makeGrantOneTime` in `@mortgage/pod-runtime`). Content does not depend on the
+ * runtime, so the caller passes it in.
+ */
+export type RegisterOneTime = (input: { resource: string; agent: string }) => Promise<unknown>;
+
+export interface ApproveOptions {
+  /**
+   * Required to approve a permission limited to one use (`odrl:count`). Without it such a request
+   * is refused: WAC cannot say "once", so the grant must not be written unless the runtime will
+   * close it.
+   */
+  readonly registerOneTime?: RegisterOneTime;
+}
+
+/** Whether a request carries a permission limited in uses (approved on a one-time screen). */
+export function isLimitedUse(request: Pick<AccessRequest, "permissions">): boolean {
+  return request.permissions.some((permission) => permission.maxUses !== undefined);
+}
+
+/**
+ * Before any write: a one-time permission needs the runtime's one-time grant, and only "once" is
+ * supported (the runtime closes a grant after the first read). Fails closed.
+ */
+function assertOneTimeSupported(request: AccessRequest, options: ApproveOptions): void {
+  for (const permission of request.permissions) {
+    const uses = permission.maxUses;
+    if (uses === undefined) continue;
+    if (uses !== 1) throw new Error(`the wallet grants one-time access only, not ${uses} uses`);
+    if (options.registerOneTime === undefined) {
+      throw new Error(
+        `request ${request.grantCode} is limited to one use: it is answered on the one-time consent screen`,
+      );
+    }
+  }
+}
+
+/**
  * Alex approves a request in the wallet: the agreement, the consent record and the ACL change
  * are written together. The agreement repeats the request's permissions exactly; the wallet adds
- * nothing and drops nothing.
+ * nothing and drops nothing. A permission limited to one use is registered with the runtime
+ * before the ACL is written (`options.registerOneTime`), and refused without it.
  */
 export async function approveRequest(
   world: World,
   requestUrl: string,
   time = "09:05",
+  options: ApproveOptions = {},
 ): Promise<ApprovalResult> {
   const alex = world.fetchAs("alex");
   const request = new AccessRequest(requestUrl, await readDataset(alex, requestUrl), DataFactory);
@@ -524,6 +616,7 @@ export async function approveRequest(
     throw new Error(`request ${requestUrl} is not addressed to Alex`);
   }
   assertGrantable(world, request);
+  assertOneTimeSupported(request, options);
   const code = request.grantCode;
   const policy = alexUrl(world, `policies/${slugOf(code)}`);
   const before = await grantRecords(world);
@@ -552,8 +645,18 @@ export async function approveRequest(
     "given",
     time,
   );
+  // The runtime must know the grant is one-time before the pod lets the agent read.
+  const register = options.registerOneTime;
+  if (register !== undefined) {
+    for (const permission of request.permissions) {
+      if (permission.maxUses === undefined) continue;
+      for (const resource of permission.targetIris) {
+        await register({ agent: permission.assigneeIri, resource });
+      }
+    }
+  }
   const after = await grantRecords(world);
-  return { acls: await syncAcls(world, before, after), code, consent, policy };
+  return { acls: await syncAcls(world, before, after, [policy]), code, consent, policy };
 }
 
 export async function endGrant(

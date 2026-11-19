@@ -1,0 +1,21 @@
+/* AUTHORED-BY Claude Opus 5.5
+ * Pennant Card's own tokens: bold red and white, one long form on a white page, rounded fields,
+ * Manrope (self-hosted, SIL Open Font License). Original values, no imagery (design.md §b.2). */
+:root {
+  --pn-red: #b3122b;
+  --pn-red-deep: #8c0d21;
+  --pn-red-soft: #fbe9ec;
+  --pn-white: #ffffff;
+  --pn-canvas: #ffffff;
+  --pn-mist: #f6f4f4;
+  --pn-ink: #1c1517;
+  --pn-muted: #5d5356;
+  --pn-line: #d9cfd1;
+  --pn-ok: #1b6b3a;
+  --pn-ok-soft: #e7f4ec;
+  --pn-focus: #1d4ed8;
+  --pn-font: "Manrope", system-ui, sans-serif;
+  --pn-radius: 14px;
+  --pn-field-radius: 10px;
+  --pn-width: 44rem;
+}

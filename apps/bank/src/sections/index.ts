@@ -35,6 +35,9 @@ const LendingCashFlow = lazySection(
 const LendingLoans = lazySection(
   async () => (await import("./small-dollar-lending/Loans.tsx")).LendingLoans,
 );
+const YourIdentity = lazySection(
+  async () => (await import("./reusable-kyc/YourIdentity.tsx")).YourIdentity,
+);
 
 export interface AppSection {
   /** The demo that owns this section, e.g. "moving-house". */
@@ -71,4 +74,5 @@ export const sections: readonly AppSection[] = [
     path: "kyb/due-diligence",
     title: "Customer due diligence",
   },
+  { Component: YourIdentity, demo: "reusable-kyc", path: "kyc", title: "Your identity" },
 ];
