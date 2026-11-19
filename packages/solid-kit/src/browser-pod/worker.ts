@@ -2,7 +2,7 @@
  * Worker-side surface of the Mode-1 in-browser pod runtime
  * (`@mortgage/solid-kit/browser-pod/worker`, sm-23): the sparq-lws-wasm pod host and the
  * persona seed adapter. ONLY import this from a worker entry file — it pulls the wasm glue
- * (`@jeswr/solid-server/wasm`, the `--target web` artifact) which must never land in the
+ * (`@sparq-org/solid-server/wasm`, the `--target web` artifact) which must never land in the
  * page bundle. Browser-safe: no `node:` imports anywhere beneath it.
  */
 

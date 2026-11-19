@@ -4,8 +4,8 @@
  * server implementation (e.g. back to CSS, or to a future Fastify-mounted sparq host per
  * sparq-org/sparq#2323) must only ever touch this module.
  *
- * Default implementation: sparq's `@jeswr/solid-server` (the `sparq-lws-wasm` WASM
- * distribution, vendored — see vendor/PROVENANCE.md), one in-memory pod instance per
+ * Default implementation: sparq's `@sparq-org/solid-server` (the `sparq-lws-wasm` WASM
+ * distribution, from npm), one in-memory pod instance per
  * identity on dynamically acquired ports.
  *
  * Two modes:
@@ -19,7 +19,7 @@
  */
 import { createHash, randomUUID } from "node:crypto";
 import { createServer, type Server } from "node:http";
-import { startSolidServer as startSparqPod } from "@jeswr/solid-server";
+import { type SolidHttpServer, startSolidServer as startSparqPod } from "@sparq-org/solid-server";
 import getPort from "get-port";
 import { base64url, calculateJwkThumbprint, exportJWK, generateKeyPair, SignJWT } from "jose";
 import { type ResourceFixture, seedPod } from "./seed.js";
@@ -85,7 +85,7 @@ function isErrnoException(error: unknown): error is NodeJS.ErrnoException {
 async function startPodOnFreePort(options: {
   ownerWebid: (baseUrl: string) => string;
   oidc: boolean;
-}): Promise<{ pod: Awaited<ReturnType<typeof startSparqPod>>; baseUrl: string }> {
+}): Promise<{ pod: SolidHttpServer; baseUrl: string }> {
   let lastError: unknown;
   for (let attempt = 0; attempt < PORT_RETRIES; attempt += 1) {
     const port = await getPort();
@@ -237,7 +237,7 @@ async function provisionOidcAccount(webid?: string): Promise<SolidTestAccount> {
     );
   }
   const identity = await createDevIssuerIdentity();
-  let pod: Awaited<ReturnType<typeof startSparqPod>>;
+  let pod: SolidHttpServer;
   let baseUrl: string;
   try {
     ({ pod, baseUrl } = await startPodOnFreePort({
@@ -277,7 +277,7 @@ async function provisionOidcAccount(webid?: string): Promise<SolidTestAccount> {
   };
 }
 
-/** The sparq WASM server implementation (`@jeswr/solid-server`, vendored). */
+/** The sparq WASM server implementation (`@sparq-org/solid-server` from npm). */
 export const sparqWasmServer: SolidServerImplementation = {
   name: "sparq-wasm",
   async start(options) {

@@ -92,7 +92,7 @@ export function GET(request: Request): Response {
 
 ## Mode-1 in-browser pod (decision 0011)
 
-Each visitor gets a per-browser WRITABLE borrower pod: the vendored `--target web`
+Each visitor gets a per-browser WRITABLE borrower pod: the npm package's `--target web`
 sparq-lws-wasm `SolidServer` runs in a SharedWorker (one pod for all same-origin tabs) with
 a dedicated-worker fallback (per-tab), seeded from the sm-20 persona fixtures on load and
 reseeded after a wasm trap (the trapping request answers 503; the next one is served by a
@@ -124,7 +124,7 @@ pod.session.simulated;                       // literally true — render the di
 await pod.session.authFetch("/mortgage/profile"); // answered in-worker by the wasm pod
 ```
 
-The wasm binary ships inside the vendored tarball (`vendor/PROVENANCE.md` — the same
+The wasm binary ships inside `@sparq-org/solid-server@0.1.8` from npm (the same
 `--target web` artifact the Node harness wraps, ~0.75 MB gzipped). The worker host loads it
 via the glue's own `new URL("sparq_lws_wasm_bg.wasm", import.meta.url)` resolution, which
 bundlers emit as an asset; pass `wasm: <InitInput>` to `startBrowserPodHost` to override
