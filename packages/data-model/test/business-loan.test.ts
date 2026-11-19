@@ -65,7 +65,8 @@ function taxCredential(): TaxComplianceCredential {
   return credential;
 }
 
-describe("tax compliance credential", () => {
+// SHACL validation pays comunica's cold start on its first run (over 5 s on a loaded machine).
+describe("tax compliance credential", { timeout: 60_000 }, () => {
   test("writes, validates and reads back the subject", async () => {
     const credential = taxCredential();
     writeTaxComplianceClaims(credential.credentialSubject, {
@@ -108,7 +109,7 @@ describe("tax compliance credential", () => {
   });
 });
 
-describe("cash flow record", () => {
+describe("cash flow record", { timeout: 60_000 }, () => {
   const init = {
     accountLast4: "2210",
     bank: BANK,
@@ -157,7 +158,7 @@ describe("cash flow record", () => {
   });
 });
 
-describe("business loan terms", () => {
+describe("business loan terms", { timeout: 60_000 }, () => {
   const init = {
     borrower: SUBJECT,
     covenants: [
@@ -208,7 +209,7 @@ describe("business loan terms", () => {
   });
 });
 
-describe("cash flow assessment", () => {
+describe("cash flow assessment", { timeout: 60_000 }, () => {
   test("round-trips sorted sources and the outcome", async () => {
     const iri = "https://pods.example/business-lender/credit/northwind/assessment";
     const turtle = await resourceToTurtle(
@@ -248,7 +249,7 @@ describe("cash flow assessment", () => {
   });
 });
 
-describe("a standing grant's ODRL timeInterval", () => {
+describe("a standing grant's ODRL timeInterval", { timeout: 60_000 }, () => {
   const init = {
     assignee: LENDER,
     assigner: SUBJECT,
