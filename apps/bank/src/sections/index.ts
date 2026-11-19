@@ -5,6 +5,7 @@
  */
 import type { ComponentType } from "react";
 import { MovingAddressOnFile } from "./moving-house/MovingHouse.tsx";
+import { YourIdentity } from "./reusable-kyc/YourIdentity.tsx";
 
 export interface AppSection {
   /** The demo that owns this section, e.g. "moving-house". */
@@ -22,4 +23,5 @@ export const sections: readonly AppSection[] = [
     path: "moving/address",
     title: "Address on file",
   },
+  { Component: YourIdentity, demo: "reusable-kyc", path: "kyc", title: "Your identity" },
 ];

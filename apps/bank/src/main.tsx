@@ -13,6 +13,12 @@ import {
   movingHouseTour,
 } from "@mortgage/content/moving-house/mount";
 import { ORGS } from "@mortgage/content/orgs";
+import {
+  isReusableKycPage,
+  REUSABLE_KYC_HOLDER,
+  reusableKycLens,
+  reusableKycTour,
+} from "@mortgage/content/reusable-kyc/mount";
 import { onEvent, resetDemo, setTourContext } from "@mortgage/pod-runtime";
 import { mountDemo } from "@mortgage/tour/mount";
 import { StrictMode } from "react";
@@ -23,6 +29,13 @@ import { PodsProvider, startPods } from "./pods.tsx";
 const APP = "bank";
 // A page under moving/ belongs to the moving-house demo (src/sections/moving-house/).
 const movingHouse = isMovingHousePage(location.pathname, "bank", location.search);
+// A page under kyc/ belongs to the reusable-KYC demo (src/sections/reusable-kyc/).
+const reusableKyc = isReusableKycPage(location.pathname, "bank", location.search);
+const demo = reusableKyc
+  ? { holder: REUSABLE_KYC_HOLDER, lens: reusableKycLens(), tour: reusableKycTour() }
+  : movingHouse
+    ? { holder: MOVING_HOUSE_HOLDER, lens: movingHouseLens(), tour: movingHouseTour() }
+    : { holder: MORTGAGE_HOLDER, lens: mortgageLens(), tour: mortgageTour() };
 const root = document.getElementById("root");
 if (root === null) throw new Error("index.html is missing #root");
 const view = createRoot(root);
@@ -43,11 +56,9 @@ startPods(APP).then(
     );
     void mountDemo({
       app: APP,
-      holder: movingHouse ? MOVING_HOUSE_HOLDER : MORTGAGE_HOLDER,
-      lens: movingHouse ? movingHouseLens() : mortgageLens(),
+      ...demo,
       registry: ORGS,
       runtime: { onEvent, resetDemo, setTourContext: trackTourContext(setTourContext) },
-      tour: movingHouse ? movingHouseTour() : mortgageTour(),
     });
   },
   (error: unknown) => console.error("bank: the pods did not start", error),
