@@ -174,7 +174,8 @@ test("honesty page reports the runtime mode and the fictional organisations", as
     "data-runtime-mode",
     "checking",
   );
-  await expect(page.getByRole("table").getByRole("row")).toHaveCount(14);
+  // A header row, then the fourteen organisation apps (the state app is moving house's).
+  await expect(page.getByRole("table").getByRole("row")).toHaveCount(15);
 });
 
 test("the old ledger path redirects to the journey ledger", async ({ page }) => {
