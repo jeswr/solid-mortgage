@@ -229,8 +229,11 @@ test("the self-hosted font loads from the app's own origin", async ({ page }) =>
 
 test("keyboard: the skip link is first and moves focus to the content", async ({ page }) => {
   await page.goto("./");
+  // The page renders on the client, after the load event: press Tab only once it is there.
+  const skip = page.getByRole("link", { name: "Skip to content" });
+  await expect(skip).toBeAttached();
   await page.keyboard.press("Tab");
-  await expect(page.getByRole("link", { name: "Skip to content" })).toBeFocused();
+  await expect(skip).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(page.locator("main")).toBeFocused();
 });

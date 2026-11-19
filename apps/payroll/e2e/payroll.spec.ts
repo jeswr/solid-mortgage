@@ -48,6 +48,7 @@ test("the back office answers a refresh request: new credential, old one revoked
   await expect(page.getByRole("heading", { name: "Sent to your pod" })).toBeVisible({
     timeout: 60_000,
   });
+  await expect(page.locator('[data-tour="payroll-sign-send"]')).toHaveText("Already in your pod");
   const before = await asOwner(page, "alex", "alex/credentials/employment-income");
 
   // Juniper asks for a refresh, as the lender desk does at step 16.
@@ -99,8 +100,11 @@ test("the back office answers a refresh request: new credential, old one revoked
   const after = await asOwner(page, "alex", "alex/credentials/employment-income");
   expect(after.status).toBe(200);
   expect(after.body).not.toBe(before.body);
-  const delivered = await asOwner(page, "lender", "lender/inbox/");
-  expect(delivered.body).toMatch(/refreshdelivery/i);
+  // "Answered automatically" shows once the back office claims the request, and the revoked
+  // entry before the reply is sent: the delivery to Juniper's inbox is the agent's last write.
+  await expect
+    .poll(async () => (await asOwner(page, "lender", "lender/inbox/")).body, { timeout: 30_000 })
+    .toMatch(/refreshdelivery/i);
 });
 
 for (const path of ["", "pay", "share", "verifications", "no-such-page"]) {

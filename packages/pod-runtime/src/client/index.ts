@@ -174,9 +174,14 @@ async function chooseTransport(current: RuntimeConfig): Promise<Transport> {
   return workerTransport(swUrl, HOST_WORKER_NAME);
 }
 
-async function startAgents(transport: Transport, current: RuntimeConfig): Promise<void> {
+async function startAgents(
+  transport: Transport,
+  current: RuntimeConfig,
+  listed: Promise<string[]> | undefined,
+): Promise<void> {
   if (current.agents === false) return;
-  const agents = current.agents === undefined ? await siteAgents() : [...current.agents];
+  const agents =
+    current.agents === undefined ? await (listed ?? siteAgents()) : [...current.agents];
   if (agents.length === 0) return;
   const map = identities(current.registry);
   if (transport.mode === "worker") {
@@ -199,6 +204,8 @@ export function ready(): Promise<RuntimeInfo> {
   started ??= (async () => {
     const current = requireConfig();
     ensureChannel();
+    // The agent list (`/site.json`) is read while the service worker starts, not after the seed.
+    const listed = current.agents === undefined ? siteAgents() : undefined;
     const transport = await chooseTransport(current);
     transport.subscribe?.(dispatchHostMessage);
     const owners = podOwners(current.registry);
@@ -226,7 +233,7 @@ export function ready(): Promise<RuntimeInfo> {
       await transport.control({ requests: [...requests], type: "seed" });
       info = { ...info, seeded: true };
     }
-    await startAgents(transport, current);
+    await startAgents(transport, current, listed);
     return { info, transport };
   })();
   started.catch(() => {

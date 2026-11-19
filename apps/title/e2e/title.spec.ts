@@ -97,6 +97,10 @@ test("step 18: the closing is signed (simulated) and Sextant cannot read back wh
   await sign.click();
   await expect(page.getByText("Signed (simulated)").first()).toBeVisible({ timeout: 60_000 });
   await expect(sign).toBeDisabled();
+  // "Signed (simulated)" follows the closing instructions, the run's first write; the signed
+  // copies and the settlement statement come after. "Signed" replaces "Signing…" when it is over.
+  await expect(sign).toHaveText("Signed", { timeout: 60_000 });
+  await expect(page.getByRole("main").getByRole("alert")).toHaveCount(0);
 
   for (const path of [
     "settlement-statement",
