@@ -13,6 +13,7 @@ import {
   OUTSIDE_LENS,
   readAs,
 } from "../../../test-support/e2e.ts";
+import { keepToOrigin } from "../../../test-support/origin-guard.ts";
 import { act, gotoStep, startTour } from "./demo.ts";
 
 test.setTimeout(900_000);
@@ -34,8 +35,12 @@ const metric = (page: Page, key: string) =>
   page.locator(`[data-metric="small-dollar-lending.${key}"]`);
 
 test("the small-dollar lending tour, all twelve steps, with the pods read back", async ({
+  baseURL,
+  context,
   page,
 }) => {
+  // Nothing may leave the site, Aztec's CRS hosts included: the prover loads the site's pinned CRS.
+  const guard = await keepToOrigin(context, new URL(baseURL as string).origin);
   // 1. An empty pod.
   await startTour(page);
   await expect(page.getByTestId("sd-drawers")).toBeVisible({ timeout: 90_000 });
@@ -82,6 +87,9 @@ test("the small-dollar lending tour, all twelve steps, with the pods read back",
   await act(page, "prove");
   await expect(page.getByTestId("sd-proved-fintech-lender")).toBeVisible();
   await expect(page.getByTestId("sd-proved-bank")).toBeVisible();
+  expect(guard.cdn).toEqual([]);
+  expect(guard.outside).toEqual([]);
+  expect(guard.crs.some((path) => path.startsWith("/crs/bn254-g1-"))).toBe(true);
   const quote = await readAs(page, "fintech-lender", "fintech-lender/quotes/maya");
   expect(quote.status).toBe(200);
   expect(quote.body).not.toContain("2860");

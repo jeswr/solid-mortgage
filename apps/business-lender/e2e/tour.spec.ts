@@ -14,6 +14,7 @@ import {
   OUTSIDE_LENS,
   readAs,
 } from "../../../test-support/e2e.ts";
+import { keepToOrigin } from "../../../test-support/origin-guard.ts";
 import { act, gotoStep, startTour, stepDone } from "./demo.ts";
 
 test.setTimeout(900_000);
@@ -25,7 +26,13 @@ async function checkPage(page: Page): Promise<void> {
 
 const card = (who: string) => `/pods/${who}/profile/card#me`;
 
-test("the business KYB tour, all twelve steps, with the pods read back", async ({ page }) => {
+test("the business KYB tour, all twelve steps, with the pods read back", async ({
+  baseURL,
+  context,
+  page,
+}) => {
+  // Nothing may leave the site, Aztec's CRS hosts included: the prover loads the site's pinned CRS.
+  const guard = await keepToOrigin(context, new URL(baseURL as string).origin);
   // 1. Northwind's pod, empty.
   await startTour(page);
   await expect(page.getByText(/credentials drawer is empty/)).toBeVisible({ timeout: 90_000 });
@@ -86,6 +93,9 @@ test("the business KYB tour, all twelve steps, with the pods read back", async (
   const ms = Number(await live.getAttribute("data-ms"));
   expect(ms).toBeGreaterThan(0);
   console.log(`business KYB: proved live in the browser in ${ms} ms`);
+  expect(guard.cdn).toEqual([]);
+  expect(guard.outside).toEqual([]);
+  expect(guard.crs.some((path) => path.startsWith("/crs/bn254-g1-"))).toBe(true);
   await expect(page.getByTestId("kyb-pre-decision")).toContainText(
     "Jordan Blake and Priya Nandakumar",
   );

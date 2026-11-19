@@ -7,6 +7,7 @@
  */
 import AxeBuilder from "@axe-core/playwright";
 import { type BrowserContext, expect, type Page, test } from "@playwright/test";
+import { keepToOrigin } from "../../../test-support/origin-guard.ts";
 
 type Owner =
   | "alex"
@@ -155,10 +156,13 @@ test("home reads the drawers from the pod", async ({ context, page }) => {
 });
 
 test("step 5: prove to two lenders, cross-origin isolated, no grant given", async ({
+  baseURL,
   context,
   page,
 }) => {
   test.setTimeout(240_000);
+  // Nothing may leave the site, Aztec's CRS hosts included: the prover loads the site's pinned CRS.
+  const guard = await keepToOrigin(context, new URL(baseURL as string).origin);
   const harness = await openHarness(context);
   await harness.beats(["share-employment", "share-credit-summary"]);
   await page.goto("prove");
@@ -169,6 +173,9 @@ test("step 5: prove to two lenders, cross-origin isolated, no grant given", asyn
   // Seconds with the prover's threads. The prover's workers load from /wallet/assets/, which
   // must carry Cross-Origin-Embedder-Policy too, or the isolated page cannot start them.
   await expect(page.getByText("Checked: yes")).toHaveCount(2, { timeout: 180_000 });
+  expect(guard.cdn).toEqual([]);
+  expect(guard.outside).toEqual([]);
+  expect(guard.crs.some((path) => path.startsWith("/crs/bn254-g1-"))).toBe(true);
   // Each lender wrote its own result; each challenge was used up; neither can read Alex's data.
   for (const lender of ["lender-b", "lender"] as const) {
     expect(await harness.status(lender, lender, "quotes/prequalification")).toBe(200);
