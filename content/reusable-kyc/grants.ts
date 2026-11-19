@@ -117,8 +117,9 @@ export async function readOneTimeRequest(
 
 /**
  * Alex approves in the wallet. The request must be exactly Y1's shape (one read of the
- * attestation, once, by Pennant). The one-time registration comes first, so the rule is
- * one-time from the moment it exists; then the agreement, the consent record and the ACL.
+ * attestation, once, by Pennant). `approveRequest` writes the agreement and the consent record,
+ * registers the one-time grant with the runtime, and only then writes the ACL rule, so the rule
+ * is one-time from the moment it exists.
  */
 export async function approveVerifiedIdentity(
   world: World,
@@ -131,8 +132,7 @@ export async function approveVerifiedIdentity(
   if ((await statusOf(world.fetchAs("alex"), attestationUrl(world))) !== 200) {
     throw new Error("there is no KYC attestation in the pod to share");
   }
-  await grantOneTime({ agent: webid(world, CARD), resource: attestationUrl(world) });
-  return approveRequest(world, requestUrl, time);
+  return approveRequest(world, requestUrl, time, { registerOneTime: grantOneTime });
 }
 
 /** Y1 as the pod records it, if it has been approved. */
