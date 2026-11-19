@@ -8,7 +8,8 @@
  *   dist/pods-sw.js   the pod runtime's service worker, from packages/pod-runtime/dist/
  *   dist/agents/      one bundle per app that has src/agent.ts (organisation back offices)
  *   dist/crs/         the prover's CRS files, from packages/vc-kit/crs/ (pinned in vc-kit's zk/crs.ts)
- *   dist/video/       recorded demo videos, from video/dist/ when present
+ *   dist/video/       demo videos: the committed web copies in video/published/, overlaid by
+ *                     a fresh local recording in video/dist/ when present
  *   dist/site.json    what was assembled, for tests
  *
  * After assembling, what every app's index.html loads up front is held to a gzip budget (build-plan.md
@@ -302,9 +303,12 @@ async function main() {
 
   const agents = await bundleAgents(apps);
 
-  const video = join(ROOT, "video", "dist");
-  const hasVideo = existsSync(video);
-  if (hasVideo) cpSync(video, join(DIST, "video"), { recursive: true });
+  // The committed web copies (video/publish.ts), then any local recording over them.
+  const videoSources = [join(ROOT, "video", "published"), join(ROOT, "video", "dist")].filter(
+    (dir) => existsSync(dir),
+  );
+  for (const dir of videoSources) cpSync(dir, join(DIST, "video"), { recursive: true });
+  const hasVideo = videoSources.length > 0;
 
   const budgets = checkEntryBudgets();
   const site = {

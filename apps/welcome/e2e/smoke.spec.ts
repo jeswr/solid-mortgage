@@ -115,6 +115,10 @@ test("without a published recording the player says Video coming soon and fetche
     if (request.url().includes("/video/") && request.method() !== "HEAD")
       videoGets.push(request.url());
   });
+  // The site ships recordings (video/published/); take them away to see the fallback.
+  await page.route("**/video/**", (route) =>
+    route.request().method() === "HEAD" ? route.fulfill({ status: 404 }) : route.continue(),
+  );
   await page.goto("./");
   await expect(page.getByRole("img", { name: /video coming soon/ }).first()).toBeVisible();
   await expect(page.locator("video")).toHaveCount(0);
@@ -148,7 +152,7 @@ test("with a published recording the poster plays in place, preload none, with c
     // The MP4 body itself is never needed here: leave it pending.
   });
   await page.goto("./");
-  const play = page.getByRole("button", { name: /Play the narrated video/ });
+  const play = page.getByRole("button", { name: /Play the narrated video: A mortgage on Solid/ });
   await expect(play).toBeVisible();
   await expect(page.getByRole("button", { name: /Play from chapter: Closing/ })).toBeVisible();
   expect(gets.filter((path) => path.endsWith(".mp4"))).toEqual([]);
@@ -170,7 +174,7 @@ test("watch page carries the full transcript", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Transcript" })).toBeVisible();
   await expect(page.locator(".transcript__chapter")).toHaveCount(8);
   await expect(
-    page.getByText("Thirteen applications. Eight grants. No documents uploaded."),
+    page.getByText("Thirteen applications. Nine grants. No documents uploaded."),
   ).toBeVisible();
 });
 

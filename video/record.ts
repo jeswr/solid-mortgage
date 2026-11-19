@@ -35,6 +35,7 @@ import {
   DEMO_IDS,
   type DemoId,
   isBuilt,
+  loadDemoTotals,
   loadOrgs,
   loadTour,
   REPO,
@@ -187,6 +188,7 @@ async function record() {
     stage: `${stat.url}/stage`,
     demoStage: `${stat.url}/demo`,
     metrics,
+    demoTotals: await loadDemoTotals(id),
     state: {},
   };
   const close = async () => {

@@ -8,8 +8,8 @@
  * waits until the tour marks the step done from the pod's own events. Nothing on screen is
  * staged except the title and end cards (`video/<demo>/cards.html`).
  */
-import type { Locator } from "@playwright/test";
-import type { Claim, Demo, OrgLite, TourStepLite } from "./lib/demo.ts";
+import type { ElementHandle, Locator } from "@playwright/test";
+import type { Claim, Demo, DemoTotals, OrgLite, TourStepLite } from "./lib/demo.ts";
 import { type Director, sleep } from "./lib/director.ts";
 import type { PageGlobals } from "./lib/page-globals.ts";
 
@@ -25,6 +25,8 @@ export interface Ctx {
   demoStage: string;
   /** Static metric values (content/), for the live totals check. */
   metrics: Record<string, number>;
+  /** The demo's own ledger totals (`content/<demo>/ledger.ts`), for `<demo>.<field>` claims. */
+  demoTotals?: DemoTotals;
   state: { speakingUntil?: number; chip?: string; step?: string; totals?: unknown };
 }
 
@@ -41,15 +43,27 @@ async function chip(c: Ctx, text?: string) {
     .catch(() => {});
 }
 
-/** The app path of a step in path mode (`appUrl` in @mortgage/demo-kit/urls). */
-function stepPath(s: TourStepLite) {
-  return `/${s.app}/${s.path.replace(/^\/+/, "")}`.replace(/\/+$/, "") || "/";
+/** A step's page: its app path and its own query (`health/shared?holder=alex`). */
+function stepTarget(c: Ctx, s: TourStepLite): URL {
+  return new URL(`${c.site}/${s.app}/${s.path.replace(/^\/+/, "")}`);
 }
 const trim = (p: string) => (p.length > 1 ? p.replace(/\/+$/, "") : p);
 
+/** The deep link to a step: its page, with the tour's parameters added to the step's own. */
 function stepUrl(c: Ctx, s: TourStepLite) {
-  const q = new URLSearchParams({ tour: c.demo.id, step: s.id, present: "1" });
-  return `${c.site}/${s.app}/${s.path.replace(/^\/+/, "")}?${q}`;
+  const url = stepTarget(c, s);
+  url.searchParams.set("tour", c.demo.id);
+  url.searchParams.set("step", s.id);
+  url.searchParams.set("present", "1");
+  return url.href;
+}
+
+/** Is the page already on the step's page (same path, and the step's own query holds)? */
+function onStepPage(c: Ctx, s: TourStepLite, here: URL) {
+  const want = stepTarget(c, s);
+  if (here.origin !== want.origin || trim(here.pathname) !== trim(want.pathname)) return false;
+  for (const [k, v] of want.searchParams) if (here.searchParams.get(k) !== v) return false;
+  return true;
 }
 
 function findStep(c: Ctx, id: string) {
@@ -78,6 +92,70 @@ async function until(ms: number, test: () => Promise<boolean>) {
     await sleep(300);
   }
   return false;
+}
+
+/**
+ * Waits while a pressed button says it is busy: the apps relabel a button "Revoking…",
+ * "Signing…" and so on (or set aria-busy) until its handler finishes. Done once it is detached,
+ * its label no longer ends in an ellipsis, or its page has gone. A button that stays disabled
+ * once its work is done ("Issued") does not hold the recording.
+ */
+async function finished(button: ElementHandle, ms: number) {
+  const end = performance.now() + ms;
+  while (performance.now() < end) {
+    const idle = await button
+      .evaluate((el) => {
+        if (!el.isConnected) return true;
+        const label = (el.textContent ?? "").trim();
+        return !/(…|\.\.\.)$/.test(label) && el.getAttribute("aria-busy") !== "true";
+      })
+      .catch(() => true); // The page navigated: the handle's context is gone.
+    if (idle) return true;
+    await sleep(200);
+  }
+  return false;
+}
+
+/** The visible element of a step's action target (`data-tour`). */
+const targetOf = (c: Ctx, s: TourStepLite) =>
+  page(c).locator(`[data-tour="${s.action?.target}"]`).filter({ visible: true });
+
+/** Where a page marks a hand-off: the wallet's "Waiting for …" card (`section.handoff`). */
+const HANDOFF = ".handoff, [data-handoff]";
+
+/** The target's text, if it is on screen inside a hand-off; undefined otherwise. */
+async function handOffLabel(c: Ctx, s: TourStepLite): Promise<string | undefined> {
+  const text = await targetOf(c, s)
+    .first()
+    .evaluate(
+      (el, sel) => (el.closest(sel) ? (el.textContent ?? "").replace(/\s+/g, " ").trim() : null),
+      HANDOFF,
+      { timeout: 1000 },
+    )
+    .catch(() => null);
+  return text ?? undefined;
+}
+
+/**
+ * Presses a hand-off before the step's own action, when the page shows one. Some steps start in
+ * another app: the wallet's consent steps put the step's target on "Have <organisation> ask now"
+ * in a "Waiting for …" card until the organisation's request arrives, and only then on the step's
+ * own button (Approve, apps/wallet/src/screens/Requests.tsx). The pointer presses the hand-off
+ * and waits until the target is the step's own button, so the request is on screen while the
+ * narration describes it. Returns false when there is no hand-off on the page.
+ */
+async function handOff(c: Ctx, s: TourStepLite): Promise<boolean> {
+  if (!s.action) return false;
+  const now = await handOffLabel(c, s);
+  if (now === undefined) return false;
+  console.log(`  · ${s.id}: pressing the hand-off "${now}" before "${s.action.label}"`);
+  if (!(await c.d.click(targetOf(c, s), `${now} [data-tour="${s.action.target}"]`))) return false;
+  const ready = await until(60_000, async () => {
+    if (!(await targetOf(c, s).first().isVisible())) return false;
+    return (await handOffLabel(c, s)) === undefined;
+  });
+  if (!ready) c.d.warn(`step ${s.id}: "${s.action.label}" never appeared after "${now}"`);
+  return ready;
 }
 
 async function cards(c: Ctx, id: string, step = 0) {
@@ -150,6 +228,18 @@ async function lensOpen(c: Ctx) {
     .catch(() => {});
 }
 
+/** Collapses the Lens, so a page it docks over is seen whole. */
+async function lensFold(c: Ctx) {
+  await page(c)
+    .evaluate(() => {
+      const lens = document.querySelector("solid-lens") as
+        | (HTMLElement & { collapsed?: boolean })
+        | null;
+      if (lens && !lens.collapsed) lens.collapsed = true;
+    })
+    .catch(() => {});
+}
+
 async function demoApi<T>(c: Ctx, fn: string, arg?: string): Promise<T> {
   return page(c).evaluate(
     ([f, a]) => {
@@ -170,8 +260,21 @@ interface LiveTotals {
   credentialsIssued: number;
 }
 
-/** The value a claim's metric has now, live, or undefined if the run cannot tell. */
-export function liveMetric(c: Ctx, t: LiveTotals, metric: string): number | undefined {
+/**
+ * The value a claim's metric has now, live, or undefined if the run cannot tell. `demo` is the
+ * demo's own ledger totals counted from the same log (`<demo>.<field>` metrics).
+ */
+export function liveMetric(
+  c: Pick<Ctx, "metrics" | "demo">,
+  t: LiveTotals,
+  metric: string,
+  demo?: Record<string, unknown>,
+): number | undefined {
+  const own = `${c.demo.id}.`;
+  if (metric.startsWith(own)) {
+    const v = demo?.[metric.slice(own.length)];
+    return typeof v === "number" ? v : undefined;
+  }
   switch (metric) {
     case "grants.total":
       return t.grants.active + t.grants.expired + t.grants.revoked;
@@ -212,18 +315,30 @@ async function openLedger(c: Ctx): Promise<Locator> {
 
 /** Compares every spoken total with the journey ledger the Lens computed from the pod's events. */
 async function checkTotals(c: Ctx) {
-  // The ledger page computes from the same log as the Lens; prefer what is on screen.
-  const t = (await page(c).evaluate(() => {
+  // The ledger page computes from the same log as the Lens; prefer what is on screen. The log
+  // itself (the Lens's received entries) feeds the demo's own totals, as on its ledger page.
+  const live = (await page(c).evaluate(() => {
+    type Model = { received?: { entry: unknown }[] };
     const ledger = document.querySelector("journey-ledger") as
-      | (Element & { totals?: () => unknown })
+      | (Element & { totals?: () => unknown; model?: Model })
       | null;
+    const lens = document.querySelector("solid-lens") as (Element & { model?: Model }) | null;
+    let model: Model | undefined;
+    try {
+      model = lens?.model;
+    } catch {
+      // <solid-lens> throws before configure(): fall back to the ledger page's own model.
+    }
+    const entries = (ledger?.model ?? model)?.received?.map((r) => r.entry);
     const fromPage = ledger?.totals?.();
-    return fromPage ?? (window as unknown as PageGlobals).__demo?.totals();
-  })) as LiveTotals | undefined;
+    return { t: fromPage ?? (window as unknown as PageGlobals).__demo?.totals(), entries };
+  })) as { t?: LiveTotals; entries?: unknown[] };
+  const t = live.t;
   if (!t) return c.d.warn("no journey ledger totals on this page");
-  c.state.totals = t;
+  const own = c.demoTotals && live.entries ? c.demoTotals(live.entries) : undefined;
+  c.state.totals = own ? { ...t, [c.demo.id]: own } : t;
   const bad = c.demo.claims
-    .map((claim: Claim) => ({ claim, live: liveMetric(c, t, claim.metric) }))
+    .map((claim: Claim) => ({ claim, live: liveMetric(c, t, claim.metric, own) }))
     .filter(({ claim, live }) => live !== claim.value);
   for (const { claim, live } of bad)
     c.d.warn(
@@ -247,10 +362,8 @@ export const actions: Record<string, Action> = {
     const s = findStep(c, id as string);
     await c.d.clearHighlight();
     c.state.step = s.id;
-    const here = new URL(page(c).url());
     const samePage =
-      here.origin === c.site &&
-      trim(here.pathname) === trim(stepPath(s)) &&
+      onStepPage(c, s, new URL(page(c).url())) &&
       (await page(c)
         .evaluate(() => !!(window as unknown as PageGlobals).__demo)
         .catch(() => false));
@@ -261,15 +374,24 @@ export const actions: Record<string, Action> = {
     await lensOpen(c);
     await chip(c, chipFor(c, s));
     await sleep(500);
+    if (await handOff(c, s)) await c.d.clearHighlight();
   },
 
   async act(c) {
     const s = findStep(c, c.state.step ?? "");
     if (!s.action) return c.d.warn(`step ${s.id} has no action`);
     await c.d.clearHighlight();
-    const target = page(c).locator(`[data-tour="${s.action.target}"]`).filter({ visible: true });
+    await handOff(c, s);
+    // A button can be drawn before the data it acts on has loaded, and stay disabled until it has
+    // (the lending prover waits for its anchors): a press then would be lost.
+    if (!(await until(20_000, () => targetOf(c, s).first().isEnabled({ timeout: 1000 }))))
+      console.log(`  · ${s.id}: "${s.action.label}" still disabled; pressing anyway`);
+    const pressed = await targetOf(c, s)
+      .first()
+      .elementHandle({ timeout: 8000 })
+      .catch(() => null);
     if (
-      !(await c.d.click(target, `${s.action.label} [data-tour="${s.action.target}"]`, {
+      !(await c.d.click(targetOf(c, s), `${s.action.label} [data-tour="${s.action.target}"]`, {
         settle: false,
       }))
     )
@@ -282,6 +404,13 @@ export const actions: Record<string, Action> = {
       ),
     );
     if (!done) c.d.warn(`step ${s.id}: the tour never marked it done`);
+    // The tour marks a step done on its first matching write, and the app may still be writing:
+    // revoking writes the consent record (the done event) and then rewrites the access rules.
+    // Leaving the page now would abandon those writes, so wait while the pressed button still
+    // says it is busy ("Revoking…").
+    if (pressed && !(await finished(pressed, 30_000)))
+      console.log(`  · ${s.id}: "${s.action.label}" still busy after 30 s; carrying on`);
+    await pressed?.dispose().catch(() => {});
     await c.d.settle();
     if (c.state.chip) await chip(c, c.state.chip);
   },
@@ -306,8 +435,16 @@ export const actions: Record<string, Action> = {
         return;
       case "totals": {
         const where = await openLedger(c);
+        // On a ledger page the docked Lens covers the right of the totals strip (the mortgage's
+        // "Uploads by Alex" tile): fold it away while the totals are read out.
+        if (await page(c).locator("journey-ledger").count()) await lensFold(c);
         await sleep(600);
-        await ringExact(c, where.locator(".totals"), "the ledger totals");
+        // The ledger's totals strip; a ledger opened on its examiner view has none, and the page
+        // shows the demo's own totals beside it (small-business-loan: `wallet-loan-totals`).
+        const strip = where.locator(".totals").filter({ visible: true });
+        const own = page(c).locator('[data-testid$="-totals"]').filter({ visible: true });
+        const shown = (await strip.count()) > 0 || !(await own.count()) ? strip : own;
+        await ringExact(c, shown, "the ledger totals");
         await checkTotals(c);
         return;
       }
