@@ -21,6 +21,7 @@
 
 import type { CompiledCircuitArtifact, FilterIntMember } from "./circuits/registry.js";
 import { loadCommittedCircuit } from "./circuits/registry.js";
+import { type BarretenbergClass, installSameOriginCrs, isNode } from "./crs.js";
 
 /** A produced/consumed UltraHonk proof: opaque bytes + ordered public inputs. */
 export interface ProofData {
@@ -102,6 +103,10 @@ async function loadApi(): Promise<{ api: unknown; threads: number }> {
   if (!apiPromise) {
     apiPromise = (async () => {
       const bb = await import("@aztec/bb.js");
+      // In a browser, load the CRS from the site, never from Aztec's CDN (crs.ts).
+      if (!isNode()) {
+        installSameOriginCrs(bb.Barretenberg as unknown as BarretenbergClass);
+      }
       const threads = maxThreads();
       const api = await bb.Barretenberg.new({ threads });
       return { api, threads };

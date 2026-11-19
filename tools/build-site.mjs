@@ -7,6 +7,8 @@
  *                     vite.config.ts; apps/vocab is a separate Vercel project and is skipped)
  *   dist/pods-sw.js   the pod runtime's service worker, from packages/pod-runtime/dist/
  *   dist/agents/      one bundle per app that has src/agent.ts (organisation back offices)
+ *   dist/zk-crs/      the BN254 CRS the in-browser prover loads (packages/vc-kit/crs/), so
+ *                     no proof ever fetches it from another origin
  *   dist/video/       recorded demo videos, from video/dist/ when present
  *   dist/site.json    what was assembled, for tests
  *
@@ -227,6 +229,9 @@ async function main() {
   }
 
   const agents = await bundleAgents(apps);
+
+  // The prover's CRS, served by the site itself (packages/vc-kit/src/zk/crs.ts).
+  cpSync(join(ROOT, "packages", "vc-kit", "crs"), join(DIST, "zk-crs"), { recursive: true });
 
   const video = join(ROOT, "video", "dist");
   const hasVideo = existsSync(video);
