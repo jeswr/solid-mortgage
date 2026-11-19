@@ -1,6 +1,6 @@
 # 0015 — Cross-app authenticated-caller boundary for verifier/reader apps
 
-**Status:** accepted (autonomous, 2026-07-16) — resolves the sm-30 roborev High (sm-7s8)
+**Status:** superseded by [0017](0017-static-rebuild.md) (2026-11-19). Was: accepted (autonomous, 2026-07-16) — resolves the sm-30 roborev High (sm-7s8)
 **Scope:** any app API route that reads or writes ANOTHER party's pod (lender-boa scenes 3/4
 today; gse/closing/verifications readers tomorrow). Scene 2 (VP-POST, decision 0012 rail 1) is
 already caller-bound and is unchanged.

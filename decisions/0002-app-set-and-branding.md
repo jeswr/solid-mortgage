@@ -1,6 +1,6 @@
 # 0002 — Definitive app set + organisation branding
 
-**Status:** accepted (autonomous, 2026-07-15) — resolves research-gaps C6/C13/Q6/Q11
+**Status:** superseded by [0017](0017-static-rebuild.md) (2026-11-19). Was: accepted (autonomous, 2026-07-15) — resolves research-gaps C6/C13/Q6/Q11
 **Inputs:** docs/research/org-map.md, mortgage-process.md (5-scene demo), showcase-patterns.md
 
 ## App list (8 Vercel projects)
