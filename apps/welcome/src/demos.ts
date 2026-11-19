@@ -91,7 +91,7 @@ export const DEMOS: readonly Demo[] = [
     sentence:
       "From first enquiry to first payment, twelve organisations ask the borrower's pod for what they need, and nobody uploads a document.",
     sectors: ["Finance", "Insurance"],
-    durationSeconds: 352,
+    durationSeconds: 250,
     status: "live",
     media: mediaFor("mortgage"),
     // Step 1 of content/mortgage/tour.ts: the Start button on this page (`tour-start`).
@@ -189,7 +189,7 @@ export const DEMOS: readonly Demo[] = [
     sentence:
       "One address in the pod, changed once: six organisations read it under standing grants, and the one that loses access sees the refusal.",
     sectors: ["Government"],
-    durationSeconds: 116,
+    durationSeconds: 110,
     status: "live",
     media: mediaFor("moving-house"),
     // Step 1 of content/moving-house/tour.ts: the address record in Alex's wallet.
@@ -251,7 +251,7 @@ export const DEMOS: readonly Demo[] = [
     sentence:
       "A hospital, a pharmacy and a family practice work from one medication list in the patient's pod, with provenance on every change.",
     sectors: ["Healthcare"],
-    durationSeconds: 113,
+    durationSeconds: 108,
     status: "live",
     media: mediaFor("medication-handover"),
     // Step 1 of content/medication-handover/tour.ts: Rosa's Health screen in her wallet.
@@ -325,7 +325,7 @@ export const DEMOS: readonly Demo[] = [
     sentence:
       "The claimant holds the claim file; the insurer and the repairer each see only their part, and access ends with the job.",
     sectors: ["Insurance"],
-    durationSeconds: 99,
+    durationSeconds: 93,
     status: "live",
     media: mediaFor("motor-claim"),
     // Step 1 of content/motor-claim/tour.ts: the claim file in Alex's wallet.
@@ -378,7 +378,7 @@ export const DEMOS: readonly Demo[] = [
     sentence:
       "A business's identity, officers and owners are issued once as credentials; two banks rely on them, and a proof answers the 25% ownership test without the cap table.",
     sectors: ["Finance"],
-    durationSeconds: 154,
+    durationSeconds: 134,
     status: "live",
     media: mediaFor("business-kyb"),
     // Step 1 of content/business-kyb/tour.ts: Northwind's credentials drawer in the wallet.
@@ -445,7 +445,7 @@ export const DEMOS: readonly Demo[] = [
     sentence:
       "Income, cash flow and a credit summary arrive as credentials; two lenders quote from a proof, and the chosen one reads under a 30-day grant.",
     sectors: ["Finance"],
-    durationSeconds: 165,
+    durationSeconds: 120,
     status: "live",
     media: mediaFor("small-dollar-lending"),
     // Step 1 of content/small-dollar-lending/tour.ts: Maya's empty pod, in her wallet.
@@ -513,7 +513,7 @@ export const DEMOS: readonly Demo[] = [
     sentence:
       "Twelve months of cash flow kept current in the business's pod by its bank, and covenant monitoring as a standing quarterly read.",
     sectors: ["Finance"],
-    durationSeconds: 112,
+    durationSeconds: 99,
     status: "live",
     media: mediaFor("small-business-loan"),
     // Step 1 of content/small-business-loan/tour.ts: Alder Bank's business banking page.
@@ -571,7 +571,7 @@ export const DEMOS: readonly Demo[] = [
     sentence:
       "One bank states what it verified; a card issuer reads that attestation once, under a one-time grant, with no documents uploaded.",
     sectors: ["Finance"],
-    durationSeconds: 106,
+    durationSeconds: 103,
     status: "live",
     media: mediaFor("reusable-kyc"),
     // Step 1 of content/reusable-kyc/tour.ts: Alder Bank's "Your identity" page.
