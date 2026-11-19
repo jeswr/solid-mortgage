@@ -1,6 +1,4 @@
 // AUTHORED-BY Claude Opus 5.5
-import { checkAtSource } from "@mortgage/content/mortgage/issuers";
-import { CREDENTIALS, type CredentialName } from "@mortgage/content/mortgage/journey";
 import { Link } from "wouter";
 import { Screen } from "../App.tsx";
 import { Icon } from "../components/Icon.tsx";
@@ -52,20 +50,11 @@ export function Documents() {
   );
 }
 
-const isCredentialName = (name: string): name is CredentialName => Object.hasOwn(CREDENTIALS, name);
-
 /** One credential: issuer, the signature check at source, dates and status. */
 export function DocumentDetail({ name }: { name: string }) {
   const back = { href: "/documents", label: "Documents" };
   const credentials = usePodData(readCredentials, [name]);
   const card = credentials.data?.find((candidate) => candidate.name === name);
-  if (!isCredentialName(name)) {
-    return (
-      <Screen title="Unknown document" page="Not found" back={back}>
-        <Empty>Cairn does not know a document called {name}.</Empty>
-      </Screen>
-    );
-  }
   return (
     <Screen title={card?.label ?? "Document"} back={back}>
       {credentials.error !== undefined ? <Problem error={credentials.error} /> : null}
@@ -82,9 +71,12 @@ export function DocumentDetail({ name }: { name: string }) {
 
 function CredentialFacts({ card }: { card: CredentialCard }) {
   const dayLabel = useDayLabel();
-  const entry = CREDENTIALS[card.name];
   const check = usePodData(
-    (world) => checkAtSource(world, "alex", card.url, card.kind, [entry.issuer]),
+    async (world) => {
+      // Loaded at the point of use: verification brings the signing library.
+      const { checkAtSource } = await import("@mortgage/content/mortgage/issuers");
+      return checkAtSource(world, "alex", card.url, card.kind, [card.expectedIssuer]);
+    },
     [card.url],
   );
   const result = check.data?.result;

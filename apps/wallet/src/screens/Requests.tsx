@@ -1,16 +1,12 @@
 // AUTHORED-BY Claude Opus 5.5
 import { approveRequest } from "@mortgage/content/mortgage/grants";
-import {
-  requestApplicationAccess,
-  requestServicerAccess,
-} from "@mortgage/content/mortgage/journey";
 import type { World } from "@mortgage/content/mortgage/world";
 import { remove } from "@mortgage/content/mortgage/world";
 import { ORGS } from "@mortgage/content/orgs";
 import type { AccessRequest } from "@mortgage/data-model";
 import { isAppSlug, type OrgSlug } from "@mortgage/demo-kit/registry";
 import { appUrl } from "@mortgage/demo-kit/urls";
-import { type MouseEvent, useState } from "react";
+import { type MouseEvent, useEffect, useRef, useState } from "react";
 import { Link, useSearch } from "wouter";
 import { Screen } from "../App.tsx";
 import { Icon } from "../components/Icon.tsx";
@@ -76,7 +72,8 @@ interface Handoff {
 
 const HANDOFFS: Readonly<Record<string, Handoff>> = {
   "apply-consent": {
-    ask: requestApplicationAccess,
+    ask: async (world) =>
+      (await import("@mortgage/content/mortgage/journey")).requestApplicationAccess(world),
     back: "/application",
     code: "G4",
     org: "lender",
@@ -84,7 +81,8 @@ const HANDOFFS: Readonly<Record<string, Handoff>> = {
     startLabel: "Start screen",
   },
   "servicer-connect": {
-    ask: requestServicerAccess,
+    ask: async (world) =>
+      (await import("@mortgage/content/mortgage/journey")).requestServicerAccess(world),
     back: "/connect",
     code: "G8",
     org: "servicer",
@@ -93,7 +91,15 @@ const HANDOFFS: Readonly<Record<string, Handoff>> = {
   },
 };
 
-function HandoffCard({ handoff, onAsked }: { handoff: Handoff; onAsked: (back: string) => void }) {
+/** A request the wallet had another organisation send (the hand-off stand-in). */
+interface Asked {
+  readonly url: string;
+  readonly back: string;
+  /** Pressed by the tour's cursor: carry on to Approve once the request is on screen. */
+  readonly byTour: boolean;
+}
+
+function HandoffCard({ handoff, onAsked }: { handoff: Handoff; onAsked: (asked: Asked) => void }) {
   const { run } = useWallet();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>();
@@ -104,10 +110,8 @@ function HandoffCard({ handoff, onAsked }: { handoff: Handoff; onAsked: (back: s
     setBusy(true);
     setError(undefined);
     try {
-      await run((world) => handoff.ask(world));
-      onAsked(appUrl(handoff.org, handoff.back));
-      // "Do it for me" carries on: the cursor moves to the request's Approve button.
-      if (byTour) void continueTour().catch(() => undefined);
+      const url = await run((world) => handoff.ask(world));
+      onAsked({ back: appUrl(handoff.org, handoff.back), byTour, url });
     } catch (caught) {
       setError(caught);
     } finally {
@@ -118,9 +122,9 @@ function HandoffCard({ handoff, onAsked }: { handoff: Handoff; onAsked: (back: s
     <section className="card handoff" aria-labelledby="handoff-heading">
       <h2 id="handoff-heading">Waiting for {name}</h2>
       <p>
-        {name} has not sent its request yet. It starts on {name}'s{" "}
-        <a href={appUrl(handoff.org, handoff.start)}>{handoff.startLabel}</a>, and comes here for
-        your answer.
+        {name} has not sent its request yet. It starts on the{" "}
+        <a href={appUrl(handoff.org, handoff.start)}>{handoff.startLabel}</a> of {name}, and comes
+        here for your answer.
       </p>
       {error !== undefined ? <Problem error={error} /> : null}
       <div className="actions">
@@ -262,12 +266,12 @@ function ConsentCard({
 /** Requests: organisations asking for access. The consent screen of design.md section b.3. */
 export function Requests() {
   const search = new URLSearchParams(useSearch());
-  const focus = search.get("request");
+  const [asked, setAsked] = useState<Asked>();
+  const focus = search.get("request") ?? asked?.url ?? null;
   const requests = usePodData(readRequests);
   const [outcome, setOutcome] = useState<Outcome | undefined>();
-  const [handoffReturn, setHandoffReturn] = useState<string>();
   const returnTo = safeReturnUrl(
-    search.get("return") ?? handoffReturn ?? null,
+    search.get("return") ?? asked?.back ?? null,
     window.location,
     isAppSlug,
   );
@@ -281,6 +285,15 @@ export function Requests() {
 
   const items = requests.data ?? [];
   const focused = focus === null ? undefined : items.find((item) => item.url === focus);
+  // "Do it for me" carries on once the request it had sent is on screen: the cursor moves to
+  // that request's Approve button. Once only: the stand-in is gone by then.
+  const continued = useRef(false);
+  const arrived = asked !== undefined && focused?.url === asked.url;
+  useEffect(() => {
+    if (!arrived || asked?.byTour !== true || continued.current) return;
+    continued.current = true;
+    void continueTour().catch(() => undefined);
+  }, [arrived, asked]);
   const waiting = items.filter((item) => !item.answered && item !== focused);
   const answered = items.filter((item) => item.answered && item !== focused);
   // The tour target goes on the newest unanswered request of each code, and only one of each.
@@ -295,6 +308,7 @@ export function Requests() {
   // Only while that grant's request has neither arrived nor been answered.
   const awaiting =
     handoff !== undefined &&
+    asked === undefined &&
     requests.data !== undefined &&
     !items.some((item) => item.request.grantCode === handoff.code)
       ? handoff
@@ -330,9 +344,7 @@ export function Requests() {
       {focused !== undefined ? (
         <ConsentCard item={focused} tourTarget={targetOf(focused)} onOutcome={onOutcome} />
       ) : null}
-      {awaiting !== undefined ? (
-        <HandoffCard handoff={awaiting} onAsked={setHandoffReturn} />
-      ) : null}
+      {awaiting !== undefined ? <HandoffCard handoff={awaiting} onAsked={setAsked} /> : null}
       {requests.data !== undefined &&
       waiting.length === 0 &&
       focused === undefined &&

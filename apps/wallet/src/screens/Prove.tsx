@@ -1,9 +1,4 @@
 // AUTHORED-BY Claude Opus 5.5
-import { proveToLenders } from "@mortgage/content/mortgage/journey";
-import {
-  PREQUALIFICATION_STATEMENTS,
-  STATEMENT_SOURCES,
-} from "@mortgage/content/mortgage/prequalification";
 import { podUrl, statusOf } from "@mortgage/content/mortgage/world";
 import { ORGS } from "@mortgage/content/orgs";
 import { MORT } from "@mortgage/data-model";
@@ -53,6 +48,10 @@ export function Prove() {
   );
   const sources = usePodData(async (world) => {
     const alex = world.fetchAs("alex");
+    // Loaded at the point of use: the statements live beside the prover's code.
+    const { PREQUALIFICATION_STATEMENTS, STATEMENT_SOURCES } = await import(
+      "@mortgage/content/mortgage/prequalification"
+    );
     const entries = [];
     for (const statement of PREQUALIFICATION_STATEMENTS) {
       const source = STATEMENT_SOURCES[statement.field];
@@ -74,7 +73,9 @@ export function Prove() {
     const started = performance.now();
     try {
       // The proofs grant nothing, so they run outside the grant queue (runtime.tsx).
-      await runApart((world) => proveToLenders(world));
+      await runApart(async (world) =>
+        (await import("@mortgage/content/mortgage/journey")).proveToLenders(world),
+      );
       setSeconds(Math.round((performance.now() - started) / 1000));
       setState("done");
     } catch (caught) {

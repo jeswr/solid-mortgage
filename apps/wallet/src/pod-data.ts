@@ -6,7 +6,7 @@
  */
 
 import { type GrantRecord, grantRecords, membersOf } from "@mortgage/content/mortgage/grants";
-import { CREDENTIALS, type CredentialName } from "@mortgage/content/mortgage/journey";
+import type { CredentialName } from "@mortgage/content/mortgage/journey";
 import {
   PodRequestError,
   podUrl,
@@ -29,6 +29,7 @@ import {
   SCHEMA,
   TitleCommitmentCredential,
 } from "@mortgage/data-model";
+import type { PodOwner } from "@mortgage/demo-kit/registry";
 import type { DatasetCore } from "@rdfjs/types";
 import {
   LiteralAs,
@@ -107,6 +108,8 @@ export interface CredentialCard {
   readonly label: string;
   readonly kind: MortgageResourceKind;
   readonly issuer: string;
+  /** The issuer the journey expects for this credential: the one checked at source. */
+  readonly expectedIssuer: PodOwner;
   readonly validFrom: Date;
   readonly validUntil: Date | undefined;
   /** The status list the issuer publishes this credential's revocation bit in, if named. */
@@ -181,6 +184,8 @@ function summaryOf(credential: CredentialResource): string {
 /** The credentials the journey puts in Alex's pod that are there now. */
 export async function readCredentials(world: World): Promise<CredentialCard[]> {
   const alex = fetcher(world);
+  // Loaded at the point of use: the journey module brings the signing library.
+  const { CREDENTIALS } = await import("@mortgage/content/mortgage/journey");
   const cards: CredentialCard[] = [];
   for (const [name, entry] of Object.entries(CREDENTIALS) as [
     CredentialName,
@@ -198,6 +203,7 @@ export async function readCredentials(world: World): Promise<CredentialCard[]> {
     if (Ctor === undefined) continue;
     const credential = new Ctor(url, dataset, DataFactory);
     cards.push({
+      expectedIssuer: entry.issuer,
       issuer: credential.issuer,
       kind: entry.kind,
       label: labelOfPath(entry.path),
