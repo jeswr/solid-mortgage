@@ -7,7 +7,7 @@
  */
 import { applyDocumentMeta } from "@mortgage/demo-kit/trust";
 import { appUrl } from "@mortgage/demo-kit/urls";
-import { ZK_HONESTY_ITEMS } from "@mortgage/vc-kit";
+import { ZK_HONESTY_ITEMS } from "@mortgage/vc-kit/honesty";
 import { useEffect, useState } from "react";
 import { org } from "../org.ts";
 import { loadReceived, tryReadIncome } from "../pod.ts";

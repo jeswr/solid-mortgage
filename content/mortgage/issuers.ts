@@ -12,22 +12,18 @@ import {
   RESOURCE_TARGET_CLASSES,
 } from "@mortgage/data-model";
 import type { PodOwner } from "@mortgage/demo-kit/registry";
-import {
-  type CredentialClaims,
-  type CredentialKind,
-  deriveStatusIndex,
-  type IssuedCredential,
-  issueCredential,
-  publishVerificationMethod,
+import type {
+  CredentialClaims,
+  CredentialKind,
+  IssuedCredential,
   StatusListClient,
-  sha256,
-  type VerifyCredentialResult,
-  validityOn,
-  verifyCredential,
+  VerifyCredentialResult,
 } from "@mortgage/vc-kit";
+import { sha256 } from "@mortgage/vc-kit/sha256";
 import type { Quad } from "@rdfjs/types";
 import { ORGS } from "../orgs.js";
 import { STATUS_LIST_LIFETIME_DAYS } from "./facts.js";
+import { vcKit } from "./vc.js";
 import { at, podUrl, put, putResource, readText, type World, webid } from "./world.js";
 
 /** The organisations that sign credentials. Each has a key and a status list. */
@@ -47,6 +43,7 @@ export function statusListUrl(world: Pick<World, "podOrigin">, issuer: PodOwner)
 
 /** The issuer's own client for its hosted status list. */
 export async function statusListOf(world: World, issuer: Issuer): Promise<StatusListClient> {
+  const { StatusListClient } = await vcKit();
   return new StatusListClient({
     fetch: world.fetchAs(issuer),
     issuer: webid(world, issuer),
@@ -75,6 +72,7 @@ export async function publishIssuer(world: World, issuer: Issuer, time = "08:00"
     storage: podUrl(world, issuer),
     webId: webid(world, issuer),
   });
+  const { publishVerificationMethod } = await vcKit();
   const published = await publishVerificationMethod({ controller: webid(world, issuer), key });
   for (const quad of published.quads as readonly Quad[]) profile.dataset.add(quad);
   await putResource(world.fetchAs(issuer), profile);
@@ -96,6 +94,7 @@ export interface IssueToPodOptions {
 
 /** Sign a credential on the current demo day. Nothing is written. */
 export async function sign(world: World, options: IssueToPodOptions): Promise<IssuedCredential> {
+  const { deriveStatusIndex, issueCredential, validityOn } = await vcKit();
   const list = await statusListOf(world, options.issuer);
   return issueCredential({
     claims: options.claims,
@@ -182,6 +181,7 @@ export async function checkAtSource(
 ): Promise<SourceCheck> {
   const fetcher = world.fetchAs(reader);
   const body = await readText(fetcher, url);
+  const { verifyCredential } = await vcKit();
   const result = await verifyCredential(body, {
     expectShape: kind,
     now: at(world, time),

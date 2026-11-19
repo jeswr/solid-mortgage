@@ -10,7 +10,11 @@
  *   dist/video/       recorded demo videos, from video/dist/ when present
  *   dist/site.json    what was assembled, for tests
  *
+ * After assembling, what every app's index.html loads up front is held to a gzip budget (build-plan.md
+ * acceptance test 15): see {@link checkEntryBudgets}. A build that breaks the budget fails.
+ *
  * Usage: node tools/build-site.mjs [--skip-build]   (--skip-build reuses existing app builds)
+ *        node tools/build-site.mjs --check-budget   (only checks the budget of the existing dist/)
  */
 import { execFileSync } from "node:child_process";
 import {
@@ -22,8 +26,9 @@ import {
   rmSync,
   writeFileSync,
 } from "node:fs";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import { gzipSync } from "node:zlib";
 import { SITE_SLUGS } from "./site-routes.mjs";
 
 const ROOT = resolve(import.meta.dirname, "..");
@@ -65,6 +70,86 @@ function checkBase(app, html) {
   }
 }
 
+// --- The entry-chunk budget ------------------------------------------------------------------------
+
+/**
+ * Most gzip bytes an app's index.html may load before anything is lazy-loaded (build-plan.md
+ * acceptance test 15: "first load of any app under 400 kB compressed excluding the wasm").
+ */
+export const ENTRY_GZIP_BUDGET = 400_000;
+
+/**
+ * What `dist/<slug>/index.html` loads up front: every `<script src>`, `<link rel="modulepreload">`
+ * and `<link rel="stylesheet">` it names under `/<slug>/`, plus every chunk that JavaScript imports
+ * statically (`import ... from "./x.js"`, `export ... from "./x.js"`). A dynamic `import("./x.js")`
+ * is lazy and is not counted, nor are the fonts and images a stylesheet asks for. Returns absolute
+ * paths, the entry first.
+ */
+export function entryAssets(siteDir, slug) {
+  const appDir = join(siteDir, slug);
+  const html = readFileSync(join(appDir, "index.html"), "utf8");
+  const queue = [];
+  for (const tag of html.matchAll(/<(script|link)\b[^>]*>/g)) {
+    const attrs = tag[0];
+    const rel = attrs.match(/\srel="([^"]+)"/)?.[1];
+    const url =
+      tag[1] === "script"
+        ? attrs.match(/\ssrc="([^"]+)"/)?.[1]
+        : rel === "modulepreload" || rel === "stylesheet"
+          ? attrs.match(/\shref="([^"]+)"/)?.[1]
+          : undefined;
+    if (url === undefined || !url.startsWith(`/${slug}/`) || !/\.(?:js|css)$/.test(url)) continue;
+    queue.push(join(appDir, url.slice(slug.length + 2)));
+  }
+  const seen = new Set();
+  while (queue.length > 0) {
+    const file = queue.shift();
+    if (seen.has(file) || !existsSync(file)) continue;
+    seen.add(file);
+    if (!file.endsWith(".js")) continue;
+    const code = readFileSync(file, "utf8");
+    for (const match of code.matchAll(
+      /\b(?:import|export)\s*(?:[\w$*{}\s,]*?\bfrom\s*)?["'](\.{1,2}\/[^"']+\.js)["']/g,
+    )) {
+      queue.push(resolve(dirname(file), match[1]));
+    }
+  }
+  return [...seen];
+}
+
+/**
+ * Measure every app in `siteDir` (each directory with an index.html) against `budget`: the summed
+ * gzip size of its {@link entryAssets}. Returns one row per app; `over` lists the apps that break it.
+ */
+export function checkEntryBudgets(siteDir = DIST, budget = ENTRY_GZIP_BUDGET) {
+  const rows = readdirSync(siteDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && existsSync(join(siteDir, entry.name, "index.html")))
+    .map((entry) => {
+      const files = entryAssets(siteDir, entry.name);
+      const gzip = files.reduce((sum, file) => sum + gzipSync(readFileSync(file)).length, 0);
+      return { files: files.length, gzip, slug: entry.name };
+    })
+    .sort((a, b) => a.slug.localeCompare(b.slug));
+  return { budget, over: rows.filter((row) => row.gzip > budget), rows };
+}
+
+/** Print every app's first load and throw if any is over budget. */
+function enforceEntryBudgets({ budget, over, rows }) {
+  const kB = (bytes) => `${(bytes / 1000).toFixed(1)} kB`;
+  for (const row of rows) {
+    console.log(
+      `build-site: ${row.slug.padEnd(14)} first load ${kB(row.gzip).padStart(9)} gzip (${row.files} file(s))`,
+    );
+  }
+  if (over.length > 0) {
+    throw new Error(
+      `first load over the ${kB(budget)} gzip budget: ${over
+        .map((row) => `${row.slug} ${kB(row.gzip)}`)
+        .join(", ")}. Load heavy code with a dynamic import() at the point of use.`,
+    );
+  }
+}
+
 async function bundleAgents(apps) {
   const withAgents = apps.filter((app) => existsSync(join(app.dir, "src", "agent.ts")));
   if (withAgents.length === 0) return [];
@@ -95,6 +180,10 @@ async function bundleAgents(apps) {
 }
 
 async function main() {
+  if (process.argv.includes("--check-budget")) {
+    enforceEntryBudgets(checkEntryBudgets());
+    return;
+  }
   const skipBuild = process.argv.includes("--skip-build");
   const apps = siteApps();
   if (apps.length === 0) throw new Error("no site apps found under apps/");
@@ -143,13 +232,16 @@ async function main() {
   const hasVideo = existsSync(video);
   if (hasVideo) cpSync(video, join(DIST, "video"), { recursive: true });
 
+  const budgets = checkEntryBudgets();
   const site = {
     agents,
     apps: apps.map((app) => app.slug),
+    firstLoadGzip: Object.fromEntries(budgets.rows.map((row) => [row.slug, row.gzip])),
     podServiceWorker: hasServiceWorker,
     video: hasVideo,
   };
   writeFileSync(join(DIST, "site.json"), `${JSON.stringify(site, null, 2)}\n`);
+  enforceEntryBudgets(budgets);
   console.log(
     `build-site: dist/ assembled with ${site.apps.length} app(s): ${site.apps.join(", ")}`,
   );
