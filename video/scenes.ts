@@ -80,6 +80,53 @@ async function until(ms: number, test: () => Promise<boolean>) {
   return false;
 }
 
+/** The visible element of a step's action target (`data-tour`). */
+const targetOf = (c: Ctx, s: TourStepLite) =>
+  page(c).locator(`[data-tour="${s.action?.target}"]`).filter({ visible: true });
+
+const words = (t: string) => t.replace(/\s+/g, " ").trim().toLowerCase();
+
+/** The target's visible label (its accessible name where it sets one). */
+async function labelOf(c: Ctx, s: TourStepLite): Promise<string | undefined> {
+  return targetOf(c, s)
+    .first()
+    .evaluate((el) => el.getAttribute("aria-label") ?? el.textContent ?? "", undefined, {
+      timeout: 1000,
+    })
+    .catch(() => undefined);
+}
+
+/**
+ * Presses a hand-off before the step's own action, when the page shows one. Some steps start in
+ * another app: the wallet's consent steps show "Have <organisation> ask now" on the step's target
+ * until the organisation's request arrives, and only then the step's own button ("Approve",
+ * apps/wallet/src/screens/Requests.tsx). The pointer presses the hand-off and waits until the
+ * target carries the step's label, so the request is on screen while the narration describes it.
+ * Returns false when there is nothing to press: the target is missing or already the action.
+ */
+async function handOff(c: Ctx, s: TourStepLite): Promise<boolean> {
+  if (!s.action) return false;
+  const label = words(s.action.label);
+  const now = await labelOf(c, s);
+  if (now === undefined || words(now).includes(label)) return false;
+  if (
+    await targetOf(c, s)
+      .first()
+      .isDisabled()
+      .catch(() => true)
+  )
+    return false;
+  console.log(`  · ${s.id}: pressing the hand-off "${now.trim()}" before "${s.action.label}"`);
+  if (!(await c.d.click(targetOf(c, s), `${now.trim()} [data-tour="${s.action.target}"]`)))
+    return false;
+  const ready = await until(60_000, async () => {
+    const after = await labelOf(c, s);
+    return after !== undefined && words(after).includes(label);
+  });
+  if (!ready) c.d.warn(`step ${s.id}: "${s.action.label}" never appeared after "${now.trim()}"`);
+  return ready;
+}
+
 async function cards(c: Ctx, id: string, step = 0) {
   await chip(c, undefined);
   const url = `${c.demoStage}/cards.html`;
@@ -261,15 +308,16 @@ export const actions: Record<string, Action> = {
     await lensOpen(c);
     await chip(c, chipFor(c, s));
     await sleep(500);
+    if (await handOff(c, s)) await c.d.clearHighlight();
   },
 
   async act(c) {
     const s = findStep(c, c.state.step ?? "");
     if (!s.action) return c.d.warn(`step ${s.id} has no action`);
     await c.d.clearHighlight();
-    const target = page(c).locator(`[data-tour="${s.action.target}"]`).filter({ visible: true });
+    await handOff(c, s);
     if (
-      !(await c.d.click(target, `${s.action.label} [data-tour="${s.action.target}"]`, {
+      !(await c.d.click(targetOf(c, s), `${s.action.label} [data-tour="${s.action.target}"]`, {
         settle: false,
       }))
     )
