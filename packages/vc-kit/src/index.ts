@@ -49,6 +49,7 @@ export {
   type OrganizationClaims,
   type PostalAddressClaims,
   type PropertyClaims,
+  type TaxComplianceClaims,
   type TitleClearClaims,
   type TitleCommitmentClaims,
   type ZkOperandAnchorClaims,

@@ -16,12 +16,15 @@ import {
   type AddressFields,
   type LegalForm,
   MORT,
+  type TaxComplianceStatus,
+  type TurnoverBand,
   TypedNode,
   writeBeneficialOwnershipClaims,
   writeEvidenceOfInsuranceClaims,
   writeIdentityClaims,
   writeOfficerAuthorisationClaims,
   writeOrganisationalIdentityClaims,
+  writeTaxComplianceClaims,
   writeTitleCommitmentClaims,
 } from "@mortgage/data-model";
 import type { DataFactory, DatasetCore, Term } from "@rdfjs/types";
@@ -295,6 +298,21 @@ export interface BeneficialOwnershipClaims {
   readonly owners: readonly { readonly name: string; readonly bps: number }[];
 }
 
+/**
+ * Small business loan: a revenue department's attestation that a business's filings are up to
+ * date, with the band its annual turnover falls in (never the figure itself).
+ */
+export interface TaxComplianceClaims {
+  readonly kind: "tax-compliance-credential";
+  readonly entityName: string;
+  /** Four digits; anything else is refused. */
+  readonly taxIdLast4: string;
+  readonly status: TaxComplianceStatus;
+  /** The end of the last tax period with every return filed (calendar date, UTC). */
+  readonly filingsCurrentThrough: Date;
+  readonly turnoverBand: TurnoverBand;
+}
+
 /** The typed claims union - discriminated by the credential kind. */
 export type CredentialClaims =
   | EmploymentIncomeClaims
@@ -308,7 +326,8 @@ export type CredentialClaims =
   | ZkOperandAnchorClaims
   | OrganisationalIdentityClaims
   | OfficerAuthorisationClaims
-  | BeneficialOwnershipClaims;
+  | BeneficialOwnershipClaims
+  | TaxComplianceClaims;
 
 /** Base wrapper: typed multi-valued `rdf:type` plus single-valued setters. */
 class GraphNode extends TermWrapper {
@@ -591,6 +610,16 @@ export function writeSubjectClaims(
       writeBeneficialOwnershipClaims(typedSubject(subject), {
         entityName: claims.entityName,
         owners: claims.owners,
+      });
+      return;
+    }
+    case "tax-compliance-credential": {
+      writeTaxComplianceClaims(typedSubject(subject), {
+        entityName: claims.entityName,
+        filingsCurrentThrough: claims.filingsCurrentThrough,
+        status: claims.status,
+        taxIdLast4: claims.taxIdLast4,
+        turnoverBand: claims.turnoverBand,
       });
       return;
     }
