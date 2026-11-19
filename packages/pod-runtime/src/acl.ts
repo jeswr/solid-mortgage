@@ -47,12 +47,55 @@ function authorizations(dataset: DatasetCore): Authorization[] {
 }
 
 /**
+ * An `AccessRule` with the conditions that narrow it. demo-kit's `AccessRule` has no field for
+ * them; this subtype is still an `AccessRule`, so events carry `origins` without a contract change.
+ */
+export interface ConditionalAccessRule extends AccessRule {
+  /** `acl:origin`: the rule applies only to requests from these origins. */
+  origins?: string[];
+}
+
+const RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
+/** What an authorisation may say and still be unconditional: who, what, where, and its type. */
+const UNCONDITIONAL = new Set([
+  RDF_TYPE,
+  `${ACL}accessTo`,
+  `${ACL}default`,
+  `${ACL}mode`,
+  `${ACL}agent`,
+  `${ACL}agentClass`,
+  `${ACL}agentGroup`,
+]);
+
+/**
+ * Fail closed before rewriting a rule: one carrying a condition other than `acl:origin` cannot be
+ * copied faithfully, and copying it without the condition would broaden it.
+ */
+function assertCopyable(dataset: DatasetCore, auth: Authorization): void {
+  for (const quad of dataset.match(auth as unknown as Quad_Subject, null, null)) {
+    const p = quad.predicate.value;
+    if (!UNCONDITIONAL.has(p) && p !== `${ACL}origin`)
+      throw new Error(
+        `cannot rewrite ${auth.value}: it has a condition (${p}) this helper does not copy`,
+      );
+  }
+}
+
+/** True when nothing on the authorisation can narrow it (no `acl:origin`, nothing unknown). */
+function unconditional(dataset: DatasetCore, auth: Authorization): boolean {
+  for (const quad of dataset.match(auth as unknown as Quad_Subject, null, null)) {
+    if (!UNCONDITIONAL.has(quad.predicate.value)) return false;
+  }
+  return true;
+}
+
+/**
  * Flatten an ACL dataset into `AccessRule`s: one per (agent or agent class) × (accessTo or default
  * target) of each authorisation. `resource` is the target's path relative to `podBase`
  * (`/documents/`), or the full IRI when it lies outside the pod.
  */
-export function rulesOf(dataset: DatasetCore, podBase: string): AccessRule[] {
-  const rules: AccessRule[] = [];
+export function rulesOf(dataset: DatasetCore, podBase: string): ConditionalAccessRule[] {
+  const rules: ConditionalAccessRule[] = [];
   const relative = (iri: string) =>
     iri.startsWith(podBase) ? `/${iri.slice(podBase.length)}` : iri;
   for (const auth of authorizations(dataset)) {
@@ -64,20 +107,24 @@ export function rulesOf(dataset: DatasetCore, podBase: string): AccessRule[] {
     const targets: Array<[string, boolean]> = [];
     if (auth.accessTo !== undefined) targets.push([auth.accessTo, false]);
     if (auth.default !== undefined) targets.push([auth.default, true]);
+    const origins = [...auth.origin].sort();
     for (const agent of agents) {
       for (const [target, inherited] of targets) {
-        rules.push({ agent, inherited, modes, resource: relative(target) });
+        const rule: ConditionalAccessRule = { agent, inherited, modes, resource: relative(target) };
+        if (origins.length > 0) rule.origins = origins;
+        rules.push(rule);
       }
     }
   }
   return rules;
 }
 
-const ruleKey = (rule: AccessRule) => JSON.stringify([rule.agent, rule.resource, rule.inherited]);
+const ruleKey = (rule: ConditionalAccessRule) =>
+  JSON.stringify([rule.agent, rule.resource, rule.inherited, rule.origins ?? []]);
 
 /** Merge rules with the same agent/resource/inherited into one rule with the union of modes. */
-function mergeRules(rules: AccessRule[]): Map<string, AccessRule> {
-  const merged = new Map<string, AccessRule>();
+function mergeRules(rules: ConditionalAccessRule[]): Map<string, ConditionalAccessRule> {
+  const merged = new Map<string, ConditionalAccessRule>();
   for (const rule of rules) {
     const key = ruleKey(rule);
     const existing = merged.get(key);
@@ -89,13 +136,13 @@ function mergeRules(rules: AccessRule[]): Map<string, AccessRule> {
 
 /** What changed between two rule sets: modes added (`granted`) and modes removed (`revoked`). */
 export function diffRules(
-  before: AccessRule[],
-  after: AccessRule[],
-): { granted: AccessRule[]; revoked: AccessRule[] } {
+  before: ConditionalAccessRule[],
+  after: ConditionalAccessRule[],
+): { granted: ConditionalAccessRule[]; revoked: ConditionalAccessRule[] } {
   const old = mergeRules(before);
   const now = mergeRules(after);
-  const granted: AccessRule[] = [];
-  const revoked: AccessRule[] = [];
+  const granted: ConditionalAccessRule[] = [];
+  const revoked: ConditionalAccessRule[] = [];
   for (const [key, rule] of now) {
     const added = rule.modes.filter((m) => !(old.get(key)?.modes ?? []).includes(m));
     if (added.length > 0) granted.push({ ...rule, modes: added });
@@ -108,12 +155,14 @@ export function diffRules(
 }
 
 /**
- * True when `owner` holds `acl:Control` over `target` in this ACL dataset, through an explicit
- * `acl:agent` rule: `acl:accessTo` the target, and for a container also `acl:default` it.
+ * True when `owner` holds `acl:Control` over `target` in this ACL dataset, through an explicit,
+ * unconditional `acl:agent` rule: `acl:accessTo` the target, and for a container also
+ * `acl:default` it. A rule narrowed by `acl:origin`, or carrying anything else this check does not
+ * understand, does not count: it could lock the owner out.
  */
 export function ownerKeepsControl(dataset: DatasetCore, owner: string, target: string): boolean {
   const rules = authorizations(dataset).filter(
-    (a) => a.agent.has(owner) && a.mode.has(`${ACL}Control`),
+    (a) => a.agent.has(owner) && a.mode.has(`${ACL}Control`) && unconditional(dataset, a),
   );
   const own = rules.some((a) => a.accessTo === target);
   const members = !target.endsWith("/") || rules.some((a) => a.default === target);
@@ -144,6 +193,8 @@ export interface GrantSpec {
   /** A WebID, `PUBLIC` or `AUTHENTICATED`. */
   agent: string;
   modes: AccessMode[];
+  /** `acl:origin` conditions: the grant applies only to requests from these origins. */
+  origins?: string[];
 }
 
 interface Scope {
@@ -164,6 +215,7 @@ function addAuthorization(store: Store, node: Quad_Subject, scope: Scope, spec: 
   if (CLASSES.has(spec.agent)) auth.agentClass.add(spec.agent);
   else auth.agent.add(spec.agent);
   for (const mode of spec.modes) auth.mode.add(`${ACL}${mode}`);
+  for (const origin of spec.origins ?? []) auth.origin.add(origin);
 }
 
 function freeFragment(store: Store, aclUrl: string, stem: string): Quad_Subject {
@@ -260,11 +312,14 @@ async function inheritedInto(
     if (!ancestor.exists) continue;
     for (const auth of authorizations(ancestor.store)) {
       if (auth.default !== container) continue;
+      assertCopyable(ancestor.store, auth);
       const modes = [...auth.mode].map(modeName).filter((m): m is AccessMode => m !== undefined);
       for (const agent of [...auth.agent, ...[...auth.agentClass].filter((c) => CLASSES.has(c))]) {
+        // Copy the conditions too: dropping one would broaden the rule.
         addAuthorization(store, freeFragment(store, aclUrl, "inherited"), scopeOf(target), {
           agent,
           modes,
+          origins: [...auth.origin],
         });
       }
     }
@@ -346,6 +401,7 @@ export async function revokeAccess(
     const isClass = CLASSES.has(options.agent);
     const holds = isClass ? auth.agentClass.has(options.agent) : auth.agent.has(options.agent);
     if (!holds) continue;
+    assertCopyable(acl.store, auth);
     const keep = [...auth.mode]
       .map(modeName)
       .filter((m): m is AccessMode => m !== undefined && !revoke.has(m));
@@ -358,9 +414,10 @@ export async function revokeAccess(
       addAuthorization(acl.store, freeFragment(acl.store, acl.aclUrl, "grant"), scope, {
         agent: options.agent,
         modes: keep,
+        origins: [...auth.origin],
       });
     }
-    if (auth.agent.size === 0 && auth.agentClass.size === 0)
+    if (auth.agent.size === 0 && auth.agentClass.size === 0 && auth.agentGroup === undefined)
       dropNode(acl.store, auth as unknown as Quad_Subject);
   }
   return writeAcl(options, acl);
