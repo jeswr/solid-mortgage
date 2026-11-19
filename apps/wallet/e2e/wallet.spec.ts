@@ -29,6 +29,7 @@ interface Harness {
   request(code: string, day: number): Promise<string>;
   status(owner: Owner, pod: Owner, path: string, method?: string): Promise<number>;
   write(owner: Owner, pod: Owner, path: string, text: string): Promise<number>;
+  members(owner: Owner, pod: Owner, path: string): Promise<string[]>;
   aclAgents(path: string): Promise<string[]>;
   webid(owner: Owner): string;
 }
@@ -60,6 +61,11 @@ async function openHarness(context: BrowserContext) {
       page.evaluate(
         ([o, p, x, t]) => (window as unknown as { __harness: Harness }).__harness.write(o, p, x, t),
         [owner, pod, path, text] as const,
+      ),
+    members: (owner: Owner, pod: Owner, path: string) =>
+      page.evaluate(
+        ([o, p, x]) => (window as unknown as { __harness: Harness }).__harness.members(o, p, x),
+        [owner, pod, path] as const,
       ),
     aclAgents: (path: string) =>
       page.evaluate(
@@ -186,7 +192,7 @@ test("step 5: prove to two lenders, cross-origin isolated, no grant given", asyn
   }
 });
 
-test("step 5 fails closed on a CRS one bit off, writes nothing, and proves once the right file is back", async ({
+test("step 5 fails closed on a CRS one bit off: no proof reaches either lender, and the retry proves", async ({
   baseURL,
   context,
   page,
@@ -215,6 +221,10 @@ test("step 5 fails closed on a CRS one bit off, writes nothing, and proves once 
   });
   const harness = await openHarness(context);
   await harness.beats(["share-employment", "share-credit-summary"]);
+  const lenders = ["lender-b", "lender"] as const;
+  const inboxes = () =>
+    Promise.all(lenders.map((lender) => harness.members(lender, lender, "inbox/")));
+  const before = await inboxes();
   await page.goto("prove");
   const prove = page.locator('[data-tour="wallet-prove"]');
   await expect(prove).toBeEnabled();
@@ -226,10 +236,14 @@ test("step 5 fails closed on a CRS one bit off, writes nothing, and proves once 
   await expect(prove).toBeEnabled();
   expect(tampered).toBeGreaterThan(0);
   await expect(page.getByText("Checked: yes")).toHaveCount(0);
-  // Nothing reached either lender, and bb.js did not go to its CDN instead.
-  for (const lender of ["lender-b", "lender"] as const) {
+  // Each lender opened its challenge before the prover started, and that is all that was written:
+  // no proof presentation reached either inbox, no lender wrote a result, and bb.js did not go to
+  // its CDN instead.
+  for (const lender of lenders) {
+    expect(await harness.status(lender, lender, "prequalification/challenge")).toBe(200);
     expect(await harness.status(lender, lender, "quotes/prequalification")).toBe(404);
   }
+  expect(await inboxes()).toEqual(before);
   expect(guard.cdn).toEqual([]);
   expect(guard.outside).toEqual([]);
 
@@ -238,8 +252,15 @@ test("step 5 fails closed on a CRS one bit off, writes nothing, and proves once 
   await prove.click();
   await expect(page.getByText("Checked: yes")).toHaveCount(2, { timeout: 180_000 });
   await expect(problem).toHaveCount(0);
-  for (const lender of ["lender-b", "lender"] as const) {
+  for (const lender of lenders) {
     expect(await harness.status(lender, lender, "quotes/prequalification")).toBe(200);
+  }
+  // The retry's presentations did arrive, one in each inbox: the inbox check above can see one.
+  const after = await inboxes();
+  for (const [index, members] of after.entries()) {
+    const added = members.filter((member) => !(before[index] ?? []).includes(member));
+    expect(added).toHaveLength(1);
+    expect(added[0]).toMatch(/^inbox\//);
   }
   expect(guard.cdn).toEqual([]);
   expect(guard.outside).toEqual([]);
