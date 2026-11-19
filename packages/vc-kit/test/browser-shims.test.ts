@@ -192,6 +192,32 @@ describe("Buffer stand-in", () => {
     expect(hex(nodeGunzip(Buffer.from(encoded.slice(1), "base64url")))).toBe(hex(bits));
   });
 
+  test("allocation, ArrayBuffer and hex behave as other libraries expect of a Buffer global", () => {
+    // msgpackr (inside the proof toolchain) calls allocUnsafeSlow once it sees a Buffer global.
+    for (const allocate of [BufferShim.alloc, BufferShim.allocUnsafe, BufferShim.allocUnsafeSlow]) {
+      const buffer = allocate(8);
+      expect(buffer).toBeInstanceOf(BufferShim);
+      expect([...buffer]).toEqual([0, 0, 0, 0, 0, 0, 0, 0]);
+    }
+    const bytes = randomBytes(12);
+    const arrayBuffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.length);
+    expect(hex(BufferShim.from(arrayBuffer))).toBe(hex(Buffer.from(arrayBuffer)));
+    for (const text of ["", "00ff10", "DEADbeef", "abc", "12zz34"]) {
+      expect(hex(BufferShim.from(text, "hex"))).toBe(hex(Buffer.from(text, "hex")));
+    }
+    expect([...BufferShim.alloc(3, 128)]).toEqual([...Buffer.alloc(3, 128)]);
+    for (let length = 0; length < 20; length += 1) {
+      const random = randomBytes(length);
+      const base64 = Buffer.from(random).toString("base64");
+      expect(BufferShim.from(random).toString("base64")).toBe(base64);
+      expect(BufferShim.from(random).toString("hex")).toBe(Buffer.from(random).toString("hex"));
+      expect(hex(BufferShim.from(base64, "base64"))).toBe(hex(random));
+      expect(hex(BufferShim.from(base64.replace(/=+$/, ""), "base64"))).toBe(hex(random));
+    }
+    expect(BufferShim.isBuffer(BufferShim.alloc(1))).toBe(true);
+    expect(BufferShim.isBuffer(new Uint8Array(1))).toBe(false);
+  });
+
   test("it never replaces a Buffer the runtime already has", () => {
     expect(installBufferShim()).toBe(false);
     expect(globalThis.Buffer).not.toBe(BufferShim);
