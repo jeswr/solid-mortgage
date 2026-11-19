@@ -230,6 +230,16 @@ export function isIdentityKey(key: string): boolean {
   return /^[a-z][a-z0-9-]*$/.test(key) && !(key in Object.prototype);
 }
 
+/**
+ * Whether a response becomes a Lens event. A state change is reported only when it happened (2xx)
+ * or was refused by access control (401/403, kind "denied"); a write that failed for any other
+ * reason changed nothing, and the Lens must never show it as a write. Reads are always reported.
+ */
+function reportable(method: string, status: number): boolean {
+  if (!MUTATING.has(method)) return true;
+  return (status >= 200 && status < 300) || status === 401 || status === 403;
+}
+
 function parentOf(path: string): string | undefined {
   const trimmed = path.endsWith("/") ? path.slice(0, -1) : path;
   if (trimmed === "") return undefined;
@@ -575,7 +585,12 @@ export function createPodHost(options: PodHostOptions): PodHost {
     if (result !== undefined && current !== undefined && current.snapshotRevision() !== revision) {
       await persist(owner, ["current"]);
     }
-    if (method !== "OPTIONS" && actorOwner !== undefined && agent !== undefined) {
+    if (
+      method !== "OPTIONS" &&
+      actorOwner !== undefined &&
+      agent !== undefined &&
+      reportable(method, response.status)
+    ) {
       const event = await buildEvent({
         actorOwner,
         agent,
