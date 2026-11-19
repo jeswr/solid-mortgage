@@ -9,7 +9,7 @@
  * staged except the title and end cards (`video/<demo>/cards.html`).
  */
 import type { Locator } from "@playwright/test";
-import type { Claim, Demo, OrgLite, TourStepLite } from "./lib/demo.ts";
+import type { Claim, Demo, DemoTotals, OrgLite, TourStepLite } from "./lib/demo.ts";
 import { type Director, sleep } from "./lib/director.ts";
 import type { PageGlobals } from "./lib/page-globals.ts";
 
@@ -25,6 +25,8 @@ export interface Ctx {
   demoStage: string;
   /** Static metric values (content/), for the live totals check. */
   metrics: Record<string, number>;
+  /** The demo's own ledger totals (`content/<demo>/ledger.ts`), for `<demo>.<field>` claims. */
+  demoTotals?: DemoTotals;
   state: { speakingUntil?: number; chip?: string; step?: string; totals?: unknown };
 }
 
@@ -217,8 +219,21 @@ interface LiveTotals {
   credentialsIssued: number;
 }
 
-/** The value a claim's metric has now, live, or undefined if the run cannot tell. */
-export function liveMetric(c: Ctx, t: LiveTotals, metric: string): number | undefined {
+/**
+ * The value a claim's metric has now, live, or undefined if the run cannot tell. `demo` is the
+ * demo's own ledger totals counted from the same log (`<demo>.<field>` metrics).
+ */
+export function liveMetric(
+  c: Pick<Ctx, "metrics" | "demo">,
+  t: LiveTotals,
+  metric: string,
+  demo?: Record<string, unknown>,
+): number | undefined {
+  const own = `${c.demo.id}.`;
+  if (metric.startsWith(own)) {
+    const v = demo?.[metric.slice(own.length)];
+    return typeof v === "number" ? v : undefined;
+  }
   switch (metric) {
     case "grants.total":
       return t.grants.active + t.grants.expired + t.grants.revoked;
@@ -259,18 +274,30 @@ async function openLedger(c: Ctx): Promise<Locator> {
 
 /** Compares every spoken total with the journey ledger the Lens computed from the pod's events. */
 async function checkTotals(c: Ctx) {
-  // The ledger page computes from the same log as the Lens; prefer what is on screen.
-  const t = (await page(c).evaluate(() => {
+  // The ledger page computes from the same log as the Lens; prefer what is on screen. The log
+  // itself (the Lens's received entries) feeds the demo's own totals, as on its ledger page.
+  const live = (await page(c).evaluate(() => {
+    type Model = { received?: { entry: unknown }[] };
     const ledger = document.querySelector("journey-ledger") as
-      | (Element & { totals?: () => unknown })
+      | (Element & { totals?: () => unknown; model?: Model })
       | null;
+    const lens = document.querySelector("solid-lens") as (Element & { model?: Model }) | null;
+    let model: Model | undefined;
+    try {
+      model = lens?.model;
+    } catch {
+      // <solid-lens> throws before configure(): fall back to the ledger page's own model.
+    }
+    const entries = (ledger?.model ?? model)?.received?.map((r) => r.entry);
     const fromPage = ledger?.totals?.();
-    return fromPage ?? (window as unknown as PageGlobals).__demo?.totals();
-  })) as LiveTotals | undefined;
+    return { t: fromPage ?? (window as unknown as PageGlobals).__demo?.totals(), entries };
+  })) as { t?: LiveTotals; entries?: unknown[] };
+  const t = live.t;
   if (!t) return c.d.warn("no journey ledger totals on this page");
-  c.state.totals = t;
+  const own = c.demoTotals && live.entries ? c.demoTotals(live.entries) : undefined;
+  c.state.totals = own ? { ...t, [c.demo.id]: own } : t;
   const bad = c.demo.claims
-    .map((claim: Claim) => ({ claim, live: liveMetric(c, t, claim.metric) }))
+    .map((claim: Claim) => ({ claim, live: liveMetric(c, t, claim.metric, own) }))
     .filter(({ claim, live }) => live !== claim.value);
   for (const { claim, live } of bad)
     c.d.warn(

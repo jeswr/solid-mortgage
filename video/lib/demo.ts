@@ -43,7 +43,9 @@ export interface Claim {
   /**
    * `registry.apps` (applications in content/orgs.ts), `registry.organisations` (distinct
    * organisations there), `grants.total` (grants in the journey ledger: active, expired and
-   * revoked), `grants.revoked`, `uploads` (documents the holder uploaded), `denied`.
+   * revoked), `grants.revoked`, `uploads` (documents the holder uploaded), `denied`,
+   * `organisations.involved`, or `<demo>.<field>`: a field of the demo's own ledger totals
+   * (`content/<demo>/ledger.ts`), counted live from the same log the ledger page counts.
    */
   metric: string;
   value: number;
@@ -136,6 +138,25 @@ export async function staticMetrics(id: DemoId): Promise<Record<string, number>>
     out["grants.total"] = grants.GRANT_CODES.length;
   }
   return out;
+}
+
+/** A demo's own ledger totals: `content/<demo>/ledger.ts` counts them from the journey's log. */
+export type DemoTotals = (entries: readonly unknown[]) => Record<string, unknown>;
+
+/**
+ * The totals function of a demo's journey ledger page (`movingHouseTotals`, `loanTotals`, …), the
+ * one the page itself runs over the pods' log, or undefined when the demo has none. A claim's
+ * metric `<demo>.<field>` is that function's `<field>`.
+ */
+export async function loadDemoTotals(id: DemoId): Promise<DemoTotals | undefined> {
+  const rel = `content/dist/${id}/ledger.js`;
+  if (!existsSync(path.join(REPO, rel))) return undefined;
+  const mod = await importBuilt<Record<string, unknown>>(rel);
+  const fns = Object.entries(mod).filter(
+    ([name, value]) => typeof value === "function" && /Totals$/.test(name),
+  );
+  if (fns.length !== 1) return undefined;
+  return fns[0]?.[1] as DemoTotals;
 }
 
 /** Drawer labels and paths the Lens shows (`MORTGAGE_DRAWERS` for the mortgage). */

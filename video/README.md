@@ -40,7 +40,10 @@ exist yet is checked against the `steps:` in its front matter, and its strict mo
 
 The recording repeats the totals check live: at `[do: lens totals]` it reads
 `window.__demo.totals()` (the journey ledger the Lens computed from the pod's own events) and,
-with `--strict`, fails if any claim differs.
+with `--strict`, fails if any claim differs. A claim on a demo's own quantity (`<demo>.<field>`,
+such as `moving-house.reads`) is counted by that demo's `content/<demo>/ledger.ts` totals
+function over the same log the Lens holds, the count its ledger page shows; the static check
+fails if that function does not count the field.
 
 ## Record
 

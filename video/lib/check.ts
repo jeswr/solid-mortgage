@@ -10,7 +10,8 @@
  * - Every step of a built demo's tour is shown, in tour order.
  * - Every spoken total (claims.json) appears in the narration, its number word equals the claimed
  *   value, and the value equals what content/ says (the live run checks the rest against
- *   `window.__demo.totals()`). A paragraph spoken over `lens totals` may not state an unclaimed
+ *   `window.__demo.totals()`, or a demo's own `content/<demo>/ledger.ts` totals, which must
+ *   count the claimed field). A paragraph spoken over `lens totals` may not state an unclaimed
  *   number.
  * - The spoken words equal docs/rebuild/video-scripts.md, the script of record, so the welcome
  *   page's transcripts (copied from it) match what is said.
@@ -22,6 +23,7 @@ import {
   type DemoId,
   dataTourNames,
   isBuilt,
+  loadDemoTotals,
   loadDrawers,
   loadOrgs,
   loadTour,
@@ -286,6 +288,9 @@ export async function checkDemo(
     s.steps.filter((st) => st.text).map((st) => ({ scene: s.id, step: st, text: plain(st.text) })),
   );
   const metrics = built ? await staticMetrics(id) : {};
+  const demoTotals = built ? await loadDemoTotals(id) : undefined;
+  // The fields the demo's ledger counts: its totals over an empty log.
+  const fields = demoTotals ? demoTotals([]) : {};
   for (const c of demo.claims) {
     const where = `${id} claim "${c.says}"`;
     const hits = paras.filter((p) => p.text.includes(c.says));
@@ -295,8 +300,23 @@ export async function checkDemo(
     const known = metrics[c.metric];
     if (known !== undefined && known !== c.value)
       add("error", where, `${c.metric} is ${known} in content/, the narration says ${c.value}`);
-    if (known === undefined)
-      add("note", where, `${c.metric} is checked live against window.__demo.totals()`);
+    const own = c.metric.startsWith(`${id}.`) ? c.metric.slice(id.length + 1) : undefined;
+    if (built && own !== undefined && typeof fields[own] !== "number")
+      add(
+        "error",
+        where,
+        demoTotals
+          ? `content/${id}/ledger.ts counts no "${own}"`
+          : `content/${id}/ledger.ts has no totals function for ${c.metric}`,
+      );
+    else if (known === undefined)
+      add(
+        "note",
+        where,
+        own === undefined
+          ? `${c.metric} is checked live against window.__demo.totals()`
+          : `${c.metric} is checked live against content/${id}/ledger.ts over the pods' log`,
+      );
   }
   for (const p of paras) {
     const overTotals = [...p.step.actions, ...p.step.after].some(
