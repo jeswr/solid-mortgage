@@ -1,0 +1,348 @@
+/* AUTHORED-BY Claude Opus 5.5 */
+@import "./tokens.css";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--st-parchment);
+  color: var(--st-ink);
+  font-family: var(--st-sans);
+  font-size: 1.0625rem;
+  line-height: 1.5;
+}
+
+h1,
+h2 {
+  font-family: var(--st-serif);
+  font-weight: 700;
+  color: var(--st-navy);
+}
+
+h1 {
+  font-size: 1.75rem;
+  margin: 0 0 1rem;
+}
+
+h2 {
+  font-size: 1.15rem;
+  margin: 1.5rem 0 0.5rem;
+}
+
+a {
+  color: var(--st-navy-2);
+}
+
+:focus-visible {
+  outline: 3px solid var(--st-focus);
+  outline-offset: 2px;
+}
+
+.muted {
+  color: var(--st-muted);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.masthead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  background: var(--st-navy);
+  padding: 0.75rem 1rem;
+}
+
+.wordmark {
+  font-family: var(--st-serif);
+  font-size: 1.5rem;
+  color: var(--st-parchment);
+  text-decoration: none;
+  letter-spacing: 0.04em;
+}
+
+.wordmark span {
+  font-size: 1rem;
+  font-style: italic;
+}
+
+.masthead-out {
+  color: var(--st-parchment);
+}
+
+.room {
+  display: grid;
+  grid-template-columns: 14rem minmax(0, 1fr) 16rem;
+  gap: 1.25rem;
+  padding: 1.25rem 1rem 3rem;
+  max-width: 84rem;
+  margin: 0 auto;
+}
+
+@media (max-width: 1100px) {
+  .room {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.tree {
+  font-size: 0.95rem;
+}
+
+.tree-root {
+  font-family: var(--st-serif);
+  font-weight: 700;
+  color: var(--st-navy);
+  margin: 0 0 0.25rem;
+}
+
+.tree ul {
+  list-style: none;
+  margin: 0;
+  padding-left: 0.9rem;
+  border-left: 1px solid var(--st-rule);
+}
+
+.tree > ul {
+  border-left: 0;
+  padding-left: 0;
+}
+
+.tree li {
+  margin: 0.2rem 0;
+}
+
+.tree-folder {
+  font-weight: 600;
+}
+
+.tree a {
+  text-decoration: none;
+  display: inline-block;
+  padding: 0.1rem 0.35rem;
+}
+
+.tree a[aria-current="page"] {
+  background: var(--st-navy);
+  color: var(--st-parchment);
+}
+
+.paper {
+  background: var(--st-paper);
+  border: 1px solid var(--st-rule);
+  box-shadow:
+    0 2px 0 var(--st-rule),
+    0 6px 18px rgb(27 42 73 / 12%);
+  padding: 2rem clamp(1rem, 4vw, 3rem);
+  min-height: 60vh;
+}
+
+.paper.narrow {
+  max-width: 48rem;
+  margin: 1.5rem auto;
+  min-height: 0;
+}
+
+.kicker {
+  font-variant: small-caps;
+  letter-spacing: 0.08em;
+  color: var(--st-brass);
+  margin: 0 0 0.25rem;
+}
+
+.schedule {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 0.35rem 1.25rem;
+}
+
+.schedule dt {
+  font-weight: 600;
+}
+
+.schedule dd {
+  margin: 0;
+}
+
+.ledger {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.5rem 0 1rem;
+}
+
+.ledger th,
+.ledger td {
+  text-align: left;
+  border-bottom: 1px solid var(--st-rule);
+  padding: 0.4rem 0.3rem;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.ledger .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.ledger tfoot th,
+.ledger tfoot td {
+  border-top: 2px solid var(--st-navy);
+  font-weight: 700;
+}
+
+.findings {
+  padding-left: 0;
+  list-style: none;
+}
+
+.findings li {
+  margin: 0.4rem 0;
+}
+
+.tag {
+  display: inline-block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  border: 1px solid var(--st-navy);
+  padding: 0 0.35rem;
+  margin-right: 0.35rem;
+}
+
+.tag.lien {
+  background: var(--st-navy);
+  color: var(--st-parchment);
+}
+
+.draft-mark,
+.issued-mark {
+  font-family: var(--st-serif);
+  font-style: italic;
+  border: 2px solid var(--st-brass);
+  color: var(--st-brass);
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  margin: 0 0 0.5rem;
+}
+
+.issued-mark {
+  border-color: var(--st-navy);
+  color: var(--st-navy);
+}
+
+.simulated {
+  border: 2px solid var(--st-refused);
+  color: var(--st-refused);
+  background: #fbf1ec;
+  font-weight: 600;
+  padding: 0.6rem 0.8rem;
+}
+
+.sig-field {
+  display: inline-block;
+  min-width: 11rem;
+  border-bottom: 1px solid var(--st-ink);
+  font-style: italic;
+  color: var(--st-muted);
+}
+
+.sig-field.signed {
+  font-family: var(--st-serif);
+  color: var(--st-navy);
+}
+
+.actions {
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--st-rule);
+  padding-top: 1rem;
+}
+
+.seal-button,
+button.secondary {
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.6rem 1.4rem;
+  border-radius: 2px;
+}
+
+.seal-button {
+  background: var(--st-navy);
+  color: var(--st-parchment);
+  border: 2px solid var(--st-navy);
+}
+
+button.secondary {
+  background: var(--st-paper);
+  color: var(--st-navy);
+  border: 2px solid var(--st-navy);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.side {
+  font-size: 0.95rem;
+}
+
+.side h2 {
+  margin-top: 0;
+}
+
+.parties {
+  margin: 0 0 1.5rem;
+}
+
+.parties dt {
+  font-weight: 600;
+  color: var(--st-muted);
+}
+
+.parties dd {
+  margin: 0 0 0.4rem;
+}
+
+.checklist {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.checklist li {
+  padding: 0.3rem 0;
+  border-bottom: 1px dotted var(--st-rule);
+}
+
+.checklist li.done {
+  color: var(--st-navy);
+  font-weight: 600;
+}
+
+.refusal,
+.failure {
+  border: 2px solid var(--st-refused);
+  color: var(--st-refused);
+  padding: 0.6rem 0.8rem;
+  margin-top: 0.75rem;
+  overflow-wrap: anywhere;
+}
+
+.catch-up {
+  border: 1px dashed var(--st-navy-2);
+  padding: 1rem;
+  margin: 1rem 0;
+}

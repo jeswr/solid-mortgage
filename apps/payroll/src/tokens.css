@@ -1,0 +1,23 @@
+/* AUTHORED-BY Claude Opus 5.5
+ * Ledgerly Payroll's tokens (design.md §b.3): indigo, a lime accent, a cool grey canvas,
+ * IBM Plex Sans, medium density, outlined icons. Original values. */
+:root {
+  --lg-canvas: #eef0f5;
+  --lg-surface: #ffffff;
+  --lg-ink: #1b1d2e;
+  --lg-muted: #555a70;
+  --lg-line: #d7dae4;
+  --lg-indigo: #3d3a8c;
+  --lg-indigo-deep: #2a2766;
+  --lg-indigo-soft: #e6e5f5;
+  --lg-lime: #b7d334;
+  --lg-lime-ink: #2f3a05;
+  --lg-red: #a3252a;
+  --lg-red-soft: #fbeaea;
+  --lg-green: #1f6b3a;
+  --lg-focus: #b7d334;
+  --lg-font: "IBM Plex Sans", system-ui, sans-serif;
+  --lg-mono: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --lg-radius: 6px;
+  --lg-rail: 88px;
+}

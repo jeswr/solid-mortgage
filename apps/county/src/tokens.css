@@ -1,0 +1,16 @@
+/* AUTHORED-BY Claude Opus 5.5
+ * The Recorder's tokens: a plain county government site. System fonts, blue links, bordered
+ * tables, no seal (design.md §b.3). */
+:root {
+  --gov-blue: #2a4d8f;
+  --gov-blue-dark: #1c3566;
+  --gov-link: #1a4fb4;
+  --gov-visited: #5b2a86;
+  --gov-ink: #1b1b1b;
+  --gov-muted: #4a4a4a;
+  --gov-rule: #8a8a8a;
+  --gov-tint: #eef2f9;
+  --gov-alert: #8b1a1a;
+  --gov-focus: #c75000;
+  --gov-font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
