@@ -273,6 +273,69 @@ describe("pod runtime in Chrome", () => {
     await context.close();
   });
 
+  it("on plain HTTP (no secure context: no service worker, Web Locks or randomUUID) one tab hosts by lease", async (ctx) => {
+    if (skipReason) return ctx.skip(skipReason);
+    // A name other than localhost is not a secure context over http.
+    const insecure = await launch(["--host-resolver-rules=MAP insecure.test 127.0.0.1"]);
+    if (insecure === undefined) return ctx.skip("no Chrome or Playwright Chromium available");
+    try {
+      const context = await insecure.newContext();
+      const port = new URL(origin).port;
+      const openInsecure = async () => {
+        const page = await context.newPage();
+        page.on("pageerror", (error) => console.error("page error:", error.message));
+        await page.goto(`http://insecure.test:${port}/`);
+        await page.waitForFunction(() => "rt" in globalThis);
+        return page;
+      };
+      const one = await openInsecure();
+      expect(
+        await one.evaluate(() => ({
+          locks: "locks" in navigator,
+          secure: isSecureContext,
+          uuid: typeof crypto.randomUUID,
+        })),
+      ).toEqual({ locks: false, secure: false, uuid: "undefined" });
+      // The first hello is answered promptly (well inside the 60 s forward timeout).
+      const started = Date.now();
+      expect((await one.evaluate(() => rt.ready())).mode).toBe("worker");
+      expect(Date.now() - started).toBeLessThan(15_000);
+      const two = await openInsecure();
+      expect((await two.evaluate(() => rt.ready())).mode).toBe("worker");
+      const text = { "content-type": "text/plain" };
+      expect((await call(one, "PUT", "/pods/bank/i/one.txt", "from one", text)).status).toBe(201);
+      expect(await call(two, "GET", "/pods/bank/i/one.txt")).toEqual({
+        body: "from one",
+        status: 200,
+      });
+      expect((await call(two, "PUT", "/pods/bank/i/two.txt", "from two", text)).status).toBe(201);
+      expect(await call(one, "GET", "/pods/bank/i/two.txt")).toEqual({
+        body: "from two",
+        status: 200,
+      });
+      // One host, so one event log with no id used twice.
+      await two.waitForFunction(
+        () => events.filter((e) => e.kind === "write" && e.path?.startsWith("/i/")).length >= 2,
+      );
+      const ids = await two.evaluate(() =>
+        events
+          .filter((e) => e.source === "pod" && e.kind === "write")
+          .map((e) => (e as unknown as { id: number }).id),
+      );
+      expect(new Set(ids).size).toBe(ids.length);
+      // Whichever tab hosted goes away; the lease frees and the other takes over from storage.
+      await one.close();
+      expect(await call(two, "GET", "/pods/bank/i/one.txt")).toEqual({
+        body: "from one",
+        status: 200,
+      });
+      expect((await call(two, "PUT", "/pods/bank/i/three.txt", "three", text)).status).toBe(201);
+      await context.close();
+    } finally {
+      await insecure.close();
+    }
+  });
+
   it("setTourContext tags the requests that follow; null clears it", async (ctx) => {
     if (skipReason) return ctx.skip(skipReason);
     const context = await (browser as Browser).newContext();
