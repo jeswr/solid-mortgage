@@ -60,6 +60,12 @@ const AFTER: Record<string, () => Promise<void>> = {
     await probe("payroll lists credentials", "payroll", alex("credentials/"));
     await probe("payroll writes another slot", "payroll", alex("credentials/assets"), TURTLE);
     await probe("payroll reads the profile", "payroll", alex("profile/card"));
+    await probe("anonymous reads Alex's profile", null, alex("profile/card"));
+    await probe(
+      "anonymous reads the bank's profile",
+      null,
+      podUrl(host.world, "bank", "profile/card"),
+    );
     await probe(
       "lender reads income before any grant",
       "lender",
@@ -425,6 +431,8 @@ describe("grants are enforced by the pod", () => {
     "payroll lists credentials": 403,
     "payroll writes another slot": 403,
     "payroll reads the profile": 403,
+    "anonymous reads Alex's profile": 401,
+    "anonymous reads the bank's profile": 200,
     "lender reads income before any grant": 403,
     "anonymous reads income": 401,
     "anonymous reads Copperfield's result": 401,

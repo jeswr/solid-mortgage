@@ -11,9 +11,16 @@
  * visitor's browser, so nothing signed can ship in the bundle.
  *
  * The pod server already writes the root ACL (owner only) when a pod is created, and creates no
- * containers until something is written. The seed adds the documents that open specific things:
- * profiles and status lists are public, inboxes take appends from any signed-in agent, and the
- * county's register is public. Everything else in every pod is owner-only until a grant.
+ * containers until something is written. The pod runtime also gives every pod a public-read
+ * `profile/card.acl` (packages/pod-runtime README, "baseline"). The seed adds the documents that
+ * open specific things: organisation profiles and status lists are public, inboxes take appends
+ * from any signed-in agent, and the county's register is public. Everything else in every pod is
+ * owner-only until a grant.
+ *
+ * Alex's profile card is not public. It holds her name and how title will be held, and design.md
+ * §b.4 has organisations read it only under a grant (G4 `profile/`, G6 `profile/card`). So the
+ * seed deletes the runtime's public `profile/card.acl` from Alex's pod; her card then follows
+ * `profile/` like every other drawer, and G6 later writes its own document for it.
  */
 
 import {
@@ -39,7 +46,8 @@ export interface SeedEnvironment {
 export interface SeedRequest {
   /** The pod the request goes to. It is made as that pod's owner. */
   readonly pod: PodOwner;
-  readonly method: "PUT";
+  /** `DELETE` only removes a document the pod runtime's baseline wrote (see above). */
+  readonly method: "PUT" | "DELETE";
   /** Path inside the pod, with a leading slash. A trailing slash is a container. */
   readonly path: string;
   readonly contentType: "text/turtle";
@@ -117,6 +125,14 @@ export async function seedRequests(env: SeedEnvironment): Promise<SeedRequest[]>
   const day = (number: number) => new Date(`${env.calendar.date(number)}T00:00:00Z`);
 
   // --- Alex ---
+  // Her card is read under G4 and G6 only, never by anyone (module comment).
+  requests.push({
+    body: "",
+    contentType: "text/turtle",
+    method: "DELETE",
+    path: "/profile/card.acl",
+    pod: "alex",
+  });
   for (const drawer of ALEX_DRAWERS) container("alex", drawer);
   await acl("alex", "inbox/", [SIGNED_IN_APPEND]);
   await resource(

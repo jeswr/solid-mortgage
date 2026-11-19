@@ -4,6 +4,10 @@
  * pod owner, and a fetch per caller that hands the caller's WebID to the server, which then
  * evaluates WAC itself. Nothing about the pod or the access check is mocked. The production
  * host is lane L1's `packages/pod-runtime`; this one exists so the journey runs headless.
+ *
+ * Like the production host, every pod starts with a public-read `profile/card.acl` (the
+ * runtime's baseline), written before anything is recorded, so the seed meets the same pods here
+ * as in the browser.
  */
 
 import { readFile } from "node:fs/promises";
@@ -16,6 +20,7 @@ import { type PodOwner, podOwners, webidFor } from "@mortgage/demo-kit/registry"
 import { generateKeyPairForSuite, type KeyPair } from "@mortgage/vc-kit";
 import { Authorization } from "@solid/object";
 import { DataFactory, Parser, Store } from "n3";
+import { aclDataset, aclTurtle, PUBLIC_READ } from "../../mortgage/acl.js";
 import { keyId } from "../../mortgage/issuers.js";
 import type { World } from "../../mortgage/world.js";
 import { ORGS } from "../../orgs.js";
@@ -104,7 +109,31 @@ export class TestHost {
   }
 
   static async create(dayOne = "2026-08-03"): Promise<TestHost> {
-    return new TestHost(await loadWasm(), createDemoCalendar(dayOne));
+    const host = new TestHost(await loadWasm(), createDemoCalendar(dayOne));
+    await host.baseline();
+    return host;
+  }
+
+  /** The runtime's baseline that the seed builds on: a public-read WebID card ACL per pod. */
+  private async baseline(): Promise<void> {
+    for (const [owner, server] of this.pods) {
+      const me = webidFor(owner, POD_ORIGIN);
+      const aclUrl = `${POD_ORIGIN}/pods/${owner}/profile/card.acl`;
+      const body = await aclTurtle(
+        aclDataset(me, `${POD_ORIGIN}/pods/${owner}/profile/card`, [PUBLIC_READ]),
+      );
+      const raw = await server.handleRequest(
+        "PUT",
+        "/profile/card.acl",
+        ["content-type", "text/turtle"],
+        new TextEncoder().encode(body),
+        me,
+      );
+      const status = raw.status;
+      raw.free();
+      if (status >= 300) throw new Error(`baseline ${owner}/profile/card.acl: HTTP ${status}`);
+      this.acls.set(aclUrl, aclPairs(body, aclUrl));
+    }
   }
 
   get owners(): PodOwner[] {
@@ -192,7 +221,10 @@ export class TestHost {
     if (status === 401 || status === 403) return "denied";
     if (method === "GET" || method === "HEAD" || method === "OPTIONS") return "read";
     if (status >= 400) return "denied";
-    if (method === "DELETE") return "delete";
+    if (method === "DELETE") {
+      this.acls.delete(url);
+      return "delete";
+    }
     if (!url.endsWith(".acl")) return "write";
     const before = this.acls.get(url) ?? new Set<string>();
     const after = aclPairs(body, url);

@@ -41,8 +41,12 @@ const OUTSIDE_GRANT: Readonly<Record<Exclude<OrgSlug, "wallet">, string[]>> = {
   servicer: ["/credentials/", "/inbox/"], // G8: contact, insurance, payment mandate
 };
 
-/** Private resources on Alex's pod (design.md §b.4) for the anonymous checks. */
+/**
+ * Private resources on Alex's pod (design.md §b.4) for the anonymous checks. Her profile card is
+ * one: organisations read it under G4 and G6 only (content/mortgage/seed.ts).
+ */
 const ALEX_PRIVATE = [
+  "/profile/card",
   "/profile/contact",
   "/identity/",
   "/credentials/",
@@ -116,7 +120,7 @@ async function checkEnforcement(page: Page): Promise<void> {
     if (status !== 403) problems.push(`${org} read ${victim}:${path}: ${status}, expected 403`);
   }
 
-  // Anonymous: every private resource that exists is refused; the public WebID is not.
+  // Anonymous: every private resource that exists is refused; an organisation's WebID is not.
   for (const path of ALEX_PRIVATE) {
     if ((await ownerRead("alex", path)) !== 200) continue;
     const { status } = await podRequest(page, null, "alex", path);
@@ -130,6 +134,7 @@ async function checkEnforcement(page: Page): Promise<void> {
       if (!refused(status))
         problems.push(`anonymous read of ${owner}:${path}: ${status}, expected 401 or 403`);
     }
+    if (owner === "alex") continue; // checked with ALEX_PRIVATE above
     const card = await podRequest(page, null, owner, "/profile/card");
     if (card.status !== 200)
       problems.push(`anonymous read of the public WebID ${owner}:/profile/card: ${card.status}`);
