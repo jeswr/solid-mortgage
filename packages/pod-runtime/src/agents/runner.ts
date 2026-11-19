@@ -83,7 +83,10 @@ export function inboxWrite(entry: LensEntry): PodEvent | undefined {
 
 export function createAgentRunner(options: AgentRunnerOptions): AgentRunner {
   const queues = new Map<string, Promise<void>>();
-  const ownerOf = (app: string) => options.identities[app] ?? (app as PodOwner);
+  const ownerOf = (app: string): PodOwner =>
+    Object.hasOwn(options.identities, app)
+      ? (options.identities[app] as PodOwner)
+      : (app as PodOwner);
 
   const unsubscribe = options.subscribe((entry) => {
     const event = inboxWrite(entry);
@@ -103,7 +106,8 @@ export function createAgentRunner(options: AgentRunnerOptions): AgentRunner {
       };
       const context: AgentContext = {
         app,
-        note: options.note,
+        // The note is from this organisation, whatever the handler wrote in it.
+        note: (note) => options.note({ ...note, org: app as AppNote["org"] }),
         now: () => event.at,
         owner,
         podFetch: options.fetchFor(owner),

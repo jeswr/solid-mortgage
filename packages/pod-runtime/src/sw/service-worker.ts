@@ -71,6 +71,11 @@ export function startServiceWorker(
       event.waitUntil(sw.clients.claim().then(() => port?.postMessage({ ok: true })));
       return;
     }
+    // Host mode: only the bridge page talks to the worker; it vouches for the calling app.
+    if (options.hostMode && !isBridge((event.source as { url?: string } | null)?.url)) {
+      port?.postMessage({ error: "control messages are accepted only from the bridge", ok: false });
+      return;
+    }
     // A pod request must arrive as a fetch, where the identity rules above apply.
     if (data?.type === "fetch" || data?.type === "agents") {
       port?.postMessage({ error: `${data.type} is not accepted by the service worker`, ok: false });

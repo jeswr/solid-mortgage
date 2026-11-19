@@ -20,6 +20,8 @@ const TERMS = [
 ].map((parts) => parts.join(""));
 // The workspace scope name is the one allowed occurrence.
 const SCOPE = new RegExp(`@${TERMS[0]}/`, "gi");
+// So are the workspace's build environment variables (`<SCOPE>_HOST_MODE`, …).
+const ENV_NAMES = new RegExp(`${TERMS[0]?.toUpperCase()}_[A-Z_]+`, "g");
 
 function files(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
@@ -35,9 +37,7 @@ test("no domain term in source, tests, scripts, config or docs", () => {
   for (const file of files(ROOT)) {
     const lines = readFileSync(file, "utf8").split("\n");
     lines.forEach((line, index) => {
-      const cleaned = line
-        .replace(SCOPE, "@scope/")
-        .replace(/MORTGAGE_HOST_MODE/g, "HOST_MODE_FLAG");
+      const cleaned = line.replace(SCOPE, "@scope/").replace(ENV_NAMES, "ENV_FLAG");
       if (pattern.test(cleaned)) hits.push(`${relative(ROOT, file)}:${index + 1}: ${line.trim()}`);
     });
   }

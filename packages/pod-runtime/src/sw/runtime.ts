@@ -33,6 +33,11 @@ export interface SwRuntimeOptions {
   /** Where events and resets are broadcast. */
   channel?: { postMessage(message: HostMessage): void };
   watchUncaught?: PodHostOptions["watchUncaught"];
+  /**
+   * Host mode: owners and identities fixed at build time. A page's hello then changes nothing,
+   * so no app can remap an identity to another owner or drop a pod.
+   */
+  fixedConfig?: RuntimeConfigMessage;
 }
 
 export interface SwRuntime {
@@ -62,7 +67,7 @@ export function createSwRuntime(options: SwRuntimeOptions): SwRuntime {
 
   async function getHost(): Promise<PodHost | undefined> {
     if (hostPromise !== undefined) return hostPromise;
-    config ??= await storage.getMeta<RuntimeConfigMessage>("config");
+    config ??= options.fixedConfig ?? (await storage.getMeta<RuntimeConfigMessage>("config"));
     if (config === undefined) return undefined;
     const { owners, identities } = config;
     hostPromise = (async () => {
@@ -109,6 +114,10 @@ export function createSwRuntime(options: SwRuntimeOptions): SwRuntime {
   }
 
   async function handleControl(message: ControlRequest): Promise<ControlReply> {
+    if (message.type === "hello" && options.fixedConfig !== undefined) {
+      const host = (await getHost()) as PodHost;
+      return { hello: { day, dayOne, info: await host.info() }, ok: true };
+    }
     if (message.type === "hello") {
       const next = { identities: message.identities, owners: [...message.owners] };
       const stored = config ?? (await storage.getMeta<RuntimeConfigMessage>("config"));

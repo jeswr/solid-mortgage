@@ -7,13 +7,14 @@
  * - Dedicated worker named `pod-agents`: the organisation agents, one runner across all tabs.
  * - Window on the pod origin (host-mode build only): the bridge page.
  */
+import hostConfig from "virtual:pod-runtime-host-config";
 import base64 from "virtual:pod-runtime-wasm";
 import { idbStorage } from "../host/storage.js";
 import { AGENTS_WORKER_NAME, EVENTS_CHANNEL } from "../protocol.js";
 import { startAgentWorker } from "./agent-worker.js";
 import { startBridgePage } from "./bridge-page.js";
 import { startHostWorker } from "./host-worker.js";
-import { createSwRuntime } from "./runtime.js";
+import { createSwRuntime, type SwRuntimeOptions } from "./runtime.js";
 import { type ServiceWorkerScope, startServiceWorker } from "./service-worker.js";
 
 const scope = globalThis as unknown as { name?: string; document?: unknown };
@@ -25,13 +26,19 @@ function decode(text: string): Uint8Array<ArrayBuffer> {
   return bytes;
 }
 
-const runtime = () =>
-  createSwRuntime({
+const runtime = () => {
+  const options: SwRuntimeOptions = {
     channel: new BroadcastChannel(EVENTS_CHANNEL),
     compile: () => WebAssembly.compile(decode(base64)),
     origin: self.location.origin,
     storage: idbStorage(),
-  });
+  };
+  if (__HOST_MODE__) {
+    if (hostConfig === undefined) throw new Error("host-mode build without a registry");
+    options.fixedConfig = hostConfig;
+  }
+  return createSwRuntime(options);
+};
 
 if (
   typeof ServiceWorkerGlobalScope !== "undefined" &&
@@ -41,7 +48,7 @@ if (
     hostMode: __HOST_MODE__,
   });
 } else if (scope.document !== undefined) {
-  if (__HOST_MODE__) startBridgePage();
+  if (__HOST_MODE__ && hostConfig !== undefined) startBridgePage(hostConfig);
 } else if (scope.name === AGENTS_WORKER_NAME) {
   startAgentWorker();
 } else {

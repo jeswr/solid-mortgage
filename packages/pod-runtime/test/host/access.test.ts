@@ -3,7 +3,7 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { aclDocument, PUBLIC } from "../../src/acl.js";
 import type { PodHost } from "../../src/node.js";
-import { doc, makeHost, put, url, webid } from "../helpers.js";
+import { doc, makeHost, put, recorder, url, webid } from "../helpers.js";
 
 let host: PodHost;
 beforeEach(async () => {
@@ -34,6 +34,23 @@ describe("owner and strangers", () => {
     expect((await host.fetchAs("bank-app")(target)).status).toBe(200);
     expect((await host.fetchAs("nobody")(target)).status).toBe(401);
     expect((await host.fetchAs("")(target)).status).toBe(401);
+  });
+
+  test("prototype names are never identities, from the options, the stored map or setIdentities", async () => {
+    const target = url("alex", "/documents/c");
+    await put(host.fetchAs("alex"), target, await doc(target));
+    const log = recorder(host);
+    // A map with an own `__proto__` key, as JSON or structured clone produces it.
+    await host.setIdentities(
+      JSON.parse('{"__proto__": "alex", "constructor": "alex", "bank-app": "bank"}'),
+    );
+    for (const name of ["constructor", "toString", "__proto__", "hasOwnProperty", "valueOf"]) {
+      expect((await host.fetchAs(name)(target)).status, name).toBe(401);
+    }
+    expect((await host.fetchAs("bank-app")(target)).status).toBe(403);
+    // Every event can be posted to another context.
+    for (const entry of log.all) expect(() => structuredClone(entry)).not.toThrow();
+    expect(log.events.map((e) => e.actor.org)).toEqual(["bank"]);
   });
 
   test("an X-Demo-* header in the request never reaches the pod or changes the identity", async () => {

@@ -5,6 +5,7 @@
  * which the browser sets and the app cannot forge, and forwards the request to its own service
  * worker. In a host-mode build the service worker honours the identity header only from this page.
  */
+import type { AppNote } from "@mortgage/demo-kit/contracts";
 import { AGENT_HEADER, type ControlReply, type ControlRequest, TOUR_HEADER } from "../protocol.js";
 
 export const BRIDGE_REQUEST = "pod-bridge";
@@ -88,6 +89,32 @@ async function forwardFetch(
   return { ok: true, response: { body, headers: [...response.headers], status: response.status } };
 }
 
+/**
+ * Forward a control message from a recognised app. What the app could use to claim another
+ * identity is replaced: a hello carries no owners or identities (the service worker's are fixed
+ * at build time), and a note's org is the calling app.
+ */
+function forwardControl(
+  message: Exclude<ControlRequest, { type: "fetch" }>,
+  identity: string,
+  options: BridgeOptions,
+): Promise<ControlReply> {
+  switch (message.type) {
+    case "hello":
+      return options.control({ identities: {}, owners: [], type: "hello" });
+    case "note":
+      return options.control({
+        note: { ...message.note, org: identity as AppNote["org"] },
+        type: "note",
+      });
+    case "claim":
+    case "agents":
+      return Promise.resolve({ error: `${message.type} is not forwarded`, ok: false });
+    default:
+      return options.control(message);
+  }
+}
+
 /** Serve bridge requests until the returned function is called. */
 export function startBridge(options: BridgeOptions): () => void {
   const target = options.target ?? (globalThis as unknown as NonNullable<BridgeOptions["target"]>);
@@ -105,12 +132,7 @@ export function startBridge(options: BridgeOptions): () => void {
         ? forwardFetch(message, identity, options)
         : identity === undefined
           ? Promise.resolve<ControlReply>({ error: "unknown app origin", ok: false })
-          : message.type === "claim" || message.type === "agents"
-            ? Promise.resolve<ControlReply>({
-                error: `${message.type} is not forwarded`,
-                ok: false,
-              })
-            : options.control(message);
+          : forwardControl(message, identity, options);
     answer
       .catch(
         (error: unknown): ControlReply => ({

@@ -225,6 +225,11 @@ function kindFor(method: string, status: number): PodEvent["kind"] {
   return "write";
 }
 
+/** An app slug usable as an identity key: lower-case slug syntax, and no `Object.prototype` name. */
+export function isIdentityKey(key: string): boolean {
+  return /^[a-z][a-z0-9-]*$/.test(key) && !(key in Object.prototype);
+}
+
 function parentOf(path: string): string | undefined {
   const trimmed = path.endsWith("/") ? path.slice(0, -1) : path;
   if (trimmed === "") return undefined;
@@ -238,7 +243,20 @@ export function createPodHost(options: PodHostOptions): PodHost {
   const clock = options.clock ?? (() => new Date().toISOString());
   const timeoutMs = options.limits?.dispatchTimeoutMs ?? 15_000;
   const listeners = new Set<(message: HostMessage) => void>();
-  let identities: Record<string, PodOwner> = { ...(options.identities ?? {}) };
+  /**
+   * Identity key (app slug) → owner. A Map, and only own entries naming a real owner are kept, so
+   * a key such as `constructor` or `__proto__` can never resolve to anything.
+   */
+  const identityMap = (map: Readonly<Record<string, unknown>> | undefined) => {
+    const out = new Map<string, PodOwner>();
+    for (const [key, value] of Object.entries(map ?? {})) {
+      if (!isIdentityKey(key)) continue;
+      if (typeof value === "string" && (owners as string[]).includes(value))
+        out.set(key, value as PodOwner);
+    }
+    return out;
+  };
+  let identities = identityMap(options.identities);
 
   const base = (owner: PodOwner) => `${origin}/pods/${owner}/`;
   const webid = (owner: PodOwner) => webidFor(owner, origin);
@@ -501,9 +519,9 @@ export function createPodHost(options: PodHostOptions): PodHost {
   }
 
   function resolveIdentity(identity: string | null | undefined): PodOwner | undefined {
-    if (identity === null || identity === undefined || identity === "") return undefined;
+    if (identity === null || identity === undefined || !isIdentityKey(identity)) return undefined;
     if ((owners as string[]).includes(identity)) return identity as PodOwner;
-    return identities[identity];
+    return identities.get(identity);
   }
 
   async function dispatch(request: BufferedRequest, context: DispatchContext): Promise<Response> {
@@ -708,10 +726,10 @@ export function createPodHost(options: PodHostOptions): PodHost {
 
   async function start(): Promise<void> {
     nextId = (await storage.getMeta<number>("nextEventId")) ?? 1;
-    identities = {
-      ...((await storage.getMeta<Record<string, PodOwner>>("identities")) ?? {}),
+    identities = new Map([
+      ...identityMap(await storage.getMeta<Record<string, unknown>>("identities")),
       ...identities,
-    };
+    ]);
     seeded = (await storage.getMeta<boolean>("seeded")) === true;
     if (seeded) {
       await rebuild("current");
@@ -784,8 +802,8 @@ export function createPodHost(options: PodHostOptions): PodHost {
         for (const listener of listeners) listener({ type: "reset" });
       }),
     setIdentities: async (map) => {
-      identities = { ...map };
-      await storage.putMeta("identities", identities);
+      identities = identityMap(map);
+      await storage.putMeta("identities", Object.fromEntries(identities));
     },
     subscribe(listener) {
       listeners.add(listener);

@@ -17,14 +17,8 @@ import {
 import { podOrigin, urlMode } from "@mortgage/demo-kit/urls";
 import { createBridgeClient } from "../bridge/client.js";
 import type { HostInfo, HostMessage, Seed, SeedContext } from "../host/host.js";
-import {
-  AGENT_HEADER,
-  AGENTS_LOCK,
-  AGENTS_WORKER_NAME,
-  EVENTS_CHANNEL,
-  HOST_WORKER_NAME,
-  TOUR_HEADER,
-} from "../protocol.js";
+import { AGENT_HEADER, EVENTS_CHANNEL, HOST_WORKER_NAME, TOUR_HEADER } from "../protocol.js";
+import { siteAgents, spawnAgentWorker } from "./agents.js";
 import { serviceWorkerTransport, type Transport, workerTransport } from "./transport.js";
 
 export interface RuntimeConfig {
@@ -120,34 +114,24 @@ async function chooseTransport(current: RuntimeConfig): Promise<Transport> {
   return workerTransport(swUrl, HOST_WORKER_NAME);
 }
 
-async function agentSlugs(current: RuntimeConfig): Promise<string[]> {
-  if (current.agents === false) return [];
-  if (current.agents !== undefined) return [...current.agents];
-  try {
-    const response = await fetch("/site.json", { cache: "no-store" });
-    if (!response.ok) return [];
-    const site = (await response.json()) as { agents?: unknown };
-    return Array.isArray(site.agents) ? site.agents.filter((s) => typeof s === "string") : [];
-  } catch {
-    return [];
-  }
-}
-
 async function startAgents(transport: Transport, current: RuntimeConfig): Promise<void> {
-  const agents = await agentSlugs(current);
+  if (current.agents === false) return;
+  const agents = current.agents === undefined ? await siteAgents() : [...current.agents];
   if (agents.length === 0) return;
-  const message = { agents, identities: identities(current.registry), type: "agents" } as const;
+  const map = identities(current.registry);
   if (transport.mode === "worker") {
-    await transport.control(message);
+    await transport.control({ agents, identities: map, type: "agents" });
     return;
   }
+  // In host mode the bridge page runs the agents, on the pod origin.
   if (transport.mode !== "service-worker" || typeof Worker === "undefined") return;
-  // One runner across tabs: the worker waits for the agents lock before it starts.
-  const worker = new Worker(current.swUrl ?? "/pods-sw.js", { name: AGENTS_WORKER_NAME });
-  worker.onmessage = (event: MessageEvent<{ type?: string; note?: AppNote }>) => {
-    if (event.data?.type === "note" && event.data.note !== undefined) note(event.data.note);
-  };
-  worker.postMessage({ ...message, lock: AGENTS_LOCK, origin: origin() });
+  spawnAgentWorker({
+    agents,
+    identities: map,
+    onNote: note,
+    origin: origin(),
+    swUrl: current.swUrl ?? "/pods-sw.js",
+  });
 }
 
 /** Start the runtime (once per page) and resolve when the pods are seeded and controlled. */
