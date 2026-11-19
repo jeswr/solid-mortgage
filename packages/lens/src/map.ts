@@ -5,6 +5,7 @@
  * it. Edges are grants. The static picture is re-rendered from the model after every entry;
  * motion is drawn on an overlay layer and never carries information the text does not.
  */
+import { isHolderId } from "@mortgage/demo-kit/registry";
 import type { Sentence } from "./describe.js";
 import { s } from "./dom.js";
 import { isDenied, isOk, isPod, type LensModel, type Received } from "./model.js";
@@ -432,6 +433,8 @@ export class LensMap {
       return "verified";
     }
     if (isDenied(e)) return "denied";
+    // An organisation sharing in its own pod draws no key: the keys are the holder's grants.
+    if (e.pod !== holder && !isHolderId(e.pod)) return "self";
     if (sentence.kind === "grant") return "grant";
     if (sentence.kind === "expire") return "expire";
     if (sentence.kind === "revoke") return "revoke";
@@ -524,7 +527,9 @@ export class LensMap {
         }
         this.opts.onCaption(
           kind === "grant"
-            ? "access granted"
+            ? (e.acl?.granted.length ?? 0) > 0
+              ? "access granted"
+              : "access changed"
             : kind === "expire"
               ? "access expired"
               : "access withdrawn",

@@ -36,7 +36,15 @@ import type { OrgSlug } from "@mortgage/demo-kit/registry";
 import { DataFactory } from "n3";
 import { type KybGrantRecord, kybGrantRecords } from "../business-kyb/grants.js";
 import { type AclRule, aclDataset, aclTurtle, SIGNED_IN_APPEND } from "../mortgage/acl.js";
-import { membersOf } from "../mortgage/grants.js";
+import { locked } from "../mortgage/grant-lock.js";
+import {
+  aclSync,
+  endGrantInOrder,
+  managedAgents,
+  membersOf,
+  notYetInForce,
+  writeAclDocument,
+} from "../mortgage/grants.js";
 import {
   at,
   dateOf,
@@ -282,24 +290,31 @@ async function syncAcls(
   world: World,
   before: readonly LoanGrantRecord[],
   after: readonly LoanGrantRecord[],
+  /** The grants on record now, as `after` would be: read again when a write must be recomputed. */
+  reload: () => Promise<readonly LoanGrantRecord[]> = () => grantRecords(world),
 ): Promise<string[]> {
   const holder = world.fetchAs(HOLDER);
   const had = targetsOf(before);
+  const sync = aclSync(
+    holder,
+    holderUrl(world),
+    webid(world, HOLDER),
+    managedAgents(before, after),
+  );
+  let current = after;
+  const refresh = (target: string) => async () => {
+    current = await reload();
+    return rulesFor(current, target);
+  };
   const written: string[] = [];
   for (const target of targetsOf(after)) {
     if (target.endsWith("/")) throw new Error(`a loan grant never covers a container: ${target}`);
-    const rules = rulesFor(after, target);
+    const rules = rulesFor(current, target);
     if (had.includes(target) && fingerprint(rulesFor(before, target)) === fingerprint(rules)) {
       continue;
     }
-    const aclUrl = `${target}.acl`;
-    await put(
-      holder,
-      aclUrl,
-      await aclTurtle(aclDataset(webid(world, HOLDER), target, rules)),
-      "text/turtle",
-    );
-    written.push(aclUrl);
+    await writeAclDocument(sync, target, rules, refresh(target));
+    written.push(`${target}.acl`);
   }
   return written;
 }
@@ -369,10 +384,10 @@ export interface LoanApproval {
  * change together. A request may name only what its grant names, with the grant's modes, for the
  * grant's organisation: anything else is refused.
  */
-export async function approveLoanRequest(
+export const approveLoanRequest = locked(async function approveLoanRequest(
   world: World,
   requestUrl: string,
-  time = "09:05",
+  time: string = "09:05",
 ): Promise<LoanApproval> {
   const holder = world.fetchAs(HOLDER);
   const request = new AccessRequest(requestUrl, await readDataset(holder, requestUrl), DataFactory);
@@ -406,7 +421,11 @@ export async function approveLoanRequest(
   const policy = loanPolicyUrl(world, code);
   const before = await grantRecords(world);
   if (before.some((record) => record.policy === policy && record.state === "active")) {
-    throw new Error(`${code} is already active`);
+    // Approved before, but its ACL write may not have finished: write the documents again.
+    const reserved = await reserve(world, spec.reserve);
+    const acls = await syncAcls(world, notYetInForce(before, [policy]), before);
+    const consent = holderUrl(world, `consents/${code.toLowerCase()}-given`);
+    return { acls, code, consent, policy, reserved };
   }
   const reserved = await reserve(world, spec.reserve);
   await putResource(
@@ -433,28 +452,37 @@ export async function approveLoanRequest(
   );
   const acls = await syncAcls(world, before, await grantRecords(world));
   return { acls, code, consent, policy, reserved };
-}
+});
 
 /** Northwind withdraws a grant: a "withdrawn" consent record and the ACL change. */
-export async function withdrawLoanGrant(
+export const withdrawLoanGrant = locked(async function withdrawLoanGrant(
   world: World,
   code: LoanGrantCode,
-  time = "16:00",
+  time: string = "16:00",
 ): Promise<string[]> {
   const before = await grantRecords(world);
   const record = before.find((candidate) => candidate.policy === loanPolicyUrl(world, code));
   if (record === undefined || record.state !== "active") {
     throw new Error(`${code} is not an active grant`);
   }
-  await writeConsent(world, record, DPV.ConsentWithdrawn, "withdrawn", time);
-  return syncAcls(world, before, await grantRecords(world));
-}
+  return endGrantInOrder(
+    before,
+    record,
+    "revoked",
+    (from, to, reload) => syncAcls(world, from, to, reload),
+    () => writeConsent(world, record, DPV.ConsentWithdrawn, "withdrawn", time),
+    () => grantRecords(world),
+  );
+});
 
 /**
  * Northwind's back office ends every loan grant whose fixed term has run out by `time` on the
  * world's day: an "expired" consent record and the ACL change. Returns the codes it ended.
  */
-export async function expireLoanGrants(world: World, time = "00:05"): Promise<LoanGrantCode[]> {
+export const expireLoanGrants = locked(async function expireLoanGrants(
+  world: World,
+  time: string = "00:05",
+): Promise<LoanGrantCode[]> {
   const now = at(world, time).getTime();
   const ended: LoanGrantCode[] = [];
   let before = await grantRecords(world);
@@ -464,14 +492,19 @@ export async function expireLoanGrants(world: World, time = "00:05"): Promise<Lo
     const ends = record.agreement.permissions.map((permission) => permission.end);
     const until = ends.find((end) => end !== undefined && "until" in end);
     if (until === undefined || !("until" in until) || until.until.getTime() > now) continue;
-    await writeConsent(world, record, DPV.ConsentExpired, "expired", time);
-    const after = await grantRecords(world);
-    await syncAcls(world, before, after);
-    before = after;
+    await endGrantInOrder(
+      before,
+      record,
+      "expired",
+      (from, to, reload) => syncAcls(world, from, to, reload),
+      () => writeConsent(world, record, DPV.ConsentExpired, "expired", time),
+      () => grantRecords(world),
+    );
+    before = await grantRecords(world);
     ended.push(code);
   }
   return ended;
-}
+});
 
 /** The organisation a grant goes to. */
 export function grantee(code: LoanGrantCode): OrgSlug {

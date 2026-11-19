@@ -4,9 +4,9 @@
  * the claim's grants (step 4), who saw which part of the claim file (step 6), and the grants with
  * the claim's closing revoke and the journey ledger (step 10).
  *
- * The motor-claim functions take Alex's grant lock themselves (content/motor-claim/lock.ts), so
- * they run through `runApart`, outside the wallet's own queue and lock: a Web Lock is not
- * re-entrant, and taking it twice would wait for ever.
+ * The motor-claim functions take the grant lock themselves (content/mortgage/grant-lock.ts), so
+ * they run through `runApart`, outside the wallet's own queue: each grant change waits for the
+ * lock on its own, and the page does not hold it while Anvil's back office answers.
  */
 import "./motor-claim.css";
 import type { ClaimFileView } from "@mortgage/content/motor-claim/claim";

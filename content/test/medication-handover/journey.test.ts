@@ -9,8 +9,14 @@
 import type { LensEntry } from "@mortgage/demo-kit/contracts";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { completesStep, matchesExpectation } from "../../../packages/tour/src/match.js";
-import { DAY, NOT_CLINICAL } from "../../medication-handover/facts.js";
-import { medGrants, PATHS, pendingRequests, rosaUrl } from "../../medication-handover/grants.js";
+import { DAY, HOLDER, NOT_CLINICAL } from "../../medication-handover/facts.js";
+import {
+  medGrants,
+  PATHS,
+  pendingRequests,
+  rosaUrl,
+  withdrawMedGrant,
+} from "../../medication-handover/grants.js";
 import {
   allergyUrl,
   approveSharing,
@@ -39,6 +45,7 @@ import { medicationTotals } from "../../medication-handover/ledger.js";
 import { isPrepared, prepareMedicationHandover } from "../../medication-handover/prepare.js";
 import { TOUR } from "../../medication-handover/tour.js";
 import { podUrl, statusOf } from "../../mortgage/world.js";
+import { failingAcl } from "../failing-acl.js";
 import { createHarness, type Harness } from "./harness.js";
 
 let h: Harness;
@@ -249,6 +256,17 @@ describe("medication handover, step by step", () => {
     expect(active).toEqual(["atorvastatin", "lisinopril", "metformin"]);
     slices.set("carer", [start, h.log.length]);
   });
+
+  test("a withdrawal whose ACL write fails leaves M2 active, to be withdrawn again", async () => {
+    h.day = DAY.changePharmacy;
+    const failing = failingAcl(h.world(), HOLDER, "PUT");
+    await probe(() =>
+      expect(withdrawMedGrant(failing.world, "M2", "10:15")).rejects.toThrow(/503/),
+    );
+    expect(failing.failed()).toBe(1);
+    const m2 = (await probe(() => medGrants(h.world()))).find((g) => g.code === "M2");
+    expect(m2?.state).toBe("active");
+  }, 60_000);
 
   test("9. Rosa withdraws M2; the pharmacy's next read is refused (403), its records stay", async () => {
     h.day = DAY.changePharmacy;

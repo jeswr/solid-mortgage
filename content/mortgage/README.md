@@ -158,6 +158,36 @@ County has the public `records/2026-0048113` (deed) and `records/2026-0048114` (
 `GRANTS` in `grants.ts` is the specification; the ODRL policy and the ACL documents are built
 from it. A grant's state is its latest consent record, and the ACL documents are recomputed from
 the grants that are active, so a revoke or an expiry removes rules by the same code that added them.
+A document the wallet writes also repeats the rules no agreement manages (`writeAclDocument`),
+because the pod uses only the nearest document, so a rule Alex wrote herself (say a public read on
+a document) survives a grant on it. From the target's own document it keeps the public and signed-in
+classes and any agent no agreement names, with their scope and `acl:origin` limits as they were.
+An `acl:agentGroup` is left out (its members are defined in a document the wallet does not read),
+and the agents and classes on the same authorization are kept. An agent that any agreement names
+is the wallet's to recompute, so a rule written by hand for such an agent on another document is
+not kept. When the target has no document yet, only the public and signed-in rules of the nearest
+one above are repeated, and from then on they are the new document's own: removing them from the
+document above later does not remove them below (the wallet never removes them; whoever does must
+also edit the documents below). An agent rule is never copied down, because a copy would outlive
+a later change above; that agent's access to the target ends when the target gets its own
+document.
+
+Each write is conditional on the copy read (`If-Match`, or `If-None-Match: *` for a new
+document). On 412 the documents and the grants on record are read again and the rules recomputed
+from them before the write is retried. Every document is read at most once per recomputation
+(`aclSync`).
+
+Every grant change (approve, withdraw, expire) in every demo takes the grant lock itself
+(`grant-lock.ts`, a Web Lock in the browser, a queue in Node), so no two changes interleave
+whichever page, agent or test makes them. The world a locked action receives is marked as
+holding the lock, so a grant change called with it does not wait for itself.
+
+A grant ends in the order that fails safe (`endGrantInOrder`): its rules leave the ACL documents
+first, and the consent record that says it ended is written only once they are. If a pod request
+fails on the way, the grant is still on record as active, so withdrawing it again retries. An
+approval records its consent first; if its ACL write then fails, approving again writes the ACL
+documents (`notYetInForce`) instead of refusing a grant that is already active. A one-time
+permission is opened only by its first approval, so a failed first approval of one stays closed.
 
 | Grant | To | May | Ends |
 |---|---|---|---|

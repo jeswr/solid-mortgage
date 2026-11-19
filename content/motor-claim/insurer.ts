@@ -21,6 +21,7 @@ import {
 } from "@mortgage/data-model";
 import type { PodOwner } from "@mortgage/demo-kit/registry";
 import { DataFactory } from "n3";
+import { withGrantLock } from "../mortgage/grant-lock.js";
 import { checkAtSource, digestOf } from "../mortgage/issuers.js";
 import { answerOrAwait } from "../mortgage/messages.js";
 import {
@@ -42,7 +43,6 @@ import {
   motorPolicyUrl,
   requestClaimGrant,
 } from "./grants.js";
-import { withAlexGrantLock } from "./lock.js";
 import { send } from "./messages.js";
 import { PHOTO_TYPE } from "./photos.js";
 import { readJob, takeAuthorisation, takeReferral } from "./repairer.js";
@@ -96,10 +96,10 @@ export async function reportClaim(world: World): Promise<ClaimCase> {
   if ((await motorGrant(world, "C1"))?.state !== "active") {
     const request =
       (await findClaimRequest(world, "C1")) ?? (await requestClaimGrant(world, "C1", "09:30"));
-    await withAlexGrantLock(async () => {
+    await withGrantLock(world, async (held) => {
       // Another tab may have approved it while this one waited for the lock.
-      if ((await motorGrant(world, "C1"))?.state === "active") return;
-      await approveClaimGrant(world, request, "09:32");
+      if ((await motorGrant(held, "C1"))?.state === "active") return;
+      await approveClaimGrant(held, request, "09:32");
     });
   }
   if (existing !== undefined) return existing;

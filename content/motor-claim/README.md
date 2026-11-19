@@ -25,7 +25,7 @@ functions against the real pod server.
 | `mount.ts` | What the apps pass to `mountDemo()`: `motorClaimLens()`, `motorClaimTour()`, `isMotorClaimPage()` |
 | `browser.ts` | `motorClaimWorld()`, a `World` for a page on the day of its step |
 | `tour.ts` | The ten `TourStep`s |
-| `lock.ts` | The one Web Lock every writer of Alex's grants takes |
+| (`../mortgage/grant-lock.ts`) | The one lock every grant change takes; the motor-claim steps that check a grant before changing it hold it across both |
 
 ## The grants
 

@@ -17,6 +17,7 @@ import {
   DOCUMENT_PATHS,
   lendingGrantRecords,
   mayaUrl,
+  withdrawLendingGrant,
 } from "../../small-dollar-lending/grants.js";
 import {
   acceptLoan,
@@ -39,6 +40,7 @@ import {
 } from "../../small-dollar-lending/journey.js";
 import { lendingTotals } from "../../small-dollar-lending/ledger.js";
 import { TOUR } from "../../small-dollar-lending/tour.js";
+import { failingAcl } from "../failing-acl.js";
 import { createHarness, type Harness } from "./harness.js";
 
 let h: Harness;
@@ -222,6 +224,17 @@ describe("small-dollar lending, step by step", () => {
         (e) => e.source === "app" && e.kind === "org-to-org" && e.org === "fintech-lender",
       ),
     ).toBe(true);
+  }, 60_000);
+
+  test("a withdrawal whose ACL write fails leaves L1 active, to be withdrawn again", async () => {
+    const before = h.log.length;
+    const failing = failingAcl(h.world(), "maya", "PUT");
+    await expect(withdrawLendingGrant(failing.world, "L1", "16:00")).rejects.toThrow(/503/);
+    expect(failing.failed()).toBe(1);
+    const l1 = (await lendingGrantRecords(h.world())).find((g) => g.code === "L1");
+    expect(l1?.state).toBe("active");
+    // The test's own attempt is not the journey's.
+    h.log.splice(before);
   }, 60_000);
 
   test("12. withdrawn: Finchly's back office reads again and the pod refuses", async () => {

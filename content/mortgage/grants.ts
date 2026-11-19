@@ -33,18 +33,17 @@ import type { PodOwner } from "@mortgage/demo-kit/registry";
 import { NamedNodeAs, NamedNodeFrom, SetFrom, TermWrapper } from "@rdfjs/wrapper";
 import { AclResource, type Authorization } from "@solid/object";
 import { DataFactory } from "n3";
-import { type AclRule, aclDataset, aclTurtle } from "./acl.js";
+import { ACL, type AclMode, type AclRule, aclDataset, aclTurtle } from "./acl.js";
 import { DAY } from "./facts.js";
+import { locked } from "./grant-lock.js";
 import {
   at,
   dateOf,
   PodRequestError,
   podUrl,
   postResource,
-  put,
   putResource,
   readDataset,
-  statusOf,
   type World,
   webid,
 } from "./world.js";
@@ -427,7 +426,7 @@ function rulesFor(
  * targets of active one-time permissions only.
  */
 async function oneTimeRulesInForce(
-  world: World,
+  sync: AclSync,
   records: readonly GrantRecord[],
 ): Promise<Set<string>> {
   const targets = new Set<string>();
@@ -438,16 +437,236 @@ async function oneTimeRulesInForce(
       for (const target of permission.targetIris) targets.add(target);
     }
   }
-  const alex = world.fetchAs("alex");
   const held = new Set<string>();
   for (const target of targets) {
-    const aclUrl = `${target}.acl`;
-    if ((await statusOf(alex, aclUrl)) !== 200) continue;
-    for (const rule of await readAcl(alex, aclUrl)) {
+    const doc = await readAclDocument(sync, `${target}.acl`);
+    for (const rule of doc?.authorizations ?? []) {
       for (const agent of rule.agent) held.add(`${agent} ${target}`);
     }
   }
   return held;
+}
+
+const AGENT_CLASSES: Readonly<Record<string, AclRule["agent"]>> = Object.freeze({
+  "http://xmlns.com/foaf/0.1/Agent": { class: "anyone" } as const,
+  [`${ACL}AuthenticatedAgent`]: { class: "signed-in" } as const,
+});
+const ACL_MODES: readonly AclMode[] = ["Read", "Write", "Append", "Control"];
+
+/** The container a pod URL sits in, or undefined at the pod root. */
+function parentOf(url: string, root: string): string | undefined {
+  if (url === root || !url.startsWith(root)) return undefined;
+  const trimmed = url.endsWith("/") ? url.slice(0, -1) : url;
+  return trimmed.slice(0, trimmed.lastIndexOf("/") + 1);
+}
+
+/** An ACL document as read: its authorizations and the ETag a conditional write must match. */
+interface AclDocument {
+  readonly authorizations: readonly Authorization[];
+  readonly etag: string;
+}
+
+/**
+ * One ACL recomputation: who writes, whose rules the agreements manage, and the ACL documents
+ * read so far. Each document is read at most once per sync (a 404 is remembered as absent); a
+ * document the sync writes is forgotten, so a later read sees the new copy.
+ */
+export interface AclSync {
+  readonly fetcher: typeof fetch;
+  /** The pod root: reads walk up to it and no further. */
+  readonly root: string;
+  readonly owner: string;
+  /** Every agent an agreement names: their rules are recomputed, never carried over. */
+  readonly managed: ReadonlySet<string>;
+  readonly docs: Map<string, AclDocument | undefined>;
+}
+
+export function aclSync(
+  fetcher: typeof fetch,
+  root: string,
+  owner: string,
+  managed: ReadonlySet<string>,
+): AclSync {
+  return { docs: new Map(), fetcher, managed, owner, root };
+}
+
+/** The ACL document at `aclUrl`, or undefined when there is none; read once per sync. */
+async function readAclDocument(sync: AclSync, aclUrl: string): Promise<AclDocument | undefined> {
+  if (sync.docs.has(aclUrl)) return sync.docs.get(aclUrl);
+  const response = await sync.fetcher(aclUrl, { headers: { accept: "text/turtle" } });
+  if (response.status === 404) {
+    sync.docs.set(aclUrl, undefined);
+    return undefined;
+  }
+  if (!response.ok) throw new PodRequestError("GET", aclUrl, response.status);
+  const etag = response.headers.get("etag");
+  if (etag === null)
+    throw new Error(`${aclUrl} came without an ETag: it cannot be rewritten safely`);
+  const dataset = await parseRdf(await response.text(), response.headers.get("content-type"), {
+    baseIRI: aclUrl,
+  });
+  const doc = { authorizations: [...new AclResource(dataset, DataFactory).authorizations], etag };
+  sync.docs.set(aclUrl, doc);
+  return doc;
+}
+
+/**
+ * What a rewrite of `target`'s ACL document must keep: the rules in force there that no agreement
+ * manages, such as a public read Alex wrote on a document herself. The pod
+ * server uses only the nearest ACL document, so a document the wallet writes must repeat them.
+ *
+ * - From the target's own document: the public and signed-in classes, and agents that no
+ *   agreement on record names, each with its modes, scope (`acl:accessTo`, `acl:default`, or
+ *   members only) and `acl:origin` limits as they were. The owner and every agreement's assignee
+ *   are left out: the wallet recomputes those. An `acl:agentGroup` is not carried (its members
+ *   are defined elsewhere); the agents and classes on the same authorization still are.
+ * - When the target has no document of its own: only the public and signed-in class rules the
+ *   nearest document above lets its members have. No agent rule is ever copied down, because a
+ *   copy would outlive a later change to the document above.
+ *
+ * Leaving anything out can only narrow access, never widen it. `etag` is the target's own
+ * document's (absent when it has none), for a write that fails if the document changed.
+ */
+async function currentAcl(
+  sync: AclSync,
+  target: string,
+): Promise<{ kept: AclRule[]; etag?: string }> {
+  for (let doc: string | undefined = target; doc !== undefined; doc = parentOf(doc, sync.root)) {
+    const found = await readAclDocument(sync, `${doc}.acl`);
+    if (found === undefined) continue;
+    const own = doc === target;
+    const kept: AclRule[] = [];
+    for (const authorization of found.authorizations) {
+      const modes = ACL_MODES.filter((mode) => authorization.mode.has(`${ACL}${mode}`));
+      if (modes.length === 0) continue;
+      const self = authorization.accessTo === target;
+      const members = authorization.default === doc;
+      // Its own document: rules about the target or its members. Above: rules for members.
+      if (own ? !self && !members : !members) continue;
+      const origins = [...authorization.origin].sort();
+      const scope = own
+        ? { inheritable: members, ...(self ? {} : { membersOnly: true }) }
+        : { inheritable: true };
+      const limits = origins.length > 0 ? { origins } : {};
+      for (const agentClass of authorization.agentClass) {
+        const agent = AGENT_CLASSES[agentClass];
+        if (agent !== undefined) kept.push({ agent, modes, ...scope, ...limits });
+      }
+      if (!own) continue;
+      for (const agent of authorization.agent) {
+        if (agent === sync.owner || sync.managed.has(agent)) continue;
+        kept.push({ agent, modes, ...scope, ...limits });
+      }
+    }
+    return own ? { etag: found.etag, kept } : { kept };
+  }
+  return { kept: [] };
+}
+
+/**
+ * Write the ACL document for `target`: the owner, `rules`, and what {@link currentAcl} says must be
+ * kept. The write is conditional on what was read (`If-Match` on the ETag, or `If-None-Match: *`
+ * when there was no document), so a change made in between is never overwritten with a stale
+ * copy: on 412 the documents are read again, `refresh` recomputes `rules` from the grants as they
+ * are on record now (not as they were when the change began), and the write is retried.
+ */
+export async function writeAclDocument(
+  sync: AclSync,
+  target: string,
+  rules: readonly AclRule[],
+  refresh?: () => Promise<readonly AclRule[]>,
+  attempts = 3,
+): Promise<void> {
+  const aclUrl = `${target}.acl`;
+  let wanted = rules;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    if (attempt > 1 && refresh !== undefined) wanted = await refresh();
+    const { etag, kept } = await currentAcl(sync, target);
+    const response = await sync.fetcher(aclUrl, {
+      body: await aclTurtle(aclDataset(sync.owner, target, [...wanted, ...kept])),
+      headers: {
+        "content-type": "text/turtle",
+        ...(etag === undefined ? { "if-none-match": "*" } : { "if-match": etag }),
+      },
+      method: "PUT",
+    });
+    if (response.ok) {
+      sync.docs.delete(aclUrl);
+      return;
+    }
+    if (response.status !== 412) throw new PodRequestError("PUT", aclUrl, response.status);
+    // Something changed since the read: read everything again.
+    sync.docs.clear();
+  }
+  throw new Error(`${aclUrl} kept changing while the wallet wrote it (${attempts} attempts)`);
+}
+
+/**
+ * `records` with the grants of `policies` taken as not yet in force. A sync from these to the
+ * records as they are writes every document those grants cover again: what an approval needs
+ * when its consent was recorded but its ACL write failed, and it is pressed again.
+ */
+export function notYetInForce<R extends { readonly policy: string; readonly state: string }>(
+  records: readonly R[],
+  policies: readonly string[],
+): R[] {
+  return records.map((record) =>
+    policies.includes(record.policy) && record.state === "active"
+      ? { ...record, state: "revoked" as R["state"] }
+      : record,
+  );
+}
+
+/** The state a grant is in once a consent record with `status` is its latest. */
+export function endedState(status: string): "expired" | "revoked" {
+  return status === DPV.ConsentExpired ? "expired" : "revoked";
+}
+
+/** Every agent any agreement on record names: the agents whose rules the wallet recomputes. */
+export function managedAgents(
+  ...records: ReadonlyArray<
+    ReadonlyArray<{
+      readonly agreement: { readonly permissions: readonly { assigneeIri: string }[] };
+    }>
+  >
+): Set<string> {
+  const agents = new Set<string>();
+  for (const list of records) {
+    for (const record of list) {
+      for (const permission of record.agreement.permissions) agents.add(permission.assigneeIri);
+    }
+  }
+  return agents;
+}
+
+/**
+ * End a grant in the order that fails safe: the ACL documents first, computed as if the grant had
+ * already ended, and the consent record that says so only once they are written. If a pod request
+ * fails on the way, the grant is still on record as active, so ending it again retries the whole
+ * change; it is never recorded as ended while its access is still in force.
+ */
+export async function endGrantInOrder<
+  R extends { readonly policy: string; readonly state: string },
+>(
+  before: readonly R[],
+  ended: R,
+  state: R["state"],
+  sync: (
+    before: readonly R[],
+    after: readonly R[],
+    reload: () => Promise<readonly R[]>,
+  ) => Promise<string[]>,
+  record: () => Promise<unknown>,
+  /** The grants on record now, for a write that must be recomputed (a 412). */
+  load: () => Promise<readonly R[]>,
+): Promise<string[]> {
+  const end = (records: readonly R[]) =>
+    records.map((candidate) =>
+      candidate.policy === ended.policy ? { ...candidate, state } : candidate,
+    );
+  const written = await sync(before, end(before), async () => end(await load()));
+  await record();
+  return written;
 }
 
 /** A stable description of a rule set, for telling whether a document has to be rewritten. */
@@ -461,7 +680,9 @@ function fingerprint(rules: readonly Rule[]): string {
 /**
  * Bring the pod's ACL documents in line with the grants on record. Only documents whose rules
  * differ between `before` and `after` are written, so each change shows in the Lens as the ACL
- * documents it really touched.
+ * documents it really touched. Each document is written by {@link writeAclDocument}, which keeps
+ * the rules no agreement manages (a public read Alex wrote herself) and never overwrites a
+ * change made since it read the document.
  */
 export async function syncAcls(
   world: World,
@@ -469,27 +690,36 @@ export async function syncAcls(
   after: readonly GrantRecord[],
   /** Policies approved by this change: their one-time rules are written (see `KeepOneTime`). */
   fresh: readonly string[] = [],
+  /** The grants on record now, as `after` would be: read again when a write must be recomputed. */
+  reload: () => Promise<readonly GrantRecord[]> = () => grantRecords(world),
 ): Promise<string[]> {
-  const alex = world.fetchAs("alex");
+  const sync = aclSync(
+    world.fetchAs("alex"),
+    alexUrl(world),
+    webid(world, "alex"),
+    managedAgents(before, after),
+  );
   const beforeTargets = targetsOf(before);
   const afterTargets = targetsOf(after);
-  const held = await oneTimeRulesInForce(world, after);
+  let current = after;
+  let held = await oneTimeRulesInForce(sync, current);
   const keep: KeepOneTime = (policy, agent, target) =>
     fresh.includes(policy) || held.has(`${agent} ${target}`);
+  // After a 412 everything is recomputed from what is on record now, for this document and the
+  // ones after it: the grants, and the one-time rules the runtime may have closed since.
+  const refresh = (target: string) => async () => {
+    current = await reload();
+    held = await oneTimeRulesInForce(sync, current);
+    return rulesFor(current, targetsOf(current), target, keep);
+  };
   const written: string[] = [];
   for (const target of afterTargets) {
-    const rules = rulesFor(after, afterTargets, target, keep);
+    const rules = rulesFor(current, targetsOf(current), target, keep);
     const had = beforeTargets.includes(target);
     if (had && fingerprint(rulesFor(before, beforeTargets, target, keep)) === fingerprint(rules))
       continue;
-    const aclUrl = `${target}.acl`;
-    await put(
-      alex,
-      aclUrl,
-      await aclTurtle(aclDataset(webid(world, "alex"), target, rules)),
-      "text/turtle",
-    );
-    written.push(aclUrl);
+    await writeAclDocument(sync, target, rules, refresh(target));
+    written.push(`${target}.acl`);
   }
   return written;
 }
@@ -604,10 +834,10 @@ function assertOneTimeSupported(request: AccessRequest, options: ApproveOptions)
  * nothing and drops nothing. A permission limited to one use is registered with the runtime
  * before the ACL is written (`options.registerOneTime`), and refused without it.
  */
-export async function approveRequest(
+export const approveRequest = locked(async function approveRequest(
   world: World,
   requestUrl: string,
-  time = "09:05",
+  time: string = "09:05",
   options: ApproveOptions = {},
 ): Promise<ApprovalResult> {
   const alex = world.fetchAs("alex");
@@ -621,7 +851,10 @@ export async function approveRequest(
   const policy = alexUrl(world, `policies/${slugOf(code)}`);
   const before = await grantRecords(world);
   if (before.some((record) => record.policy === policy && record.state === "active")) {
-    throw new Error(`${code} is already active`);
+    // Approved before, but its ACL write may not have finished (a failed request): write the
+    // documents again. A one-time rule is not reopened: that happens only on the first approval.
+    const acls = await syncAcls(world, notYetInForce(before, [policy]), before);
+    return { acls, code, consent: alexUrl(world, `consents/${slugOf(code)}-given`), policy };
   }
   await putResource(
     alex,
@@ -657,9 +890,9 @@ export async function approveRequest(
   }
   const after = await grantRecords(world);
   return { acls: await syncAcls(world, before, after, [policy]), code, consent, policy };
-}
+});
 
-export async function endGrant(
+export const endGrant = locked(async function endGrant(
   world: World,
   code: string,
   status: string,
@@ -671,9 +904,15 @@ export async function endGrant(
   if (record === undefined || record.state !== "active") {
     throw new Error(`${code} is not an active grant`);
   }
-  await writeConsent(world, record, status, suffix, time);
-  return syncAcls(world, before, await grantRecords(world));
-}
+  return endGrantInOrder(
+    before,
+    record,
+    endedState(status),
+    (from, to, reload) => syncAcls(world, from, to, [], reload),
+    () => writeConsent(world, record, status, suffix, time),
+    () => grantRecords(world),
+  );
+});
 
 /** Alex withdraws a grant. The agreement stays on record; a "withdrawn" consent record is added. */
 export function revokeGrant(world: World, code: GrantCode, time = "09:00"): Promise<string[]> {
@@ -702,7 +941,10 @@ async function hasEnded(world: World, record: GrantRecord): Promise<boolean> {
  * has left its evidence in the pod, gets an "expired" consent record and loses its ACL entries.
  * Returns the codes that expired. The Lens labels this "expiry applied by Alex's wallet".
  */
-export async function applyExpiries(world: World, time = "00:05"): Promise<string[]> {
+export const applyExpiries = locked(async function applyExpiries(
+  world: World,
+  time: string = "00:05",
+): Promise<string[]> {
   const expired: string[] = [];
   for (const record of await grantRecords(world)) {
     if (record.state !== "active" || !(await hasEnded(world, record))) continue;
@@ -710,4 +952,4 @@ export async function applyExpiries(world: World, time = "00:05"): Promise<strin
     expired.push(record.code);
   }
   return expired;
-}
+});

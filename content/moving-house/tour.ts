@@ -241,8 +241,9 @@ export const TOUR: readonly TourStep[] = Object.freeze([
     body: "Alex is closing the old Alder Bank account, so the bank no longer needs the address. Press Withdraw: Cairn records the withdrawal and removes the bank's rule from the address.",
     chapter: "4 Taking one away",
     clock: { day: DAY.moved },
-    done: { event: revoke("/profile/address") },
-    expect: [write("alex", "/consents/h3-withdrawn"), revoke("/profile/address")],
+    // The rule goes first; the withdrawal is recorded once it is gone, and that ends the step.
+    done: { event: write("alex", "/consents/h3-withdrawn") },
+    expect: [revoke("/profile/address"), write("alex", "/consents/h3-withdrawn")],
     id: "revoke-bank",
     lens: {
       chips: [{ kind: "grant", label: "H3 withdrawn" }],

@@ -62,11 +62,25 @@ const stop = onEvent((entry) => lens.push(entry), { replay: true });
   organisation's last rule is removed, the grant is **expired** if the removing request has
   `actor.viaAgent: true` (the holder's app applying expiry automatically, design.md §b.4) and
   **withdrawn** otherwise. The wallet must therefore apply expiry through its agent and a
-  visitor's Revoke through a normal request.
+  visitor's Revoke through a normal request. A rule is identified by agent, resource, scope and
+  `acl:origin` limits, and an event lists only the modes it removed, so a rule keeps the modes it
+  still has: taking one mode away, or an origin-limited rule beside an unlimited one, narrows a
+  grant without ending it, and the entry reads "{holder} narrowed {org}'s access to {resource}"
+  ("{org} narrowed what {other org} may do with {resource}" between organisations). The test is
+  per ACL document and from what the log has shown: a change that leaves one organisation some
+  rules and another none reads as stopping sharing (or a withdrawal) for both, and rules the log
+  never showed (the seed's) are not counted as left. When a resource below an inherited rule gets
+  an ACL document of its own without that rule, the runtime reports a removal scoped to the
+  resource; the inherited rule stays in force for the rest of the container but no longer makes
+  its agent a reader of that resource (`whoCanRead`).
 - **Untagged entries** (app notes carry no `tour`) belong to the current step when they arrive
   live, and to the step of the latest tagged entry when replayed.
 - **Organisation-to-organisation notes** name the other party in `refs`, as an org slug or a
   WebID; without one the arc cannot be drawn and only the text appears.
+- **Sharing between organisations** (an ACL write on an organisation's own pod) reads "{org}
+  shared {resource} with {other org}" / "stopped sharing", labelled "in its own pod, between
+  organisations" and "not one of {holder}'s grants". It adds no drawer and draws no key on the
+  map (`motionOf` gives `self`).
 - **Signature results** on the resource card come from `verified` notes whose `refs` include the
   resource's path.
 - **Refusals** say why from the grant history at that moment: "no grant covers it", "no rule in

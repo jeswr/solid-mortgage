@@ -24,11 +24,11 @@ import {
   mortgageSeed,
   PATH_MODE_HEADERS,
 } from "../../mortgage/browser.js";
+import { withGrantLock } from "../../mortgage/grant-lock.js";
 import { applyExpiries } from "../../mortgage/grants.js";
 import type { World } from "../../mortgage/world.js";
 import { motorClaimRepairerInbox, motorClaimWalletExpiries } from "../../motor-claim/agents.js";
 import { DAY } from "../../motor-claim/facts.js";
-import { withAlexGrantLock } from "../../motor-claim/lock.js";
 import { ORGS } from "../../orgs.js";
 
 export const ORIGIN = "https://pods.demo.test";
@@ -99,9 +99,9 @@ export async function createHarness(): Promise<Harness> {
       // apps/wallet/src/agent.ts: the mortgage's expiry pass, then the motor claim's, in one lock.
       wallet: {
         inbox: async (_message, ctx) => {
-          await withAlexGrantLock(async () => {
-            await applyExpiries(worldFor(ctx));
-            await motorClaimWalletExpiries(ctx, worldFor);
+          await withGrantLock(worldFor(ctx), async (world) => {
+            await applyExpiries(world);
+            await motorClaimWalletExpiries(ctx, () => world);
           });
         },
       },

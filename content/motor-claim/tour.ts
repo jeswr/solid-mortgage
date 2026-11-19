@@ -257,12 +257,13 @@ export const TOUR: readonly TourStep[] = Object.freeze([
     body: "Five days later the car is ready. Press Complete job: Anvil files its invoice in the claim folder. C2 was for this job only, so Alex's wallet sees the invoice, marks the grant expired and removes Anvil's rules.",
     chapter: "4 When the job ends",
     clock: { day: DAY.complete },
-    done: { event: revoke(`${CLAIM}photos/`) },
+    // The wallet removes Anvil's rules first and records the expiry once they are gone.
+    done: { event: write("alex", "/consents/c2-expired") },
     expect: [
       write("alex", `${CLAIM}invoice`, "repairer"),
       write("repairer", "/jobs/CLM-1", "repairer"),
-      write("alex", "/consents/c2-expired"),
       revoke(`${CLAIM}photos/`),
+      write("alex", "/consents/c2-expired"),
     ],
     id: "complete",
     lens: {
@@ -305,10 +306,14 @@ export const TOUR: readonly TourStep[] = Object.freeze([
     body: "Wrenfield has paid the invoice. Press Close claim: Alex withdraws C1, so Wrenfield no longer reads the licence or the claim folder. Grant P1 stays, and Wrenfield still keeps the motor policy current. The ledger below counts it all.",
     chapter: "4 When the job ends",
     clock: { day: DAY.close },
-    // The wallet rewrites the policy's rules last (Wrenfield keeps its read there under P1, so the
-    // Lens shows no change): that rewrite, not the claim's revoke, is the withdrawal's end.
-    done: { event: rulesRewritten("/insurance/motor-policy") },
-    expect: [write("alex", "/consents/c1-withdrawn"), revoke(CLAIM)],
+    // The wallet rewrites the rules first (the claim's revoke, then the policy's, where Wrenfield
+    // keeps its read under P1) and records the withdrawal once they are written.
+    done: { event: write("alex", "/consents/c1-withdrawn") },
+    expect: [
+      revoke(CLAIM),
+      rulesRewritten("/insurance/motor-policy"),
+      write("alex", "/consents/c1-withdrawn"),
+    ],
     id: "close",
     lens: {
       chips: [{ kind: "grant", label: "C1 withdrawn" }],

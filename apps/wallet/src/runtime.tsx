@@ -194,7 +194,9 @@ export function WalletProvider({
 
   const enqueue = useCallback<Action>(
     (action, make = worldOn) => {
-      const next = queue.current.then(() => withGrantLock(() => action(make(currentDay))));
+      // The world the action gets is marked as holding the lock, so the grant changes it calls
+      // (which take the lock themselves) run at once instead of waiting for it.
+      const next = queue.current.then(() => withGrantLock(make(currentDay), action));
       queue.current = next.catch(() => undefined);
       return next.finally(bump);
     },

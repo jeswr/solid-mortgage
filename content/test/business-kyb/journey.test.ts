@@ -13,8 +13,13 @@ import { beforeAll, describe, expect, test } from "vitest";
 import { type EvidencePattern, matchesEvidence } from "../../../packages/lens/src/examiner.js";
 import { completesStep, matchesExpectation } from "../../../packages/tour/src/match.js";
 import { cddUrl, readCddRecord } from "../../business-kyb/banks.js";
-import { DAY, ENTITY, PATHS, shareAnchorPath } from "../../business-kyb/facts.js";
-import { KYB_GRANTS, kybGrantRecords, pendingRequest } from "../../business-kyb/grants.js";
+import { DAY, ENTITY, HOLDER, PATHS, shareAnchorPath } from "../../business-kyb/facts.js";
+import {
+  KYB_GRANTS,
+  kybGrantRecords,
+  pendingRequest,
+  withdrawKybGrant,
+} from "../../business-kyb/grants.js";
 import {
   approveCredit,
   approveOnboarding,
@@ -36,6 +41,7 @@ import { challengeIsLive, resultUrl } from "../../business-kyb/proof.js";
 import { credentialUrl, holderUrl, issuedVersions } from "../../business-kyb/register.js";
 import { TOUR } from "../../business-kyb/tour.js";
 import { podUrl, readText, statusOf } from "../../mortgage/world.js";
+import { failingAcl } from "../failing-acl.js";
 import { createHarness, type Harness } from "./harness.js";
 
 let h: Harness;
@@ -268,6 +274,16 @@ describe("business KYB, step by step", () => {
     expect(again.changed).toBe(false);
     expect(again.alder).toBeUndefined();
     slices.set("both-banks", [start, h.log.length]);
+  }, 60_000);
+
+  test("a withdrawal whose ACL write fails leaves K1 active, to be withdrawn again", async () => {
+    const failing = failingAcl(h.world(), HOLDER, "PUT");
+    await probe(() =>
+      expect(withdrawKybGrant(failing.world, "K1", "16:00")).rejects.toThrow(/503/),
+    );
+    expect(failing.failed()).toBe(1);
+    const k1 = (await probe(() => kybGrantRecords(h.world()))).find((g) => g.code === "K1");
+    expect(k1?.state).toBe("active");
   }, 60_000);
 
   test("11. withdrawing K1 ends Alder's access at source; its record stays", async () => {

@@ -21,10 +21,12 @@ import {
 } from "@mortgage/data-model";
 import type { OrgSlug, PodOwner } from "@mortgage/demo-kit/registry";
 import { DataFactory } from "n3";
+import { locked } from "../mortgage/grant-lock.js";
 import {
   endGrant,
   type GrantRecord,
   grantRecords,
+  notYetInForce,
   syncAcls,
   writeConsent,
 } from "../mortgage/grants.js";
@@ -156,19 +158,24 @@ export interface HolderApproval {
  * ACL recomputation for all of them, then one notice per organisation. Grants already active are
  * left as they are.
  */
-export async function approveHolders(
+export const approveHolders = locked(async function approveHolders(
   world: World,
   holders: readonly Holder[],
-  time = "10:20",
+  time: string = "10:20",
 ): Promise<{ approvals: HolderApproval[]; acls: string[] }> {
   const alex = world.fetchAs("alex");
   const before = await grantRecords(world);
   const added: { code: HolderCode; policy: string; agreement: AccessAgreement }[] = [];
+  const again: string[] = [];
   for (const holder of holders) {
     const code = codeOf(holder);
     const spec = HOLDER_GRANTS[code];
     const policy = holderPolicyUrl(world, code);
-    if (before.some((record) => record.policy === policy && record.state === "active")) continue;
+    if (before.some((record) => record.policy === policy && record.state === "active")) {
+      // Approved before, but its ACL write may not have finished: written again below.
+      again.push(policy);
+      continue;
+    }
     await putResource(
       alex,
       buildAccessAgreement({
@@ -191,7 +198,7 @@ export async function approveHolders(
     await writeConsent(world, { agreement, code, policy }, DPV.ConsentGiven, "given", time);
     added.push({ agreement, code, policy });
   }
-  const acls = await syncAcls(world, before, await grantRecords(world));
+  const acls = await syncAcls(world, notYetInForce(before, again), await grantRecords(world));
   const approvals: HolderApproval[] = [];
   for (const { agreement, code, policy } of added) {
     const holder = HOLDER_GRANTS[code].to;
@@ -215,7 +222,7 @@ export async function approveHolders(
     approvals.push({ code, notice, policy });
   }
   return { acls, approvals };
-}
+});
 
 /** Alex withdraws one organisation's grant: a "withdrawn" consent record and the ACL change. */
 export function withdrawHolder(world: World, holder: Holder, time = "16:40"): Promise<string[]> {

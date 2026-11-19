@@ -5,7 +5,16 @@
  * derived from earlier entries (a withdrawn grant). Nothing is guessed.
  */
 import type { AccessMode, AccessRule } from "@mortgage/demo-kit/contracts";
-import { type GrantRecord, isDenied, isOk, isPod, type LensModel, type Received } from "./model.js";
+import { isHolderId } from "@mortgage/demo-kit/registry";
+import {
+  type GrantRecord,
+  isDenied,
+  isOk,
+  isPod,
+  type LensModel,
+  type PodEntry,
+  type Received,
+} from "./model.js";
 import { isAclPath, localName, nodeOf, PUBLIC_AGENTS, podRelative } from "./paths.js";
 
 export type EntryKind =
@@ -61,10 +70,15 @@ export function listWords(items: string[]): string {
 }
 
 /** "Fernhollow may read Profile and Certificates; add to Permits". */
-export function describeRules(model: LensModel, org: string, rules: AccessRule[]): string {
+export function describeRules(
+  model: LensModel,
+  org: string,
+  rules: AccessRule[],
+  pod: string = model.holder,
+): string {
   const byMode = new Map<AccessMode, string[]>();
   for (const r of rules) {
-    const what = ruleTarget(model, r);
+    const what = ruleTarget(model, r, pod);
     for (const m of r.modes) {
       const list = byMode.get(m) ?? [];
       list.push(what);
@@ -78,10 +92,10 @@ export function describeRules(model: LensModel, org: string, rules: AccessRule[]
 }
 
 /** What a rule is about: a drawer's label for a container, a resource label otherwise. */
-export function ruleTarget(model: LensModel, r: AccessRule): string {
+export function ruleTarget(model: LensModel, r: AccessRule, pod: string = model.holder): string {
   const rel = podRelative(r.resource);
   if (rel === "/") return "everything in the pod";
-  return model.labelOf(rel);
+  return model.labelOf(rel, pod);
 }
 
 function grantMeta(model: LensModel, iri: string | undefined): string[] {
@@ -287,12 +301,33 @@ export function describe(model: LensModel, rec: Received): Sentence {
   }
 }
 
+/** The resource an ACL document is about, by its label. */
+function aclSubject(model: LensModel, e: PodEntry): string {
+  return model.labelOf(e.path.replace(/\.acl$/, ""), e.pod);
+}
+
+/**
+ * True when every organisation this change took rules from keeps others in the same document
+ * (a mode removed, or an origin-limited rule removed beside an unlimited one): a narrowing, never
+ * said as a withdrawal or the end of sharing.
+ */
+function narrowedOnly(
+  model: LensModel,
+  rec: Received,
+  revoked: Map<string, AccessRule[]>,
+): boolean {
+  const narrowed = model.narrowed(rec.seq);
+  return [...revoked.keys()].every((org) => narrowed.has(org));
+}
+
 function describeAcl(model: LensModel, rec: Received): Sentence {
   const e = rec.entry;
   if (!isPod(e) || !e.acl) throw new Error("not an ACL event");
   const actor = model.nameOf(e.actor.org);
   const granted = groupByOrg(model, e.acl.granted);
   const revoked = groupByOrg(model, e.acl.revoked);
+  if (e.pod !== model.holder && !isHolderId(e.pod))
+    return describeShare(model, rec, granted, revoked);
   const publicRules = e.acl.granted.filter((r) => PUBLIC_AGENTS.has(r.agent));
   const meta: string[] = [];
   for (const [org, rules] of granted) meta.push(describeRules(model, org, rules));
@@ -304,6 +339,15 @@ function describeAcl(model: LensModel, rec: Received): Sentence {
   if (granted.size > 0) {
     const names = listWords([...granted.keys()].map((o) => model.nameOf(o)));
     return sentence("grant", "pod", [{ b: actor }, " gave ", { b: names }, " access"], meta);
+  }
+  if (revoked.size > 0 && narrowedOnly(model, rec, revoked)) {
+    const names = listWords([...revoked.keys()].map((o) => possessive(model.nameOf(o))));
+    return sentence(
+      "grant",
+      "pod",
+      [{ b: actor }, " narrowed ", { b: names }, " access to ", { b: aclSubject(model, e) }],
+      meta,
+    );
   }
   if (revoked.size > 0) {
     const names = listWords([...revoked.keys()].map((o) => possessive(model.nameOf(o))));
@@ -329,11 +373,64 @@ function describeAcl(model: LensModel, rec: Received): Sentence {
   return sentence(
     "grant",
     "pod",
-    [
-      { b: actor },
-      " changed the access rules for ",
-      { b: model.labelOf(e.path.replace(/\.acl$/, ""), e.pod) },
-    ],
+    [{ b: actor }, " changed the access rules for ", { b: aclSubject(model, e) }],
+    meta,
+  );
+}
+
+/**
+ * An organisation sharing a file in its own pod with another organisation. It is said as such,
+ * never as a grant of the holder's: the holder's grants are only the rules on the holder's pod.
+ */
+function describeShare(
+  model: LensModel,
+  rec: Received,
+  granted: Map<string, AccessRule[]>,
+  revoked: Map<string, AccessRule[]>,
+): Sentence {
+  const e = rec.entry;
+  if (!isPod(e)) throw new Error("not a pod event");
+  const actor = model.nameOf(e.actor.org);
+  const owner = model.nameOf(e.pod);
+  const what = e.resource?.label ?? model.labelOf(e.path.replace(/\.acl$/, ""), e.pod);
+  const meta = [
+    `in ${actor === owner ? "its own" : possessive(owner)} pod, between organisations`,
+    `not one of ${possessive(model.holderName)} grants`,
+  ];
+  for (const [org, rules] of granted) meta.push(describeRules(model, org, rules, e.pod));
+  for (const [org, rules] of revoked)
+    meta.push(`Removed: ${describeRules(model, org, rules, e.pod)}`);
+  if (granted.size > 0) {
+    const names = listWords([...granted.keys()].map((o) => model.nameOf(o)));
+    return sentence(
+      "grant",
+      "pod",
+      [{ b: actor }, " shared ", { b: what }, " with ", { b: names }],
+      meta,
+    );
+  }
+  if (revoked.size > 0 && narrowedOnly(model, rec, revoked)) {
+    const names = listWords([...revoked.keys()].map((o) => model.nameOf(o)));
+    return sentence(
+      "grant",
+      "pod",
+      [{ b: actor }, " narrowed what ", { b: names }, " may do with ", { b: what }],
+      meta,
+    );
+  }
+  if (revoked.size > 0) {
+    const names = listWords([...revoked.keys()].map((o) => model.nameOf(o)));
+    return sentence(
+      "revoke",
+      "pod",
+      [{ b: actor }, " stopped sharing ", { b: what }, " with ", { b: names }],
+      meta,
+    );
+  }
+  return sentence(
+    "grant",
+    "pod",
+    [{ b: actor }, " changed the access rules for ", { b: what }],
     meta,
   );
 }

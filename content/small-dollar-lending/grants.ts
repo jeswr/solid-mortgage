@@ -32,15 +32,23 @@ import {
 } from "@mortgage/data-model";
 import type { PodOwner } from "@mortgage/demo-kit/registry";
 import { DataFactory } from "n3";
-import { type AclRule, aclDataset, aclTurtle } from "../mortgage/acl.js";
-import { membersOf } from "../mortgage/grants.js";
+import type { AclRule } from "../mortgage/acl.js";
+import { locked } from "../mortgage/grant-lock.js";
+import {
+  aclSync,
+  endedState,
+  endGrantInOrder,
+  managedAgents,
+  membersOf,
+  notYetInForce,
+  writeAclDocument,
+} from "../mortgage/grants.js";
 import {
   at,
   dateOf,
   PodRequestError,
   podUrl,
   postResource,
-  put,
   putResource,
   readDataset,
   type World,
@@ -369,13 +377,26 @@ export async function syncLendingAcls(
   before: readonly LendingGrantRecord[],
   after: readonly LendingGrantRecord[],
   fresh: readonly string[] = [],
+  /** The grants on record now, as `after` would be: read again when a write must be recomputed. */
+  reload: () => Promise<readonly LendingGrantRecord[]> = () => lendingGrantRecords(world),
 ): Promise<string[]> {
   const opened = new Set(fresh);
   const beforeTargets = targetsOf(before);
   const afterTargets = targetsOf(after);
+  const sync = aclSync(
+    maya(world),
+    mayaUrl(world),
+    webid(world, MAYA),
+    managedAgents(before, after),
+  );
+  let current = after;
+  const refresh = (target: string) => async () => {
+    current = await reload();
+    return rulesFor(current, targetsOf(current), target, opened);
+  };
   const written: string[] = [];
   for (const target of afterTargets) {
-    const rules = rulesFor(after, afterTargets, target, opened);
+    const rules = rulesFor(current, targetsOf(current), target, opened);
     const had = beforeTargets.includes(target);
     if (
       had &&
@@ -383,14 +404,8 @@ export async function syncLendingAcls(
     ) {
       continue;
     }
-    const aclUrl = `${target}.acl`;
-    await put(
-      maya(world),
-      aclUrl,
-      await aclTurtle(aclDataset(webid(world, MAYA), target, rules)),
-      "text/turtle",
-    );
-    written.push(aclUrl);
+    await writeAclDocument(sync, target, rules, refresh(target));
+    written.push(`${target}.acl`);
   }
   return written;
 }
@@ -483,7 +498,7 @@ export function oneTimeServiceUrl(world: Pick<World, "podOrigin">): string {
  * before the ACL change for A1 and L1; a one-time grant is marked one-time before the ACL change
  * opens it, so there is no moment at which it could be read twice.
  */
-export async function approveLendingRequest(
+export const approveLendingRequest = locked(async function approveLendingRequest(
   world: World,
   requestUrl: string,
   time: string,
@@ -507,7 +522,12 @@ export async function approveLendingRequest(
   const policy = lendingPolicyUrl(world, code);
   const before = await lendingGrantRecords(world);
   if (before.some((record) => record.policy === policy && record.state === "active")) {
-    throw new Error(`${code} is already active`);
+    // Approved before, but what followed the consent record may not have finished: write the
+    // credit-check authorisation and the ACL documents again. A one-time grant is not reopened
+    // (only its first approval opens it), so a failed first approval of one stays closed.
+    if (code === "A1" || code === "L1") await writeAuthorisation(world, code, spec.to, time);
+    const acls = await syncLendingAcls(world, notYetInForce(before, [policy]), before);
+    return { acls, code, consent: mayaUrl(world, `consents/${slugOf(code)}-given`), policy };
   }
   await putResource(
     fetcher,
@@ -549,7 +569,7 @@ export async function approveLendingRequest(
   const after = await lendingGrantRecords(world);
   // Only this approval opens a one-time grant's rule; no later recompute does.
   return { acls: await syncLendingAcls(world, before, after, [policy]), code, consent, policy };
-}
+});
 
 /** The organisation asks and Maya approves, in one step (the issuer pages and the lenders). */
 export async function askAndApprove(
@@ -576,24 +596,33 @@ export async function isActive(world: World, code: LendingGrantCode): Promise<bo
  * End an active grant: a "withdrawn" or "expired" consent record. With `syncAcl` the ACL documents
  * follow; without it the caller knows they already do (a one-time grant the runtime closed).
  */
-export async function endLendingGrant(
+export const endLendingGrant = locked(async function endLendingGrant(
   world: World,
   code: LendingGrantCode,
   status: string,
   suffix: string,
   time: string,
-  syncAcl = true,
+  syncAcl: boolean = true,
 ): Promise<string[]> {
   const before = await lendingGrantRecords(world);
   const record = before.find((candidate) => candidate.code === code);
   if (record === undefined || record.state !== "active") {
     throw new Error(`${code} is not an active grant`);
   }
-  await writeConsent(world, record, status, suffix, time);
-  if (!syncAcl) return [];
+  if (!syncAcl) {
+    await writeConsent(world, record, status, suffix, time);
+    return [];
+  }
   // An unused one-time grant ended here still has its rule: name it, so the rule is removed.
-  return syncLendingAcls(world, before, await lendingGrantRecords(world), [record.policy]);
-}
+  return endGrantInOrder(
+    before,
+    record,
+    endedState(status),
+    (from, to, reload) => syncLendingAcls(world, from, to, [record.policy], reload),
+    () => writeConsent(world, record, status, suffix, time),
+    () => lendingGrantRecords(world),
+  );
+});
 
 /** The inbox slug of the wallet's withdrawal notice to an organisation. */
 export const WITHDRAWAL_SLUG_PREFIX = "grant-withdrawn-";
@@ -604,7 +633,7 @@ export function isWithdrawalNotice(path: string): boolean {
 }
 
 /**
- * Maya withdraws a grant: the consent record, the ACL change, then a copy of the withdrawal in
+ * Maya withdraws a grant: the ACL change, the consent record once it is written, then a copy of the withdrawal in
  * the organisation's inbox, so its back office learns the access has ended.
  */
 export async function withdrawLendingGrant(
