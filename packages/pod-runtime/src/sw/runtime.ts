@@ -41,6 +41,11 @@ export interface SwRuntimeOptions {
 }
 
 export interface SwRuntime {
+  /**
+   * Start compiling the wasm now, without waiting for it: the service worker calls this when it
+   * installs, so the compile runs while the page waits to be controlled, not after its hello.
+   */
+  prewarm(): void;
   /** The host, once the owners are known (from a page's hello, or stored from an earlier one). */
   getHost(): Promise<PodHost | undefined>;
   /**
@@ -70,6 +75,15 @@ export function createSwRuntime(options: SwRuntimeOptions): SwRuntime {
   let day = 1;
   let dayOne = "";
 
+  function compile(): Promise<WebAssembly.Module> {
+    if (compiled === undefined) {
+      compiled = options.compile();
+      // A failed compile is reported where it is awaited (getHost), not as an unhandled rejection.
+      compiled.catch(() => undefined);
+    }
+    return compiled;
+  }
+
   async function getHost(): Promise<PodHost | undefined> {
     if (hostPromise !== undefined) return hostPromise;
     config ??= options.fixedConfig ?? (await storage.getMeta<RuntimeConfigMessage>("config"));
@@ -80,11 +94,10 @@ export function createSwRuntime(options: SwRuntimeOptions): SwRuntime {
       await storage.putMeta("dayOne", dayOne);
       day = (await storage.getMeta<number>("day")) ?? 1;
       const calendar = createDemoCalendar(dayOne);
-      compiled ??= options.compile();
       const hostOptions: PodHostOptions = {
         clock: () => calendar.time(day, new Date().toISOString().slice(11, 16)),
         identities,
-        loadWasm: wasmLoader(await compiled),
+        loadWasm: wasmLoader(await compile()),
         origin: options.origin,
         owners,
         storage,
@@ -188,5 +201,12 @@ export function createSwRuntime(options: SwRuntimeOptions): SwRuntime {
     config = undefined;
   }
 
-  return { dropHost, getHost, handleControl, onControlMessage, serveRequest };
+  return {
+    dropHost,
+    getHost,
+    handleControl,
+    onControlMessage,
+    prewarm: () => void compile(),
+    serveRequest,
+  };
 }
