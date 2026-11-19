@@ -3,7 +3,16 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Scaffold manifest from lane L0: dependencies are fixed here so the lockfile is complete; lane A7 owns the package and adds scripts and source. Start from apps/_template and keep these dependencies.",
+  "description": "The front door of the Solid demos site for EDMA members: demo cards with narrated video, watch pages with transcripts, the app launcher, the honesty page and the journey ledger page.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "biome check src test e2e package.json tsconfig.json vite.config.ts playwright.config.ts",
+    "typecheck": "tsc --project tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test"
+  },
   "dependencies": {
     "@fontsource/atkinson-hyperlegible": "^5.3.0",
     "@jeswr/fetch-rdf": "^0.1.0",
