@@ -9,7 +9,7 @@
  */
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { Parser } from "n3";
+import { Parser, Writer } from "n3";
 
 const PACKAGE_ROOT = path.resolve(import.meta.dirname, "..");
 const SHAPES_DIR = path.join(PACKAGE_ROOT, "shapes");
@@ -24,6 +24,14 @@ function objectKey(stem) {
   return /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(stem) ? stem : `"${stem}"`;
 }
 
+function serialise(quads, prefixes) {
+  return new Promise((resolve, reject) => {
+    const writer = new Writer({ format: "text/turtle", prefixes });
+    writer.addQuads(quads);
+    writer.end((error, result) => (error ? reject(error) : resolve(result)));
+  });
+}
+
 export async function generateModule() {
   const files = (await readdir(SHAPES_DIR)).filter((file) => file.endsWith(".ttl")).sort();
   if (files.length === 0) throw new Error(`no .ttl shape documents found in ${SHAPES_DIR}`);
@@ -31,10 +39,16 @@ export async function generateModule() {
   const entries = [];
   for (const file of files) {
     const turtle = await readFile(path.join(SHAPES_DIR, file), "utf8");
-    // Fail codegen on unparseable Turtle rather than shipping a broken module.
-    new Parser({ format: "text/turtle" }).parse(turtle);
+    // Fail codegen on unparseable Turtle rather than shipping a broken module. The bundled
+    // copy is re-serialised from the parsed quads, so source comments (which may name the real
+    // organisations a shape was modelled on) never reach an app bundle (check:insignia).
+    const prefixes = {};
+    const quads = new Parser({ format: "text/turtle" }).parse(turtle, null, (prefix, iri) => {
+      prefixes[prefix] = iri.value;
+    });
+    const bundled = await serialise(quads, prefixes);
     entries.push(
-      `  ${objectKey(file.replace(/\.ttl$/, ""))}: \`${escapeTemplateLiteral(turtle)}\`,`,
+      `  ${objectKey(file.replace(/\.ttl$/, ""))}: \`${escapeTemplateLiteral(bundled)}\`,`,
     );
   }
 
