@@ -1,0 +1,21 @@
+@prefix cred: <https://www.w3.org/2018/credentials#>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#>.
+@prefix schema: <https://schema.org/>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix cmns-id: <https://www.omg.org/spec/Commons/Identifiers/>.
+@prefix cmns-txt: <https://www.omg.org/spec/Commons/TextDatatype/>.
+@prefix fibo-be-le-lei: <https://spec.edmcouncil.org/fibo/ontology/BE/LegalEntities/LEIEntities/>.
+@prefix fibo-be-le-lp: <https://spec.edmcouncil.org/fibo/ontology/BE/LegalEntities/LegalPersons/>.
+@prefix fibo-be-oac-exec: <https://spec.edmcouncil.org/fibo/ontology/BE/OwnershipAndControl/Executives/>.
+@prefix fibo-be-oac-opty: <https://spec.edmcouncil.org/fibo/ontology/BE/OwnershipAndControl/OwnershipParties/>.
+
+<https://bank.pod.example/kyb/cdd/northwind> a mort:CddDecisionRecord;
+    schema:name "Customer due diligence: Northwind Logistics LLC";
+    dcterms:subject <https://northwind.pod.example/profile/card#me>;
+    dcterms:creator <https://bank.pod.example/profile/card#me>;
+    mort:cddDecisionStatus mort:CddDecisionStatus-Opened;
+    mort:cddCheckDate "2026-09-02"^^xsd:date;
+    mort:checkedCredential <https://northwind.pod.example/credentials/org-identity>, <https://northwind.pod.example/credentials/beneficial-ownership>;
+    mort:identifiedBeneficialOwner "Jordan Blake", "Priya Nandakumar";
+    mort:controlPerson "Jordan Blake".
