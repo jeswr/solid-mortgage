@@ -1,0 +1,16 @@
+@prefix schema: <https://schema.org/>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix locn: <http://www.w3.org/ns/locn#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+# No effective date, and a postal code that is not a US ZIP code.
+<https://pods.example/pods/alex/profile/address#it> a schema:PostalAddress, locn:Address;
+  schema:streetAddress "14 Larch Lane";
+  schema:addressLocality "Marlow";
+  schema:addressRegion "OH";
+  schema:postalCode "MARLOW";
+  schema:addressCountry "US";
+  locn:fullAddress "14 Larch Lane, Marlow, OH, US";
+  locn:postName "Marlow";
+  locn:postCode "MARLOW";
+  dcterms:modified "2026-09-15T09:10:00Z"^^xsd:dateTime.

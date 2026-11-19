@@ -1,0 +1,136 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix locn: <http://www.w3.org/ns/locn#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
+@prefix mshape: <https://solid-mortgage-vocab.vercel.app/shapes#> .
+
+# AUTHORED-BY Claude Opus 5.5
+# profile/address (moving-house demo, flows.md section 2): the one authoritative postal address,
+# typed both schema:PostalAddress and the SEMIC Core Location locn:Address, with the date it takes
+# effect and the evidence it rests on (prov:wasDerivedFrom the recorded deed's receipt). An
+# organisation's own copy uses the same shape: prov:wasDerivedFrom is then the address it read,
+# prov:generatedAtTime when, odrl:hasPolicy the agreement that allowed it, and
+# prov:invalidatedAtTime when the organisation learned its copy was out of date.
+# Targeting locn:Address (not schema:PostalAddress) leaves the plain address nodes inside other
+# resources to mshape:PostalAddressShape.
+mshape:AddressRecordShape
+  a sh:NodeShape ;
+  sh:targetClass locn:Address ;
+  sh:closed true ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:in ( schema:PostalAddress locn:Address ) ;
+  ] ;
+  sh:property [
+    sh:path rdf:type ;
+    sh:hasValue schema:PostalAddress ;
+  ] ;
+  sh:property [
+    sh:path schema:streetAddress ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path schema:addressLocality ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path schema:addressRegion ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:pattern "^[A-Z]{2}$" ;
+  ] ;
+  sh:property [
+    sh:path schema:postalCode ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:pattern "^[0-9]{5}(-[0-9]{4})?$" ;
+  ] ;
+  sh:property [
+    sh:path schema:addressCountry ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:pattern "^[A-Z]{2}$" ;
+  ] ;
+  sh:property [
+    sh:path locn:fullAddress ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path locn:locatorDesignator ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path locn:thoroughfare ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path locn:locatorName ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path locn:postName ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path locn:postCode ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 1 ;
+  ] ;
+  sh:property [
+    sh:path schema:validFrom ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+  ] ;
+  sh:property [
+    sh:path dcterms:modified ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dateTime ;
+  ] ;
+  sh:property [
+    sh:path prov:wasDerivedFrom ;
+    sh:nodeKind sh:IRI ;
+  ] ;
+  sh:property [
+    sh:path prov:generatedAtTime ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dateTime ;
+  ] ;
+  sh:property [
+    sh:path prov:invalidatedAtTime ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dateTime ;
+  ] ;
+  sh:property [
+    sh:path odrl:hasPolicy ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+  ] .

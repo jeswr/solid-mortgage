@@ -118,10 +118,16 @@ export async function loadOrgs(): Promise<Record<string, OrgLite>> {
 
 /** Static values of the claim metrics that do not need a run of the journey. */
 export async function staticMetrics(id: DemoId): Promise<Record<string, number>> {
-  const orgs = await loadOrgs();
+  const all = await loadOrgs();
+  // The registry grows with each demo; count only the apps this demo uses (content/orgs.ts).
+  const { DEMO_APPS } = await importBuilt<{ DEMO_APPS: Record<string, readonly string[]> }>(
+    "content/dist/orgs.js",
+  );
+  const slugs = DEMO_APPS[id] ?? Object.keys(all);
+  const orgs = slugs.flatMap((slug) => (all[slug] === undefined ? [] : [all[slug]]));
   const out: Record<string, number> = {
-    "registry.apps": Object.keys(orgs).length,
-    "registry.organisations": new Set(Object.values(orgs).map((o) => o.organisation)).size,
+    "registry.apps": orgs.length,
+    "registry.organisations": new Set(orgs.map((o) => o.organisation)).size,
   };
   if (id === "mortgage") {
     const grants = await importBuilt<{ GRANT_CODES: readonly string[] }>(

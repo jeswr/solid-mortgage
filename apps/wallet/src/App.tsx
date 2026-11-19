@@ -14,6 +14,7 @@ import { Inbox } from "./screens/Inbox.tsx";
 import { Prove } from "./screens/Prove.tsx";
 import { Requests } from "./screens/Requests.tsx";
 import { Sharing } from "./screens/Sharing.tsx";
+import { sections } from "./sections/index.ts";
 
 /** The router base: Vite's `base` without its trailing slash ("/wallet"). */
 export const ROUTER_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -160,6 +161,13 @@ export function App({
                 <Route path="/activity" component={Activity} />
                 <Route path="/inbox" component={Inbox} />
                 <Route path="/prove" component={Prove} />
+                {sections.map((section) => (
+                  <Route
+                    key={section.path}
+                    path={`/${section.path}`}
+                    component={section.Component}
+                  />
+                ))}
                 <Route component={NotFound} />
               </Switch>
               <TabBar />

@@ -14,6 +14,12 @@ import { beatsBefore } from "@mortgage/content/mortgage/catch-up";
 import { MORTGAGE_HOLDER, mortgageLens, mortgageTour } from "@mortgage/content/mortgage/mount";
 import { refusalOf } from "@mortgage/content/mortgage/reads";
 import type { World } from "@mortgage/content/mortgage/world";
+import {
+  isMovingHousePage,
+  MOVING_HOUSE_HOLDER,
+  movingHouseLens,
+  movingHouseTour,
+} from "@mortgage/content/moving-house/mount";
 import { ORGS } from "@mortgage/content/orgs";
 import { createDemoCalendar } from "@mortgage/demo-kit/calendar";
 import { createCatchUp, createPodHooks } from "@mortgage/demo-kit/react";
@@ -47,14 +53,16 @@ export function startDemo(): Promise<string> {
     configure({ app: APP, registry: ORGS, seed: mortgageSeed() });
     const info = await ready();
     const calendar = createDemoCalendar(info.dayOne);
+    // A page under moving/ belongs to the moving-house demo (src/sections/moving-house/).
+    const movingHouse = isMovingHousePage(location.pathname, APP, location.search);
     await mountDemo({
       app: APP,
       calendar: { dayOf: (date) => calendar.dayOf(date), label: (day) => calendar.label(day) },
-      holder: MORTGAGE_HOLDER,
-      lens: mortgageLens(),
+      holder: movingHouse ? MOVING_HOUSE_HOLDER : MORTGAGE_HOLDER,
+      lens: movingHouse ? movingHouseLens() : mortgageLens(),
       registry: ORGS,
       runtime: { onEvent, resetDemo, setTourContext: trackTourContext(setTourContext) },
-      tour: mortgageTour(),
+      tour: movingHouse ? movingHouseTour() : mortgageTour(),
     });
     return info.dayOne;
   })();
