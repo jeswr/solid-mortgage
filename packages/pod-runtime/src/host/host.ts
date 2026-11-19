@@ -448,13 +448,23 @@ export function createPodHost(options: PodHostOptions): PodHost {
     bad: Set<string>,
     issues: RestoreIssue[],
   ): Promise<boolean> {
-    const candidates: Array<{ kind: "current" | "seed"; bytes: Uint8Array }> = [];
+    // Each snapshot is read only when it is tried, inside the recovery: a record that cannot be
+    // read or decoded is one more failure to fall back from, never a reason the start fails.
+    let previous: RestoreIssue | undefined;
     for (const kind of chain) {
-      const bytes = await storage.getSnapshot(owner, kind);
-      if (bytes !== undefined && !bad.has(`${owner}:${kind}`)) candidates.push({ bytes, kind });
-    }
-    for (const [index, { bytes, kind }] of candidates.entries()) {
+      if (bad.has(`${owner}:${kind}`)) continue;
       try {
+        let bytes: Uint8Array | undefined;
+        try {
+          bytes = await storage.getSnapshot(owner, kind);
+        } finally {
+          // Reading (or failing to read) an existing record means this is what we fell back to.
+          if (previous !== undefined) previous.fellBackTo = kind === "seed" ? "seed" : "baseline";
+        }
+        if (bytes === undefined) {
+          if (previous !== undefined) previous.fellBackTo = "baseline";
+          continue;
+        }
         pods.set(owner, (glue as Glue).SolidServer.withSnapshot(base(owner), webid(owner), bytes));
         // Every pod the host made has a root ACL its owner can read; a restored one must too.
         const check = await asOwner(owner, "GET", "/.acl");
@@ -464,12 +474,13 @@ export function createPodHost(options: PodHostOptions): PodHost {
       } catch (error) {
         pods.delete(owner);
         bad.add(`${owner}:${kind}`);
-        issues.push({
+        previous = {
           error: String((error as Error)?.message ?? error),
-          fellBackTo: candidates[index + 1]?.kind === "seed" ? "seed" : "baseline",
+          fellBackTo: "baseline",
           owner,
           snapshot: kind,
-        });
+        };
+        issues.push(previous);
         if (isTrap(error)) throw new PoisonedModule(`restoring ${owner} trapped`);
       }
     }

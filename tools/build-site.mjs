@@ -81,7 +81,11 @@ async function bundleAgents(apps) {
         outDir: join(DIST, "agents"),
         sourcemap: true,
       },
-      configFile: false,
+      // The app's own config supplies resolve.alias (the vc-kit browser stand-ins for the Node
+      // modules @jeswr/solid-vc imports); the inline lib build above takes precedence.
+      configFile: existsSync(join(app.dir, "vite.config.ts"))
+        ? join(app.dir, "vite.config.ts")
+        : false,
       publicDir: false,
       logLevel: "warn",
       root: app.dir,

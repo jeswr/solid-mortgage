@@ -9,7 +9,7 @@
  */
 import hostConfig from "virtual:pod-runtime-host-config";
 import base64 from "virtual:pod-runtime-wasm";
-import { idbStorage } from "../host/storage.js";
+import { idbStorage, type PodStorage } from "../host/storage.js";
 import { AGENTS_WORKER_NAME, EVENTS_CHANNEL } from "../protocol.js";
 import { startAgentWorker } from "./agent-worker.js";
 import { startBridgePage } from "./bridge-page.js";
@@ -26,12 +26,12 @@ function decode(text: string): Uint8Array<ArrayBuffer> {
   return bytes;
 }
 
-const runtime = () => {
+const runtime = (storage: PodStorage = idbStorage()) => {
   const options: SwRuntimeOptions = {
     channel: new BroadcastChannel(EVENTS_CHANNEL),
     compile: () => WebAssembly.compile(decode(base64)),
     origin: self.location.origin,
-    storage: idbStorage(),
+    storage,
   };
   if (__HOST_MODE__) {
     if (hostConfig === undefined) throw new Error("host-mode build without a registry");
@@ -52,5 +52,8 @@ if (
 } else if (scope.name === AGENTS_WORKER_NAME) {
   startAgentWorker();
 } else {
-  startHostWorker(runtime());
+  startHostWorker(() => {
+    const storage = idbStorage();
+    return { runtime: runtime(storage), storage };
+  });
 }
