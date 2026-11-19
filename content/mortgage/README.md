@@ -16,9 +16,42 @@ supply buttons and screens and call into this directory; the headless test in
 | `messages.ts` | Organisation-to-organisation inbox messages |
 | `prequalification.ts` | The threshold proof: challenge, presentation, verification |
 | `journey.ts` | One function per step (`JOURNEY`), and the agents that react to inbox messages (`agents`) |
+| `mount.ts` | What every app passes to `mountDemo()`: `mortgageLens()`, `mortgageTour()`, `MORTGAGE_HOLDER` |
+| `browser.ts` | The browser side: `createBrowserWorld`, `agentWorld`, the shared key store and `mortgageSeed()` for `configure({ seed })` |
 | `tour.ts` | The 24 `TourStep`s: copy, `data-tour` names, expected pod events, Lens text, real-world rule |
 
 ## How an app uses it
+
+### In the browser
+
+```ts
+import { configure, note, podFetch, ready, setTourContext } from "@mortgage/pod-runtime";
+import { createBrowserWorld, mortgageSeed, trackTourContext } from "@mortgage/content/mortgage/browser";
+import { JOURNEY, shareEmployment } from "@mortgage/content/mortgage/journey";
+
+configure({ registry: ORGS, app: "payroll", seed: mortgageSeed() }); // every app: the same seed
+const info = await ready();
+const day = JOURNEY.find((beat) => beat.run === shareEmployment)?.day ?? 1;
+await shareEmployment(
+  createBrowserWorld({ actsAs: "payroll", podFetch, note, day, dayOne: info.dayOne }),
+);
+// mountDemo({ runtime: { onEvent, resetDemo, setTourContext: trackTourContext(setTourContext) } })
+```
+
+- `createBrowserWorld({ actsAs, podFetch, note?, day?, dayOne?, podOrigin?, fetch?, keys?, tour? })`:
+  `fetchAs(actsAs)` is the injected `podFetch`. `fetchAs(other)` is a plain `fetch` with
+  `x-demo-agent: <owner>`, `x-demo-via-agent: 1` and the tour tag recorded by
+  `trackTourContext`. That works in path mode with the service worker only; in the
+  dedicated-worker fallback and in host mode a cross-owner action must run in that
+  organisation's agent (lane H1).
+- `agentWorld(ctx)` builds the world inside an agent handler from the runtime's agent context
+  (acts as `ctx.owner` through `ctx.podFetch`, on the day of the event).
+- `keyFor` creates each owner's Ed25519 key on first use (non-extractable WebCrypto) in the
+  IndexedDB database `mortgage-demo-keys`, store `keys`, keyed by pod owner, shared by every app.
+- `mortgageSeed()` is `seedRequests()` plus `firstRun()` captured through a recording world. Pass
+  the same seed from every app: whichever page starts the runtime first seeds the pods.
+
+### The journey functions
 
 ```ts
 import { JOURNEY, agents, shareEmployment } from "@mortgage/content/mortgage/journey";
@@ -34,7 +67,24 @@ server, not this code, allows or refuses each request. `note()` is the Lens "app
   the first when the screen opens and the second on the button, or both in order.
 - Organisations react to their inbox through `agents.*`. Each takes the URL of the message and acts
   only as its own organisation. In the journey functions they are called in line, so the tour is
-  deterministic; an agent runner may call them from an inbox watcher instead.
+  deterministic, and in the browser the agent runner calls them from the inbox as well.
+- Each agent answers a message once. Before anything else it claims the message: it creates
+  `handled/<message name>` in its own pod with `If-None-Match: *` (a `document`). Exactly one
+  claim succeeds; a later or concurrent caller gets 412 and the agent returns `undefined`. A
+  journey function whose agent returned `undefined` waits for the reply in the sender's own inbox
+  (`awaitReply`), for the access request in Alex's inbox (step 12), or for the appraisal copy
+  (step 13).
+- Steps 7 and 21 start in another app and finish in the wallet, so each has two halves around
+  the wallet's `approveRequest(world, url)`:
+  - step 7: `requestApplicationAccess(world)` (Juniper posts the G4 request, returns its URL),
+    then `completeApplicationAccess(world)` (Alex's credit-report authorisation);
+  - step 21: `requestServicerAccess(world)` (Juniper's boarding message to Marigold, then
+    Marigold posts the G8 request, returns its URL), then `completeServicerConnection(world)`
+    (payment mandate, Marigold's three reads, its transfer notice and escrow statement).
+
+  A completion half throws unless the grant is active, and is safe to call again while it is.
+  `approveApplicationAccess` and `connectServicer` are the one-call compositions the journey
+  test runs.
 - `agents.walletApplyExpiries(world)` removes the access rules of grants whose end has been
   reached. Call it whenever the simulated day advances. The journey calls it where an end falls
   inside a step.
@@ -113,7 +163,7 @@ the grants that are active, so a revoke or an expiry removes rules by the same c
 | G5 | Plumbline | read `property/subject-property`, `property/purchase-agreement` | when the report is delivered |
 | G6 | Sextant | read `profile/card`, `property/purchase-agreement`; write `mortgage/closing/` | when the owner's policy is issued |
 | G7 | Wrenfield | read `property/subject-property`, `mortgage/juniper/appraisal`; write `insurance/` | when the policy lapses |
-| G8 | Marigold | read `profile/contact`, `insurance/`, `banking/payment-mandate`; write `mortgage/servicing/` | when servicing ends |
+| G8 | Marigold | read `profile/contact`, `insurance/`, `banking/payment-mandate`; read and write `mortgage/servicing/` (it reads back its own letters) | when servicing ends |
 
 An issuer's grant is a write-only slot: Append on `credentials/` itself and Write on the one
 resource. The issuer can create and replace that resource. It cannot read it back, list the
@@ -199,7 +249,7 @@ The threshold proof is JSON, not RDF, because the proof is bytes:
 Checked by `content/test/mortgage/journey.test.ts`, on the real `@sparq-org/solid-server` wasm with
 one WebID per organisation: every beat completes; every tour `expect` and `done` entry is produced
 in its step; every Turtle resource in all 12 pods conforms to the closed SHACL shape of each type
-it claims; every ACL document keeps its owner in control; 64 access probes between steps return
+it claims; every ACL document keeps its owner in control; 66 access probes between steps return
 the status the grants imply (including 403 for each ended or revoked grant); the first employment
 credential is revoked and the re-issued one verifies.
 
