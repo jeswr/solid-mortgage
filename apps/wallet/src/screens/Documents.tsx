@@ -132,7 +132,9 @@ function CredentialFacts({ card }: { card: CredentialCard }) {
                 <Icon name="cross" /> {error.message}
               </li>
             ))}
-            <li className="muted">Status list: {new URL(card.status).pathname}</li>
+            {card.statusList === undefined ? null : (
+              <li className="muted">Status list: {new URL(card.statusList).pathname}</li>
+            )}
           </ul>
         ) : null}
       </section>

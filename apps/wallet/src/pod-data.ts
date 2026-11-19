@@ -36,6 +36,8 @@ import {
   NamedNodeFrom,
   OptionalFrom,
   SetFrom,
+  TermAs,
+  TermFrom,
   TermWrapper,
 } from "@rdfjs/wrapper";
 import { DataFactory } from "n3";
@@ -107,9 +109,40 @@ export interface CredentialCard {
   readonly issuer: string;
   readonly validFrom: Date;
   readonly validUntil: Date | undefined;
-  readonly status: string;
+  /** The status list the issuer publishes this credential's revocation bit in, if named. */
+  readonly statusList: string | undefined;
   /** What the credential says, in a line, for the holder's own eyes. */
   readonly summary: string;
+}
+
+const CRED_STATUS = "https://www.w3.org/2018/credentials#credentialStatus";
+const STATUS_LIST_CREDENTIAL = "https://www.w3.org/ns/credentials/status#statusListCredential";
+
+/** A `credentialStatus` entry: the suite's issuers write it as a blank node (vc-kit status.ts). */
+class StatusEntry extends TermWrapper {
+  get statusList(): string | undefined {
+    return OptionalFrom.subjectPredicate(this, STATUS_LIST_CREDENTIAL, NamedNodeAs.string);
+  }
+}
+
+/** The credential node, read only for its status entries (named or blank). */
+class StatusHolder extends TermWrapper {
+  get entries(): Set<StatusEntry> {
+    return SetFrom.subjectPredicate(
+      this,
+      CRED_STATUS,
+      TermAs.instance(StatusEntry),
+      TermFrom.instance,
+    );
+  }
+}
+
+function statusListOf(url: string, dataset: DatasetCore): string | undefined {
+  for (const entry of new StatusHolder(url, dataset, DataFactory).entries) {
+    const list = entry.statusList;
+    if (list !== undefined) return list;
+  }
+  return undefined;
 }
 
 const usd = (amount: number) => `$${amount.toLocaleString("en-US")}`;
@@ -170,7 +203,7 @@ export async function readCredentials(world: World): Promise<CredentialCard[]> {
       label: labelOfPath(entry.path),
       name,
       path: entry.path,
-      status: credential.credentialStatusIri,
+      statusList: statusListOf(url, dataset),
       summary: summaryOf(credential),
       url,
       validFrom: credential.validFrom,
