@@ -146,7 +146,8 @@ export const GRANTS: Readonly<Record<GrantCode, GrantSpec>> = Object.freeze({
         modes: ["Read"],
         paths: ["profile/", "identity/", "credentials/", "property/", "insurance/"],
       },
-      { modes: ["Write"], paths: ["mortgage/juniper/"] },
+      // Juniper reads back what it delivered (the Loan Estimate, the Closing Disclosure).
+      { modes: ["Read", "Write"], paths: ["mortgage/juniper/"] },
       {
         modes: ["Read"],
         paths: [

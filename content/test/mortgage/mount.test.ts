@@ -17,7 +17,9 @@ describe("the mountDemo options every mortgage app shares", () => {
       GRANT_CODES.map((c) => `/policies/${c.toLowerCase()}`),
     );
     expect(lens.recordDrawers).toEqual(["/inbox/", "/policies/", "/consents/"]);
-    expect(lens.revokeCaveat).toContain("{org}");
+    expect(lens.revokeCaveat).toBe(
+      "Juniper still holds the loan file it is required to keep. What has ended is its access to Alex's data at source.",
+    );
   });
 
   test("the tour is the mortgage tour", () => {

@@ -40,6 +40,10 @@ export interface MortgageLensOptions {
   ledgerHref: string;
 }
 
+/** The caveat under a refused read after a withdrawal, verbatim from design.md section c.4. */
+export const REVOKE_CAVEAT =
+  "Juniper still holds the loan file it is required to keep. What has ended is its access to Alex's data at source.";
+
 /** The Lens options (`mountDemo({ lens })`). */
 export function mortgageLens(): MortgageLensOptions {
   const grants: MortgageLensOptions["grants"] = {};
@@ -56,8 +60,9 @@ export function mortgageLens(): MortgageLensOptions {
     grants,
     // Access requests, agreements and consent records are bookkeeping, not documents.
     recordDrawers: ["/inbox/", "/policies/", "/consents/"],
-    revokeCaveat:
-      "{org} keeps the records the law requires it to keep. {holder}'s withdrawal stops any further reads of the pod.",
+    // design.md c.4 fixes this sentence (the e2e suite asserts it). Only Juniper's grant (G4) is
+    // ever withdrawn in this demo; every other grant expires, and expiry shows no caveat.
+    revokeCaveat: REVOKE_CAVEAT,
     grantsHref: appUrl("wallet", "sharing"),
     ledgerHref: appUrl("welcome", "journey"),
   };
