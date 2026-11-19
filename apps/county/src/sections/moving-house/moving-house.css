@@ -1,0 +1,44 @@
+/* AUTHORED-BY Claude Opus 5.5
+ * The moving-house section: plain layout that inherits this app's own fonts and colours. */
+.mh-held {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+}
+
+.mh-held-card {
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.mh-held-card address {
+  font-style: normal;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.mh-held-card dl {
+  display: grid;
+  grid-template-columns: minmax(5rem, auto) 1fr;
+  gap: 0.25rem 1rem;
+}
+
+.mh-held-card dd {
+  margin: 0;
+  min-width: 0;
+}
+
+.mh-held-alert {
+  border-left: 5px solid #9b1c1c;
+  background: #fdecec;
+  color: #7a1414;
+  padding: 0.75rem 1rem;
+}
+
+.mh-held-ok,
+.mh-held-note {
+  border-left: 5px solid currentColor;
+  padding: 0.25rem 0.75rem;
+}
