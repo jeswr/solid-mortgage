@@ -173,6 +173,17 @@ export const ORGS: OrgRegistry = Object.freeze({
     themeColor: "#17375E",
     title: "State Online Services",
   },
+  "card-issuer": {
+    actsAs: "card-issuer",
+    organisation: "Pennant Card",
+    persona: alex("card applicant"),
+    product: "Card application",
+    role: "Credit card issuer: relies on another institution's identity checks (reusable KYC)",
+    short: "Pennant",
+    slug: "card-issuer",
+    themeColor: "#B3122B",
+    title: "Pennant Card",
+  },
 });
 
 /**
@@ -180,6 +191,7 @@ export const ORGS: OrgRegistry = Object.freeze({
  * mortgage video's "Thirteen applications.") is taken from its list here, never from `ORGS`.
  */
 export const DEMO_APPS = Object.freeze({
-  mortgage: ORG_SLUGS.filter((slug) => slug !== "state"),
+  mortgage: ORG_SLUGS.filter((slug) => slug !== "state" && slug !== "card-issuer"),
   "moving-house": ["wallet", "state", "county", "bank", "insurer", "payroll", "servicer"],
+  "reusable-kyc": ["wallet", "bank", "card-issuer"],
 } satisfies Record<string, readonly OrgSlug[]>);

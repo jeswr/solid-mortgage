@@ -23,6 +23,7 @@ export const ORG_SLUGS = [
   "county",
   "servicer",
   "state",
+  "card-issuer",
 ] as const;
 
 export type OrgSlug = (typeof ORG_SLUGS)[number];
