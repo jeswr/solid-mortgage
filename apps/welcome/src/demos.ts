@@ -532,33 +532,53 @@ export const DEMOS: readonly Demo[] = [
       "One bank states what it verified; a card issuer reads that attestation once, under a one-time grant, with no documents uploaded.",
     sectors: ["Finance"],
     durationSeconds: 170,
-    status: "coming",
+    status: "live",
     media: mediaFor("reusable-kyc"),
+    // Step 1 of content/reusable-kyc/tour.ts: Alder Bank's "Your identity" page.
+    tour: { demo: "reusable-kyc", app: "bank", path: "kyc", step: "attestation" },
     chapters: [
       {
         id: "intro",
         title: "The same checks, again",
-        transcript: [],
+        transcript: [
+          "When Alex opened a bank account, the bank checked who they were. Now Alex wants a credit card from another company, which must run its own checks.",
+          "Usually that means the same passport, the same proof of address, and another copy of both.",
+        ],
       },
       {
         id: "attest",
         title: "What the bank can say",
-        transcript: [],
+        transcript: [
+          "Alex asks the bank for a statement of what it verified: which checks, by what method, and when. The statement is signed, and holds no images of documents. It goes into Alex's pod.",
+        ],
       },
       {
         id: "apply",
         title: "One read",
-        transcript: [],
+        transcript: [
+          "The card company offers a choice: fill in the form, or use a verified identity.",
+          "Alex grants it one record, to be read once, within the hour. It is the narrowest grant in these demos.",
+          "The card company reads the statement and checks three things: the signature, that the statement has not been withdrawn, and that the bank is on its list of issuers it has an agreement with.",
+          "That agreement matters. One institution may rely on another's checks only under conditions, and the list stands for those conditions.",
+          "The card company did not see the identity document, the bank account, or anything else in the pod.",
+        ],
       },
       {
         id: "revoke",
         title: "Used once",
-        transcript: [],
+        transcript: [
+          "If it asks again, the pod refuses. A one-time grant is used up.",
+          "Later, Alex loses the identity document.",
+          "The bank withdraws its statement and issues a new one. Anyone checking the old statement will see that it no longer stands.",
+        ],
       },
       {
         id: "ledger",
         title: "Two kinds of withdrawal",
-        transcript: [],
+        transcript: [
+          "One set of checks, two institutions, one read. And two ways to take something back: the owner withdraws access, and the issuer withdraws its word.",
+          "To work on reusable identity with other EDMA members, join the Solid Community of Practice.",
+        ],
       },
     ],
   },

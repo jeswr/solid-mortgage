@@ -1,0 +1,20 @@
+@prefix cred: <https://www.w3.org/2018/credentials#>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix mort: <https://solid-mortgage-vocab.vercel.app/mort#>.
+@prefix schema: <https://schema.org/>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+<https://card.example/scheme/trusted-issuers> a mort:TrustedIssuerList, schema:ItemList;
+    schema:name "Keelstone Reliance Scheme: trusted KYC issuers";
+    schema:publisher _:publisher;
+    schema:about mort:KycAttestationCredential;
+    schema:datePublished "2026-07-01T00:00:00.000Z"^^xsd:dateTime;
+    schema:validThrough "2027-07-01T00:00:00.000Z"^^xsd:dateTime;
+    schema:itemListElement _:bank.
+_:publisher a schema:Organization;
+    schema:name "Keelstone Reliance Scheme".
+_:bank a schema:ListItem;
+    schema:item <https://bank.example/profile/card#me>;
+    schema:name "Alder Bank";
+    schema:identifier "KRS-RA-0042";
+    schema:validFrom "2026-01-01T00:00:00.000Z"^^xsd:dateTime.

@@ -120,8 +120,9 @@ mshape:ScoreDisclosureShape
     sh:minLength 1 ;
   ] .
 
-# An ODRL constraint on a permission: its purpose (a DPV purpose), a fixed end (odrl:dateTime)
-# or an event that ends it (odrl:event with a concept from mort:GrantEndScheme).
+# An ODRL constraint on a permission: its purpose (a DPV purpose), a fixed end (odrl:dateTime),
+# an event that ends it (odrl:event with a concept from mort:GrantEndScheme) or how many times
+# it may be used (odrl:count, an xsd:integer: 1 for a one-time grant).
 mshape:ConstraintShape
   a sh:NodeShape ;
   sh:closed true ;
@@ -131,7 +132,7 @@ mshape:ConstraintShape
     sh:minCount 1 ;
     sh:maxCount 1 ;
     sh:nodeKind sh:IRI ;
-    sh:in ( odrl:purpose odrl:dateTime odrl:event ) ;
+    sh:in ( odrl:purpose odrl:dateTime odrl:event odrl:count ) ;
   ] ;
   sh:property [
     sh:path odrl:operator ;
