@@ -1,6 +1,6 @@
 [
   { "says": "Twelve organisations take part", "metric": "registry.organisations", "value": 12 },
   { "says": "Thirteen applications.", "metric": "registry.apps", "value": 13 },
-  { "says": "Eight grants.", "metric": "grants.total", "value": 8 },
+  { "says": "Nine grants.", "metric": "grants.total", "value": 9 },
   { "says": "No documents uploaded.", "metric": "uploads", "value": 0 }
 ]

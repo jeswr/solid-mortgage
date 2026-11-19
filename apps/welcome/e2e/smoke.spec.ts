@@ -170,7 +170,7 @@ test("watch page carries the full transcript", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Transcript" })).toBeVisible();
   await expect(page.locator(".transcript__chapter")).toHaveCount(8);
   await expect(
-    page.getByText("Thirteen applications. Eight grants. No documents uploaded."),
+    page.getByText("Thirteen applications. Nine grants. No documents uploaded."),
   ).toBeVisible();
 });
 

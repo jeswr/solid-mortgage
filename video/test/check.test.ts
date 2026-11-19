@@ -75,11 +75,11 @@ describe("the checker catches", () => {
   test("a spoken total that differs from the ledger", async () => {
     const errors = await errorsOf(mortgage, [
       { says: "Thirteen applications.", metric: "registry.apps", value: 13 },
-      { says: "Eight grants.", metric: "grants.total", value: 9 },
+      { says: "Nine grants.", metric: "grants.total", value: 8 },
       { says: "No documents uploaded.", metric: "uploads", value: 0 },
     ]);
-    expect(errors.join("\n")).toMatch(/says 8, claims 9/);
-    expect(errors.join("\n")).toMatch(/grants.total is 8 in content\//);
+    expect(errors.join("\n")).toMatch(/says 9, claims 8/);
+    expect(errors.join("\n")).toMatch(/grants.total is 9 in content\//);
   });
 
   test("a claim on a field the demo's own ledger does not count", async () => {
@@ -98,7 +98,7 @@ describe("the checker catches", () => {
     const errors = await errorsOf(mortgage, [
       { says: "Thirteen applications.", metric: "registry.apps", value: 13 },
     ]);
-    expect(errors.join("\n")).toMatch(/"Eight grants\." states a total with no entry/);
+    expect(errors.join("\n")).toMatch(/"Nine grants\." states a total with no entry/);
   });
 
   test("words that drift from the script of record", async () => {

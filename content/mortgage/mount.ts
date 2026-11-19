@@ -63,8 +63,11 @@ export function mortgageLens(): MortgageLensOptions {
   return {
     drawers: MORTGAGE_DRAWERS.map((drawer) => ({ ...drawer })),
     grants,
-    // Access requests, agreements and consent records are bookkeeping, not documents.
-    recordDrawers: ["/inbox/", "/policies/", "/consents/"],
+    // Access requests, agreements and consent records are bookkeeping, not documents. So is the
+    // autopay mandate Alex sets up for Marigold (banking/payment-mandate, step 21): an instruction
+    // she gives, like a consent, not a document she uploads. design.md c.5 counts uploads by the
+    // borrower as zero, and the video says "No documents uploaded" over that total.
+    recordDrawers: ["/inbox/", "/policies/", "/consents/", "/banking/"],
     // design.md c.4 fixes this sentence (the e2e suite asserts it). Only Juniper's grant (G4) is
     // ever withdrawn in this demo; every other grant expires, and expiry shows no caveat.
     revokeCaveat: REVOKE_CAVEAT,

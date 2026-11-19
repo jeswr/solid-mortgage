@@ -132,10 +132,18 @@ export async function staticMetrics(id: DemoId): Promise<Record<string, number>>
     "registry.organisations": new Set(orgs.map((o) => o.organisation)).size,
   };
   if (id === "mortgage") {
-    const grants = await importBuilt<{ GRANT_CODES: readonly string[] }>(
-      "content/dist/mortgage/grants.js",
-    );
-    out["grants.total"] = grants.GRANT_CODES.length;
+    // The ledger counts a grant per organisation given access (packages/lens/src/model.ts), so
+    // G4's onward permission to the underwriting service is a grant of its own there: the
+    // organisations the eight policies name, not the eight policies (content/mortgage/grants.ts).
+    const { GRANTS } = await importBuilt<{
+      GRANTS: Record<string, { to: string; permissions: readonly { to?: string }[] }>;
+    }>("content/dist/mortgage/grants.js");
+    const grantees = new Set<string>();
+    for (const g of Object.values(GRANTS)) {
+      grantees.add(g.to);
+      for (const p of g.permissions) if (p.to !== undefined) grantees.add(p.to);
+    }
+    out["grants.total"] = grantees.size;
   }
   return out;
 }

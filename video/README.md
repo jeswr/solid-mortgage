@@ -34,8 +34,9 @@ resolve (a card that is not in `cards.html`, a step that is not in `content/<dem
 `act` on a step with no action, a Lens view or part the Lens lacks, an organisation not in
 `content/orgs.ts`), a built demo's tour step is never shown or is shown out of order, a spoken
 total disagrees with its claim or with `content/` (applications and organisations in the
-registry, the mortgage's eight grants G1 to G8), a number is spoken over `lens totals` with no
-claim, or the words differ from docs/rebuild/video-scripts.md. A demo whose content does not
+registry; for the mortgage's grants, the organisations G1 to G8 give access to, since the ledger
+counts a grant per organisation), a number is spoken over `lens totals` with no claim, or the
+words differ from docs/rebuild/video-scripts.md. A demo whose content does not
 exist yet is checked against the `steps:` in its front matter, and its strict mode is off.
 
 The recording repeats the totals check live: at `[do: lens totals]` it reads

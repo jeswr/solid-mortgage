@@ -176,7 +176,7 @@ export const DEMOS: readonly Demo[] = [
         title: "The whole journey",
         transcript: [
           "This is the whole journey on one page: every organisation, every record, every grant, and what each one never saw.",
-          "Thirteen applications. Eight grants. No documents uploaded.",
+          "Thirteen applications. Nine grants. No documents uploaded.",
           "Everything you saw ran in a browser, on open standards. Try it yourself from the welcome page, or join the EDMA Solid Community of Practice. We meet every week.",
         ],
       },
