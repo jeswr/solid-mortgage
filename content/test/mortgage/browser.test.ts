@@ -29,7 +29,14 @@ import {
   requestApplicationAccess,
   shareEmployment,
 } from "../../mortgage/journey.js";
-import { awaitReply, claimMessage, deliver, handledUrl } from "../../mortgage/messages.js";
+import {
+  answerOnce,
+  answerOrAwait,
+  awaitReply,
+  claimMessage,
+  deliver,
+  handledUrl,
+} from "../../mortgage/messages.js";
 import { applySeed, type SeedRequest } from "../../mortgage/seed.js";
 import { podUrl, statusOf, type World } from "../../mortgage/world.js";
 import { POD_ORIGIN, TestHost } from "./host.js";
@@ -225,6 +232,150 @@ describe("a message is answered once", () => {
     await expect(
       awaitReply(world, "lender", message, { intervalMs: 10, timeoutMs: 50 }),
     ).rejects.toThrow(/no reply/);
+  });
+});
+
+describe("a failed answer does not leave its message stuck", () => {
+  async function serviceOrder(world: World): Promise<string> {
+    return deliver(world, {
+      from: "lender",
+      kind: MORT.MessageKind_ServiceOrder,
+      summary: "Appraisal ordered for 14 Larch Lane",
+      time: "09:30",
+      to: "appraisal",
+    });
+  }
+
+  const nothingYet = async (): Promise<string | undefined> => undefined;
+
+  test("an answer that throws gives its claim back", async () => {
+    const world = browserWorld("lender", DAY.orders);
+    const message = await serviceOrder(world);
+    await expect(
+      answerOnce(world, "appraisal", message, "09:31", async () => {
+        throw new Error("signing failed");
+      }),
+    ).rejects.toThrow(/signing failed/);
+    const fetcher = world.fetchAs("appraisal");
+    expect(await statusOf(fetcher, handledUrl(world, "appraisal", message))).toBe(404);
+    expect(await claimMessage(world, "appraisal", message, "09:32")).toBe(true);
+  });
+
+  test("an answer that succeeds keeps its claim", async () => {
+    const world = browserWorld("lender", DAY.orders);
+    const message = await serviceOrder(world);
+    expect(await answerOnce(world, "appraisal", message, "09:31", async () => "done")).toBe("done");
+    expect(await answerOnce(world, "appraisal", message, "09:32", async () => "again")).toBe(
+      undefined,
+    );
+  });
+
+  test("a caller waiting on a claimant that fails runs the agent once more", async () => {
+    const world = browserWorld("lender", DAY.orders);
+    const message = await serviceOrder(world);
+    let crash: () => void = () => undefined;
+    let started: () => void = () => undefined;
+    const holding = new Promise<void>((resolve) => {
+      started = resolve;
+    });
+    // The other caller (the agent worker) claims the order, then crashes.
+    const other = answerOnce(
+      browserWorld("appraisal", DAY.orders),
+      "appraisal",
+      message,
+      "09:31",
+      () => {
+        started();
+        return new Promise<string>((_, reject) => {
+          crash = () => reject(new Error("crashed"));
+        });
+      },
+    );
+    await holding;
+    const waiting = answerOrAwait(
+      world,
+      {
+        answer: () => agents.requestFromOrder(world, "appraisal", message),
+        claimant: "appraisal",
+        look: nothingYet,
+        messageUrl: message,
+      },
+      { intervalMs: 10, timeoutMs: 5_000 },
+    );
+    crash();
+    await expect(other).rejects.toThrow(/crashed/);
+    expect(await waiting).toMatch(/\/pods\/alex\/inbox\//);
+    const requests = host.events.filter(
+      (event) =>
+        event.pod === "alex" &&
+        event.method === "POST" &&
+        event.path === "/inbox/" &&
+        event.status === 201,
+    );
+    expect(requests).toHaveLength(1);
+  });
+
+  test("a claim that stays held is waited on, never answered twice", async () => {
+    const world = browserWorld("lender", DAY.orders);
+    const message = await serviceOrder(world);
+    expect(await claimMessage(world, "appraisal", message, "09:31")).toBe(true);
+    let runs = 0;
+    await expect(
+      answerOrAwait(
+        world,
+        {
+          answer: async () => {
+            runs++;
+            return answerOnce(world, "appraisal", message, "09:32", async () => "mine");
+          },
+          claimant: "appraisal",
+          look: nothingYet,
+          messageUrl: message,
+        },
+        { intervalMs: 10, timeoutMs: 100 },
+      ),
+    ).rejects.toThrow(/was not answered by appraisal/);
+    expect(runs).toBe(1);
+  });
+
+  test("the agent runs at most twice, however often the claim disappears", async () => {
+    const world = browserWorld("lender", DAY.orders);
+    const message = await serviceOrder(world);
+    let runs = 0;
+    await expect(
+      answerOrAwait(
+        world,
+        {
+          answer: async () => {
+            runs++;
+            return undefined;
+          },
+          claimant: "appraisal",
+          look: nothingYet,
+          messageUrl: message,
+        },
+        { intervalMs: 10, timeoutMs: 100 },
+      ),
+    ).rejects.toThrow(/was not answered/);
+    expect(runs).toBe(2);
+  });
+
+  test("the result another caller produced is found without running the agent again", async () => {
+    const world = browserWorld("lender", DAY.orders);
+    const message = await serviceOrder(world);
+    expect(await claimMessage(world, "appraisal", message, "09:31")).toBe(true);
+    let looks = 0;
+    const found = await answerOrAwait(
+      world,
+      {
+        answer: () => answerOnce(world, "appraisal", message, "09:32", async () => "mine"),
+        claimant: "appraisal",
+        look: async () => (++looks >= 3 ? "theirs" : undefined),
+        messageUrl: message,
+      },
+      { intervalMs: 10, timeoutMs: 5_000 },
+    );
+    expect(found).toBe("theirs");
   });
 });
 
