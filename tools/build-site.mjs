@@ -7,8 +7,7 @@
  *                     vite.config.ts; apps/vocab is a separate Vercel project and is skipped)
  *   dist/pods-sw.js   the pod runtime's service worker, from packages/pod-runtime/dist/
  *   dist/agents/      one bundle per app that has src/agent.ts (organisation back offices)
- *   dist/zk-crs/      the BN254 CRS the in-browser prover loads (packages/vc-kit/crs/), so
- *                     no proof ever fetches it from another origin
+ *   dist/crs/         the prover's CRS files, from packages/vc-kit/crs/ (pinned in vc-kit's zk/crs.ts)
  *   dist/video/       recorded demo videos, from video/dist/ when present
  *   dist/site.json    what was assembled, for tests
  *
@@ -19,6 +18,7 @@
  *        node tools/build-site.mjs --check-budget   (only checks the budget of the existing dist/)
  */
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import {
   cpSync,
   existsSync,
@@ -31,6 +31,7 @@ import {
 import { dirname, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { gzipSync } from "node:zlib";
+import { CRS_FILES } from "../packages/vc-kit/src/zk/crs-pins.ts";
 import { SITE_SLUGS } from "./site-routes.mjs";
 
 const ROOT = resolve(import.meta.dirname, "..");
@@ -181,6 +182,39 @@ async function bundleAgents(apps) {
   return withAgents.map((app) => app.slug);
 }
 
+/**
+ * The CRS files to copy into `dist/crs/`: exactly the files vc-kit pins (`zk/crs-pins.ts`), each
+ * with its pinned length and SHA-256. Throws when one is missing, differs from its pin, or the
+ * directory holds any other file, so a build never ships a CRS the prover would refuse, nor
+ * anything else under `/crs/`.
+ */
+export function collectCrs(source, pins = CRS_FILES) {
+  const present = existsSync(source) ? readdirSync(source).sort() : [];
+  const pinned = pins.map((pin) => pin.file);
+  const missing = pinned.filter((name) => !present.includes(name));
+  if (missing.length > 0) {
+    throw new Error(`build-site: ${source} lacks the pinned CRS file(s) ${missing.join(", ")}`);
+  }
+  const extra = present.filter((name) => !pinned.includes(name));
+  if (extra.length > 0) {
+    throw new Error(
+      `build-site: ${source} holds file(s) vc-kit does not pin: ${extra.join(", ")} (pins: packages/vc-kit/src/zk/crs-pins.ts)`,
+    );
+  }
+  for (const pin of pins) {
+    const bytes = readFileSync(join(source, pin.file));
+    if (bytes.length !== pin.bytes) {
+      throw new Error(
+        `build-site: CRS file ${pin.file} is ${bytes.length} bytes, not the pinned ${pin.bytes}`,
+      );
+    }
+    if (createHash("sha256").update(bytes).digest("hex") !== pin.sha256) {
+      throw new Error(`build-site: CRS file ${pin.file} does not match its pinned SHA-256`);
+    }
+  }
+  return pinned;
+}
+
 async function main() {
   if (process.argv.includes("--check-budget")) {
     enforceEntryBudgets(checkEntryBudgets());
@@ -228,10 +262,13 @@ async function main() {
     );
   }
 
-  const agents = await bundleAgents(apps);
+  // The prover loads its CRS from the site, never from a CDN; vc-kit checks each file's SHA-256.
+  const crsSource = join(ROOT, "packages", "vc-kit", "crs");
+  const crs = collectCrs(crsSource);
+  mkdirSync(join(DIST, "crs"), { recursive: true });
+  for (const name of crs) cpSync(join(crsSource, name), join(DIST, "crs", name));
 
-  // The prover's CRS, served by the site itself (packages/vc-kit/src/zk/crs.ts).
-  cpSync(join(ROOT, "packages", "vc-kit", "crs"), join(DIST, "zk-crs"), { recursive: true });
+  const agents = await bundleAgents(apps);
 
   const video = join(ROOT, "video", "dist");
   const hasVideo = existsSync(video);
@@ -241,6 +278,7 @@ async function main() {
   const site = {
     agents,
     apps: apps.map((app) => app.slug),
+    crs,
     firstLoadGzip: Object.fromEntries(budgets.rows.map((row) => [row.slug, row.gzip])),
     podServiceWorker: hasServiceWorker,
     video: hasVideo,

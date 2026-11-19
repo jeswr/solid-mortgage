@@ -21,7 +21,7 @@
 
 import type { CompiledCircuitArtifact, FilterIntMember } from "./circuits/registry.js";
 import { loadCommittedCircuit } from "./circuits/registry.js";
-import { type BarretenbergClass, installSameOriginCrs, isNode } from "./crs.js";
+import { ZkError } from "./errors.js";
 
 /** A produced/consumed UltraHonk proof: opaque bytes + ordered public inputs. */
 export interface ProofData {
@@ -39,15 +39,7 @@ export type ZkVerifierTarget = typeof ZK_VERIFIER_TARGET;
 
 const PROOF_OPTIONS = Object.freeze({ verifierTarget: ZK_VERIFIER_TARGET });
 
-/** Thrown for every Tier A/B configuration or verification-input failure. */
-export class ZkError extends Error {
-  override readonly name: string = "ZkError";
-  readonly code: string;
-  constructor(code: string, message: string) {
-    super(message);
-    this.code = code;
-  }
-}
+export { ZkError };
 
 /**
  * Fail-closed flavour gate for values arriving over the wire (a presented
@@ -102,13 +94,13 @@ const memberBackends = new Map<string, Promise<MemberBackend>>();
 async function loadApi(): Promise<{ api: unknown; threads: number }> {
   if (!apiPromise) {
     apiPromise = (async () => {
-      const bb = await import("@aztec/bb.js");
-      // In a browser, load the CRS from the site, never from Aztec's CDN (crs.ts).
-      if (!isNode()) {
-        installSameOriginCrs(bb.Barretenberg as unknown as BarretenbergClass);
-      }
+      // crs.ts loads with bb.js, not with the page: it is no part of any app's first load.
+      const [bb, crs] = await Promise.all([import("@aztec/bb.js"), import("./crs.js")]);
       const threads = maxThreads();
-      const api = await bb.Barretenberg.new({ threads });
+      // In a browser the CRS comes from this site, pinned by SHA-256 (crs.ts), never from a CDN.
+      const api = crs.usesSiteCrs()
+        ? await crs.barretenbergWithSiteCrs(bb, threads)
+        : await bb.Barretenberg.new({ threads });
       return { api, threads };
     })();
     apiPromise.catch(() => {
