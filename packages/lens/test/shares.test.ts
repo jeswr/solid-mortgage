@@ -176,6 +176,7 @@ suite("an access change that takes away only part of a rule", () => {
       }),
       { replayed: true },
     );
+    if (!ended) throw new Error("no change");
     expect(m.grant("bank")?.state).toBe("revoked");
     expect(describe(m, ended).text).toBe("Alex withdrew Sorrel's access");
   });
