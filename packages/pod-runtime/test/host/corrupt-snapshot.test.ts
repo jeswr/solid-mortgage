@@ -90,6 +90,29 @@ describe("corrupt snapshots", () => {
     expect(webid("bank")).toMatch(/bank/);
   });
 
+  test("snapshots are read one at a time: an unreadable seed record never blocks a good current one", async () => {
+    const storage = await used();
+    const unreadable = (bad: "current" | "seed"): PodStorage => ({
+      ...storage,
+      getSnapshot: async (owner, kind) => {
+        if (owner === "bank" && kind === bad) throw new Error(`cannot decode ${kind} record`);
+        return storage.getSnapshot(owner, kind);
+      },
+    });
+    const host = makeHost({ storage: unreadable("seed") });
+    await host.ready;
+    expect(await status(host, "bank", "/later/x")).toBe(200);
+    expect((await host.info()).restoreIssues).toEqual([]);
+    // An unreadable current record falls back to the seed and is reported.
+    const other = makeHost({ storage: unreadable("current") });
+    await other.ready;
+    expect(await status(other, "bank", "/statements/1")).toBe(200);
+    expect(await status(other, "bank", "/later/x")).toBe(404);
+    expect((await other.info()).restoreIssues).toEqual([
+      expect.objectContaining({ fellBackTo: "seed", owner: "bank", snapshot: "current" }),
+    ]);
+  });
+
   test("reset works even when the host failed to start", async () => {
     const storage = memoryStorage();
     let broken = true;
