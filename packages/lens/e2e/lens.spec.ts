@@ -525,3 +525,59 @@ test("the withdrawal card stays for the next step only; the before/after card fo
   await step(page, "certify", 1);
   await expect(page.locator('solid-lens [data-pinned="compare"]')).toHaveCount(0);
 });
+
+test("a burst of live entries, one per task, is drawn once per frame and loses none", async ({
+  page,
+}) => {
+  // The pod runtime delivers each entry in its own message task, hundreds a second while the
+  // organisation agents work. Drawing each one (the whole step panel, the map and a forced layout)
+  // held the page's main thread long enough to stall the wallet's own work (wallet e2e, steps 21
+  // and 22). The Lens takes every entry at once and draws at most once a frame.
+  await open(page);
+  await step(page, "certify", 1);
+  const template = EVENTS.find((e) => e.source === "pod" && e.kind === "read");
+  if (template === undefined) throw new Error("the fixture log has no pod read");
+  const burst = 400;
+  const result = await page.evaluate(
+    async ([entry, n]) => {
+      const lens = window.harness.lens;
+      const panel = lens.shadowRoot?.querySelector<HTMLElement>("[role=tabpanel]:not([hidden])");
+      if (!panel) throw new Error("no visible tab panel");
+      let rebuilds = 0;
+      // Each draw replaces the panel's children: one mutation callback per draw.
+      const observer = new MutationObserver(() => {
+        rebuilds += 1;
+      });
+      observer.observe(panel, { childList: true });
+      const { tour: _tour, ...untagged } = entry as PodEvent;
+      // One message task per entry, as the runtime's worker messages arrive.
+      const channel = new MessageChannel();
+      let received = 0;
+      const all = new Promise<void>((resolve) => {
+        channel.port1.onmessage = (event: MessageEvent<number>) => {
+          const i = event.data;
+          lens.push({
+            ...untagged,
+            id: 100_000 + i,
+            path: `${untagged.path}?burst=${i}`,
+          } as unknown as Parameters<typeof lens.push>[0]);
+          received += 1;
+          if (received === n) resolve();
+        };
+      });
+      for (let i = 0; i < (n as number); i++) channel.port2.postMessage(i);
+      await all;
+      // Two frames: whatever is still pending is drawn.
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      observer.disconnect();
+      channel.port1.close();
+      return { rebuilds, shown: panel.querySelectorAll("ol.entries > li").length };
+    },
+    [template, burst] as const,
+  );
+  // Every entry is in the step panel...
+  expect(result.shown).toBeGreaterThanOrEqual(burst);
+  // ...drawn in far fewer passes than there were entries (once per frame, not once per entry).
+  expect(result.rebuilds).toBeGreaterThan(0);
+  expect(result.rebuilds).toBeLessThan(burst / 4);
+});
