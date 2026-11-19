@@ -13,6 +13,7 @@ const present = async () => true;
 
 vi.mock("../src/guided-tour.ts", () => ({
   mountJourneyLedger: vi.fn(async () => () => undefined),
+  readGrantsOnRecord: vi.fn(async () => []),
   startFresh: vi.fn(async () => undefined),
 }));
 
@@ -212,6 +213,30 @@ describe("honesty and ledger", () => {
     const mount = document.querySelector("[data-journey-ledger-mount]");
     expect(mount?.id).toBe("journey-ledger");
     expect(screen.getByRole("heading", { level: 1, name: "Journey ledger" })).toBeTruthy();
+  });
+
+  it("lists the grants on record in Alex's pod, read when the page opens", async () => {
+    const { readGrantsOnRecord } = await import("../src/guided-tour.ts");
+    vi.mocked(readGrantsOnRecord).mockResolvedValueOnce([
+      { code: "G4", name: "Apply", state: "revoked", to: "Juniper", when: "Day 40" },
+      { code: "G8", name: "Service", state: "active", to: "Marigold", when: "Day 39" },
+    ]);
+    render(<App hook={at("/journey")} />);
+    const table = await screen.findByRole("table");
+    expect(readGrantsOnRecord).toHaveBeenCalled();
+    expect(screen.getByRole("heading", { name: "Grants on record in Alex's pod" })).toBeTruthy();
+    const rows = within(table).getAllByRole("row").slice(1);
+    expect(rows.map((row) => row.textContent)).toEqual([
+      "G4JuniperApplyWithdrawnDay 40",
+      "G8MarigoldServiceActiveDay 39",
+    ]);
+  });
+
+  it("shows no grants table when the pod has no grant on record", async () => {
+    const { readGrantsOnRecord } = await import("../src/guided-tour.ts");
+    render(<App hook={at("/journey")} />);
+    await waitFor(() => expect(readGrantsOnRecord).toHaveBeenCalled());
+    expect(screen.queryByRole("table")).toBeNull();
   });
 });
 
