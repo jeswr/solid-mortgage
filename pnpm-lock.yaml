@@ -54,7 +54,7 @@ importers:
         version: 8.3.8(@types/node@25.9.5)(jiti@2.7.0)
       vitest:
         specifier: ^4.1.9
-        version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+        version: 4.1.10(@opentelemetry/api@1.10.0)(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
 
   apps/_template:
     dependencies:
@@ -109,7 +109,7 @@ importers:
         version: 8.3.8(@types/node@25.9.5)(jiti@2.7.0)
       vitest:
         specifier: ^4.1.9
-        version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+        version: 4.1.10(@opentelemetry/api@1.10.0)(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
 
   apps/appraisal:
     dependencies:
@@ -200,7 +200,7 @@ importers:
         version: 8.3.8(@types/node@25.9.5)(jiti@2.7.0)
       vitest:
         specifier: ^4.1.9
-        version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+        version: 4.1.10(@opentelemetry/api@1.10.0)(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
 
   apps/aus:
     dependencies:
@@ -294,7 +294,7 @@ importers:
         version: 8.3.8(@types/node@25.9.5)(jiti@2.7.0)
       vitest:
         specifier: ^4.1.9
-        version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+        version: 4.1.10(@opentelemetry/api@1.10.0)(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
 
   apps/bank:
     dependencies:
@@ -388,7 +388,7 @@ importers:
         version: 8.3.8(@types/node@25.9.5)(jiti@2.7.0)
       vitest:
         specifier: ^4.1.9
-        version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+        version: 4.1.10(@opentelemetry/api@1.10.0)(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
 
   apps/bureau:
     dependencies:
@@ -476,7 +476,7 @@ importers:
         version: 8.3.8(@types/node@25.9.5)(jiti@2.7.0)
       vitest:
         specifier: ^4.1.9
-        version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+        version: 4.1.10(@opentelemetry/api@1.10.0)(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
 
   apps/business-lender:
     dependencies:
@@ -549,7 +549,7 @@ importers:
         version: 8.3.8(@types/node@25.9.5)(jiti@2.7.0)
       vitest:
         specifier: ^4.1.9
-        version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+        version: 4.1.10(@opentelemetry/api@1.10.0)(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
 
   apps/card-issuer:
     dependencies:
@@ -619,7 +619,7 @@ importers:
         version: 8.3.8(@types/node@25.9.5)(jiti@2.7.0)
       vitest:
         specifier: ^4.1.9
-        version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+        version: 4.1.10(@opentelemetry/api@1.10.0)(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
 
   apps/clinic:
     dependencies:
@@ -692,7 +692,7 @@ importers:
         version: 8.3.8(@types/node@25.9.5)(jiti@2.7.0)
       vitest:
         specifier: ^4.1.9
-        version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+        version: 4.1.10(@opentelemetry/api@1.10.0)(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
 
   apps/county:
     dependencies:
@@ -777,7 +777,62 @@ importers:
         version: 8.3.8(@types/node@25.9.5)(jiti@2.7.0)
       vitest:
         specifier: ^4.1.9
-        version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+        version: 4.1.10(@opentelemetry/api@1.10.0)(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+
+  apps/feedback:
+    dependencies:
+      '@fontsource/atkinson-hyperlegible':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@mortgage/demo-kit':
+        specifier: workspace:*
+        version: link:../../packages/demo-kit
+      '@mortgage/feedback':
+        specifier: workspace:*
+        version: link:../../packages/feedback
+      react:
+        specifier: ^19.2.7
+        version: 19.2.7
+      react-dom:
+        specifier: ^19.2.7
+        version: 19.2.7(react@19.2.7)
+      wouter:
+        specifier: ^3.13.0
+        version: 3.13.0(react@19.2.7)
+    devDependencies:
+      '@axe-core/playwright':
+        specifier: ^4.12.1
+        version: 4.12.1(playwright-core@1.63.0)
+      '@playwright/test':
+        specifier: ~1.63.0
+        version: 1.63.0
+      '@testing-library/react':
+        specifier: ^16.3.3
+        version: 16.3.3(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@types/node':
+        specifier: ^25.9.2
+        version: 25.9.5
+      '@types/react':
+        specifier: ^19.2.17
+        version: 19.2.17
+      '@types/react-dom':
+        specifier: ^19.2.3
+        version: 19.2.3(@types/react@19.2.17)
+      '@vitejs/plugin-react':
+        specifier: ^6.3.0
+        version: 6.3.0(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+      jsdom:
+        specifier: ^29.1.1
+        version: 29.1.1
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+      vite:
+        specifier: ^8.3.0
+        version: 8.3.8(@types/node@25.9.5)(jiti@2.7.0)
+      vitest:
+        specifier: ^4.1.9
+        version: 4.1.10(@opentelemetry/api@1.10.0)(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
 
   apps/fintech-lender:
     dependencies:
@@ -850,7 +905,7 @@ importers:
         version: 8.3.8(@types/node@25.9.5)(jiti@2.7.0)
       vitest:
         specifier: ^4.1.9
-        version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+        version: 4.1.10(@opentelemetry/api@1.10.0)(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
 
   apps/hospital:
     dependencies:
@@ -920,7 +975,7 @@ importers:
         version: 8.3.8(@types/node@25.9.5)(jiti@2.7.0)
       vitest:
         specifier: ^4.1.9
-        version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+        version: 4.1.10(@opentelemetry/api@1.10.0)(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
 
   apps/idv:
     dependencies:
@@ -993,7 +1048,7 @@ importers:
         version: 8.3.8(@types/node@25.9.5)(jiti@2.7.0)
       vitest:
         specifier: ^4.1.9
-        version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+        version: 4.1.10(@opentelemetry/api@1.10.0)(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
 
   apps/insurer:
     dependencies:
@@ -1081,7 +1136,7 @@ importers:
         version: 8.3.8(@types/node@25.9.5)(jiti@2.7.0)
       vitest:
         specifier: ^4.1.9
-        version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+        version: 4.1.10(@opentelemetry/api@1.10.0)(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
 
   apps/lender:
     dependencies:
@@ -1172,7 +1227,7 @@ importers:
         version: 8.3.8(@types/node@25.9.5)(jiti@2.7.0)
       vitest:
         specifier: ^4.1.9
-        version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+        version: 4.1.10(@opentelemetry/api@1.10.0)(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
 
   apps/lender-b:
     dependencies:
@@ -1266,7 +1321,7 @@ importers:
         version: 8.3.8(@types/node@25.9.5)(jiti@2.7.0)
       vitest:
         specifier: ^4.1.9
-        version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+        version: 4.1.10(@opentelemetry/api@1.10.0)(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
 
   apps/lender-desk:
     dependencies:
@@ -1360,7 +1415,7 @@ importers:
         version: 8.3.8(@types/node@25.9.5)(jiti@2.7.0)
       vitest:
         specifier: ^4.1.9
-        version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+        version: 4.1.10(@opentelemetry/api@1.10.0)(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
 
   apps/payout:
     dependencies:
@@ -1433,7 +1488,7 @@ importers:
         version: 8.3.8(@types/node@25.9.5)(jiti@2.7.0)
       vitest:
         specifier: ^4.1.9
-        version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+        version: 4.1.10(@opentelemetry/api@1.10.0)(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
 
   apps/payroll:
     dependencies:
@@ -1524,7 +1579,7 @@ importers:
         version: 8.3.8(@types/node@25.9.5)(jiti@2.7.0)
       vitest:
         specifier: ^4.1.9
-        version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+        version: 4.1.10(@opentelemetry/api@1.10.0)(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
 
   apps/pharmacy:
     dependencies:
@@ -1597,7 +1652,7 @@ importers:
         version: 8.3.8(@types/node@25.9.5)(jiti@2.7.0)
       vitest:
         specifier: ^4.1.9
-        version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+        version: 4.1.10(@opentelemetry/api@1.10.0)(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
 
   apps/registry:
     dependencies:
@@ -1670,7 +1725,7 @@ importers:
         version: 8.3.8(@types/node@25.9.5)(jiti@2.7.0)
       vitest:
         specifier: ^4.1.9
-        version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+        version: 4.1.10(@opentelemetry/api@1.10.0)(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
 
   apps/repairer:
     dependencies:
@@ -1743,7 +1798,7 @@ importers:
         version: 8.3.8(@types/node@25.9.5)(jiti@2.7.0)
       vitest:
         specifier: ^4.1.9
-        version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+        version: 4.1.10(@opentelemetry/api@1.10.0)(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
 
   apps/servicer:
     dependencies:
@@ -1831,7 +1886,7 @@ importers:
         version: 8.3.8(@types/node@25.9.5)(jiti@2.7.0)
       vitest:
         specifier: ^4.1.9
-        version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+        version: 4.1.10(@opentelemetry/api@1.10.0)(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
 
   apps/state:
     dependencies:
@@ -1901,7 +1956,7 @@ importers:
         version: 8.3.8(@types/node@25.9.5)(jiti@2.7.0)
       vitest:
         specifier: ^4.1.9
-        version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+        version: 4.1.10(@opentelemetry/api@1.10.0)(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
 
   apps/title:
     dependencies:
@@ -1992,7 +2047,7 @@ importers:
         version: 8.3.8(@types/node@25.9.5)(jiti@2.7.0)
       vitest:
         specifier: ^4.1.9
-        version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+        version: 4.1.10(@opentelemetry/api@1.10.0)(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
 
   apps/vocab:
     dependencies:
@@ -2001,7 +2056,7 @@ importers:
         version: 1.0.0
       next:
         specifier: ^16.2.10
-        version: 16.2.10(@playwright/test@1.63.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+        version: 16.2.10(@opentelemetry/api@1.10.0)(@playwright/test@1.63.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       react:
         specifier: ^19.2.7
         version: 19.2.7
@@ -2114,7 +2169,7 @@ importers:
         version: 8.3.8(@types/node@25.9.5)(jiti@2.7.0)
       vitest:
         specifier: ^4.1.9
-        version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+        version: 4.1.10(@opentelemetry/api@1.10.0)(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
 
   apps/welcome:
     dependencies:
@@ -2202,7 +2257,7 @@ importers:
         version: 8.3.8(@types/node@25.9.5)(jiti@2.7.0)
       vitest:
         specifier: ^4.1.9
-        version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+        version: 4.1.10(@opentelemetry/api@1.10.0)(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
 
   content:
     dependencies:
@@ -2248,7 +2303,7 @@ importers:
         version: 6.0.3
       vitest:
         specifier: ^4.1.9
-        version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+        version: 4.1.10(@opentelemetry/api@1.10.0)(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
 
   packages/data-model:
     dependencies:
@@ -2313,7 +2368,26 @@ importers:
         version: 6.0.3
       vitest:
         specifier: ^4.1.9
-        version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+        version: 4.1.10(@opentelemetry/api@1.10.0)(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+
+  packages/feedback:
+    dependencies:
+      '@anthropic-ai/sdk':
+        specifier: 1.4.0
+        version: 1.4.0(zod@4.6.7)
+      zod:
+        specifier: ^4.4.3
+        version: 4.6.7
+    devDependencies:
+      '@types/node':
+        specifier: ^25.9.2
+        version: 25.9.5
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: ^4.1.9
+        version: 4.1.10(@opentelemetry/api@1.10.0)(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
 
   packages/lens:
     dependencies:
@@ -2344,7 +2418,7 @@ importers:
         version: 8.3.8(@types/node@25.9.5)(jiti@2.7.0)
       vitest:
         specifier: ^4.1.9
-        version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+        version: 4.1.10(@opentelemetry/api@1.10.0)(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
 
   packages/pod-runtime:
     dependencies:
@@ -2396,7 +2470,7 @@ importers:
         version: 8.3.8(@types/node@25.9.5)(jiti@2.7.0)
       vitest:
         specifier: ^4.1.9
-        version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+        version: 4.1.10(@opentelemetry/api@1.10.0)(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
 
   packages/tour:
     dependencies:
@@ -2439,7 +2513,7 @@ importers:
         version: 8.3.8(@types/node@25.9.5)(jiti@2.7.0)
       vitest:
         specifier: ^4.1.9
-        version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+        version: 4.1.10(@opentelemetry/api@1.10.0)(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
 
   packages/vc-kit:
     dependencies:
@@ -2485,6 +2559,15 @@ importers:
         version: 6.0.3
 
 packages:
+
+  '@anthropic-ai/sdk@1.4.0':
+    resolution: {integrity: sha512-tyuibnhQL57kLOx5oomY4Ld7jOVOPNC5v3IiyRtR3l+Friv66tI4VbuZYF2NMel/T0WMuQMBFOMKDBUbUh8gPA==}
+    hasBin: true
+    peerDependencies:
+      zod: ^3.25.0 || ^4.0.0
+    peerDependenciesMeta:
+      zod:
+        optional: true
 
   '@asamuzakjp/css-color@5.1.11':
     resolution: {integrity: sha512-KVw6qIiCTUQhByfTd78h2yD1/00waTmm9uy/R7Ck/ctUyAPj+AEDLkQIdJW0T8+qGgj3j5bpNKK7Q3G+LedJWg==}
@@ -3770,6 +3853,10 @@ packages:
   '@noir-lang/types@1.0.0-beta.21':
     resolution: {integrity: sha512-9EmkLKAhBZ89xK9/E2ElfmuAOMRuggfcvnoJSXHMGBgZISAH5SZfT7kJMVDeSQRdzkfZZetSAasf3O6fKXWlqQ==}
 
+  '@opentelemetry/api@1.10.0':
+    resolution: {integrity: sha512-lMkyes8iHrG+mk6WH7X70MdCLI2RS0FwNBY1PyQ8UemaijE2m5mv5A0Niy3HtbYTFrgkUEQjFMXmSAk2hQDuPQ==}
+    engines: {node: '>=8.0.0'}
+
   '@oxc-project/types@0.156.0':
     resolution: {integrity: sha512-1Duyg48TdJNdyhEB8Xn1L36bT9Pv6GUtlKjHxOys8xkaF/rQq3XJE+bAurSK/AgIz5mGFsb77cn9Pb20+WCScw==}
 
@@ -4213,6 +4300,9 @@ packages:
       fastify:
         optional: true
 
+  '@stablelib/base64@1.0.1':
+    resolution: {integrity: sha512-1bnPQqSxSuc3Ii6MhBysoWCg58j97aUjuCSZrGSmDxNqtytIi0k8utUenAwTZN4V5mXXYGsVUI9zeBqy+jBOSQ==}
+
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
 
@@ -4637,6 +4727,9 @@ packages:
   fast-deep-equal@3.1.3:
     resolution: {integrity: sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==}
 
+  fast-sha256@1.3.0:
+    resolution: {integrity: sha512-n11RGP/lrWEFI/bWdygLxhI+pVeo1ZYIVwvvPkW7azl/rOy+F3HYRZ2K5zeE9mmkhQppyv9sQFx0JM9UabnpPQ==}
+
   fdir@6.5.0:
     resolution: {integrity: sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg==}
     engines: {node: '>=12.0.0'}
@@ -4736,6 +4829,10 @@ packages:
     peerDependenciesMeta:
       canvas:
         optional: true
+
+  json-schema-to-ts@3.1.1:
+    resolution: {integrity: sha512-+DWg8jCJG2TEnpy7kOm/7/AxaYoaRbjVB4LFZLySZlWn8exGs3A4OLJR966cVvU26N7X9TWxl+Jsw7dzAqKT6g==}
+    engines: {node: '>=16'}
 
   jsonld-context-parser@2.4.0:
     resolution: {integrity: sha512-ZYOfvh525SdPd9ReYY58dxB3E2RUEU4DJ6ZibO8AitcowPeBH4L5rCAitE2om5G1P+HMEgYEYEr4EZKbVN4tpA==}
@@ -5191,6 +5288,9 @@ packages:
   stackback@0.0.2:
     resolution: {integrity: sha512-1XMJE5fQo1jGH6Y/7ebnwPOBEkIEnT4QF32d5R1+VXdXveM0IBMJt8zfaxX1P3QhVwrYe+576+jkANtSS2mBbw==}
 
+  standardwebhooks@1.3.0:
+    resolution: {integrity: sha512-5W9skHjqAm2dlA9wWvglTP+oX47JX4lFXVk1aJV7+TG1snvTR4QXaVgPscEzvOw9GRreeavMwbqEeL+MGhZHCg==}
+
   std-env@4.2.0:
     resolution: {integrity: sha512-oCUKSupKTHX53EyjDtuZQ64pjLJ6yYCtpmEw0goYxtjG9KpbRe8KAsl2tBUGU9DyMcJ0RwJ8GqJAFzMXcXW1Rw==}
 
@@ -5269,6 +5369,9 @@ packages:
   triple-beam@1.4.1:
     resolution: {integrity: sha512-aZbgViZrg1QNcG+LULa7nhZpJTZSLm/mXnHXnbAbjmN5aSa0y7V+wvv6+4WaBtpISJzThKy+PIPxc1Nq1EJ9mg==}
     engines: {node: '>= 14.0.0'}
+
+  ts-algebra@2.0.0:
+    resolution: {integrity: sha512-FPAhNPFMrkwz76P7cdjdmiShwMynZYN6SgOujD1urY4oNm80Ou9oMdmbR45LotcKOXoy7wSmHkRFE6Mxbrhefw==}
 
   ts-guards@0.5.1:
     resolution: {integrity: sha512-Y6P/VJnwARiPMfxO7rvaYaz5tGQ5TQ0Wnb2cWIxMpFOioYkhsT8XaCrJX6wYPNFACa4UOrN5SPqhwpM8NolAhQ==}
@@ -5492,6 +5595,14 @@ packages:
     resolution: {integrity: sha512-g8W2D2kU6a8untc053fX1uVBKzM7yqAxW/3zwk83+6RyF2+SKOuV+c0wBDhUwzV1PaGapmZH+rmcUzPf+3CGwg==}
 
 snapshots:
+
+  '@anthropic-ai/sdk@1.4.0(zod@4.6.7)':
+    dependencies:
+      '@opentelemetry/api': 1.10.0
+      json-schema-to-ts: 3.1.1
+      standardwebhooks: 1.3.0
+    optionalDependencies:
+      zod: 4.6.7
 
   '@asamuzakjp/css-color@5.1.11':
     dependencies:
@@ -8403,6 +8514,8 @@ snapshots:
 
   '@noir-lang/types@1.0.0-beta.21': {}
 
+  '@opentelemetry/api@1.10.0': {}
+
   '@oxc-project/types@0.156.0': {}
 
   '@playwright/test@1.63.0':
@@ -8776,6 +8889,8 @@ snapshots:
       '@solid/access-token-verifier': 2.1.2
     transitivePeerDependencies:
       - encoding
+
+  '@stablelib/base64@1.0.1': {}
 
   '@standard-schema/spec@1.1.0': {}
 
@@ -9192,6 +9307,8 @@ snapshots:
 
   fast-deep-equal@3.1.3: {}
 
+  fast-sha256@1.3.0: {}
+
   fdir@6.5.0(picomatch@4.0.7):
     optionalDependencies:
       picomatch: 4.0.7
@@ -9291,6 +9408,11 @@ snapshots:
       xml-name-validator: 5.0.0
     transitivePeerDependencies:
       - '@noble/hashes'
+
+  json-schema-to-ts@3.1.1:
+    dependencies:
+      '@babel/runtime': 7.29.7
+      ts-algebra: 2.0.0
 
   jsonld-context-parser@2.4.0:
     dependencies:
@@ -9475,7 +9597,7 @@ snapshots:
 
   negotiator@1.0.0: {}
 
-  next@16.2.10(@playwright/test@1.63.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
+  next@16.2.10(@opentelemetry/api@1.10.0)(@playwright/test@1.63.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
     dependencies:
       '@next/env': 16.2.10
       '@swc/helpers': 0.5.15
@@ -9494,6 +9616,7 @@ snapshots:
       '@next/swc-linux-x64-musl': 16.2.10
       '@next/swc-win32-arm64-msvc': 16.2.10
       '@next/swc-win32-x64-msvc': 16.2.10
+      '@opentelemetry/api': 1.10.0
       '@playwright/test': 1.63.0
       sharp: 0.34.5
     transitivePeerDependencies:
@@ -9845,6 +9968,11 @@ snapshots:
 
   stackback@0.0.2: {}
 
+  standardwebhooks@1.3.0:
+    dependencies:
+      '@stablelib/base64': 1.0.1
+      fast-sha256: 1.3.0
+
   std-env@4.2.0: {}
 
   stream-to-string@1.2.1:
@@ -9906,6 +10034,8 @@ snapshots:
       punycode: 2.3.1
 
   triple-beam@1.4.1: {}
+
+  ts-algebra@2.0.0: {}
 
   ts-guards@0.5.1: {}
 
@@ -9969,7 +10099,7 @@ snapshots:
       fsevents: 2.3.3
       jiti: 2.7.0
 
-  vitest@4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0)):
+  vitest@4.1.10(@opentelemetry/api@1.10.0)(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0)):
     dependencies:
       '@vitest/expect': 4.1.10
       '@vitest/mocker': 4.1.10(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
@@ -9992,6 +10122,7 @@ snapshots:
       vite: 8.3.8(@types/node@25.9.5)(jiti@2.7.0)
       why-is-node-running: 2.3.0
     optionalDependencies:
+      '@opentelemetry/api': 1.10.0
       '@types/node': 25.9.5
       jsdom: 29.1.1
     transitivePeerDependencies:

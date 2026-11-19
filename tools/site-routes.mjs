@@ -68,6 +68,14 @@ export const CRS_HEADERS = Object.freeze({
 /** The exact paths of the pinned CRS files, the only paths {@link CRS_HEADERS} apply to. */
 export const CRS_URL_PATHS = Object.freeze(CRS_FILES.map((pin) => `${CRS_PATH}${pin.file}`));
 
+/** The feedback API's functions (`api/feedback/*.ts`) and their limits. */
+export const API_FUNCTIONS = Object.freeze({
+  "api/feedback/*.ts": Object.freeze({ maxDuration: 90 }),
+});
+
+/** Headers on every API response, besides the base ones. */
+export const API_HEADERS = Object.freeze({ "Cache-Control": "no-store" });
+
 const toVercelHeaders = (headers) =>
   Object.entries(headers).map(([key, value]) => ({ key, value }));
 
@@ -80,6 +88,7 @@ export function vercelConfig() {
     buildCommand: "pnpm run build",
     outputDirectory: "dist",
     ignoreCommand: "node tools/vercel-ignore.mjs",
+    functions: API_FUNCTIONS,
     redirects: [
       { source: "/", destination: `/${HOME_SLUG}/`, permanent: false },
       { source: `/:app(${SLUG_ALTERNATION})`, destination: "/:app/", permanent: false },
@@ -97,6 +106,7 @@ export function vercelConfig() {
         headers: toVercelHeaders({ "Cache-Control": NO_CACHE, "Service-Worker-Allowed": "/" }),
       },
       { source: "/agents/(.*)", headers: toVercelHeaders({ "Cache-Control": NO_CACHE }) },
+      { source: "/api/(.*)", headers: toVercelHeaders(API_HEADERS) },
       ...CRS_URL_PATHS.map((source) => ({ source, headers: toVercelHeaders(CRS_HEADERS) })),
       {
         source: `/:app(${SLUG_ALTERNATION})/assets/(.*)`,
@@ -138,6 +148,7 @@ export function headersFor(pathname) {
     Object.assign(headers, { "Cache-Control": NO_CACHE, "Service-Worker-Allowed": "/" });
   }
   if (pathname.startsWith("/agents/")) headers["Cache-Control"] = NO_CACHE;
+  if (pathname.startsWith("/api/")) Object.assign(headers, API_HEADERS);
   if (CRS_URL_PATHS.includes(pathname)) Object.assign(headers, CRS_HEADERS);
   const [, slug, second] = pathname.split("/");
   if (SITE_SLUGS.includes(slug) && second === "assets") headers["Cache-Control"] = IMMUTABLE;

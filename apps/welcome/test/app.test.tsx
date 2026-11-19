@@ -155,6 +155,18 @@ describe("home", () => {
     }
   });
 
+  it("links the feedback page from the join section and every watch page", () => {
+    render(<App hook={at("/")} probe={missing} />);
+    expect(
+      screen.getByRole("link", { name: "Give feedback on the demos" }).getAttribute("href"),
+    ).toBe("/feedback/?from=welcome");
+    cleanup();
+    render(<App hook={at("/watch/motor-claim")} probe={missing} />);
+    expect(
+      screen.getByRole("link", { name: "Give feedback on this demo" }).getAttribute("href"),
+    ).toBe("/feedback/?from=welcome&demo=motor-claim");
+  });
+
   it("links the weekly meeting, the forum and the source", () => {
     render(<App hook={at("/")} probe={missing} />);
     expect(

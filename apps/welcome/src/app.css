@@ -1126,3 +1126,7 @@ button.poster:hover .poster__play {
     flex: 1 1 100%;
   }
 }
+
+.watch__feedback {
+  margin: 1rem 0 0;
+}

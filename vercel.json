@@ -5,6 +5,11 @@
   "buildCommand": "pnpm run build",
   "outputDirectory": "dist",
   "ignoreCommand": "node tools/vercel-ignore.mjs",
+  "functions": {
+    "api/feedback/*.ts": {
+      "maxDuration": 90
+    }
+  },
   "redirects": [
     {
       "source": "/",
@@ -12,14 +17,14 @@
       "permanent": false
     },
     {
-      "source": "/:app(wallet|payroll|bank|bureau|lender|lender-desk|lender-b|aus|appraisal|title|insurer|county|servicer|state|idv|fintech-lender|payout|registry|business-lender|hospital|pharmacy|clinic|card-issuer|repairer|welcome|_template)",
+      "source": "/:app(wallet|payroll|bank|bureau|lender|lender-desk|lender-b|aus|appraisal|title|insurer|county|servicer|state|idv|fintech-lender|payout|registry|business-lender|hospital|pharmacy|clinic|card-issuer|repairer|welcome|feedback|_template)",
       "destination": "/:app/",
       "permanent": false
     }
   ],
   "rewrites": [
     {
-      "source": "/:app(wallet|payroll|bank|bureau|lender|lender-desk|lender-b|aus|appraisal|title|insurer|county|servicer|state|idv|fintech-lender|payout|registry|business-lender|hospital|pharmacy|clinic|card-issuer|repairer|welcome|_template)/:path((?!assets/).*)",
+      "source": "/:app(wallet|payroll|bank|bureau|lender|lender-desk|lender-b|aus|appraisal|title|insurer|county|servicer|state|idv|fintech-lender|payout|registry|business-lender|hospital|pharmacy|clinic|card-issuer|repairer|welcome|feedback|_template)/:path((?!assets/).*)",
       "destination": "/:app/index.html"
     }
   ],
@@ -64,6 +69,15 @@
       ]
     },
     {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    },
+    {
       "source": "/crs/bn254-g1-32768-50d2f4e9567be2b8.dat",
       "headers": [
         {
@@ -90,7 +104,7 @@
       ]
     },
     {
-      "source": "/:app(wallet|payroll|bank|bureau|lender|lender-desk|lender-b|aus|appraisal|title|insurer|county|servicer|state|idv|fintech-lender|payout|registry|business-lender|hospital|pharmacy|clinic|card-issuer|repairer|welcome|_template)/assets/(.*)",
+      "source": "/:app(wallet|payroll|bank|bureau|lender|lender-desk|lender-b|aus|appraisal|title|insurer|county|servicer|state|idv|fintech-lender|payout|registry|business-lender|hospital|pharmacy|clinic|card-issuer|repairer|welcome|feedback|_template)/assets/(.*)",
       "headers": [
         {
           "key": "Cache-Control",

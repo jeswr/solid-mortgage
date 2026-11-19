@@ -1,0 +1,33 @@
+{
+  "name": "@mortgage/feedback",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The feedback interview for EDMA members: the guide, answer validation and the downloadable record (browser-safe), plus the /api/feedback/* handlers (server only: Anthropic interviewer, GitHub storage, rate limits, signed recording receipts).",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./server": {
+      "types": "./dist/server/index.d.ts",
+      "import": "./dist/server/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "lint": "biome check src test package.json tsconfig.json tsconfig.test.json",
+    "test": "vitest run --root . --config ../../vitest.config.ts",
+    "typecheck": "tsc --project tsconfig.json --noEmit && tsc --project tsconfig.test.json"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "1.4.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.2",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9"
+  }
+}
