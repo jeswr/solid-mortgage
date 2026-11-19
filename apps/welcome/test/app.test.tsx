@@ -1,6 +1,6 @@
 // AUTHORED-BY Claude Opus 5.5
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { memoryLocation } from "wouter/memory-location";
 import { App } from "../src/App.tsx";
 import { EXPLAINER, FOOTER_LINE, HEADLINE, HONESTY_STATEMENT } from "../src/copy.ts";
@@ -11,7 +11,15 @@ const at = (path: string) => memoryLocation({ path }).hook;
 const missing = async () => false;
 const present = async () => true;
 
-afterEach(cleanup);
+vi.mock("../src/guided-tour.ts", () => ({
+  mountJourneyLedger: vi.fn(async () => () => undefined),
+  startFresh: vi.fn(async () => undefined),
+}));
+
+afterEach(() => {
+  cleanup();
+  window.history.replaceState(null, "", "/");
+});
 
 describe("every route", () => {
   for (const path of [
@@ -19,7 +27,7 @@ describe("every route", () => {
     "/watch/mortgage",
     "/watch/moving-house",
     "/honesty",
-    "/ledger",
+    "/journey",
     "/nope",
   ]) {
     it(`renders the trust banner and the fictional line on ${path}`, () => {
@@ -64,7 +72,7 @@ describe("home", () => {
       within(first)
         .getByRole("link", { name: /^Try it yourself/ })
         .getAttribute("href"),
-    ).toBe("/wallet/?tour=mortgage&step=welcome");
+    ).toBe("/welcome/?tour=mortgage&step=welcome");
   });
 
   it("shows coming demos as Coming next with no links at all", () => {
@@ -190,10 +198,49 @@ describe("honesty and ledger", () => {
     expect(screen.getAllByRole("row")).toHaveLength(14);
   });
 
-  it("leaves a marked mount point for the journey ledger", () => {
-    render(<App hook={at("/ledger")} />);
+  it("redirects the old ledger path to /journey", async () => {
+    const location = memoryLocation({ path: "/ledger", record: true });
+    render(<App hook={location.hook} />);
+    await waitFor(() => expect(location.history?.at(-1)).toBe("/journey"));
+  });
+
+  it("mounts the journey ledger where the tour's last step points", async () => {
+    const { mountJourneyLedger } = await import("../src/guided-tour.ts");
+    render(<App hook={at("/journey")} />);
+    await waitFor(() => expect(mountJourneyLedger).toHaveBeenCalled());
+    expect(document.querySelector('[data-tour="journey-ledger"]')?.id).toBe("journey-ledger");
     const mount = document.querySelector("[data-journey-ledger-mount]");
     expect(mount?.id).toBe("journey-ledger");
     expect(screen.getByRole("heading", { level: 1, name: "Journey ledger" })).toBeTruthy();
+  });
+});
+
+describe("the guided tour", () => {
+  it("restarts the demo before a plain click on Try it yourself follows the link", async () => {
+    const { startFresh } = await import("../src/guided-tour.ts");
+    render(<App hook={at("/")} probe={missing} />);
+    const first = within(screen.getByRole("list", { name: "Demos" })).getAllByRole("article")[0];
+    const link = within(first as HTMLElement).getByRole("link", { name: /^Try it yourself/ });
+    const modified = new MouseEvent("click", { bubbles: true, cancelable: true, ctrlKey: true });
+    link.addEventListener("click", (event) => event.preventDefault(), { once: true });
+    link.dispatchEvent(modified);
+    expect(startFresh).not.toHaveBeenCalled();
+    link.click();
+    await waitFor(() => expect(startFresh).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(startFresh).mock.calls[0]?.[0]).toMatch(
+      /\/welcome\/\?tour=mortgage&step=welcome$/,
+    );
+    expect(link.getAttribute("aria-busy")).toBe("true");
+  });
+
+  it("shows the Start button of step 1 only on a page the tour opened", () => {
+    render(<App hook={at("/")} probe={missing} />);
+    expect(document.querySelector('[data-tour="tour-start"]')).toBeNull();
+    cleanup();
+    window.history.replaceState(null, "", "/?tour=mortgage&step=welcome");
+    render(<App hook={at("/")} probe={missing} />);
+    const start = document.querySelector('[data-tour="tour-start"]');
+    expect(start?.textContent).toBe("Start");
+    expect(start?.getAttribute("href")).toBe("/wallet/");
   });
 });

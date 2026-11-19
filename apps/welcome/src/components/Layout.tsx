@@ -65,7 +65,7 @@ export function Layout({ children }: { children: ReactNode }) {
               <Link href="/honesty">What is real and what is simulated</Link>
             </li>
             <li>
-              <Link href="/ledger">Journey ledger</Link>
+              <Link href="/journey">Journey ledger</Link>
             </li>
             <li>
               <a href={LINKS.source}>Source code</a>

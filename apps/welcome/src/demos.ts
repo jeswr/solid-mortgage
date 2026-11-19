@@ -12,7 +12,7 @@
  * Media lives at the site root under `/video/<id>/`, assembled from video/dist by
  * tools/build-site.mjs. Until a recording exists the player shows "Video coming soon".
  */
-import type { OrgSlug } from "@mortgage/demo-kit/registry";
+import type { AppSlug } from "@mortgage/demo-kit/registry";
 
 export type Sector = "Finance" | "Insurance" | "Government" | "Healthcare";
 
@@ -43,10 +43,13 @@ export interface DemoMedia {
   poster: string;
 }
 
-/** Where "Try it yourself" starts the guided tour: `appUrl(app, path, { tour: demo, step })`. */
+/**
+ * Where "Try it yourself" starts the guided tour: `appUrl(app, path, { tour: demo, step })`, the
+ * app and route of the tour's first step.
+ */
 export interface DemoTour {
   demo: string;
-  app: OrgSlug;
+  app: AppSlug;
   path: string;
   step: string;
 }
@@ -91,7 +94,8 @@ export const DEMOS: readonly Demo[] = [
     durationSeconds: 290,
     status: "live",
     media: mediaFor("mortgage"),
-    tour: { demo: "mortgage", app: "wallet", path: "", step: "welcome" },
+    // Step 1 of content/mortgage/tour.ts: the Start button on this page (`tour-start`).
+    tour: { demo: "mortgage", app: "welcome", path: "", step: "welcome" },
     chapters: [
       {
         id: "intro",

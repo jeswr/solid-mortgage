@@ -1,13 +1,19 @@
 // AUTHORED-BY Claude Opus 5.5
 import { expect, test } from "@playwright/test";
-import { expectAccessible, expectNoHorizontalScroll, WCAG_21 } from "../../../test-support/e2e.ts";
+import {
+  expectAccessible,
+  expectNoHorizontalScroll,
+  open,
+  podRequest,
+  WCAG_21,
+} from "../../../test-support/e2e.ts";
 
 const ROUTES = [
   "./",
   "./watch/mortgage",
   "./watch/moving-house",
   "./honesty",
-  "./ledger",
+  "./journey",
   "./nope",
 ];
 
@@ -49,7 +55,7 @@ test("home: title, order, demos, launcher and join-in links", async ({ page }) =
   await expect(cards.first().getByRole("heading", { level: 3 })).toHaveText("Buying a home");
   await expect(cards.first().getByRole("link", { name: /^Try it yourself/ })).toHaveAttribute(
     "href",
-    "/wallet/?tour=mortgage&step=welcome",
+    "/welcome/?tour=mortgage&step=welcome",
   );
   for (const card of await page.locator(".demo-card--coming").all()) {
     await expect(card.getByText("Coming next")).toBeVisible();
@@ -170,14 +176,30 @@ test("honesty page reports the runtime mode and the fictional organisations", as
   await expect(page.getByRole("table").getByRole("row")).toHaveCount(14);
 });
 
-test("ledger page leaves a marked mount point", async ({ page }) => {
+test("the old ledger path redirects to the journey ledger", async ({ page }) => {
   await page.goto("./ledger");
-  await expect(page.locator("#journey-ledger[data-journey-ledger-mount]")).toHaveCount(1);
+  await expect(page).toHaveURL(/\/welcome\/journey$/);
+  await expect(page.locator('#journey-ledger[data-tour="journey-ledger"]')).toHaveCount(1);
+});
+
+test("the journey ledger renders the pods' request log", async ({ page }) => {
+  test.setTimeout(240_000);
+  // Any organisation app's page starts the pods; its first reads are in the log.
+  await open(page, "/payroll/?tour=off");
+  await expect(page.getByRole("status").filter({ hasText: "Connecting" })).toHaveCount(0, {
+    timeout: 60_000,
+  });
+  await page.goto("./journey");
+  const ledger = page.locator("#journey-ledger journey-ledger");
+  await expect(ledger).toHaveCount(1, { timeout: 60_000 });
+  await expect(ledger.getByRole("heading", { level: 2 }).first()).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByText("The ledger appears here after you run a demo.")).toHaveCount(0);
+  await expect(page.locator("solid-lens")).toHaveCount(1);
 });
 
 test.describe("at 390 px", () => {
   test.use({ viewport: { width: 390, height: 844 } });
-  for (const route of ["./", "./watch/mortgage", "./honesty", "./ledger"]) {
+  for (const route of ["./", "./watch/mortgage", "./honesty", "./journey"]) {
     test(`${route} fits without horizontal scrolling and passes axe`, async ({ page }) => {
       await page.goto(route);
       await expectNoHorizontalScroll(page);
@@ -203,4 +225,35 @@ test("keyboard: the skip link is first and moves focus to the content", async ({
   await expect(page.getByRole("link", { name: "Skip to content" })).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(page.locator("main")).toBeFocused();
+});
+
+test("Try it yourself restarts the pods from the seed, then opens step 1 here", async ({
+  page,
+}) => {
+  test.setTimeout(240_000);
+  // Start the pods from an organisation app and leave a resource the seed does not have.
+  await open(page, "/payroll/?tour=off");
+  const marker = "alex/e2e-try-it-marker";
+  const put = await podRequest(page, "wallet", marker, {
+    body: "left by the welcome e2e suite",
+    contentType: "text/plain",
+    method: "PUT",
+  });
+  expect(put.status, put.body).toBeLessThan(300);
+  expect((await podRequest(page, "wallet", marker)).status).not.toBe(404);
+
+  await page.goto("./");
+  const cards = page.getByRole("list", { name: "Demos" }).getByRole("article");
+  await cards
+    .first()
+    .getByRole("link", { name: /^Try it yourself/ })
+    .click();
+  await page.waitForURL(/\/welcome\/\?tour=mortgage&step=welcome$/, { timeout: 120_000 });
+
+  // Step 1 of the tour: this page, its Start button, the step card in the Solid Lens.
+  await expect(page.locator('[data-tour="tour-start"]')).toBeVisible();
+  await expect(page.locator('[data-tour="tour-start"]')).toHaveAttribute("href", "/wallet/");
+  await expect(page.locator("solid-lens")).toHaveCount(1, { timeout: 60_000 });
+  await page.waitForFunction(() => navigator.serviceWorker?.controller !== null);
+  expect((await podRequest(page, "wallet", marker)).status).toBe(404);
 });
