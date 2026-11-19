@@ -3,6 +3,7 @@
  * How a page reaches the pod host: the service worker (normal), a dedicated worker running the
  * same bundle (where service workers are unavailable), or the host-mode bridge iframe.
  */
+import type { HostMessage } from "../host/host.js";
 import type { ControlReply, ControlRequest, FetchReply } from "../protocol.js";
 
 export interface Transport {
@@ -10,6 +11,11 @@ export interface Transport {
   control(message: ControlRequest): Promise<ControlReply & { ok: true }>;
   /** Send a pod request; the transport adds nothing but what the caller put in `request`. */
   fetch(request: Request): Promise<Response>;
+  /**
+   * Events from a host this page's BroadcastChannel cannot hear (host mode: the pods live on
+   * another origin, so the bridge relays them).
+   */
+  subscribe?(listener: (message: HostMessage) => void): void;
 }
 
 /** Send one control message over a fresh MessageChannel and wait for the reply. */

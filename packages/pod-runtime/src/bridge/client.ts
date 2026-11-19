@@ -1,8 +1,9 @@
 // AUTHORED-BY Claude Opus 5.5
 /** Host mode, the app side: a hidden iframe on the pod origin carries every pod request. */
 import { fromFetchReply, type Transport, toControlFetch } from "../client/transport.js";
+import type { HostMessage } from "../host/host.js";
 import { BRIDGE_PATH, type ControlReply, type ControlRequest } from "../protocol.js";
-import { BRIDGE_READY, BRIDGE_REPLY, BRIDGE_REQUEST } from "./server.js";
+import { BRIDGE_EVENT, BRIDGE_READY, BRIDGE_REPLY, BRIDGE_REQUEST } from "./server.js";
 
 export interface BridgeClientOptions {
   podsOrigin: string;
@@ -17,15 +18,23 @@ export async function createBridgeClient(options: BridgeClientOptions): Promise<
   frame.title = "pod bridge";
   frame.src = new URL(BRIDGE_PATH, options.podsOrigin).href;
   const pending = new Map<number, (reply: ControlReply) => void>();
+  const subscribers = new Set<(message: HostMessage) => void>();
   let nextId = 1;
   const readyPromise = new Promise<void>((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error("the pod bridge did not start")), timeoutMs);
     window.addEventListener("message", (event: MessageEvent) => {
       if (event.origin !== options.podsOrigin || event.source !== frame.contentWindow) return;
-      const data = event.data as { type?: string; id?: number; reply?: ControlReply };
+      const data = event.data as {
+        type?: string;
+        id?: number;
+        reply?: ControlReply;
+        message?: HostMessage;
+      };
       if (data?.type === BRIDGE_READY) {
         clearTimeout(timer);
         resolve();
+      } else if (data?.type === BRIDGE_EVENT && data.message !== undefined) {
+        for (const subscriber of subscribers) subscriber(data.message);
       } else if (data?.type === BRIDGE_REPLY && typeof data.id === "number" && data.reply) {
         pending.get(data.id)?.(data.reply);
         pending.delete(data.id);
@@ -62,5 +71,8 @@ export async function createBridgeClient(options: BridgeClientOptions): Promise<
       return fromFetchReply(reply.response);
     },
     mode: "bridge",
+    subscribe: (listener) => {
+      subscribers.add(listener);
+    },
   };
 }

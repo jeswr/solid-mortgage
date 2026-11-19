@@ -5,9 +5,11 @@
  * origin, `<slug>.<domain>`).
  */
 import type { PodOwner } from "@mortgage/demo-kit/registry";
-import { BRIDGE_READY, hostModeIdentity, startBridge } from "../bridge/server.js";
+import { BRIDGE_EVENT, BRIDGE_READY, hostModeIdentity, startBridge } from "../bridge/server.js";
 import { siteAgents, spawnAgentWorker } from "../client/agents.js";
 import { serviceWorkerTransport } from "../client/transport.js";
+import type { HostMessage } from "../host/host.js";
+import { EVENTS_CHANNEL } from "../protocol.js";
 
 /** `config` is the build-time registry: the only identities the bridge recognises. */
 export function startBridgePage(config: { identities: Record<string, PodOwner> }): void {
@@ -15,7 +17,16 @@ export function startBridgePage(config: { identities: Record<string, PodOwner> }
     const domain = location.hostname.replace(/^pods\./, "");
     const transport = await serviceWorkerTransport(new URL("/pods-sw.js", location.origin).href);
     if (transport === undefined) throw new Error("the pod service worker did not take control");
+    // Relay events to the embedding app, once it has shown itself to be a recognised app.
+    let parentOrigin: string | undefined;
+    new BroadcastChannel(EVENTS_CHANNEL).onmessage = (event: MessageEvent<HostMessage>) => {
+      if (parentOrigin !== undefined)
+        window.parent.postMessage({ message: event.data, type: BRIDGE_EVENT }, parentOrigin);
+    };
     startBridge({
+      onRecognised: (origin, source) => {
+        if (source === window.parent) parentOrigin = origin;
+      },
       control: (message) => transport.control(message),
       fetch: (request) => transport.fetch(request),
       identify: hostModeIdentity(domain, Object.keys(config.identities)),

@@ -14,6 +14,7 @@ import { ORIGIN } from "../helpers.js";
 export interface FakeClient {
   id: string;
   url: string;
+  type?: "window" | "worker";
 }
 
 export interface FakeServiceWorker {

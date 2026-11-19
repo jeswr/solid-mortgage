@@ -90,14 +90,15 @@ export function session(): Session {
   return { org: app, persona, simulated: true, webid: webidFor(record.actsAs, origin()) };
 }
 
+function dispatchHostMessage(message: HostMessage): void {
+  if (message.type === "event") for (const listener of listeners) listener(message.entry);
+  else if (message.type === "reset") for (const listener of resetListeners) listener();
+}
+
 function ensureChannel(): void {
   if (channel !== undefined || typeof BroadcastChannel === "undefined") return;
   channel = new BroadcastChannel(EVENTS_CHANNEL);
-  channel.onmessage = (event: MessageEvent<HostMessage>) => {
-    const message = event.data;
-    if (message.type === "event") for (const listener of listeners) listener(message.entry);
-    else if (message.type === "reset") for (const listener of resetListeners) listener();
-  };
+  channel.onmessage = (event: MessageEvent<HostMessage>) => dispatchHostMessage(event.data);
 }
 
 async function chooseTransport(current: RuntimeConfig): Promise<Transport> {
@@ -140,6 +141,7 @@ export function ready(): Promise<RuntimeInfo> {
     const current = requireConfig();
     ensureChannel();
     const transport = await chooseTransport(current);
+    transport.subscribe?.(dispatchHostMessage);
     const owners = podOwners(current.registry);
     const reply = await transport.control({
       identities: identities(current.registry),

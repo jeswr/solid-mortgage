@@ -11,7 +11,10 @@ export interface ServiceWorkerOptions {
 /** The parts of `ServiceWorkerGlobalScope` this role uses (a fake one in tests). */
 export interface ServiceWorkerScope {
   addEventListener(type: string, listener: (event: never) => void): void;
-  clients: { get(id: string): Promise<{ url: string } | undefined>; claim(): Promise<void> };
+  clients: {
+    get(id: string): Promise<{ url: string; type?: string } | undefined>;
+    claim(): Promise<void>;
+  };
   location: { origin: string };
   skipWaiting(): Promise<void>;
 }
@@ -32,6 +35,16 @@ interface MessageEventLike {
 const isBridge = (url: string | undefined) =>
   url !== undefined && new URL(url).pathname === BRIDGE_PATH;
 
+/**
+ * Host mode: who may name an identity in a request. The bridge page (it vouches for the calling
+ * app's origin) and the agent worker it starts from this same script (it acts for the
+ * organisations). The pod origin serves nothing else that could start either.
+ */
+const mayNameIdentity = (client: { url: string; type?: string } | undefined) =>
+  client !== undefined &&
+  (isBridge(client.url) ||
+    (client.type === "worker" && new URL(client.url).pathname === "/pods-sw.js"));
+
 export function startServiceWorker(
   sw: ServiceWorkerScope,
   runtime: SwRuntime,
@@ -42,7 +55,7 @@ export function startServiceWorker(
     // Host mode: identity is established by the bridge page (from the caller's origin), never by
     // whichever page on this origin happens to send the header.
     const client = event.clientId === "" ? undefined : await sw.clients.get(event.clientId);
-    return isBridge(client?.url) ? identityOf(event.request) : null;
+    return mayNameIdentity(client) ? identityOf(event.request) : null;
   }
 
   sw.addEventListener("install", (event: { waitUntil(p: Promise<unknown>): void }) =>

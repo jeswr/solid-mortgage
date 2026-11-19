@@ -11,6 +11,8 @@ import { AGENT_HEADER, type ControlReply, type ControlRequest, TOUR_HEADER } fro
 export const BRIDGE_REQUEST = "pod-bridge";
 export const BRIDGE_REPLY = "pod-bridge-reply";
 export const BRIDGE_READY = "pod-bridge-ready";
+/** A host event relayed to the embedding app (host mode: it cannot hear the pod origin's channel). */
+export const BRIDGE_EVENT = "pod-bridge-event";
 
 export interface BridgeEnvelope {
   type: typeof BRIDGE_REQUEST;
@@ -42,6 +44,8 @@ export interface BridgeOptions {
   fetch?: (request: Request) => Promise<Response>;
   /** Send a non-fetch control message to the service worker. */
   control(message: ControlRequest): Promise<ControlReply>;
+  /** Called with each recognised app that sends a request (origin, and the window to answer). */
+  onRecognised?(origin: string, source: unknown): void;
 }
 
 /** `https://<slug>.<domain>` → `<slug>` when the slug is one of `slugs`. */
@@ -127,6 +131,7 @@ export function startBridge(options: BridgeOptions): () => void {
     const message = data.message;
     if (typeof id !== "number" || message === undefined) return;
     const identity = options.identify(event.origin);
+    if (identity !== undefined) options.onRecognised?.(event.origin, source);
     const answer =
       message.type === "fetch"
         ? forwardFetch(message, identity, options)

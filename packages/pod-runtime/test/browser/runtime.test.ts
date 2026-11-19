@@ -4,35 +4,19 @@
  * built client, a fixture agent. Skipped (with a message) when dist/ or a Chrome is missing.
  */
 import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
-import { createServer, type Server } from "node:http";
+import type { Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
-import { type Browser, type BrowserContext, chromium, type Page } from "@playwright/test";
-import { build } from "vite";
+import { join } from "node:path";
+import type { Browser, BrowserContext, Page } from "@playwright/test";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-
-const PACKAGE = resolve(import.meta.dirname, "../..");
-const SW = join(PACKAGE, "dist", "pods-sw.js");
-const CHROME = process.env.POD_RUNTIME_CHROME ?? "/usr/bin/google-chrome";
+import { AGENT_JS, buildPage, call, close, launch, PAGE_HTML, SW, serve } from "./support.js";
 
 let browser: Browser | undefined;
 let server: Server | undefined;
 let origin = "";
 let out = "";
 let skipReason: string | undefined;
-
-async function launch(): Promise<Browser | undefined> {
-  const attempts = existsSync(CHROME) ? [{ executablePath: CHROME }, {}] : [{}];
-  for (const options of attempts) {
-    try {
-      return await chromium.launch({ ...options, headless: true });
-    } catch {
-      // try the next browser
-    }
-  }
-  return undefined;
-}
 
 beforeAll(async () => {
   if (!existsSync(SW)) {
@@ -45,58 +29,21 @@ beforeAll(async () => {
     return;
   }
   out = mkdtempSync(join(tmpdir(), "pod-runtime-browser-"));
-  await build({
-    build: {
-      emptyOutDir: true,
-      lib: {
-        entry: join(import.meta.dirname, "fixture/page.ts"),
-        fileName: () => "page.js",
-        formats: ["es"],
-      },
-      minify: false,
-      outDir: out,
-    },
-    configFile: false,
-    logLevel: "warn",
-    publicDir: false,
-    root: PACKAGE,
-  });
   const files: Record<string, [string, string]> = {
-    "/": [
-      "text/html",
-      '<!doctype html><meta charset="utf-8"><title>pods</title><script type="module" src="/page.js"></script>',
-    ],
-    "/agents/bank.js": [
-      "text/javascript",
-      readFileSync(join(import.meta.dirname, "fixture/agent.js"), "utf8"),
-    ],
-    "/page.js": ["text/javascript", readFileSync(join(out, "page.js"), "utf8")],
+    "/": ["text/html", PAGE_HTML],
+    "/agents/bank.js": ["text/javascript", AGENT_JS],
+    "/page.js": ["text/javascript", await buildPage(out)],
     "/pods-sw.js": ["text/javascript", readFileSync(SW, "utf8")],
     "/site.json": ["application/json", JSON.stringify({ agents: ["bank"] })],
   };
-  server = createServer((request, response) => {
-    const path = new URL(request.url ?? "/", "http://localhost").pathname;
-    const file = files[path];
-    if (file === undefined) {
-      response.writeHead(404, { "content-type": "text/plain" }).end(`not served: ${path}`);
-      return;
-    }
-    response
-      .writeHead(200, {
-        "cache-control": "no-cache",
-        "content-type": file[0],
-        "service-worker-allowed": "/",
-      })
-      .end(file[1]);
-  });
-  await new Promise<void>((done) => server?.listen(0, "127.0.0.1", done));
+  server = await serve((_, path) => files[path], 0);
   // localhost (not 127.0.0.1) so the page is a secure context by name as well as by address.
   origin = `http://localhost:${(server.address() as AddressInfo).port}`;
 }, 120_000);
 
 afterAll(async () => {
   await browser?.close();
-  await new Promise<void>((done) => (server ? server.close(() => done()) : done()));
+  await close(server);
   if (out) rmSync(out, { force: true, recursive: true });
 });
 
@@ -116,25 +63,6 @@ declare const events: Array<{
   path?: string;
   actor?: { viaAgent: boolean };
 }>;
-
-const call = (
-  page: Page,
-  method: string,
-  path: string,
-  body?: string,
-  headers: Record<string, string> = {},
-) =>
-  page.evaluate(
-    async ([m, p, b, h]) => {
-      const response = await rt.podFetch(p as string, {
-        body: b as string | undefined,
-        headers: h as Record<string, string>,
-        method: m as string,
-      });
-      return { body: await response.text(), status: response.status };
-    },
-    [method, path, body, headers] as const,
-  );
 
 describe("pod runtime in Chrome", () => {
   it("starts cold within 3 s, under a service worker, seeded", async (ctx) => {

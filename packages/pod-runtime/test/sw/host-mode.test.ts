@@ -23,6 +23,9 @@ import { type FakeClient, type FakeServiceWorker, fakeServiceWorker } from "./fa
 
 const BRIDGE: FakeClient = { id: "bridge", url: `${ORIGIN}${BRIDGE_PATH}` };
 const OTHER_PAGE: FakeClient = { id: "other", url: `${ORIGIN}/somewhere/` };
+const AGENTS: FakeClient = { id: "agents", type: "worker", url: `${ORIGIN}/pods-sw.js` };
+const OTHER_WORKER: FakeClient = { id: "w2", type: "worker", url: `${ORIGIN}/other.js` };
+const SW_AS_PAGE: FakeClient = { id: "w3", type: "window", url: `${ORIGIN}/pods-sw.js` };
 /** Build-time config: app slug → owner. `wallet` acts as alex. */
 const FIXED = {
   identities: { bank: "bank", bureau: "bureau", payroll: "payroll", wallet: "alex" } as const,
@@ -34,7 +37,9 @@ let worker: FakeServiceWorker;
 let listener: Listener | undefined;
 
 beforeEach(() => {
-  worker = fakeServiceWorker(true, [BRIDGE, OTHER_PAGE], { fixedConfig: FIXED });
+  worker = fakeServiceWorker(true, [BRIDGE, OTHER_PAGE, AGENTS, OTHER_WORKER, SW_AS_PAGE], {
+    fixedConfig: FIXED,
+  });
   startBridge({
     control: (message) => worker.post(message, BRIDGE),
     fetch: (request) => worker.fetch(request, BRIDGE),
@@ -118,6 +123,10 @@ describe("host mode", () => {
       new Request(`${ORIGIN}/pods/alex/private/x.txt`, { headers: { [AGENT_HEADER]: "wallet" } });
     expect((await worker.fetch(asAlex(), BRIDGE)).status).toBe(200);
     expect((await worker.fetch(asAlex(), OTHER_PAGE)).status).toBe(401);
+    // The agent worker (this script, as a worker) acts for organisations; nothing else does.
+    expect((await worker.fetch(asAlex(), AGENTS)).status).toBe(200);
+    expect((await worker.fetch(asAlex(), OTHER_WORKER)).status).toBe(401);
+    expect((await worker.fetch(asAlex(), SW_AS_PAGE)).status).toBe(401);
     expect((await worker.fetch(asAlex())).status).toBe(401); // no client (clientId "")
   });
 
