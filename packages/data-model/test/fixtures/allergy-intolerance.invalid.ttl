@@ -1,0 +1,9 @@
+@prefix fhir: <http://hl7.org/fhir/>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+# No patient, and a category outside the value set.
+<https://pods.example/pods/rosa/allergies/amoxicillin> a fhir:AllergyIntolerance;
+  fhir:id [ fhir:v "amoxicillin" ];
+  fhir:clinicalStatus [ fhir:coding ( [ fhir:system [ fhir:v "http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical"^^xsd:anyURI ]; fhir:code [ fhir:v "active" ] ] ) ];
+  fhir:category ( [ fhir:v "pollen" ] );
+  fhir:code [ fhir:coding ( [ fhir:system [ fhir:v "http://www.nlm.nih.gov/research/umls/rxnorm"^^xsd:anyURI ]; fhir:code [ fhir:v "723" ] ] ); fhir:text [ fhir:v "Amoxicillin" ] ];
+  fhir:recordedDate [ fhir:v "2026-09-07T10:00:00Z"^^xsd:dateTime ].

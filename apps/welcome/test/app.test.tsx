@@ -28,6 +28,7 @@ describe("every route", () => {
     "/watch/mortgage",
     "/watch/moving-house",
     "/watch/motor-claim",
+    "/watch/small-dollar-lending",
     "/watch/business-kyb",
     "/honesty",
     "/journey",
@@ -187,7 +188,7 @@ describe("watch pages", () => {
   });
 
   it("gives a coming demo a Coming next page without a player", () => {
-    render(<App hook={at("/watch/medication-handover")} probe={present} />);
+    render(<App hook={at("/watch/reusable-kyc")} probe={present} />);
     expect(screen.getByRole("heading", { name: "This demo is being built" })).toBeTruthy();
     expect(document.querySelector("video, .player")).toBeNull();
   });

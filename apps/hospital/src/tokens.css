@@ -1,0 +1,23 @@
+/* AUTHORED-BY Claude Opus 5.5
+ * Riverbend General Hospital's own tokens: a dense clinical record, hospital blue on cool grey,
+ * a red allergy flag that never hides, Source Sans 3 for tight tables (self-hosted, SIL Open Font
+ * License). Original values, no imagery. */
+:root {
+  --rb-blue: #14558f;
+  --rb-blue-deep: #0c3a63;
+  --rb-blue-soft: #e4eef7;
+  --rb-ink: #17212b;
+  --rb-muted: #46525e;
+  --rb-paper: #ffffff;
+  --rb-panel: #eef1f4;
+  --rb-line: #c4ccd4;
+  --rb-red: #a4161a;
+  --rb-red-soft: #fbe9e9;
+  --rb-amber: #7a4a00;
+  --rb-amber-soft: #fff2d9;
+  --rb-green: #1d6b3a;
+  --rb-green-soft: #e3f2e8;
+  --rb-focus: #f2a900;
+  --rb-font: "Source Sans 3", system-ui, sans-serif;
+  --rb-space: 0.75rem;
+}

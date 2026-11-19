@@ -551,6 +551,79 @@ importers:
         specifier: ^4.1.9
         version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
 
+  apps/clinic:
+    dependencies:
+      '@fontsource/dm-sans':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@fontsource/source-serif-4':
+        specifier: ^5.3.0
+        version: 5.3.1
+      '@mortgage/content':
+        specifier: workspace:*
+        version: link:../../content
+      '@mortgage/data-model':
+        specifier: workspace:*
+        version: link:../../packages/data-model
+      '@mortgage/demo-kit':
+        specifier: workspace:*
+        version: link:../../packages/demo-kit
+      '@mortgage/lens':
+        specifier: workspace:*
+        version: link:../../packages/lens
+      '@mortgage/pod-runtime':
+        specifier: workspace:*
+        version: link:../../packages/pod-runtime
+      '@mortgage/tour':
+        specifier: workspace:*
+        version: link:../../packages/tour
+      '@mortgage/vc-kit':
+        specifier: workspace:*
+        version: link:../../packages/vc-kit
+      react:
+        specifier: ^19.2.7
+        version: 19.2.7
+      react-dom:
+        specifier: ^19.2.7
+        version: 19.2.7(react@19.2.7)
+      wouter:
+        specifier: ^3.13.0
+        version: 3.13.0(react@19.2.7)
+    devDependencies:
+      '@axe-core/playwright':
+        specifier: ^4.12.1
+        version: 4.12.1(playwright-core@1.63.0)
+      '@playwright/test':
+        specifier: ~1.63.0
+        version: 1.63.0
+      '@testing-library/react':
+        specifier: ^16.3.3
+        version: 16.3.3(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@types/node':
+        specifier: ^25.9.2
+        version: 25.9.5
+      '@types/react':
+        specifier: ^19.2.17
+        version: 19.2.17
+      '@types/react-dom':
+        specifier: ^19.2.3
+        version: 19.2.3(@types/react@19.2.17)
+      '@vitejs/plugin-react':
+        specifier: ^6.3.0
+        version: 6.3.0(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+      jsdom:
+        specifier: ^29.1.1
+        version: 29.1.1
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+      vite:
+        specifier: ^8.3.0
+        version: 8.3.8(@types/node@25.9.5)(jiti@2.7.0)
+      vitest:
+        specifier: ^4.1.9
+        version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+
   apps/county:
     dependencies:
       '@jeswr/fetch-rdf':
@@ -611,6 +684,222 @@ importers:
       '@types/n3':
         specifier: ^1.26.1
         version: 1.26.1
+      '@types/node':
+        specifier: ^25.9.2
+        version: 25.9.5
+      '@types/react':
+        specifier: ^19.2.17
+        version: 19.2.17
+      '@types/react-dom':
+        specifier: ^19.2.3
+        version: 19.2.3(@types/react@19.2.17)
+      '@vitejs/plugin-react':
+        specifier: ^6.3.0
+        version: 6.3.0(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+      jsdom:
+        specifier: ^29.1.1
+        version: 29.1.1
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+      vite:
+        specifier: ^8.3.0
+        version: 8.3.8(@types/node@25.9.5)(jiti@2.7.0)
+      vitest:
+        specifier: ^4.1.9
+        version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+
+  apps/fintech-lender:
+    dependencies:
+      '@fontsource/dm-sans':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@fontsource/manrope':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@mortgage/content':
+        specifier: workspace:*
+        version: link:../../content
+      '@mortgage/data-model':
+        specifier: workspace:*
+        version: link:../../packages/data-model
+      '@mortgage/demo-kit':
+        specifier: workspace:*
+        version: link:../../packages/demo-kit
+      '@mortgage/lens':
+        specifier: workspace:*
+        version: link:../../packages/lens
+      '@mortgage/pod-runtime':
+        specifier: workspace:*
+        version: link:../../packages/pod-runtime
+      '@mortgage/tour':
+        specifier: workspace:*
+        version: link:../../packages/tour
+      '@mortgage/vc-kit':
+        specifier: workspace:*
+        version: link:../../packages/vc-kit
+      react:
+        specifier: ^19.2.7
+        version: 19.2.7
+      react-dom:
+        specifier: ^19.2.7
+        version: 19.2.7(react@19.2.7)
+      wouter:
+        specifier: ^3.13.0
+        version: 3.13.0(react@19.2.7)
+    devDependencies:
+      '@axe-core/playwright':
+        specifier: ^4.12.1
+        version: 4.12.1(playwright-core@1.63.0)
+      '@playwright/test':
+        specifier: ~1.63.0
+        version: 1.63.0
+      '@testing-library/react':
+        specifier: ^16.3.3
+        version: 16.3.3(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@types/node':
+        specifier: ^25.9.2
+        version: 25.9.5
+      '@types/react':
+        specifier: ^19.2.17
+        version: 19.2.17
+      '@types/react-dom':
+        specifier: ^19.2.3
+        version: 19.2.3(@types/react@19.2.17)
+      '@vitejs/plugin-react':
+        specifier: ^6.3.0
+        version: 6.3.0(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+      jsdom:
+        specifier: ^29.1.1
+        version: 29.1.1
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+      vite:
+        specifier: ^8.3.0
+        version: 8.3.8(@types/node@25.9.5)(jiti@2.7.0)
+      vitest:
+        specifier: ^4.1.9
+        version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+
+  apps/hospital:
+    dependencies:
+      '@fontsource/source-sans-3':
+        specifier: ^5.3.0
+        version: 5.3.1
+      '@mortgage/content':
+        specifier: workspace:*
+        version: link:../../content
+      '@mortgage/data-model':
+        specifier: workspace:*
+        version: link:../../packages/data-model
+      '@mortgage/demo-kit':
+        specifier: workspace:*
+        version: link:../../packages/demo-kit
+      '@mortgage/lens':
+        specifier: workspace:*
+        version: link:../../packages/lens
+      '@mortgage/pod-runtime':
+        specifier: workspace:*
+        version: link:../../packages/pod-runtime
+      '@mortgage/tour':
+        specifier: workspace:*
+        version: link:../../packages/tour
+      '@mortgage/vc-kit':
+        specifier: workspace:*
+        version: link:../../packages/vc-kit
+      react:
+        specifier: ^19.2.7
+        version: 19.2.7
+      react-dom:
+        specifier: ^19.2.7
+        version: 19.2.7(react@19.2.7)
+      wouter:
+        specifier: ^3.13.0
+        version: 3.13.0(react@19.2.7)
+    devDependencies:
+      '@axe-core/playwright':
+        specifier: ^4.12.1
+        version: 4.12.1(playwright-core@1.63.0)
+      '@playwright/test':
+        specifier: ~1.63.0
+        version: 1.63.0
+      '@testing-library/react':
+        specifier: ^16.3.3
+        version: 16.3.3(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@types/node':
+        specifier: ^25.9.2
+        version: 25.9.5
+      '@types/react':
+        specifier: ^19.2.17
+        version: 19.2.17
+      '@types/react-dom':
+        specifier: ^19.2.3
+        version: 19.2.3(@types/react@19.2.17)
+      '@vitejs/plugin-react':
+        specifier: ^6.3.0
+        version: 6.3.0(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+      jsdom:
+        specifier: ^29.1.1
+        version: 29.1.1
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+      vite:
+        specifier: ^8.3.0
+        version: 8.3.8(@types/node@25.9.5)(jiti@2.7.0)
+      vitest:
+        specifier: ^4.1.9
+        version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+
+  apps/idv:
+    dependencies:
+      '@fontsource/archivo-black':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@fontsource/inter-tight':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@mortgage/content':
+        specifier: workspace:*
+        version: link:../../content
+      '@mortgage/data-model':
+        specifier: workspace:*
+        version: link:../../packages/data-model
+      '@mortgage/demo-kit':
+        specifier: workspace:*
+        version: link:../../packages/demo-kit
+      '@mortgage/lens':
+        specifier: workspace:*
+        version: link:../../packages/lens
+      '@mortgage/pod-runtime':
+        specifier: workspace:*
+        version: link:../../packages/pod-runtime
+      '@mortgage/tour':
+        specifier: workspace:*
+        version: link:../../packages/tour
+      '@mortgage/vc-kit':
+        specifier: workspace:*
+        version: link:../../packages/vc-kit
+      react:
+        specifier: ^19.2.7
+        version: 19.2.7
+      react-dom:
+        specifier: ^19.2.7
+        version: 19.2.7(react@19.2.7)
+      wouter:
+        specifier: ^3.13.0
+        version: 3.13.0(react@19.2.7)
+    devDependencies:
+      '@axe-core/playwright':
+        specifier: ^4.12.1
+        version: 4.12.1(playwright-core@1.63.0)
+      '@playwright/test':
+        specifier: ~1.63.0
+        version: 1.63.0
+      '@testing-library/react':
+        specifier: ^16.3.3
+        version: 16.3.3(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@types/node':
         specifier: ^25.9.2
         version: 25.9.5
@@ -1003,6 +1292,79 @@ importers:
         specifier: ^4.1.9
         version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
 
+  apps/payout:
+    dependencies:
+      '@fontsource/ibm-plex-mono':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@fontsource/source-sans-3':
+        specifier: ^5.3.0
+        version: 5.3.1
+      '@mortgage/content':
+        specifier: workspace:*
+        version: link:../../content
+      '@mortgage/data-model':
+        specifier: workspace:*
+        version: link:../../packages/data-model
+      '@mortgage/demo-kit':
+        specifier: workspace:*
+        version: link:../../packages/demo-kit
+      '@mortgage/lens':
+        specifier: workspace:*
+        version: link:../../packages/lens
+      '@mortgage/pod-runtime':
+        specifier: workspace:*
+        version: link:../../packages/pod-runtime
+      '@mortgage/tour':
+        specifier: workspace:*
+        version: link:../../packages/tour
+      '@mortgage/vc-kit':
+        specifier: workspace:*
+        version: link:../../packages/vc-kit
+      react:
+        specifier: ^19.2.7
+        version: 19.2.7
+      react-dom:
+        specifier: ^19.2.7
+        version: 19.2.7(react@19.2.7)
+      wouter:
+        specifier: ^3.13.0
+        version: 3.13.0(react@19.2.7)
+    devDependencies:
+      '@axe-core/playwright':
+        specifier: ^4.12.1
+        version: 4.12.1(playwright-core@1.63.0)
+      '@playwright/test':
+        specifier: ~1.63.0
+        version: 1.63.0
+      '@testing-library/react':
+        specifier: ^16.3.3
+        version: 16.3.3(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@types/node':
+        specifier: ^25.9.2
+        version: 25.9.5
+      '@types/react':
+        specifier: ^19.2.17
+        version: 19.2.17
+      '@types/react-dom':
+        specifier: ^19.2.3
+        version: 19.2.3(@types/react@19.2.17)
+      '@vitejs/plugin-react':
+        specifier: ^6.3.0
+        version: 6.3.0(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+      jsdom:
+        specifier: ^29.1.1
+        version: 29.1.1
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+      vite:
+        specifier: ^8.3.0
+        version: 8.3.8(@types/node@25.9.5)(jiti@2.7.0)
+      vitest:
+        specifier: ^4.1.9
+        version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+
   apps/payroll:
     dependencies:
       '@fontsource/ibm-plex-sans':
@@ -1069,6 +1431,79 @@ importers:
       '@types/n3':
         specifier: ^1.26.1
         version: 1.26.1
+      '@types/node':
+        specifier: ^25.9.2
+        version: 25.9.5
+      '@types/react':
+        specifier: ^19.2.17
+        version: 19.2.17
+      '@types/react-dom':
+        specifier: ^19.2.3
+        version: 19.2.3(@types/react@19.2.17)
+      '@vitejs/plugin-react':
+        specifier: ^6.3.0
+        version: 6.3.0(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+      jsdom:
+        specifier: ^29.1.1
+        version: 29.1.1
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+      vite:
+        specifier: ^8.3.0
+        version: 8.3.8(@types/node@25.9.5)(jiti@2.7.0)
+      vitest:
+        specifier: ^4.1.9
+        version: 4.1.10(@types/node@25.9.5)(jsdom@29.1.1)(vite@8.3.8(@types/node@25.9.5)(jiti@2.7.0))
+
+  apps/pharmacy:
+    dependencies:
+      '@fontsource/atkinson-hyperlegible':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@fontsource/ibm-plex-mono':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@mortgage/content':
+        specifier: workspace:*
+        version: link:../../content
+      '@mortgage/data-model':
+        specifier: workspace:*
+        version: link:../../packages/data-model
+      '@mortgage/demo-kit':
+        specifier: workspace:*
+        version: link:../../packages/demo-kit
+      '@mortgage/lens':
+        specifier: workspace:*
+        version: link:../../packages/lens
+      '@mortgage/pod-runtime':
+        specifier: workspace:*
+        version: link:../../packages/pod-runtime
+      '@mortgage/tour':
+        specifier: workspace:*
+        version: link:../../packages/tour
+      '@mortgage/vc-kit':
+        specifier: workspace:*
+        version: link:../../packages/vc-kit
+      react:
+        specifier: ^19.2.7
+        version: 19.2.7
+      react-dom:
+        specifier: ^19.2.7
+        version: 19.2.7(react@19.2.7)
+      wouter:
+        specifier: ^3.13.0
+        version: 3.13.0(react@19.2.7)
+    devDependencies:
+      '@axe-core/playwright':
+        specifier: ^4.12.1
+        version: 4.12.1(playwright-core@1.63.0)
+      '@playwright/test':
+        specifier: ~1.63.0
+        version: 1.63.0
+      '@testing-library/react':
+        specifier: ^16.3.3
+        version: 16.3.3(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@types/node':
         specifier: ^25.9.2
         version: 25.9.5

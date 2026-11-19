@@ -101,8 +101,11 @@ export function demoCreditScoreClaims(
  * Every integer whose sparq term encoding the fixture set captures: the
  * decision-0005 statement operands/bounds the zk tests exercise, the hidden
  * demo values (income 8500, score 742, debt 1180), and 30 (the sparq
- * car-hire age-gate cross-check vector).
+ * car-hire age-gate cross-check vector). The small-dollar lending demo adds the
+ * values ported from jeswr/solid-lending's capture at the same sparq commit: its hidden
+ * values (returned payments 0, cash-flow score 720, income 2860), its bounds (660, 2200) and
+ * its test vectors (99, 500, 850).
  */
 export const DEMO_OPERAND_VALUES: readonly number[] = Object.freeze([
-  30, 619, 620, 700, 742, 1180, 6500, 7000, 8500, 9999,
+  0, 30, 99, 500, 619, 620, 660, 700, 720, 742, 850, 1180, 2200, 2860, 6500, 7000, 8500, 9999,
 ]);

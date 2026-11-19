@@ -60,6 +60,20 @@ export const RESOURCE_TARGET_CLASSES = {
   // Moving-house demo (flows.md section 2).
   "address-record": "http://www.w3.org/ns/locn#Address",
   "data-product": "https://ekgf.github.io/dprod/DataProduct",
+  // Small-dollar lending (flows.md section 4).
+  "adverse-action-notice": MORT.AdverseActionNotice,
+  "cash-flow-credential": MORT.CashFlowCredential,
+  "closed-end-disclosure": MORT.ClosedEndCreditDisclosure,
+  "payout-instruction": MORT.PayoutInstruction,
+  "repayment-history-credential": MORT.RepaymentHistoryCredential,
+  // Medication handover (flows.md section 5): FHIR R5 resources in RDF.
+  "medication-statement": "http://hl7.org/fhir/MedicationStatement",
+  "medication-request": "http://hl7.org/fhir/MedicationRequest",
+  "medication-dispense": "http://hl7.org/fhir/MedicationDispense",
+  "allergy-intolerance": "http://hl7.org/fhir/AllergyIntolerance",
+  "provenance-record": "http://hl7.org/fhir/Provenance",
+  "discharge-summary": "http://hl7.org/fhir/Composition",
+  "encounter-record": "http://hl7.org/fhir/Encounter",
   // Motor claim demo (flows.md section 7).
   "claim-case": MORT.ClaimCase,
   "damage-report": MORT.DamageReport,

@@ -1,0 +1,57 @@
+/* AUTHORED-BY Claude Opus 5.5
+ * The small-dollar lending section: a plain layout in this app's own fonts and colours (bureau: --qc-*). */
+.sd-section {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+}
+
+.sd-card {
+  border: 1px solid var(--qc-rule);
+  border-radius: 6px;
+  padding: 1rem;
+  margin-top: 1rem;
+  background: var(--qc-paper);
+}
+
+.sd-card dl {
+  display: grid;
+  grid-template-columns: minmax(6rem, auto) 1fr;
+  gap: 0.25rem 1rem;
+  margin: 0.5rem 0 0;
+}
+
+.sd-card dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.sd-send {
+  margin-top: 1rem;
+  padding: 0.65rem 1.2rem;
+  border: 0;
+  border-radius: 4px;
+  background: var(--qc-blue);
+  color: #ffffff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sd-send:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.sd-ok {
+  border-left: 5px solid var(--qc-blue);
+  padding: 0.25rem 0.75rem;
+}
+
+.sd-alert {
+  border-left: 5px solid #9b1c1c;
+  background: #fdecec;
+  color: #7a1414;
+  padding: 0.75rem 1rem;
+}

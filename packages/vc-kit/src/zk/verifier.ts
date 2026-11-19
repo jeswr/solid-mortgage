@@ -9,7 +9,7 @@
  *
  *  1. structural   - sanctioned flavour (`evm`, never `*-no-zk`), committed
  *                    member, 5 public inputs, member width within the field's
- *                    decision-0005 budget;
+ *                    decision-0005 budget [minDigits, digits];
  *  2. nonce        - single-use challenge burned via the injected
  *                    nonce-consumer seam BEFORE anything else (a failed attempt
  *                    consumes the challenge too);
@@ -283,6 +283,13 @@ export async function verifyTierA(
     return reject(
       "MEMBER_BUDGET_MISMATCH",
       `${member} (${memberDigits(member)} digits) exceeds the ${budget.digits}-digit budget of ${budget.key}`,
+      checks,
+    );
+  }
+  if (memberDigits(member) < budget.minDigits) {
+    return reject(
+      "MEMBER_BUDGET_MISMATCH",
+      `${member} (${memberDigits(member)} digits) is narrower than the ${budget.minDigits}-digit minimum of ${budget.key}`,
       checks,
     );
   }
