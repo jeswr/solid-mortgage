@@ -1,113 +1,121 @@
 WEBVTT
 
 1
-00:00:00.350 --> 00:00:02.606
-Rosa is going home from hospital.
+00:00:00.350 --> 00:00:02.166
+This is an idealised future.
 
 2
-00:00:02.606 --> 00:00:07.116
-Her medicines have changed: one stopped, one dose raised, one new.
+00:00:02.166 --> 00:00:04.889
+No single organisation could run it today.
 
 3
-00:00:07.966 --> 00:00:14.089
-Usually that news travels by letter, and is typed again at the pharmacy and at her doctor's practice.
+00:00:05.742 --> 00:00:07.871
+Rosa is going home from hospital.
 
 4
-00:00:14.089 --> 00:00:16.090
-Mistakes happen at each retyping.
+00:00:07.871 --> 00:00:12.129
+Her medicines have changed: one stopped, one dose raised, one new.
 
 5
-00:00:16.940 --> 00:00:19.631
-Rosa's medication list is in her pod.
+00:00:12.979 --> 00:00:18.780
+Usually that news travels by letter, and is typed again at the pharmacy and at her doctor's practice.
 
 6
-00:00:20.481 --> 00:00:25.108
-On the ward, the pharmacist records the three changes, with a reason for each.
+00:00:18.780 --> 00:00:20.676
+Mistakes happen at each retyping.
 
 7
-00:00:25.108 --> 00:00:30.329
-The list is written once, in a standard health format, where everyone else will read it.
+00:00:21.552 --> 00:00:24.136
+Rosa's medication list is in her pod.
 
 8
-00:00:31.179 --> 00:00:32.903
-Rosa decides who can see it.
+00:00:24.986 --> 00:00:29.612
+On the ward, the pharmacist records the three changes, with a reason for each.
 
 9
-00:00:33.753 --> 00:00:36.672
-Her pharmacy can read her medicines and allergies.
+00:00:29.612 --> 00:00:34.831
+The list is written once, in a standard health format, where everyone else will read it.
 
 10
-00:00:36.672 --> 00:00:40.174
-Her doctor's practice can read and update her health record.
+00:00:35.684 --> 00:00:37.402
+Rosa decides who can see it.
 
 11
-00:00:40.174 --> 00:00:43.967
-Her son, Alex, can read the list, because he helps with her care.
+00:00:38.252 --> 00:00:41.710
+Rosa lets her pharmacy read her medicines and allergies.
 
 12
-00:00:44.817 --> 00:00:48.866
-The pharmacist opens the list and sees what changed since the last supply.
+00:00:41.710 --> 00:00:45.724
+She lets her doctor's practice read and update her health record.
 
 13
-00:00:49.716 --> 00:00:51.884
-They dispense, and record it in the pod.
+00:00:45.724 --> 00:00:50.294
+And she lets her son, Alex, read the list, because he helps with her care.
 
 14
-00:00:52.734 --> 00:00:55.247
-The pharmacy saw medicines and allergies.
+00:00:51.145 --> 00:00:55.179
+The pharmacist opens the list and sees what changed since the last supply.
 
 15
-00:00:55.247 --> 00:00:57.514
-It did not see the discharge summary.
+00:00:56.029 --> 00:00:58.135
+They dispense, and record it in the pod.
 
 16
-00:00:58.366 --> 00:01:01.553
-A week later, Rosa's doctor opens the same list.
+00:00:58.986 --> 00:01:01.388
+The pharmacy saw medicines and allergies.
 
 17
-00:01:02.403 --> 00:01:03.598
-They stop a duplicate.
+00:01:01.388 --> 00:01:03.554
+It did not see the discharge summary.
 
 18
-00:01:03.598 --> 00:01:07.784
-That change is written to the same record, with the doctor's name against it.
+00:01:04.408 --> 00:01:07.449
+A week later, Rosa's doctor opens the same list.
 
 19
-00:01:08.634 --> 00:01:10.788
-The pharmacy sees it on its next read.
+00:01:08.299 --> 00:01:09.500
+They stop a duplicate.
 
 20
-00:01:10.788 --> 00:01:13.963
-The practice and the pharmacy never exchanged a message.
+00:01:09.500 --> 00:01:13.702
+That change is written to the same record, with the doctor's name against it.
 
 21
-00:01:14.811 --> 00:01:18.311
-And Alex sees the current list in his own wallet, read-only.
+00:01:14.553 --> 00:01:16.787
+The pharmacy sees it on its next read.
 
 22
-00:01:19.161 --> 00:01:23.602
-Rosa moves to a pharmacy nearer home, and withdraws the old one's access.
+00:01:16.787 --> 00:01:20.078
+The practice and the pharmacy never exchanged a message.
 
 23
-00:01:24.452 --> 00:01:26.125
-Its next read is refused.
+00:01:20.931 --> 00:01:24.603
+And Alex sees the current list in his own wallet, read-only.
 
 24
-00:01:26.125 --> 00:01:29.337
-It keeps its own dispensing records, as it must.
+00:01:25.453 --> 00:01:29.907
+Rosa moves to a pharmacy nearer home, and withdraws the old one's access.
 
 25
-00:01:29.337 --> 00:01:31.479
-It no longer sees the live list.
+00:01:30.758 --> 00:01:32.468
+Its next read is refused.
 
 26
-00:01:32.328 --> 00:01:37.579
-One list, three organisations writing to it, every change signed with a name and a reason.
+00:01:32.468 --> 00:01:35.752
+It keeps its own dispensing records, as it must.
 
 27
-00:01:38.428 --> 00:01:43.450
-If your organisation works with health data, help us shape this one.
+00:01:35.752 --> 00:01:37.941
+It no longer sees the live list.
 
 28
-00:01:43.450 --> 00:01:46.552
+00:01:38.793 --> 00:01:44.055
+One list, three organisations writing to it, every change signed with a name and a reason.
+
+29
+00:01:44.906 --> 00:01:50.096
+If your organisation works with health data, help us shape this one.
+
+30
+00:01:50.096 --> 00:01:53.301
 Join the EDMA Solid Community of Practice.

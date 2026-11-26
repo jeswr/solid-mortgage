@@ -300,7 +300,7 @@ export const DEMOS: readonly Demo[] = [
       label: "An idealised future flow",
       text: "No single organisation could run this today: it needs hospitals, pharmacies and practices to agree to read and write one record the patient holds, and the rules to allow it. It shows where Solid could lead, not a near-term project.",
     },
-    durationSeconds: 108,
+    durationSeconds: 115,
     status: "live",
     media: mediaFor("medication-handover"),
     // Step 1 of content/medication-handover/tour.ts: Rosa's Health screen in her wallet.
