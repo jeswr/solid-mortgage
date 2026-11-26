@@ -59,6 +59,8 @@ code {
   height: 100%;
   overflow-y: auto;
   overscroll-behavior: contain;
+  /* Keep a control scrolled into view clear of the pinned tab bar. */
+  scroll-padding-bottom: 88px;
 }
 
 @media (max-width: 520px) {

@@ -55,11 +55,18 @@ test("home: title, order, demos, launcher and join-in links", async ({ page }) =
   const sections = await page
     .locator("main > section")
     .evaluateAll((nodes) => nodes.map((n) => n.id || "hero"));
-  expect(sections).toEqual(["hero", "demos", "sectors", "apps", "real", "join"]);
+  expect(sections).toEqual(["hero", "solid", "demos", "adoption", "apps", "real", "join"]);
 
-  const cards = page.getByRole("list", { name: "Demos" }).getByRole("article");
-  await expect(cards.first().getByRole("heading", { level: 3 })).toHaveText("Buying a home");
-  await expect(cards.first().getByRole("link", { name: /^Try it yourself/ })).toHaveAttribute(
+  await expect(
+    page.getByRole("list", { name: "Single interactions" }).getByRole("article").first(),
+  ).toHaveAttribute("id", "demo-moving-house");
+  const mortgage = page.locator("#demo-mortgage");
+  await expect(mortgage.getByRole("heading", { level: 3 })).toHaveText("Buying a home");
+  await expect(mortgage.getByRole("link", { name: /^Read the story first/ })).toHaveAttribute(
+    "href",
+    "/welcome/story/mortgage",
+  );
+  await expect(mortgage.getByRole("link", { name: /^Try it yourself/ })).toHaveAttribute(
     "href",
     "/welcome/?tour=mortgage&step=welcome",
   );
@@ -263,9 +270,8 @@ test("Try it yourself restarts the pods from the seed, then opens step 1 here", 
   expect((await podRequest(page, "wallet", marker)).status).not.toBe(404);
 
   await page.goto("./");
-  const cards = page.getByRole("list", { name: "Demos" }).getByRole("article");
-  await cards
-    .first()
+  await page
+    .locator("#demo-mortgage")
     .getByRole("link", { name: /^Try it yourself/ })
     .click();
   await page.waitForURL(/\/welcome\/\?tour=mortgage&step=welcome$/, { timeout: 120_000 });
