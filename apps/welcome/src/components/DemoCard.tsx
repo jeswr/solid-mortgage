@@ -7,6 +7,7 @@ import { Link } from "wouter";
 import type { Demo } from "../demos.ts";
 import { startTourFresh, tourUrl } from "../demos-links.ts";
 import { formatDuration, isoDuration } from "../format.ts";
+import { Framing, Parties } from "./Framing.tsx";
 import { ArrowIcon } from "./icons.tsx";
 import { VideoPlayer } from "./VideoPlayer.tsx";
 
@@ -64,7 +65,9 @@ export function DemoCard({ demo, probe }: DemoCardProps) {
           {demo.title}
         </h3>
         <p className="demo-card__video-title">{demo.videoTitle}</p>
+        <Framing demo={demo} />
         <p className="demo-card__sentence">{demo.sentence}</p>
+        <Parties demo={demo} />
         <p className="demo-card__duration">
           Narrated video,{" "}
           <time dateTime={isoDuration(demo.durationSeconds)}>
@@ -73,6 +76,11 @@ export function DemoCard({ demo, probe }: DemoCardProps) {
           , with captions and a transcript
         </p>
         <div className="demo-card__actions">
+          {demo.story === undefined ? null : (
+            <Link href={demo.story} className="button button--secondary">
+              Read the story first<span className="visually-hidden">: {demo.title}</span>
+            </Link>
+          )}
           <Link href={`/watch/${demo.id}`} className="button button--secondary">
             Watch<span className="visually-hidden"> the {demo.title} video</span>
           </Link>

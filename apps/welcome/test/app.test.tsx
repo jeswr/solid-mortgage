@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { memoryLocation } from "wouter/memory-location";
 import { App } from "../src/App.tsx";
 import { EXPLAINER, FOOTER_LINE, HEADLINE, HONESTY_STATEMENT } from "../src/copy.ts";
-import { DEMOS } from "../src/demos.ts";
+import { DEMOS, JOURNEY_ORDER, SINGLE_ORDER } from "../src/demos.ts";
 import { LINKS } from "../src/site.ts";
 
 const at = (path: string) => memoryLocation({ path }).hook;
@@ -58,16 +58,52 @@ describe("home", () => {
   it("keeps the sections in the order design.md §e gives", () => {
     const { container } = render(<App hook={at("/")} probe={missing} />);
     const order = [...container.querySelectorAll("main > section")].map((s) => s.id || "hero");
-    expect(order).toEqual(["hero", "demos", "sectors", "apps", "real", "join"]);
+    expect(order).toEqual(["hero", "solid", "demos", "adoption", "apps", "real", "join"]);
   });
 
-  it("lists the mortgage first, with Watch and Try it yourself", () => {
+  it("explains Solid in four ideas before the demos", () => {
     render(<App hook={at("/")} probe={missing} />);
-    const list = screen.getByRole("list", { name: "Demos" });
-    const cards = within(list).getAllByRole("article");
-    expect(cards).toHaveLength(DEMOS.length);
-    const first = cards[0] as HTMLElement;
+    const primer = document.getElementById("solid") as HTMLElement;
+    const terms = [...primer.querySelectorAll("dt")].map((node) => node.textContent);
+    expect(terms).toEqual(["Pod", "Grant", "Credential", "Audit trail"]);
+  });
+
+  it("puts single interactions before whole journeys, every demo in one of them", () => {
+    render(<App hook={at("/")} probe={missing} />);
+    const single = screen.getByRole("list", { name: "Single interactions" });
+    const journeys = screen.getByRole("list", { name: "Whole journeys" });
+    expect(
+      single.compareDocumentPosition(journeys) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    const ids = [single, journeys].flatMap((list) =>
+      within(list)
+        .getAllByRole("article")
+        .map((card) => card.id.replace(/^demo-/, "")),
+    );
+    expect(ids).toEqual([...SINGLE_ORDER, ...JOURNEY_ORDER]);
+    expect([...ids].sort()).toEqual(DEMOS.map((demo) => demo.id).sort());
+    for (const demo of DEMOS) {
+      const card = document.getElementById(`demo-${demo.id}`) as HTMLElement;
+      const parties = within(card).getByRole("list", { name: `Who takes part in ${demo.title}` });
+      expect(within(parties).getAllByRole("listitem")).toHaveLength(demo.parties.length);
+    }
+  });
+
+  it("frames the medication demo as an idealised future flow", () => {
+    render(<App hook={at("/")} probe={missing} />);
+    const card = document.getElementById("demo-medication-handover") as HTMLElement;
+    expect(within(card).getByText("An idealised future flow")).toBeTruthy();
+  });
+
+  it("offers the mortgage story first, with Watch and Try it yourself", () => {
+    render(<App hook={at("/")} probe={missing} />);
+    const first = document.getElementById("demo-mortgage") as HTMLElement;
     expect(within(first).getByRole("heading", { level: 3 }).textContent).toBe("Buying a home");
+    expect(
+      within(first)
+        .getByRole("link", { name: /^Read the story first/ })
+        .getAttribute("href"),
+    ).toBe("/story/mortgage");
     expect(
       within(first)
         .getByRole("link", { name: /^Watch/ })
@@ -140,7 +176,7 @@ describe("home", () => {
       );
       const images = document.querySelectorAll("img.poster__image");
       expect(images).toHaveLength(1);
-      expect(images[0]?.getAttribute("src")).toBe("/video/mortgage/poster.jpg");
+      expect(images[0]?.getAttribute("src")).toBe(`/video/${SINGLE_ORDER[0]}/poster.jpg`);
     } finally {
       vi.unstubAllGlobals();
     }
@@ -148,7 +184,7 @@ describe("home", () => {
 
   it("opens the video in place with captions and preload none", async () => {
     render(<App hook={at("/")} probe={present} />);
-    // The mortgage card comes first.
+    // The first single interaction's card comes first.
     (await screen.findAllByRole("button", { name: /Play the narrated video/ }))[0]?.click();
     const video = await waitFor(() => {
       const found = document.querySelector("video");
@@ -156,22 +192,24 @@ describe("home", () => {
       return found;
     });
     expect(video.getAttribute("preload")).toBe("none");
-    expect(video.getAttribute("poster")).toBe("/video/mortgage/poster.jpg");
+    expect(video.getAttribute("poster")).toBe(`/video/${SINGLE_ORDER[0]}/poster.jpg`);
     const captions = video.querySelector('track[kind="captions"]');
-    expect(captions?.getAttribute("src")).toBe("/video/mortgage/captions.vtt");
+    expect(captions?.getAttribute("src")).toBe(`/video/${SINGLE_ORDER[0]}/captions.vtt`);
     expect(captions?.hasAttribute("default")).toBe(true);
-    expect(video.querySelector("source")?.getAttribute("src")).toBe("/video/mortgage/video.mp4");
+    expect(video.querySelector("source")?.getAttribute("src")).toBe(
+      `/video/${SINGLE_ORDER[0]}/video.mp4`,
+    );
   });
 
-  it("has the four sectors strip", () => {
+  it("tells the adoption story: build it for the mortgage, then reuse it", () => {
     render(<App hook={at("/")} probe={missing} />);
     const strip = document.querySelector(".sector-strip") as HTMLElement;
     const labels = [...strip.querySelectorAll(".sector-strip__label")].map((n) => n.textContent);
     expect(labels).toEqual([
-      "Buy a home",
-      "Insure it",
-      "Tell everyone you moved",
-      "Hand over a medication list",
+      "Build it for the mortgage",
+      "Reuse it when the customer moves",
+      "Reuse it for a claim",
+      "Extend it to new sectors",
     ]);
     for (const link of strip.querySelectorAll("a")) {
       const target = link.getAttribute("href")?.slice(1) ?? "";
@@ -302,8 +340,8 @@ describe("the guided tour", () => {
   it("restarts the demo before a plain click on Try it yourself follows the link", async () => {
     const { startFresh } = await import("../src/guided-tour.ts");
     render(<App hook={at("/")} probe={missing} />);
-    const first = within(screen.getByRole("list", { name: "Demos" })).getAllByRole("article")[0];
-    const link = within(first as HTMLElement).getByRole("link", { name: /^Try it yourself/ });
+    const first = document.getElementById("demo-mortgage") as HTMLElement;
+    const link = within(first).getByRole("link", { name: /^Try it yourself/ });
     const modified = new MouseEvent("click", { bubbles: true, cancelable: true, ctrlKey: true });
     link.addEventListener("click", (event) => event.preventDefault(), { once: true });
     link.dispatchEvent(modified);

@@ -54,6 +54,18 @@ export interface DemoTour {
   step: string;
 }
 
+/**
+ * How much of a process a demo shows. `single`: one interaction a newcomer can follow in a minute
+ * or two. `journey`: a whole process with many organisations, best seen after a single one.
+ */
+export type DemoScale = "single" | "journey";
+
+/** A short note shown above a demo's card text and on its watch page, before the video. */
+export interface DemoFraming {
+  label: string;
+  text: string;
+}
+
 export interface Demo {
   /** URL segment (`/welcome/watch/<id>`) and video folder (`/video/<id>/`). */
   id: string;
@@ -64,6 +76,12 @@ export interface Demo {
   /** One sentence for the card. */
   sentence: string;
   sectors: readonly Sector[];
+  scale: DemoScale;
+  /** The parties that take part, as tags: the pod holder first, then each kind of organisation. */
+  parties: readonly string[];
+  framing?: DemoFraming;
+  /** A page that tells the story before the demo shows it (welcome route), when there is one. */
+  story?: string;
   /** Video length in seconds: the recording in video/published/<id>/ (video/test checks it). */
   durationSeconds: number;
   status: DemoStatus;
@@ -91,6 +109,21 @@ export const DEMOS: readonly Demo[] = [
     sentence:
       "From first enquiry to first payment, twelve organisations ask the borrower's pod for what they need, and nobody uploads a document.",
     sectors: ["Finance", "Insurance"],
+    scale: "journey",
+    story: "/story/mortgage",
+    parties: [
+      "Borrower",
+      "Lenders",
+      "Payroll provider",
+      "Bank",
+      "Credit bureau",
+      "Investor",
+      "Appraiser",
+      "Title and escrow",
+      "Insurer",
+      "County recorder",
+      "Servicer",
+    ],
     durationSeconds: 250,
     status: "live",
     media: mediaFor("mortgage"),
@@ -189,6 +222,16 @@ export const DEMOS: readonly Demo[] = [
     sentence:
       "One address in the pod, changed once: six organisations read it under standing grants, and the one that loses access sees the refusal.",
     sectors: ["Government"],
+    scale: "single",
+    parties: [
+      "Homeowner",
+      "State agency",
+      "County",
+      "Bank",
+      "Insurer",
+      "Payroll provider",
+      "Servicer",
+    ],
     durationSeconds: 110,
     status: "live",
     media: mediaFor("moving-house"),
@@ -251,6 +294,12 @@ export const DEMOS: readonly Demo[] = [
     sentence:
       "A hospital, a pharmacy and a family practice work from one medication list in the patient's pod, with provenance on every change.",
     sectors: ["Healthcare"],
+    scale: "single",
+    parties: ["Patient", "Hospital", "Pharmacy", "Family doctor", "Family carer"],
+    framing: {
+      label: "An idealised future flow",
+      text: "No single organisation could run this today: it needs hospitals, pharmacies and practices to agree to read and write one record the patient holds, and the rules to allow it. It shows where Solid could lead, not a near-term project.",
+    },
     durationSeconds: 108,
     status: "live",
     media: mediaFor("medication-handover"),
@@ -261,6 +310,7 @@ export const DEMOS: readonly Demo[] = [
         id: "intro",
         title: "Leaving hospital",
         transcript: [
+          "This is an idealised future. No single organisation could run it today.",
           "Rosa is going home from hospital. Her medicines have changed: one stopped, one dose raised, one new.",
           "Usually that news travels by letter, and is typed again at the pharmacy and at her doctor's practice. Mistakes happen at each retyping.",
           "Rosa's medication list is in her pod.",
@@ -278,7 +328,7 @@ export const DEMOS: readonly Demo[] = [
         title: "Three grants, three scopes",
         transcript: [
           "Rosa decides who can see it.",
-          "Her pharmacy can read her medicines and allergies. Her doctor's practice can read and update her health record. Her son, Alex, can read the list, because he helps with her care.",
+          "Rosa lets her pharmacy read her medicines and allergies. She lets her doctor's practice read and update her health record. And she lets her son, Alex, read the list, because he helps with her care.",
         ],
       },
       {
@@ -325,6 +375,8 @@ export const DEMOS: readonly Demo[] = [
     sentence:
       "The claimant holds the claim file; the insurer and the repairer each see only their part, and access ends with the job.",
     sectors: ["Insurance"],
+    scale: "single",
+    parties: ["Policyholder", "Insurer", "Repair shop"],
     durationSeconds: 93,
     status: "live",
     media: mediaFor("motor-claim"),
@@ -378,6 +430,12 @@ export const DEMOS: readonly Demo[] = [
     sentence:
       "A business's identity, officers and owners are issued once as credentials; two banks rely on them, and a proof answers the 25% ownership test without the cap table.",
     sectors: ["Finance"],
+    scale: "journey",
+    parties: ["Business", "Business register (LEI issuer)", "Banks"],
+    framing: {
+      label: "What this shows",
+      text: "Know your business (KYB) is the check a bank runs before it serves a company: who the company is, who may act for it, and who owns 25% or more. Here the register issues those facts once, as credentials in the company's own pod, and each bank reads them there instead of collecting its own copies. The pod belongs to the company. Its signatory, Jordan Blake, manages it through a pod provider, as a finance team would manage a bank account.",
+    },
     durationSeconds: 134,
     status: "live",
     media: mediaFor("business-kyb"),
@@ -445,6 +503,16 @@ export const DEMOS: readonly Demo[] = [
     sentence:
       "Income, cash flow and a credit summary arrive as credentials; two lenders quote from a proof, and the chosen one reads under a 30-day grant.",
     sectors: ["Finance"],
+    scale: "journey",
+    parties: [
+      "Borrower",
+      "Identity verifier",
+      "Payroll provider",
+      "Bank",
+      "Credit bureau",
+      "Lenders",
+      "Payment service",
+    ],
     durationSeconds: 120,
     status: "live",
     media: mediaFor("small-dollar-lending"),
@@ -513,6 +581,12 @@ export const DEMOS: readonly Demo[] = [
     sentence:
       "Twelve months of cash flow kept current in the business's pod by its bank, and covenant monitoring as a standing quarterly read.",
     sectors: ["Finance"],
+    scale: "journey",
+    parties: ["Business", "Bank", "Tax authority", "Business lender"],
+    framing: {
+      label: "What this shows",
+      text: "This picks up Northwind Logistics after its KYB credentials are in its pod. The pod belongs to the company, not to an employee: its signatory manages it through a pod provider, and could hand that role to a finance team, an accountant or the company's own server. Its bank keeps twelve months of cash flow current there, and a lender decides on a loan and then monitors it with a standing, read-only grant.",
+    },
     durationSeconds: 99,
     status: "live",
     media: mediaFor("small-business-loan"),
@@ -571,6 +645,8 @@ export const DEMOS: readonly Demo[] = [
     sentence:
       "One bank states what it verified; a card issuer reads that attestation once, under a one-time grant, with no documents uploaded.",
     sectors: ["Finance"],
+    scale: "single",
+    parties: ["Customer", "Bank", "Card issuer"],
     durationSeconds: 103,
     status: "live",
     media: mediaFor("reusable-kyc"),
@@ -623,6 +699,26 @@ export const DEMOS: readonly Demo[] = [
     ],
   },
 ];
+
+/** The welcome page's two groups, in page order: single interactions first, then whole journeys. */
+export const SINGLE_ORDER = [
+  "moving-house",
+  "motor-claim",
+  "reusable-kyc",
+  "medication-handover",
+] as const;
+export const JOURNEY_ORDER = [
+  "small-dollar-lending",
+  "mortgage",
+  "business-kyb",
+  "small-business-loan",
+] as const;
+
+/** The demos of one scale, in page order. */
+export function demosOfScale(scale: DemoScale): readonly Demo[] {
+  const order: readonly string[] = scale === "single" ? SINGLE_ORDER : JOURNEY_ORDER;
+  return order.map((id) => demoById(id)).filter((demo): demo is Demo => demo?.scale === scale);
+}
 
 /** The demo with this id, if any. */
 export function demoById(id: string): Demo | undefined {

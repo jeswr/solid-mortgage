@@ -6,6 +6,7 @@
 import { appUrl } from "@mortgage/demo-kit/urls";
 import { useEffect } from "react";
 import { Link } from "wouter";
+import { Framing, Parties } from "../components/Framing.tsx";
 import { ArrowIcon } from "../components/icons.tsx";
 import { VideoPlayer } from "../components/VideoPlayer.tsx";
 import type { Demo } from "../demos.ts";
@@ -39,6 +40,13 @@ export function Watch({ demo, probe }: { demo: Demo; probe?: (url: string) => Pr
             </time>
             {live ? ", with English captions" : null}
           </p>
+          <Framing demo={demo} />
+          <Parties demo={demo} />
+          {demo.story === undefined ? null : (
+            <p>
+              <Link href={demo.story}>Read the story first: what happens, and who sees what</Link>
+            </p>
+          )}
         </header>
 
         {live ? (

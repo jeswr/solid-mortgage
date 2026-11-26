@@ -50,7 +50,7 @@ export const TOUR: readonly TourStep[] = Object.freeze([
   {
     action: { label: "Keep my pod up to date", target: "bank-business-publish-cash-flow" },
     app: "bank",
-    body: "Northwind banks with Alder. Press Keep my pod up to date: Jordan approves grant S1 in Cairn, and Alder writes twelve months of cash flow into one resource in Northwind's pod. Alder may write it, never read it.",
+    body: "Northwind, from the KYB demo, owns its pod; Jordan Blake manages it. Press Keep my pod up to date: Jordan approves grant S1, and Alder Bank writes twelve months of cash flow there for a loan application. Alder may write it, never read it.",
     chapter: "1 Data from the source",
     clock: { day: DAY.cashFlow },
     done: { event: write("northwind", "/finance/cash-flow", "bank") },

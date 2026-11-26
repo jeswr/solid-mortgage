@@ -334,7 +334,12 @@ button:disabled {
 }
 
 .phone {
-  max-width: 24rem;
+  /* The same proportions as the wallet's phone, so every phone in the demos reads alike. */
+  max-width: 430px;
+  /* This app's header sits above the phone, so it leaves more room than the wallet does. */
+  height: clamp(560px, calc(100dvh - 240px), 880px);
+  display: flex;
+  flex-direction: column;
   margin: 0 auto;
   background: #fff;
   border: 10px solid #111214;
@@ -354,6 +359,9 @@ button:disabled {
 }
 
 .phone-body {
+  flex: 1;
+  overflow-y: auto;
+  align-content: start;
   padding: 0.9rem;
   display: grid;
   gap: 1rem;
@@ -442,4 +450,14 @@ button:disabled {
   background: #eef6ef;
   border-left: 5px solid var(--pl-ok);
   padding: 0.75rem;
+}
+
+@media (max-width: 520px) {
+  .phone {
+    height: auto;
+  }
+
+  .phone-body {
+    overflow-y: visible;
+  }
 }
