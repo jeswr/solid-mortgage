@@ -17,13 +17,16 @@ import {
 } from "../components/icons.tsx";
 import { Launcher } from "../components/Launcher.tsx";
 import { PodDiagram } from "../components/PodDiagram.tsx";
-import { EXPLAINER, HEADLINE, REAL, SIMULATED } from "../copy.ts";
-import { DEMOS, demoById } from "../demos.ts";
+import { ADOPTION_LEAD, EXPLAINER, HEADLINE, PRIMER, REAL, SIMULATED } from "../copy.ts";
+import { type Demo, demoById, demosOfScale } from "../demos.ts";
 import { guidedDemo, startTourFresh, tourUrl } from "../demos-links.ts";
 import { applyMeta, CONVENER, LINKS } from "../site.ts";
 
-/** design.md §e item 3: one pod, four sectors, each pointing at the demo card that shows it. */
-const SECTOR_STRIP: ReadonlyArray<{
+/**
+ * The adoption path (design.md §e item 3, reworked after member feedback): build the pieces for
+ * one high-value journey, then reuse the same pod for single interactions and new sectors.
+ */
+const ADOPTION_PATH: ReadonlyArray<{
   label: string;
   sector: string;
   demo: string;
@@ -31,38 +34,38 @@ const SECTOR_STRIP: ReadonlyArray<{
   note: string;
 }> = [
   {
-    label: "Buy a home",
+    label: "Build it for the mortgage",
     sector: "Finance",
     demo: "mortgage",
     icon: <HomeIcon />,
-    note: "Twelve organisations, one pod",
+    note: "Pods, grants, credentials and audit, in one journey",
   },
   {
-    label: "Insure it",
-    sector: "Insurance",
-    demo: "mortgage",
-    icon: <ShieldIcon />,
-    note: "Quoted from facts already in the pod",
-  },
-  {
-    label: "Tell everyone you moved",
+    label: "Reuse it when the customer moves",
     sector: "Government",
     demo: "moving-house",
     icon: <MoveIcon />,
-    note: "One address, changed once",
+    note: "The same pod; one address, changed once",
   },
   {
-    label: "Hand over a medication list",
+    label: "Reuse it for a claim",
+    sector: "Insurance",
+    demo: "motor-claim",
+    icon: <ShieldIcon />,
+    note: "Each party sees only its part of the claim",
+  },
+  {
+    label: "Extend it to new sectors",
     sector: "Healthcare",
     demo: "medication-handover",
     icon: <PillIcon />,
-    note: "One list, three writers",
+    note: "Further out: one medication list, three writers",
   },
 ];
 
 export function Home({ probe }: { probe?: (url: string) => Promise<boolean> }) {
   useEffect(() => applyMeta(), []);
-  const flagship = DEMOS.find((demo) => demo.status === "live" && demo.tour !== undefined);
+  const flagship = demoById("mortgage");
   const guided = guidedDemo(window.location.search) !== undefined;
   return (
     <>
@@ -77,9 +80,18 @@ export function Home({ probe }: { probe?: (url: string) => Promise<boolean> }) {
             <div className="hero__actions">
               {guided ? (
                 // Step 1 of the guided tour: Start opens Alex's wallet, which reads Alex's pod.
-                <a href={appUrl("wallet")} data-tour="tour-start" className="button button--light">
-                  Start
-                </a>
+                <>
+                  <a
+                    href={appUrl("wallet")}
+                    data-tour="tour-start"
+                    className="button button--light"
+                  >
+                    Start
+                  </a>
+                  <Link href="/story/mortgage" className="button button--ghost-light">
+                    Read the story first
+                  </Link>
+                </>
               ) : (
                 <a href="#demos" className="button button--light">
                   See the demos
@@ -102,57 +114,68 @@ export function Home({ probe }: { probe?: (url: string) => Promise<boolean> }) {
         </div>
       </section>
 
+      <section className="section" id="solid" aria-labelledby="solid-title">
+        <div className="section__inner">
+          <header className="section__header">
+            <p className="eyebrow">New to Solid?</p>
+            <h2 id="solid-title">Four ideas the demos rely on</h2>
+          </header>
+          <dl className="primer">
+            {PRIMER.map((item) => (
+              <div key={item.term} className="primer__item">
+                <dt>{item.term}</dt>
+                <dd>{item.body}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </section>
+
       <section className="section" id="demos" aria-labelledby="demos-title">
         <div className="section__inner">
           <header className="section__header">
             <p className="eyebrow">Demos</p>
-            <h2 id="demos-title">Watch one, then run it yourself</h2>
+            <h2 id="demos-title">Start small, then see a whole journey</h2>
             <p className="section__lead">
-              Each demo is a real process run by fictional organisations against pods in your
-              browser. Watch the narrated video, or take the guided tour with fresh data.
+              Each demo runs a real process with fictional organisations, against pods in your
+              browser. Watch the narrated video, or take the guided tour yourself.
             </p>
           </header>
-          <ul className="demo-list" aria-label="Demos">
-            {DEMOS.map((demo) => (
-              <li
-                key={demo.id}
-                className={demo.status === "live" ? "demo-list__live" : "demo-list__coming"}
-              >
-                <DemoCard demo={demo} {...(probe === undefined ? {} : { probe })} />
-              </li>
-            ))}
-          </ul>
+          <DemoGroup
+            id="single"
+            title="Single interactions"
+            lead="One customer, one or two organisations, a minute or two each. Start here if Solid is new to you."
+            demos={demosOfScale("single")}
+            probe={probe}
+          />
+          <DemoGroup
+            id="journeys"
+            title="Whole journeys"
+            lead="Many organisations, one pod, from first request to last. The mortgage is the fullest of them."
+            demos={demosOfScale("journey")}
+            probe={probe}
+          />
         </div>
       </section>
 
-      <section className="section section--band" id="sectors" aria-labelledby="sectors-title">
+      <section className="section section--band" id="adoption" aria-labelledby="adoption-title">
         <div className="section__inner">
           <header className="section__header">
-            <p className="eyebrow">The connected story</p>
-            <h2 id="sectors-title">One pod, four sectors</h2>
-            <p className="section__lead">
-              The same person's pod serves a lender, an insurer, a state agency and a pharmacy. Each
-              reads what it was granted, and nothing else.
-            </p>
+            <p className="eyebrow">Adoption</p>
+            <h2 id="adoption-title">Build it once for the mortgage, reuse it everywhere</h2>
+            <p className="section__lead">{ADOPTION_LEAD}</p>
           </header>
           <ol className="sector-strip">
-            {SECTOR_STRIP.map((item) => {
-              const demo = demoById(item.demo);
-              const live = demo?.status === "live";
-              return (
-                <li key={item.label} className="sector-strip__item">
-                  <a href={`#demo-${item.demo}`} className="sector-strip__link">
-                    <span className="sector-strip__icon">{item.icon}</span>
-                    <span className="sector-strip__label">{item.label}</span>
-                    <span className="sector-strip__sector">{item.sector}</span>
-                    <span className="sector-strip__note">{item.note}</span>
-                    <span className={live ? "badge badge--live" : "badge badge--coming"}>
-                      {live ? "In the mortgage demo" : "Coming next"}
-                    </span>
-                  </a>
-                </li>
-              );
-            })}
+            {ADOPTION_PATH.map((item) => (
+              <li key={item.label} className="sector-strip__item">
+                <a href={`#demo-${item.demo}`} className="sector-strip__link">
+                  <span className="sector-strip__icon">{item.icon}</span>
+                  <span className="sector-strip__label">{item.label}</span>
+                  <span className="sector-strip__sector">{item.sector}</span>
+                  <span className="sector-strip__note">{item.note}</span>
+                </a>
+              </li>
+            ))}
           </ol>
         </div>
       </section>
@@ -239,5 +262,38 @@ export function Home({ probe }: { probe?: (url: string) => Promise<boolean> }) {
         </div>
       </section>
     </>
+  );
+}
+
+function DemoGroup({
+  id,
+  title,
+  lead,
+  demos,
+  probe,
+}: {
+  id: string;
+  title: string;
+  lead: string;
+  demos: readonly Demo[];
+  probe: ((url: string) => Promise<boolean>) | undefined;
+}) {
+  return (
+    <section className="demo-group" id={`demos-${id}`} aria-labelledby={`demos-${id}-title`}>
+      <h3 id={`demos-${id}-title`} className="demo-group__title">
+        {title}
+      </h3>
+      <p className="demo-group__lead">{lead}</p>
+      <ul className="demo-list" aria-label={title}>
+        {demos.map((demo) => (
+          <li
+            key={demo.id}
+            className={demo.status === "live" ? "demo-list__live" : "demo-list__coming"}
+          >
+            <DemoCard demo={demo} {...(probe === undefined ? {} : { probe })} />
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

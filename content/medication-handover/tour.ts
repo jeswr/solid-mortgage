@@ -68,7 +68,7 @@ const STAGE_WEEK = "A week later";
 export const TOUR: readonly TourStep[] = Object.freeze([
   {
     app: "wallet",
-    body: "Rosa Rivera, Alex's mother, is going home from Riverbend General Hospital today. Her medicines and her allergy are in her own pod; the hospital has written to it during her stay under grant M1. Every clinical detail is fictional.",
+    body: "An idealised future: no single organisation could run this today. Rosa Rivera, Alex's mother, is leaving hospital. Her medicines and allergy are in her own pod; the hospital wrote to it during her stay under grant M1, which she gave. All clinical details are fictional.",
     chapter: "1 Leaving hospital",
     clock: { day: DAY.discharge },
     // Completes when the page has read the allergy, its last read.
@@ -124,7 +124,7 @@ export const TOUR: readonly TourStep[] = Object.freeze([
   {
     action: { label: "Approve", target: "wallet-med-approve" },
     app: "wallet",
-    body: "Home again, Rosa answers two requests and adds her son. Corner Dispensary may read her medicines and allergies, Larch Lane Family Practice may read and update her record, and Alex may read the list. Press Approve.",
+    body: "Home again, Rosa decides who may use her list. She lets Corner Dispensary read her medicines and allergies, lets Larch Lane Family Practice read and update her record, and lets her son Alex read the list. Nobody gets access she has not approved. Press Approve.",
     chapter: "1 Leaving hospital",
     clock: { day: DAY.discharge },
     done: { event: grant("/medications/dispenses/") },

@@ -42,3 +42,23 @@
   border-left: 5px solid currentColor;
   padding: 0.25rem 0.75rem;
 }
+
+/* Was and now: what changed for this organisation when Alex changed the one record. */
+.mh-held-change {
+  display: grid;
+  grid-template-columns: minmax(5rem, auto) 1fr;
+  gap: 0.25rem 1rem;
+  margin: 0.75rem 0;
+  padding: 0.75rem 1rem;
+  border-left: 5px solid currentColor;
+  background: rgb(0 0 0 / 4%);
+}
+
+.mh-held-change dd {
+  margin: 0;
+  min-width: 0;
+}
+
+.mh-held-change dd:first-of-type {
+  text-decoration: line-through;
+}

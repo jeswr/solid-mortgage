@@ -7,7 +7,13 @@
 import "./moving-house.css";
 import { refusalOf } from "@mortgage/content/mortgage/reads";
 import { movingHouseWorld } from "@mortgage/content/moving-house/browser";
-import { DAY, streetLine } from "@mortgage/content/moving-house/facts";
+import {
+  DAY,
+  fullAddress,
+  OLD_ADDRESS,
+  sameAddress,
+  streetLine,
+} from "@mortgage/content/moving-house/facts";
 import { codeOf } from "@mortgage/content/moving-house/grants";
 import { ORGS } from "@mortgage/content/orgs";
 import { createPodHooks } from "@mortgage/demo-kit/react";
@@ -64,6 +70,16 @@ export function MovingTreasurer() {
             <br />
             {copy.address.locality}, {copy.address.region} {copy.address.postalCode}
           </address>
+          {sameAddress(copy.address, OLD_ADDRESS) ? null : (
+            <dl className="mh-held-change" data-testid="mh-held-change">
+              <dt>Was</dt>
+              <dd>{fullAddress(OLD_ADDRESS)}</dd>
+              <dt>Now</dt>
+              <dd>{fullAddress(copy.address)}</dd>
+              <dt>How</dt>
+              <dd>Alex changed it once, in Alex's pod. No change-of-address form reached us.</dd>
+            </dl>
+          )}
           <dl>
             <dt>Source</dt>
             <dd>Alex's pod, read under grant {codeOf(HOLDER)} (until Alex withdraws it)</dd>

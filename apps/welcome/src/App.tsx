@@ -7,6 +7,7 @@ import { Home } from "./pages/Home.tsx";
 import { Honesty } from "./pages/Honesty.tsx";
 import { Ledger } from "./pages/Ledger.tsx";
 import { NotFound } from "./pages/NotFound.tsx";
+import { Story } from "./pages/Story.tsx";
 import { Watch } from "./pages/Watch.tsx";
 import { SITE_RECORD } from "./site.ts";
 
@@ -36,6 +37,7 @@ export function App({ hook, probe }: AppProps) {
                 return demo === undefined ? <NotFound /> : <Watch demo={demo} {...probeProp} />;
               }}
             </Route>
+            <Route path="/story/mortgage" component={Story} />
             <Route path="/honesty" component={Honesty} />
             <Route path="/journey" component={Ledger} />
             <Route path="/ledger">

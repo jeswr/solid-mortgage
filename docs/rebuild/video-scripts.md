@@ -448,6 +448,8 @@ note: provisional until the apps exist. Every clinical detail is fictional. Add 
 ## Leaving hospital {#intro}
 
 [do: card title]
+This is an idealised future. No single organisation could run it today.
+
 Rosa is going home from hospital. Her medicines have changed: one stopped, one dose raised, one new.
 
 [do: card letters]
@@ -468,7 +470,7 @@ On the ward, the pharmacist records the three changes, with a reason for each. T
 Rosa decides who can see it.
 
 [do: act]
-Her pharmacy can read her medicines and allergies. Her doctor's practice can read and update her health record. Her son, Alex, can read the list, because he helps with her care.
+Rosa lets her pharmacy read her medicines and allergies. She lets her doctor's practice read and update her health record. And she lets her son, Alex, read the list, because he helps with her care.
 
 ## The pharmacy {#pharmacy}
 

@@ -52,7 +52,7 @@ const STAGE = "Business onboarding";
 export const TOUR: readonly TourStep[] = Object.freeze([
   {
     app: "wallet",
-    body: "Jordan Blake runs Northwind Logistics' pod in Cairn. The credentials drawer is empty: no register record, no officer list, no ownership record yet.",
+    body: "Know your business (KYB): before serving a company, a bank checks who it is, who acts for it and who owns it. Northwind Logistics owns this pod; its signatory, Jordan Blake, manages it in Cairn. The credentials drawer is still empty.",
     chapter: "1 The register",
     clock: { day: DAY.register },
     done: { event: read("northwind", "/credentials/") },
